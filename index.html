@@ -4780,7 +4780,7 @@
                                     <div class="practice-step-box">
                                         <div class="practice-step-title"><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</div>
                                         <div class="choice-grid">
-                                            ${practiceFlow.choices.map((word) => `<button class="choice-chip-button" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`).join('')}
+                                            ${[...practiceFlow.choices].sort(() => Math.random() - 0.5).map((word) => `<button class="choice-chip-button" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`).join('')}
                                         </div>
                                     </div>
                                 </div>
