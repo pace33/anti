@@ -300,17 +300,18 @@
         .combine-card  { cursor:pointer; transition:box-shadow 0.2s; }
         .combine-card:hover { box-shadow:0 4px 18px rgba(134,239,172,0.5); }
         .combine-replay{ font-size:0.78rem; color:#94a3b8; text-align:center; margin-top:6px; }
-        @keyframes combineLeft  { 0%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(38px);opacity:0} 68%{transform:translateX(38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
-        @keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(-38px);opacity:0} 68%{transform:translateX(-38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
-        @keyframes opFade       { 0%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
-        @keyframes resultPop    { 0%,42%{transform:scale(0);opacity:0} 58%{transform:scale(1.2);opacity:1} 72%,100%{transform:scale(1);opacity:1} }
-        /* 점이 오른쪽에서 왜쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
-        .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; }
+        @keyframes combineLeft  { 0%,15%{transform:translateX(0);opacity:0} 20%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(38px);opacity:0} 68%{transform:translateX(38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
+        @keyframes combineRight { 0%,15%{transform:translateX(0);opacity:0} 20%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(-38px);opacity:0} 68%{transform:translateX(-38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
+        @keyframes opFade       { 0%,15%{opacity:0} 20%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
+        @keyframes resultPop    { 0%,45%{transform:scale(0);opacity:0} 58%{transform:scale(1.2);opacity:1} 72%,100%{transform:scale(1);opacity:1} }
+        /* 점이 오른쪽에서 왼쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
+        .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:baseFadeIn 2.5s ease-in-out 1 both; }
         .combine-row     { overflow:visible; }
-        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 2.5s ease-in-out 1 forwards; }
-        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 2.5s ease-in-out 1 forwards; }
-        @keyframes dotToAbove { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,-62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
-        @keyframes dotToBelow { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
+        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 2.5s ease-in-out 1 both; }
+        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 2.5s ease-in-out 1 both; }
+        @keyframes dotToAbove { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,-62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
+        @keyframes dotToBelow { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
+        @keyframes baseFadeIn { 0%,15%{opacity:0} 20%,100%{opacity:1} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
@@ -4246,7 +4247,7 @@
                 const vertUp   = ['ㅗ','ㅛ'];
                 const vertDown = ['ㅜ','ㅠ'];
                 const rows = combos.map((c, i) => {
-                    const d = `animation-delay:${i * 0.15}s`;
+                    const d = `animation-delay:${i * 2.5}s`;
                     const isUp   = vertUp.includes(c.res);
                     const isDown = vertDown.includes(c.res);
                     if (isUp || isDown) {
@@ -4255,7 +4256,7 @@
                         const dClass   = isUp ? 'combine-dot-up' : 'combine-dot-down';
                         return `<div class="combine-row">
                             <div class="combine-box ${dClass}" style="${d}">${dotChar}</div>
-                            <div class="combine-box combine-base">${baseChar}</div>
+                            <div class="combine-box combine-base" style="${d}">${baseChar}</div>
                             <span class="combine-op" style="${d}">→</span>
                             <div class="combine-box combine-result" style="${d}">${c.res}</div>
                         </div>`;
