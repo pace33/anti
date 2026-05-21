@@ -293,14 +293,14 @@
             justify-content: center;
             border-radius: 14px;
         }
-        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 1.6s ease-in-out 1 forwards; }
-        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 1.6s ease-in-out 1 forwards; }
-        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 1.6s ease-in-out 1 forwards; }
-        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 1.6s ease-in-out 1 forwards; }
-        @keyframes combineLeft  { 0%{transform:translateX(0);opacity:1} 55%{transform:translateX(38px);opacity:0} 100%{transform:translateX(38px);opacity:0} }
-        @keyframes combineRight { 0%{transform:translateX(0);opacity:1} 55%{transform:translateX(-38px);opacity:0} 100%{transform:translateX(-38px);opacity:0} }
-        @keyframes opFade       { 0%{opacity:1} 55%{opacity:0} 100%{opacity:0} }
-        @keyframes resultPop    { 0%{transform:scale(0);opacity:0} 65%{transform:scale(0);opacity:0} 82%{transform:scale(1.2);opacity:1} 100%{transform:scale(1);opacity:1} }
+        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 3.2s ease-in-out infinite; }
+        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 3.2s ease-in-out infinite; }
+        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 3.2s ease-in-out infinite; }
+        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 3.2s ease-in-out infinite; }
+        @keyframes combineLeft  { 0%,30%{transform:translateX(0);opacity:1} 48%{transform:translateX(36px);opacity:0} 72%{transform:translateX(36px);opacity:0} 88%,100%{transform:translateX(0);opacity:1} }
+        @keyframes combineRight { 0%,30%{transform:translateX(0);opacity:1} 48%{transform:translateX(-36px);opacity:0} 72%{transform:translateX(-36px);opacity:0} 88%,100%{transform:translateX(0);opacity:1} }
+        @keyframes opFade       { 0%,30%{opacity:1} 48%{opacity:0} 72%{opacity:0} 88%,100%{opacity:1} }
+        @keyframes resultPop    { 0%,35%{transform:scale(0);opacity:0} 52%{transform:scale(1.2);opacity:1} 62%,72%{transform:scale(1);opacity:1} 84%,100%{transform:scale(0);opacity:0} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
