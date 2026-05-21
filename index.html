@@ -4187,9 +4187,10 @@
             speakTextKo(consonantSoundMap[char] || char);
         };
 
-        // 결합 카드 클릭 시 애니메이션 재시작
+        // 결합 카드 클릭 시 애니메이션 재시작 + 순차적 자모음 음성(므, 아, 마) 출력
+        let activeTtsTimeouts = [];
         window.restartCombineAnim = function(card) {
-            const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op,.combine-dot-up,.combine-dot-down');
+            const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op,.combine-dot-up,.combine-dot-down,.combine-base');
             card.style.visibility = 'hidden';
             els.forEach(el => {
                 el.style.animation = 'none';
@@ -4201,6 +4202,46 @@
                 });
                 card.style.visibility = '';
             });
+
+            // 기존 진행 중인 모든 합성 음성 대기열 취소
+            activeTtsTimeouts.forEach(t => clearTimeout(t));
+            activeTtsTimeouts = [];
+            speechSynthesis.cancel();
+
+            const combosAttr = card.getAttribute('data-combos');
+            if (combosAttr) {
+                try {
+                    const combos = JSON.parse(combosAttr);
+                    combos.forEach((c, idx) => {
+                        const getSound = (char) => {
+                            if (char === 'ㆍ') return '어';
+                            return consonantSoundMap[char] || char;
+                        };
+                        const soundL = getSound(c.l);
+                        const soundR = getSound(c.r);
+                        const soundRes = c.res;
+
+                        // 첫소리 (예: 0s 시작행이면 바로 "므" / "으")
+                        const t1 = setTimeout(() => {
+                            speakTextKo(soundL);
+                        }, idx * 2500);
+
+                        // 가운뎃소리 (0.55초 후 "아" / "어")
+                        const t2 = setTimeout(() => {
+                            speakTextKo(soundR);
+                        }, idx * 2500 + 550);
+
+                        // 끝소리 (1.15초 후 "마" / "아")
+                        const t3 = setTimeout(() => {
+                            speakTextKo(soundRes);
+                        }, idx * 2500 + 1150);
+
+                        activeTtsTimeouts.push(t1, t2, t3);
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+            }
         };
 
         // 글자 결합 패턴 감지 및 애니메이션 카드 생성
@@ -4244,6 +4285,7 @@
             // 2) A+B→C 결합 패턴
             const combos = parseCombinations(card);
             if (combos.length) {
+                const combosData = JSON.stringify(combos).replace(/"/g, '&quot;');
                 const vertUp   = ['ㅗ','ㅛ'];
                 const vertDown = ['ㅜ','ㅠ'];
                 const rows = combos.map((c, i) => {
@@ -4271,7 +4313,7 @@
                         <div class="combine-box combine-result" style="${d}">${c.res}</div>
                     </div>`;
                 }).join('');
-                return `<div class="combine-card" onclick="restartCombineAnim(this)" title="눌러서 다시 보기">${rows}<div class="combine-replay">🔄 눌러서 다시 보기</div></div>`;
+                return `<div class="combine-card" onclick="restartCombineAnim(this)" data-combos="${combosData}" title="눌러서 다시 보기">${rows}<div class="combine-replay">🔄 눌러서 다시 보기</div></div>`;
             }
             // 3) 일반 텍스트 카드
             return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
