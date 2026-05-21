@@ -267,6 +267,40 @@
             color: #46b3a5;
             text-shadow: 0 4px 16px rgba(70, 179, 165, 0.4);
         }
+        /* ===== 글자 결합 애니메이션 ===== */
+        .combine-card {
+            background: linear-gradient(135deg,#f0fdf4,#f0f9ff);
+            border: 2px solid #86efac;
+            border-radius: 20px;
+            padding: 14px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .combine-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .combine-box {
+            font-size: 2rem;
+            font-weight: 900;
+            width: 58px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+        }
+        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 3s ease-in-out infinite; }
+        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 3s ease-in-out infinite; }
+        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 3s ease-in-out infinite; }
+        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 3s ease-in-out infinite; }
+        @keyframes combineLeft  { 0%,38%{transform:translateX(0);opacity:1} 52%{transform:translateX(38px);opacity:0} 68%,100%{transform:translateX(0);opacity:1} }
+        @keyframes combineRight { 0%,38%{transform:translateX(0);opacity:1} 52%{transform:translateX(-38px);opacity:0} 68%,100%{transform:translateX(0);opacity:1} }
+        @keyframes opFade       { 0%,38%{opacity:1} 52%{opacity:0} 68%,100%{opacity:1} }
+        @keyframes resultPop    { 0%,40%{transform:scale(0);opacity:0} 56%{transform:scale(1.25);opacity:1} 67%,73%{transform:scale(1);opacity:1} 86%,100%{transform:scale(0);opacity:0} }
     </style>
 </head>
 <body>
@@ -4086,6 +4120,32 @@
             speakTextKo(consonantSoundMap[char] || char);
         };
 
+        // 글자 결합 패턴 감지 및 애니메이션 카드 생성
+        function parseCombinations(text) {
+            const re = /([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ]+)\s*\+\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ]+)\s*[→=]\s*([가-힣ㄱ-ㅎㅏ-ㅣ●]+)/g;
+            const out = [];
+            let m;
+            while ((m = re.exec(text)) !== null) out.push({ l: m[1].trim(), r: m[2].trim(), res: m[3].trim() });
+            return out;
+        }
+        function renderCardContent(card) {
+            const combos = parseCombinations(card);
+            if (combos.length) {
+                const rows = combos.map((c, i) => {
+                    const d = `animation-delay:${i * 0.15}s`;
+                    return `<div class="combine-row">
+                        <div class="combine-box combine-left"  style="${d}">${c.l}</div>
+                        <span class="combine-op" style="${d}">+</span>
+                        <div class="combine-box combine-right" style="${d}">${c.r}</div>
+                        <span class="combine-op" style="${d}">→</span>
+                        <div class="combine-box combine-result" style="${d}">${c.res}</div>
+                    </div>`;
+                }).join('');
+                return `<div class="combine-card">${rows}</div>`;
+            }
+            return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
+        }
+
         // 이해하기 2: 자음 전체 선택 + 음성
         window.selectConsonants = function() {
             document.querySelectorAll('.syllable-consonant').forEach(el => el.classList.add('selected-consonant'));
@@ -4841,9 +4901,7 @@
                             <div class="learning-main-card">
                                 <div class="learning-card-label">📖 이해하기</div>
                                 <div class="grid gap-3">
-                                    ${(introCards.length ? introCards : activityCards.slice(0, 2)).map((card) => `
-                                        <div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>
-                                    `).join('')}
+                                    ${(introCards.length ? introCards : activityCards.slice(0, 2)).map((card) => renderCardContent(card)).join('')}
                                 </div>
                                 <div class="mt-4">
                                     <div class="learning-card-label">📖 배움 글자</div>
