@@ -293,14 +293,17 @@
             justify-content: center;
             border-radius: 14px;
         }
-        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 3.2s ease-in-out infinite; }
-        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 3.2s ease-in-out infinite; }
-        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 3.2s ease-in-out infinite; }
-        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 3.2s ease-in-out infinite; }
-        @keyframes combineLeft  { 0%,30%{transform:translateX(0);opacity:1} 48%{transform:translateX(36px);opacity:0} 72%{transform:translateX(36px);opacity:0} 88%,100%{transform:translateX(0);opacity:1} }
-        @keyframes combineRight { 0%,30%{transform:translateX(0);opacity:1} 48%{transform:translateX(-36px);opacity:0} 72%{transform:translateX(-36px);opacity:0} 88%,100%{transform:translateX(0);opacity:1} }
-        @keyframes opFade       { 0%,30%{opacity:1} 48%{opacity:0} 72%{opacity:0} 88%,100%{opacity:1} }
-        @keyframes resultPop    { 0%,35%{transform:scale(0);opacity:0} 52%{transform:scale(1.2);opacity:1} 62%,72%{transform:scale(1);opacity:1} 84%,100%{transform:scale(0);opacity:0} }
+        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 2s ease-in-out 1 forwards; }
+        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 2s ease-in-out 1 forwards; }
+        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 2s ease-in-out 1 forwards; }
+        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 2s ease-in-out 1 forwards; }
+        .combine-card  { cursor:pointer; transition:box-shadow 0.2s; }
+        .combine-card:hover { box-shadow:0 4px 18px rgba(134,239,172,0.5); }
+        .combine-replay{ font-size:0.78rem; color:#94a3b8; text-align:center; margin-top:6px; }
+        @keyframes combineLeft  { 0%,30%{transform:translateX(0);opacity:1} 52%{transform:translateX(38px);opacity:0} 100%{transform:translateX(38px);opacity:0} }
+        @keyframes combineRight { 0%,30%{transform:translateX(0);opacity:1} 52%{transform:translateX(-38px);opacity:0} 100%{transform:translateX(-38px);opacity:0} }
+        @keyframes opFade       { 0%,30%{opacity:1} 52%{opacity:0} 100%{opacity:0} }
+        @keyframes resultPop    { 0%,45%{transform:scale(0);opacity:0} 62%{transform:scale(1.2);opacity:1} 78%,100%{transform:scale(1);opacity:1} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
@@ -4158,6 +4161,16 @@
             speakTextKo(consonantSoundMap[char] || char);
         };
 
+        // 결합 카드 클릭 시 애니메이션 재시작
+        window.restartCombineAnim = function(card) {
+            const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op');
+            els.forEach(el => {
+                el.style.animation = 'none';
+                void el.offsetWidth; // reflow 강제
+                el.style.animation = '';
+            });
+        };
+
         // 글자 결합 패턴 감지 및 애니메이션 카드 생성
         function parseCombinations(text) {
             const re = /([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ]+)\s*\+\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ]+)\s*[→=]\s*([가-힣ㄱ-ㅎㅏ-ㅣ●]+)/g;
@@ -4209,7 +4222,7 @@
                         <div class="combine-box combine-result" style="${d}">${c.res}</div>
                     </div>`;
                 }).join('');
-                return `<div class="combine-card">${rows}</div>`;
+                return `<div class="combine-card" onclick="restartCombineAnim(this)" title="눌러서 다시 보기">${rows}<div class="combine-replay">🔄 눌러서 다시 보기</div></div>`;
             }
             // 3) 일반 텍스트 카드
             return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
