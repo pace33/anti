@@ -1033,6 +1033,9 @@
                 <div class="aiedu-badge mb-4">이해하기 2</div>
                 <h4 class="text-2xl font-bold text-[#2c3e50] mb-4">엄마는 모음, 아기는 자음</h4>
                 <p class="text-sm text-gray-500 mb-6">자음(파란색)이나 모음(노란색) 부분을 터치해보세요!</p>
+                <div class="text-center mb-6">
+                    <img src="consonant_vowel_concept.png" alt="자음 모음 아기 엄마 개념도" class="mx-auto rounded-2xl shadow-sm" style="max-height:220px;object-fit:contain;">
+                </div>
                 <div class="bg-white rounded-3xl p-8 shadow-sm">
                     <div class="flex justify-around items-center gap-2">
                         <div class="flex items-end text-7xl font-black leading-none">
@@ -4186,10 +4189,16 @@
         // 결합 카드 클릭 시 애니메이션 재시작
         window.restartCombineAnim = function(card) {
             const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op,.combine-dot-up,.combine-dot-down');
+            card.style.visibility = 'hidden';
             els.forEach(el => {
                 el.style.animation = 'none';
-                void el.offsetWidth; // reflow 강제
-                el.style.animation = '';
+            });
+            requestAnimationFrame(() => {
+                void card.offsetWidth;
+                els.forEach(el => {
+                    el.style.animation = '';
+                });
+                card.style.visibility = '';
             });
         };
 
