@@ -148,6 +148,11 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
         }
+        .choice-grid-wide {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 6px;
+        }
         .choice-chip-button {
             border: 2px solid #bae6fd;
             border-radius: 16px;
@@ -3175,7 +3180,7 @@
             4: { listen: 'ㅡ, ㅣ. 가로선이 ㅡ, 세로선이 ㅣ예요.', choices: ['ㅡ', 'ㅣ', 'ㅗ', 'ㅏ'], writeLines: ['ㅡ ㅡ ㅡ ㅡ', 'ㅣ ㅣ ㅣ ㅣ'] },
             5: { listen: 'ㅑ, ㅕ. 짧은 선이 두 개 붙어 있어요.', choices: ['ㅑ', 'ㅕ', 'ㅏ', 'ㅓ'], writeLines: ['ㅑ ㅑ ㅑ ㅑ', 'ㅕ ㅕ ㅕ ㅕ'] },
             6: { listen: 'ㅛ, ㅠ. 세로선 두 개가 위에 있으면 ㅛ, 아래에 있으면 ㅠ예요.', choices: ['ㅛ', 'ㅠ', 'ㅗ', 'ㅜ'], writeLines: ['ㅛ ㅛ ㅛ ㅛ', 'ㅠ ㅠ ㅠ ㅠ'] },
-            7: { listen: '아, 야, 어, 여, 오, 요, 우, 유, 으, 이. 모음을 모두 읽어봐요.', choices: ['아', '야', '오', '이'], writeLines: ['아 야 오 이', '어 여 우 으'] },
+            7: { listen: '아, 야, 어, 여, 오, 요, 우, 유, 으, 이. 배운 모음을 모두 읽어봐요.', choices: ['아', '야', '어', '여', '오', '요', '우', '유', '으', '이'], writeLines: ['아 야 어 여 오', '요 우 유 으 이'] },
             8: { listen: 'ㄱ, ㅋ, ㄲ. 기역, 키읔, 쌍기역 순서로 소리가 세져요.', choices: ['ㄱ', 'ㅋ', 'ㄲ', '가'], writeLines: ['ㄱ ㄱ ㄱ ㄱ', 'ㅋ ㅋ ㄲ ㄲ'] },
             9: { listen: 'ㄴ, ㄷ, ㅌ, ㄸ. 기본/거센/된소리를 구분해요.', choices: ['ㄴ', 'ㄷ', 'ㅌ', 'ㄸ'], writeLines: ['ㄴ ㄴ ㄷ ㄷ', 'ㅌ ㅌ ㄸ ㄸ'] },
             10: { listen: 'ㅁ, ㅂ, ㅍ, ㅃ. 기본/거센/된소리를 구분해요.', choices: ['ㅁ', 'ㅂ', 'ㅍ', 'ㅃ'], writeLines: ['ㅁ ㅁ ㅂ ㅂ', 'ㅍ ㅍ ㅃ ㅃ'] },
@@ -4836,13 +4841,13 @@
                                 <div class="grid gap-3">
                                     <div class="practice-step-box">
                                         <div class="practice-step-title"><span class="practice-step-number">1</span> 듣기</div>
-                                        <div class="choice-grid">
+                                        <div class="${practiceFlow.choices.length > 4 ? 'choice-grid-wide' : 'choice-grid'}">
                                             ${practiceFlow.choices.map((word) => `<button class="listen-chip-button" onclick="speakTextKo('${word}')">${word}</button>`).join('')}
                                         </div>
                                     </div>
                                     <div class="practice-step-box">
                                         <div class="practice-step-title"><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</div>
-                                        <div class="choice-grid">
+                                        <div class="${practiceFlow.choices.length > 4 ? 'choice-grid-wide' : 'choice-grid'}">
                                             ${[...practiceFlow.choices].sort(() => Math.random() - 0.5).map((word) => `<button class="choice-chip-button" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`).join('')}
                                         </div>
                                     </div>
