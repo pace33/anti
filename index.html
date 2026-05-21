@@ -293,10 +293,10 @@
             justify-content: center;
             border-radius: 14px;
         }
-        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 3.2s ease-in-out 1 both; }
-        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 3.2s ease-in-out 1 both; }
-        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 3.2s ease-in-out 1 both; }
-        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 3.2s ease-in-out 1 both; }
+        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 3.7s ease-in-out 1 both; }
+        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 3.7s ease-in-out 1 both; }
+        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 3.7s ease-in-out 1 both; }
+        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 3.7s ease-in-out 1 both; }
         .combine-card  { cursor:pointer; transition:box-shadow 0.2s; }
         .combine-card:hover { box-shadow:0 4px 18px rgba(134,239,172,0.5); }
         .combine-replay{ font-size:0.78rem; color:#94a3b8; text-align:center; margin-top:6px; }
@@ -305,10 +305,10 @@
         @keyframes opFade       { 0%,15%{opacity:0} 20%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
         @keyframes resultPop    { 0%,45%{transform:scale(0);opacity:0} 58%{transform:scale(1.2);opacity:1} 72%,100%{transform:scale(1);opacity:1} }
         /* 점이 오른쪽에서 왼쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
-        .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:baseFadeIn 3.2s ease-in-out 1 both; }
+        .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:baseFadeIn 3.7s ease-in-out 1 both; }
         .combine-row     { overflow:visible; }
-        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 3.2s ease-in-out 1 both; }
-        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 3.2s ease-in-out 1 both; }
+        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 3.7s ease-in-out 1 both; }
+        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 3.7s ease-in-out 1 both; }
         @keyframes dotToAbove { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,-62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
         @keyframes dotToBelow { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
         @keyframes baseFadeIn { 0%,15%{opacity:0} 20%,100%{opacity:1} }
@@ -4242,17 +4242,17 @@
                         // 첫소리 (예: 0s 시작행이면 바로 "므" / "으")
                         const t1 = setTimeout(() => {
                             speakTextKo(soundL);
-                        }, idx * 3200);
+                        }, idx * 3700);
 
-                        // 가운뎃소리 (0.7초 후 "아" / "어")
+                        // 가운뎃소리 (0.8초 후 "아" / "어")
                         const t2 = setTimeout(() => {
                             speakTextKo(soundR);
-                        }, idx * 3200 + 700);
+                        }, idx * 3700 + 800);
 
-                        // 끝소리 (1.6초 후 "마" / "아")
+                        // 끝소리 (1.9초 후 "마" / "아")
                         const t3 = setTimeout(() => {
                             speakTextKo(soundRes);
-                        }, idx * 3200 + 1600);
+                        }, idx * 3700 + 1900);
 
                         activeTtsTimeouts.push(t1, t2, t3);
                     });
@@ -4307,7 +4307,7 @@
                 const vertUp   = ['ㅗ','ㅛ'];
                 const vertDown = ['ㅜ','ㅠ'];
                 const rows = combos.map((c, i) => {
-                    const d = `animation-delay:${i * 3.2}s`;
+                    const d = `animation-delay:${i * 3.7}s`;
                     const isUp   = vertUp.includes(c.res);
                     const isDown = vertDown.includes(c.res);
                     if (isUp || isDown) {
