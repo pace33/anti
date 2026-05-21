@@ -301,6 +301,44 @@
         @keyframes combineRight { 0%{transform:translateX(0);opacity:1} 55%{transform:translateX(-38px);opacity:0} 100%{transform:translateX(-38px);opacity:0} }
         @keyframes opFade       { 0%{opacity:1} 55%{opacity:0} 100%{opacity:0} }
         @keyframes resultPop    { 0%{transform:scale(0);opacity:0} 65%{transform:scale(0);opacity:0} 82%{transform:scale(1.2);opacity:1} 100%{transform:scale(1);opacity:1} }
+
+        /* ===== 입 벌림 진행 애니메이션 ===== */
+        .mouth-card {
+            background: linear-gradient(135deg,#fffbeb,#fef9c3);
+            border: 2px solid #fcd34d;
+            border-radius: 20px;
+            padding: 14px 12px;
+        }
+        .mouth-sequence {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .mouth-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            opacity: 0;
+            animation: mouthStepIn 0.45s ease-out forwards;
+        }
+        .mouth-oval {
+            background: #fef3c7;
+            border: 3px solid #f59e0b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #78350f;
+        }
+        .mouth-lbl { font-size: 1.1rem; font-weight: 900; color: #92400e; }
+        .mouth-arr { font-size: 1.3rem; color: #94a3b8; font-weight: bold; opacity:0; animation: mouthStepIn 0.3s ease-out forwards; }
+        .mouth-text { font-size: 0.95rem; color: #78350f; line-height: 1.4; margin-top: 4px; }
+        @keyframes mouthStepIn { from{opacity:0;transform:scale(0.5) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
     </style>
 </head>
 <body>
@@ -4128,7 +4166,37 @@
             while ((m = re.exec(text)) !== null) out.push({ l: m[1].trim(), r: m[2].trim(), res: m[3].trim() });
             return out;
         }
+        // 진행 패턴(A→B→C) 감지 - 입 벌림 애니메이션
+        function parseProgression(text) {
+            const re = /([\uac00-\ud7a3\u3131-\u314e\u314f-\u3163]+)(?:\u2192([\uac00-\ud7a3\u3131-\u314e\u314f-\u3163]+))+/;
+            const m = re.exec(text);
+            if (!m) return null;
+            return m[0].split('\u2192');
+        }
         function renderCardContent(card) {
+            // 1) A→B→C 진행 패턴: 입 벌림 애니메이션
+            const steps = parseProgression(card);
+            if (steps && steps.length >= 3) {
+                const n = steps.length;
+                // 타원 크기: 첫 항목이 가장 좌우가 좌고(입이 존게), 마지링이 널직게
+                const steps_html = steps.map((s, i) => {
+                    const ratio = i / (n - 1);  // 0 → 1
+                    const w = Math.round(30 + ratio * 40);  // 30px → 70px
+                    const h = Math.round(56 - ratio * 22);  // 56px → 34px
+                    const delay = `animation-delay:${i * 0.55}s`;
+                    const arrDelay = `animation-delay:${i * 0.55 - 0.2}s`;
+                    const arr = i < n - 1 ? `<span class="mouth-arr" style="${arrDelay}">→</span>` : '';
+                    return `<div class="mouth-step" style="${delay}">
+                        <div class="mouth-oval" style="width:${w}px;height:${h}px">${s}</div>
+                        <span class="mouth-lbl">${s}</span>
+                    </div>${arr}`;
+                }).join('');
+                return `<div class="mouth-card">
+                    <div class="mouth-sequence">${steps_html}</div>
+                    <div class="mouth-text">${card}</div>
+                </div>`;
+            }
+            // 2) A+B→C 결합 패턴
             const combos = parseCombinations(card);
             if (combos.length) {
                 const rows = combos.map((c, i) => {
@@ -4143,6 +4211,7 @@
                 }).join('');
                 return `<div class="combine-card">${rows}</div>`;
             }
+            // 3) 일반 텍스트 카드
             return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
         }
 
