@@ -309,8 +309,8 @@
         .combine-row     { overflow:visible; }
         .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 2.5s ease-in-out 1 forwards; }
         .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 2.5s ease-in-out 1 forwards; }
-        @keyframes dotToAbove { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(-66px,-62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
-        @keyframes dotToBelow { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(-66px,62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
+        @keyframes dotToAbove { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,-62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
+        @keyframes dotToBelow { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(66px,62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
@@ -4239,8 +4239,8 @@
                         const baseChar = (c.l === 'ㆍ') ? c.r : c.l;
                         const dClass   = isUp ? 'combine-dot-up' : 'combine-dot-down';
                         return `<div class="combine-row">
-                            <div class="combine-box combine-base">${baseChar}</div>
                             <div class="combine-box ${dClass}" style="${d}">${dotChar}</div>
+                            <div class="combine-box combine-base">${baseChar}</div>
                             <span class="combine-op" style="${d}">→</span>
                             <div class="combine-box combine-result" style="${d}">${c.res}</div>
                         </div>`;
