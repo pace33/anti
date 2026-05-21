@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우리 지역에 있는 장소를 찾아요 | 5학년 사회 7단원</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nanum Gothic',sans-serif;background:#0d1b2a;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px}
+.wrap{width:100%;max-width:680px}
+
+/* 탭 */
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{flex:1;padding:13px 8px;border:none;border-radius:14px;font-family:'Nanum Gothic',sans-serif;font-size:1em;font-weight:800;cursor:pointer;background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);transition:.3s;line-height:1.4}
+.tab.on{background:linear-gradient(90deg,#e94560,#c62a47);color:#fff;box-shadow:0 4px 14px rgba(233,69,96,.4)}
+
+/* 페이지 */
+.page{display:none;background:linear-gradient(160deg,#0f3460,#16213e);border-radius:24px;padding:26px 22px;box-shadow:0 16px 48px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08)}
+.page.on{display:block;animation:fi .4s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* 공통 */
+.ptag{display:inline-block;background:linear-gradient(90deg,#e94560,#c62a47);color:#fff;padding:5px 16px;border-radius:20px;font-size:.82em;font-weight:800;margin-bottom:12px}
+h1{color:#fff;font-size:1.55em;font-weight:800;margin-bottom:6px;line-height:1.4}
+.sub{color:#a0c4ff;font-size:.9em;margin-bottom:20px}
+
+/* 1면 이야기 박스 */
+.story{background:rgba(255,255,255,.06);border:1px solid rgba(255,215,0,.3);border-radius:16px;padding:16px;margin-bottom:20px}
+.slabel{color:#FFD700;font-size:.8em;font-weight:800;margin-bottom:10px;letter-spacing:.5px}
+.crow{display:flex;gap:12px;align-items:flex-start}
+.face{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ffd700,#ff9800);display:flex;align-items:center;justify-content:center;font-size:1.7em;flex-shrink:0;box-shadow:0 4px 12px rgba(255,152,0,.4)}
+.bub{background:#fff;border-radius:14px 14px 14px 4px;padding:12px 14px;color:#333;font-size:.95em;line-height:1.8;flex:1}
+.bub strong{color:#e94560}
+
+/* 1면 시설 그리드 */
+.glabel{color:#a0c4ff;font-size:.82em;font-weight:800;margin-bottom:10px;letter-spacing:.5px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.pbtn{padding:16px 8px;border:2px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.05);color:#fff;font-family:'Nanum Gothic',sans-serif;font-size:.88em;font-weight:800;cursor:pointer;text-align:center;line-height:1.5;transition:.25s}
+.pbtn .picon{font-size:2em;display:block;margin-bottom:6px}
+.pbtn:hover,.pbtn.sel{border-color:#FFD700;background:rgba(255,215,0,.12);transform:translateY(-2px)}
+.pinfo{background:rgba(160,196,255,.08);border:1.5px solid rgba(160,196,255,.25);border-radius:14px;padding:16px;margin-bottom:18px;min-height:72px;color:#e0f4ff;font-size:.95em;line-height:1.8;transition:.3s}
+.pinfo .pname{font-size:1.1em;font-weight:800;color:#FFD700;margin-bottom:6px}
+.pinfo .pkey{color:#7dd3fc;font-size:.85em;font-weight:800;margin-top:8px;padding:6px 12px;background:rgba(125,211,252,.1);border-radius:8px;display:inline-block}
+
+.gbtn{width:100%;padding:16px;background:linear-gradient(90deg,#e94560,#c62a47);color:#fff;border:none;border-radius:16px;font-family:'Nanum Gothic',sans-serif;font-size:1.05em;font-weight:800;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(233,69,96,.35)}
+.gbtn:hover{transform:scale(1.02)}
+
+/* 2면 스텝바 */
+.sbar{display:flex;gap:8px;margin-bottom:18px}
+.sd{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
+.sd::after{content:'';position:absolute;left:0;top:0;height:100%;width:0;border-radius:4px;transition:.4s}
+.sd.done::after{width:100%;background:#00b4d8}
+.sd.cur::after{width:100%;background:#FFD700}
+
+/* 미션 카드 */
+.mcard{background:rgba(0,180,216,.07);border:1.5px solid rgba(0,180,216,.22);border-radius:20px;padding:20px 18px}
+.mnum{color:#00b4d8;font-size:.78em;font-weight:800;margin-bottom:8px;letter-spacing:.5px}
+.mtit{color:#fff;font-size:1.15em;font-weight:800;margin-bottom:14px;line-height:1.5}
+.mimg{font-size:3em;text-align:center;margin-bottom:12px}
+.msit{background:rgba(0,119,182,.18);border-left:4px solid #00b4d8;border-radius:0 12px 12px 0;padding:14px 16px;color:#e0f4ff;font-size:.95em;line-height:1.9;margin-bottom:16px}
+.msit .sq{font-size:1.05em;font-weight:800;color:#fff;margin-top:8px}
+
+/* 선택지 */
+.ogrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.opt{padding:18px 12px;border:2.5px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.05);color:#fff;font-family:'Nanum Gothic',sans-serif;font-size:.92em;font-weight:800;cursor:pointer;text-align:center;line-height:1.6;transition:.2s}
+.opt .oicon{font-size:1.8em;display:block;margin-bottom:6px}
+.opt:hover{border-color:#00b4d8;background:rgba(0,180,216,.12);transform:translateY(-2px)}
+.opt.ok{border-color:#4caf50;background:rgba(76,175,80,.2);color:#a5d6a7;pointer-events:none}
+.opt.ng{border-color:#ef5350;background:rgba(239,83,80,.12);color:#ef9a9a;pointer-events:none}
+
+/* 피드백 */
+.fb{border-radius:14px;padding:14px 16px;font-size:.93em;line-height:1.8;display:none;font-weight:700}
+.fb.on{display:block;animation:fi .3s ease}
+.fb.ok{background:rgba(76,175,80,.15);border:1.5px solid rgba(76,175,80,.4);color:#a5d6a7}
+.fb.ng{background:rgba(239,83,80,.1);border:1.5px solid rgba(239,83,80,.3);color:#ef9a9a}
+
+.nsbtn{width:100%;padding:14px;background:linear-gradient(90deg,#00b4d8,#0077b6);color:#fff;border:none;border-radius:14px;font-family:'Nanum Gothic',sans-serif;font-size:1em;font-weight:800;cursor:pointer;display:none;margin-top:12px;box-shadow:0 4px 14px rgba(0,180,216,.3);transition:.2s}
+.nsbtn:hover{transform:scale(1.02)}
+
+/* 완료 */
+.donebox{text-align:center;padding:12px}
+.trophy{font-size:4em;margin-bottom:12px;animation:bo .9s infinite alternate}
+@keyframes bo{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.dh{color:#FFD700;font-size:1.5em;font-weight:800;margin-bottom:8px}
+.dp{color:#a0c4ff;font-size:.95em;line-height:1.8;margin-bottom:16px}
+.stamps{display:flex;justify-content:center;gap:12px;margin-bottom:16px}
+.stamp{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#ffd700,#ff9800);display:flex;align-items:center;justify-content:center;font-size:1.6em;box-shadow:0 4px 14px rgba(255,215,0,.4)}
+.cert{border:2px solid rgba(255,215,0,.35);border-radius:16px;padding:16px;background:rgba(255,215,0,.04);margin-bottom:16px;color:#e0e0e0;font-size:.9em;line-height:1.9}
+.rbtn{padding:12px 22px;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-family:'Nanum Gothic',sans-serif;font-size:.9em;font-weight:800;cursor:pointer;margin:4px;transition:.2s}
+.rbtn:hover{background:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab on" id="t1" onclick="gp(1)">📖 1면<br>장소 찾기</button>
+    <button class="tab" id="t2" onclick="gp(2)">🎯 2면<br>민준이 도와주기</button>
+  </div>
+
+  <!-- ===== 1면 ===== -->
+  <div class="page on" id="pg1">
+    <div class="ptag">📚 5학년 사회 7단원</div>
+    <h1>🏘️ 우리 지역에 있는<br>장소를 찾아요</h1>
+    <p class="sub">실생활 문제해결 차시 | 특수학교 초등 5학년</p>
+
+    <div class="story">
+      <div class="slabel">📖 이야기로 만나기</div>
+      <div class="crow">
+        <div class="face">🧒</div>
+        <div class="bub">
+          안녕! 나는 <strong>민준이</strong>야.<br>
+          우리 동네로 이사왔어.<br>
+          <strong>어디에 가면 뭘 할 수 있는지</strong> 알고 싶어!<br>
+          같이 알아봐줘! 🙏
+        </div>
+      </div>
+    </div>
+
+    <div class="glabel">🗺️ 우리 동네 장소 — 버튼을 눌러 알아보세요!</div>
+    <div class="pgrid">
+      <button class="pbtn" id="pb0" onclick="sp(0)"><span class="picon">🏥</span>병원</button>
+      <button class="pbtn" id="pb1" onclick="sp(1)"><span class="picon">🛒</span>마트</button>
+      <button class="pbtn" id="pb2" onclick="sp(2)"><span class="picon">📚</span>도서관</button>
+      <button class="pbtn" id="pb3" onclick="sp(3)"><span class="picon">🏫</span>학교</button>
+      <button class="pbtn" id="pb4" onclick="sp(4)"><span class="picon">🎭</span>공연장</button>
+      <button class="pbtn" id="pb5" onclick="sp(5)"><span class="picon">🚌</span>버스정류장</button>
+    </div>
+
+    <div class="pinfo" id="pinfo">
+      👆 장소 버튼을 눌러 어떤 곳인지 알아보세요!
+    </div>
+
+    <button class="gbtn" onclick="gp(2)">🎯 2면으로 — 민준이 도와주러 가기!</button>
+  </div>
+
+  <!-- ===== 2면 ===== -->
+  <div class="page" id="pg2">
+    <div class="ptag">🎯 실생활 문제 해결</div>
+    <h1>민준이를 도와줘요!</h1>
+    <p class="sub">1면에서 배운 장소로 문제를 해결해요</p>
+
+    <div class="sbar">
+      <div class="sd" id="sd0"></div>
+      <div class="sd" id="sd1"></div>
+      <div class="sd" id="sd2"></div>
+      <div class="sd" id="sd3"></div>
+    </div>
+    <div id="ma"></div>
+  </div>
+
+</div>
+
+<script>
+// ── 1면: 시설 데이터 ──
+var places=[
+  {n:"🏥 병원",k:"아프면 → 병원!",d:"몸이 아플 때 가는 곳이에요.<br>의사 선생님이 치료해 주세요.<br>누구나 이용할 수 있어요."},
+  {n:"🛒 마트",k:"물건 사려면 → 마트!",d:"먹을 것, 생활용품을 살 수 있어요.<br>판매원 선생님이 도와줘요."},
+  {n:"📚 도서관",k:"책 읽고 싶으면 → 도서관!",d:"책을 빌릴 수 있어요.<br>공짜로 이용해요.<br>조용히 공부도 할 수 있어요."},
+  {n:"🏫 학교",k:"공부하는 곳 → 학교!",d:"선생님과 함께 공부하는 곳이에요.<br>친구들과 즐겁게 배워요."},
+  {n:"🎭 공연장",k:"공연 보고 싶으면 → 공연장!",d:"음악회, 연극, 공연을 볼 수 있어요.<br>다양한 문화를 즐기는 곳이에요."},
+  {n:"🚌 버스정류장",k:"버스 타려면 → 버스정류장!",d:"버스를 타고 내리는 곳이에요.<br>다른 곳으로 이동할 때 이용해요."}
+];
+
+function sp(i){
+  document.querySelectorAll('.pbtn').forEach(function(b,j){b.classList.toggle('sel',j===i);});
+  var p=places[i];
+  document.getElementById('pinfo').innerHTML=
+    '<div class="pname">'+p.n+'</div>'+p.d+'<div class="pkey">💡 '+p.k+'</div>';
+}
+
+// ── 2면: 상황 데이터 ──
+var steps=[
+  {
+    num:"상황 1 / 4",
+    icon:"🤒",
+    tit:"민준이가 갑자기 열이 나고 배가 아파요!",
+    sit:"민준이 엄마가 말했어요.<br>\"민준아, 열이 나고 배가 아프구나.<br>어디로 가야 할까?\"",
+    q:"민준이는 어디로 가야 할까요?",
+    opts:[
+      {icon:"🏥",t:"병원에 가요",ok:true,
+       fb:"✅ 맞아요!<br>아플 때는 병원에 가요.<br>의사 선생님이 치료해 주세요!"},
+      {icon:"🛒",t:"마트에 가요",ok:false,
+       fb:"❌ 마트는 물건 사는 곳이에요.<br>아플 때는 병원에 가야 해요!"}
+    ]
+  },
+  {
+    num:"상황 2 / 4",
+    icon:"📚",
+    tit:"민준이가 책을 빌리고 싶어요!",
+    sit:"민준이가 말했어요.<br>\"책 읽는 숙제가 있어.<br>책을 빌릴 수 있는 곳이 어디야?\"",
+    q:"민준이는 어디로 가야 할까요?",
+    opts:[
+      {icon:"📚",t:"도서관에 가요",ok:true,
+       fb:"✅ 맞아요!<br>책은 도서관에서 빌려요.<br>공짜로 이용할 수 있어요!"},
+      {icon:"🎭",t:"공연장에 가요",ok:false,
+       fb:"❌ 공연장은 공연을 보는 곳이에요.<br>책을 빌리려면 도서관에 가요!"}
+    ]
+  },
+  {
+    num:"상황 3 / 4",
+    icon:"🎭",
+    tit:"민준이가 음악 공연을 보고 싶어요!",
+    sit:"민준이가 말했어요.<br>\"오늘 음악회가 있대.<br>공연을 보러 어디로 가야 해?\"",
+    q:"민준이는 어디로 가야 할까요?",
+    opts:[
+      {icon:"🎭",t:"공연장에 가요",ok:true,
+       fb:"✅ 맞아요!<br>공연은 공연장에서 봐요.<br>음악회, 연극도 볼 수 있어요!"},
+      {icon:"🚌",t:"버스정류장에 가요",ok:false,
+       fb:"❌ 버스정류장은 버스 타는 곳이에요.<br>공연을 보려면 공연장에 가요!"}
+    ]
+  },
+  {
+    num:"상황 4 / 4",
+    icon:"🚌",
+    tit:"민준이가 버스 타고 할머니 댁에 가요!",
+    sit:"민준이가 말했어요.<br>\"할머니 댁이 다른 동네에 있어.<br>버스를 타야 하는데 어디서 타야 해?\"",
+    q:"민준이는 어디로 가야 할까요?",
+    opts:[
+      {icon:"🚌",t:"버스정류장에 가요",ok:true,
+       fb:"✅ 맞아요!<br>버스는 버스정류장에서 타요.<br>다른 동네도 버스로 갈 수 있어요!"},
+      {icon:"🏫",t:"학교에 가요",ok:false,
+       fb:"❌ 학교는 공부하는 곳이에요.<br>버스를 타려면 버스정류장에 가요!"}
+    ]
+  }
+];
+
+var cur=0, answered=false;
+
+function gp(n){
+  document.getElementById('pg1').classList.toggle('on',n===1);
+  document.getElementById('pg2').classList.toggle('on',n===2);
+  document.getElementById('t1').classList.toggle('on',n===1);
+  document.getElementById('t2').classList.toggle('on',n===2);
+  if(n===2){cur=0;answered=false;renderStep();}
+}
+
+function updateBar(){
+  for(var i=0;i<4;i++){
+    var d=document.getElementById('sd'+i);
+    d.className='sd'+(i<cur?' done':i===cur?' cur':'');
+  }
+}
+
+function renderStep(){
+  updateBar();
+  if(cur>=steps.length){showDone();return;}
+  var m=steps[cur];
+  var ob=m.opts.map(function(o,i){
+    return '<button class="opt" id="ob'+i+'" onclick="pick('+i+')">'+
+      '<span class="oicon">'+o.icon+'</span>'+o.t+'</button>';
+  }).join('');
+  document.getElementById('ma').innerHTML=
+    '<div class="mcard">'+
+      '<div class="mnum">'+m.num+'</div>'+
+      '<div class="mimg">'+m.icon+'</div>'+
+      '<div class="mtit">'+m.tit+'</div>'+
+      '<div class="msit">'+m.sit+'<div class="sq">👉 '+m.q+'</div></div>'+
+      '<div class="ogrid">'+ob+'</div>'+
+      '<div class="fb" id="fb"></div>'+
+      '<button class="nsbtn" id="nb" onclick="nextS()">'+
+        (cur<steps.length-1?'다음 상황 →':'🏆 완료!')+'</button>'+
+    '</div>';
+  answered=false;
+}
+
+function pick(i){
+  if(answered)return;
+  answered=true;
+  var o=steps[cur].opts[i];
+  steps[cur].opts.forEach(function(op,j){
+    document.getElementById('ob'+j).className='opt '+(op.ok?'ok':'ng');
+  });
+  var fb=document.getElementById('fb');
+  fb.className='fb on '+(o.ok?'ok':'ng');
+  fb.innerHTML=o.fb;
+  document.getElementById('nb').style.display='block';
+}
+
+function nextS(){cur++;answered=false;renderStep();}
+
+function showDone(){
+  document.getElementById('ma').innerHTML=
+    '<div class="donebox">'+
+      '<div class="trophy">🏆</div>'+
+      '<div class="stamps">'+
+        '<div class="stamp">🏥</div>'+
+        '<div class="stamp">📚</div>'+
+        '<div class="stamp">🎭</div>'+
+      '</div>'+
+      '<div class="dh">민준이를 도왔어요!</div>'+
+      '<div class="dp">3가지 상황을 모두 해결했어요!<br>우리 동네 장소를 잘 알게 됐어요.</div>'+
+      '<div class="cert">'+
+        '<strong style="color:#FFD700">🎖️ 수행 완료 인증</strong><br><br>'+
+        '이 학생은 우리 지역의 다양한 장소를 탐색하고<br>'+
+        '실생활 문제 상황에서 알맞은 장소를 찾았습니다.<br><br>'+
+        '<strong style="color:#FFD700">⭐ 우리 동네 지역 탐험가 ⭐</strong>'+
+      '</div>'+
+      '<button class="rbtn" onclick="gp(1)">📖 1면으로</button>'+
+      '<button class="rbtn" onclick="gp(2)">🔄 다시 하기</button>'+
+    '</div>';
+}
+</script>
+</body>
+</html>

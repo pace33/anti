@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우리 동네 탐험대 미션북</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nanum Gothic',sans-serif;background:#FFF8E1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px}
+header{text-align:center;margin-bottom:16px}
+header h1{font-size:1.8em;color:#E65100;font-weight:800}
+header p{color:#F57C00;font-size:1em;margin-top:4px}
+.progress-area{width:100%;max-width:600px;background:#fff;border-radius:16px;padding:14px 18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.08);display:flex;align-items:center;gap:12px}
+.progress-area span{font-size:1.5em}
+.bar{flex:1;height:18px;background:#FFE0B2;border-radius:9px;overflow:hidden}
+.bar-inner{height:18px;background:linear-gradient(90deg,#FF9800,#FFC107);border-radius:9px;transition:width .5s}
+.pts{font-weight:800;color:#E65100;white-space:nowrap}
+.card{width:100%;max-width:600px;background:#fff;border-radius:24px;box-shadow:0 6px 24px rgba(0,0,0,.1);padding:24px;margin-bottom:16px}
+.scene-label{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.85em;font-weight:800;margin-bottom:12px}
+.scene-school{background:#E3F2FD;color:#1565C0}
+.scene-home{background:#F3E5F5;color:#6A1B9A}
+.scene-community{background:#E8F5E9;color:#2E7D32}
+.mission-num{font-size:.85em;color:#999;margin-bottom:6px}
+.mission-title{font-size:1.3em;font-weight:800;color:#333;margin-bottom:12px}
+.scene-box{background:#FFF3E0;border-radius:14px;padding:14px 16px;margin-bottom:16px;line-height:1.8;font-size:1em}
+.scene-box .icon{font-size:2em;margin-bottom:6px;display:block}
+.step-label{font-size:.85em;color:#F57C00;font-weight:800;margin-bottom:8px}
+.action-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.action-btn{padding:16px 10px;border:2.5px solid #FFE0B2;border-radius:14px;background:#fff;font-family:'Nanum Gothic',sans-serif;font-size:.95em;font-weight:800;cursor:pointer;transition:all .2s;text-align:center;line-height:1.4}
+.action-btn:hover{border-color:#FF9800;background:#FFF8E1;transform:scale(1.03)}
+.action-btn.correct{border-color:#43A047;background:#E8F5E9;color:#2E7D32;pointer-events:none}
+.action-btn.wrong{border-color:#E53935;background:#FFEBEE;color:#C62828;pointer-events:none}
+.feedback-box{border-radius:12px;padding:14px 16px;font-size:.95em;line-height:1.7;margin-bottom:14px;display:none;font-weight:700}
+.feedback-box.show{display:block}
+.feedback-box.ok{background:#E8F5E9;color:#2E7D32}
+.feedback-box.ng{background:#FFEBEE;color:#C62828}
+.next-btn{width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(90deg,#FF9800,#F57C00);color:#fff;font-family:'Nanum Gothic',sans-serif;font-size:1.05em;font-weight:800;cursor:pointer;display:none;transition:all .2s}
+.next-btn:hover{transform:scale(1.02);box-shadow:0 4px 12px rgba(255,152,0,.4)}
+.stamp-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stamp{width:44px;height:44px;border-radius:50%;border:3px dashed #FFB300;display:flex;align-items:center;justify-content:center;font-size:1.4em;background:#FFF8E1}
+.stamp.earned{border-style:solid;border-color:#FF9800;background:#FFE0B2}
+.complete{text-align:center;padding:20px}
+.complete .big{font-size:4em;margin-bottom:10px}
+.complete h2{color:#E65100;font-size:1.5em;font-weight:800;margin-bottom:8px}
+.cert{border:3px solid #FF9800;border-radius:16px;padding:16px;margin:16px 0;background:#FFF8E1}
+.cert h3{color:#E65100;font-size:1.2em;margin-bottom:8px}
+.restart-btn{padding:14px 30px;border:none;border-radius:14px;background:#FF9800;color:#fff;font-family:'Nanum Gothic',sans-serif;font-size:1em;font-weight:800;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺️ 우리 동네 탐험대 미션북</h1>
+  <p>5학년 사회 7단원 | 실생활 미션형 수행활동</p>
+</header>
+
+<div class="progress-area">
+  <span id="starIcon">⭐</span>
+  <div class="bar"><div class="bar-inner" id="barInner" style="width:0%"></div></div>
+  <div class="pts"><span id="pts">0</span>/5 완료</div>
+</div>
+
+<div class="card" id="mainCard"></div>
+
+<script>
+const missions=[
+  {
+    scene:"🏫 교실",cls:"scene-school",
+    title:"미션 1: 우리 동네 집 모양 카드 고르기",
+    intro:{icon:"🏠",text:"[활동 의도] 우리 지역에는 다양한 집이 있어요.\n사람들이 왜 서로 다른 집에 살까요?\n지역 공동체의 다양성을 이해해봐요!\n\n[수행 과제] 집 모양 사진 카드를 보고\n알맞은 집을 골라 소개해보세요."},
+    steps:[
+      {q:"📋 선생님이 집 사진 카드 3장을 나눠줬어요.\n(아파트·단독주택·빌라) 어떻게 살펴볼까요?",
+       cards:[{t:"👀 카드를 천천히 보며\n집 이름을 읽어본다",ok:true,
+               fb:"✅ 맞아요! 아파트는 여러 가구가 함께 사는 높은 건물, 단독주택은 한 가족이 사는 집, 빌라는 그 중간이에요.\n→ 결과: 3가지 집의 이름과 모양을 알게 됐어요!"},
+              {t:"📱 카드는 안 보고\n스마트폰을 켠다",ok:false,
+               fb:"❌ 카드를 꼭 살펴봐야 해요!\n→ 해설: 직접 보고 비교해야 집의 특징을 알 수 있어요."}]},
+      {q:"🙋 선생님이 물어봐요.\n'우리 동네에서 제일 많은 집은 뭘까요?'\n어떻게 대답할까요?",
+       cards:[{t:"📢 내가 아는 집 종류를\n이름 대며 대답한다",ok:true,
+               fb:"✅ 훌륭해요! '저희 동네에는 아파트가 많아요!'처럼 말하면 돼요.\n→ 결과: 우리 지역 주거 환경에 관심을 갖게 됐어요!"},
+              {t:"😶 모르겠다며\n고개를 숙인다",ok:false,
+               fb:"❌ 용기를 내봐요! 카드를 보며 말해도 괜찮아요.\n→ 해설: 틀려도 괜찮아요. 말하는 것이 중요해요!"}]},
+      {q:"✏️ 활동지에 내가 살고 싶은 집을 고르고\n이유를 써야 해요. 어떻게 할까요?",
+       cards:[{t:"🖊️ 카드를 보며 하나 골라\n이유를 한 문장으로 쓴다",ok:true,
+               fb:"✅ 완벽해요! '나는 아파트가 좋아요. 왜냐하면 친구들이 많이 살기 때문이에요.'처럼 쓰면 돼요!\n→ 미션 1 완료! 🏅"},
+              {t:"⬜ 아무것도 안 쓰고\n기다린다",ok:false,
+               fb:"❌ 그림으로 그려도 괜찮아요! 한 가지 집을 골라봐요.\n→ 해설: 정답이 없어요. 내 생각을 표현하는 게 중요해요!"}]}
+    ]
+  },
+  {
+    scene:"🏫 교실",cls:"scene-school",
+    title:"미션 2: 일하는 곳과 하는 일 짝 맞추기",
+    intro:{icon:"🏢",text:"[활동 의도] 우리 지역에는 사람들이 일하는\n다양한 곳이 있어요.\n각 장소에서 어떤 일을 하는지 알면\n우리 지역을 더 잘 이해할 수 있어요!\n\n[수행 과제] 장소 카드와 직업 카드를\n올바르게 짝 맞춰 연결해보세요."},
+    steps:[
+      {q:"🃏 책상 위에 장소 카드와 직업 카드가 있어요.\n(병원·소방서·학교 / 의사·소방관·교사)\n먼저 어떻게 할까요?",
+       cards:[{t:"🔍 장소 카드를 하나씩 보며\n어떤 사람이 일하는지 생각한다",ok:true,
+               fb:"✅ 좋아요! 병원→의사, 소방서→소방관, 학교→교사!\n→ 결과: 각 장소에서 하는 일을 연결할 수 있어요!"},
+              {t:"🙈 카드를 뒤집어 놓고\n아무거나 짝 맞춘다",ok:false,
+               fb:"❌ 카드를 잘 살펴봐야 해요!\n→ 해설: 그림을 보면 힌트를 찾을 수 있어요!"}]},
+      {q:"🤔 '마트'라는 장소 카드가 나왔어요.\n마트에서 일하는 사람은 누구일까요?",
+       cards:[{t:"🛒 물건을 팔고 계산해주는\n판매원·계산원을 연결한다",ok:true,
+               fb:"✅ 맞아요! 마트에는 물건을 파는 판매원, 계산해주는 계산원이 일해요.\n→ 결과: 우리가 자주 가는 마트도 일하는 곳임을 알았어요!"},
+              {t:"🚒 소방관을\n마트에 연결한다",ok:false,
+               fb:"❌ 소방관은 소방서에서 일해요!\n→ 해설: 장소 그림을 보고 그 곳에서 하는 일을 생각해봐요."}]},
+      {q:"📣 짝 맞추기가 끝났어요!\n친구에게 한 가지 장소를 설명할 시간이에요.",
+       cards:[{t:"💬 '병원은 아픈 사람을\n치료해주는 곳이에요!'라고 말한다",ok:true,
+               fb:"✅ 훌륭한 설명이에요! 이처럼 장소의 역할을 말할 수 있어야 해요.\n→ 미션 2 완료! 🏅"},
+              {t:"😶 아무 말도 안 하고\n자리에 앉는다",ok:false,
+               fb:"❌ 한 단어라도 말해봐요! '병원 = 아픈 곳'만 해도 돼요.\n→ 해설: 말하기 연습이 우리 지역 이해의 시작이에요!"}]}
+    ]
+  },
+  {
+    scene:"🏫 교실",cls:"scene-school",
+    title:"미션 3: 우리 동네 문화시설 소개하기",
+    intro:{icon:"🎭",text:"[활동 의도] 도서관, 공원, 문화센터는\n모든 사람이 함께 이용하는 곳이에요.\n내가 소개할 문화시설을 골라서\n친구들에게 알려줘봐요!\n\n[수행 과제] 문화시설 사진 카드 중 하나를 골라\n하는 일과 이용 방법을 소개해보세요."},
+    steps:[
+      {q:"📸 교실 칠판에 문화시설 사진 3장이 붙어있어요.\n(도서관·공원·문화센터)\n내가 소개할 곳을 어떻게 고를까요?",
+       cards:[{t:"💭 내가 가본 적 있거나\n좋아하는 곳을 고른다",ok:true,
+               fb:"✅ 좋아요! 도서관을 고르면: 책을 빌릴 수 있는 곳이에요. 조용히 공부도 할 수 있어요!\n→ 결과: 내가 아는 것을 바탕으로 더 잘 소개할 수 있어요!"},
+              {t:"🎲 눈 감고\n아무거나 찍는다",ok:false,
+               fb:"❌ 내가 아는 곳을 골라야 잘 소개할 수 있어요!\n→ 해설: 경험이 있는 곳을 고르면 더 자신 있게 말할 수 있어요."}]},
+      {q:"📋 고른 문화시설의 특징을 정리해야 해요.\n어떻게 정리할까요?",
+       cards:[{t:"✏️ '어디? / 뭘 해? / 누가 가?' 세 가지를\n활동지에 적거나 그린다",ok:true,
+               fb:"✅ 완벽한 정리예요!\n예) 도서관 → 어디: 우리 동네 / 뭘 해: 책 읽기·빌리기 / 누가: 누구나!\n→ 결과: 소개 준비가 완성됐어요!"},
+              {t:"🧠 머릿속으로만 생각하고\n아무것도 적지 않는다",ok:false,
+               fb:"❌ 적어야 발표할 때 안 잊어버려요!\n→ 해설: 그림으로 그려도 좋아요. 기록이 중요해요!"}]},
+      {q:"📢 발표 시간! 친구들 앞에서 소개할 차례예요.",
+       cards:[{t:"🙋 '저는 도서관을 소개해요.\n책을 빌릴 수 있어요!'라고 말한다",ok:true,
+               fb:"✅ 멋진 발표예요! 문화시설을 친구에게 소개할 수 있게 됐어요!\n→ 미션 3 완료! 🏅"},
+              {t:"🙈 너무 부끄러워서\n발표를 포기한다",ok:false,
+               fb:"❌ 활동지를 보며 읽어도 괜찮아요!\n→ 해설: 한 문장만 읽어도 훌륭한 발표예요. 용기를 내봐요!"}]}
+    ]
+  },
+  {
+    scene:"🏫 교실",cls:"scene-school",
+    title:"미션 4: 공공시설 상황 판단하기",
+    intro:{icon:"🏛️",text:"[활동 의도] 공공시설은 우리 모두가\n함께 이용하는 곳이에요.\n상황에 맞는 공공시설을 찾아\n지역 공동체 안에서 살아가는 방법을 배워요!\n\n[수행 과제] 상황 카드를 읽고 알맞은\n공공시설을 골라 이유를 말해보세요."},
+    steps:[
+      {q:"🃏 상황 카드가 나왔어요:\n'동생이 갑자기 열이 많이 나요!'\n어디로 가야 할까요?",
+       cards:[{t:"🏥 병원에 간다",ok:true,
+               fb:"✅ 맞아요! 병원은 아픈 사람을 돌봐주는 공공시설이에요.\n→ 결과: 위급 상황에서 알맞은 공공시설을 찾을 수 있어요!"},
+              {t:"📚 도서관에 간다",ok:false,
+               fb:"❌ 도서관은 책을 읽는 곳이에요. 아플 땐 병원으로!\n→ 해설: 각 공공시설의 역할을 알아야 상황에 맞게 이용할 수 있어요."}]},
+      {q:"🃏 두 번째 상황 카드:\n'우리 집 앞에 불이 났어요!'\n가장 먼저 무엇을 해야 할까요?",
+       cards:[{t:"📞 119에 신고하고\n소방서에 연락한다",ok:true,
+               fb:"✅ 정확해요! 소방서(119)는 화재·사고를 처리하는 공공시설이에요.\n→ 결과: 위험 상황에서 공공시설의 역할을 알게 됐어요!"},
+              {t:"🛒 마트에 가서\n물을 산다",ok:false,
+               fb:"❌ 불이 나면 빨리 피하고 119에 신고해야 해요!\n→ 해설: 소방서는 우리의 안전을 지켜주는 중요한 공공시설이에요."}]},
+      {q:"📋 활동지에 공공시설 3곳을 쓰고\n각각 어떤 상황에서 이용하는지 써야 해요.",
+       cards:[{t:"✏️ 병원·소방서·도서관을 쓰고\n각각의 상황을 한 줄씩 적는다",ok:true,
+               fb:"✅ 완벽해요!\n병원→아플 때 / 소방서→위험할 때 / 도서관→책 읽을 때\n→ 미션 4 완료! 🏅"},
+              {t:"⬜ 아무것도 적지 않고\n친구 것을 베낀다",ok:false,
+               fb:"❌ 내가 직접 생각해봐야 해요!\n→ 해설: 틀려도 괜찮아요. 내 생각을 먼저 써보는 게 중요해요!"}]}
+    ]
+  },
+  {
+    scene:"🏫 교실",cls:"scene-school",
+    title:"미션 5: 우리 동네 지도 완성 & 발표",
+    intro:{icon:"🗺️",text:"[활동 의도] 우리가 배운 것을 지도로 표현하면\n지역에 대한 소속감이 생겨요!\n지역 공동체의 구성원으로서\n우리 동네를 자랑스럽게 소개해봐요!\n\n[수행 과제] 빈 지도에 장소 스티커를 붙이고\n'우리 동네 소개'를 친구에게 발표해보세요."},
+    steps:[
+      {q:"🗺️ 빈 지도가 있어요.\n장소 스티커를 어디에 붙여야 할까요?",
+       cards:[{t:"🏠🏥🚌 집·병원·버스 정류장 스티커를\n알맞은 자리에 붙인다",ok:true,
+               fb:"✅ 맞아요! 지도에는 그림 기호를 사용해요.\n→ 선택1: 도서관 스티커를 붙이면 → 문화시설 위치를 알 수 있어요!\n→ 선택2: 병원 스티커를 붙이면 → 아플 때 어디 가는지 알 수 있어요!\n→ 선택3: 버스 정류장 스티커 → 교통 환경을 파악할 수 있어요!"},
+              {t:"✏️ 스티커 말고\n아무 곳에나 낙서한다",ok:false,
+               fb:"❌ 지도는 정확하게 표시해야 해요!\n→ 해설: 장소 스티커를 사용하면 누구나 알아볼 수 있어요."}]},
+      {q:"📣 친구에게 지도를 보여주며 발표해야 해요!",
+       cards:[{t:"🙋 지도를 가리키며\n'여기는 ○○예요!'라고 소개한다",ok:true,
+               fb:"✅ 훌륭한 발표예요!\n→ 해설1: '여기는 도서관이에요. 책을 빌릴 수 있어요!' → 문화시설 이해\n→ 해설2: '여기는 공원이에요. 사람들이 쉬어요!' → 공공시설 이해\n→ 해설3: '여기는 버스 정류장이에요!' → 교통 환경 이해"},
+              {t:"😶 지도를 보여주지 않고\n고개를 숙인다",ok:false,
+               fb:"❌ 지도를 들고 한 곳만 가리켜도 돼요!\n→ 해설: 발표는 완벽하지 않아도 괜찮아요. 참여가 중요해요!"}]},
+      {q:"⭐ 활동을 마무리해요!\n오늘 배운 것 중 가장 기억에 남는 것은?",
+       cards:[{t:"👍 기억에 남는 장소나 배운 내용을\n활동지에 그림이나 글로 남긴다",ok:true,
+               fb:"✅ 완벽한 마무리예요!\n→ 해설: 지역 공동체의 구성원으로서 우리 동네에 관심과 소속감을 갖게 됐어요!\n→ 미션 5 완료! 🏆 우리 동네 탐험대 임무 완료!"},
+              {t:"📖 아무것도 안 하고\n가방을 챙긴다",ok:false,
+               fb:"❌ 마지막 한 가지만 적어봐요! 그림으로 그려도 OK!\n→ 해설: 기록이 학습을 완성해요. 어떤 장소든 하나만 그려봐요!"}]}
+    ]
+  }
+];
+
+let mIdx=0,sIdx=0,done=0,answered=false;
+
+function updateBar(){
+  document.getElementById('barInner').style.width=(done/missions.length*100)+'%';
+  document.getElementById('pts').textContent=done;
+  const icons=['⭐','⭐⭐','🌟','🌟🌟','🏅','🏆','🎖️'];
+  document.getElementById('starIcon').textContent=icons[done]||'🎖️';
+}
+
+function render(){
+  if(mIdx>=missions.length){showFinal();return;}
+  const m=missions[mIdx];
+  const isIntro=sIdx===0;
+  const totalSteps=m.steps.length;
+  const stamps=missions.map((_,i)=>`<div class="stamp ${i<done?'earned':''}">
+    ${i<done?['🏠','🏢','🎭','🏛️','🗺️'][i]:'?'}
+  </div>`).join('');
+
+  if(isIntro){
+    document.getElementById('mainCard').innerHTML=`
+      <div class="stamp-row">${stamps}</div>
+      <br>
+      <span class="scene-label ${m.cls}">${m.scene}</span>
+      <div class="mission-num">미션 ${mIdx+1} / ${missions.length}</div>
+      <div class="mission-title">${m.title}</div>
+      <div class="scene-box">
+        <span class="icon">${m.intro.icon}</span>
+        ${m.intro.text.replace(/\n/g,'<br>')}
+      </div>
+      <button class="next-btn" style="display:block" onclick="startSteps()">▶ 미션 시작!</button>
+    `;
+  } else {
+    const si=sIdx-1;
+    const s=m.steps[si];
+    const cards=s.cards.map((c,i)=>`<button class="action-btn" id="ab${i}" onclick="pick(${i})">${c.t.replace(/\n/g,'<br>')}</button>`).join('');
+    document.getElementById('mainCard').innerHTML=`
+      <span class="scene-label ${m.cls}">${m.scene}</span>
+      <div class="mission-num">미션 ${mIdx+1} | 단계 ${si+1}/${totalSteps}</div>
+      <div class="mission-title">${m.title}</div>
+      <div class="step-label">🃏 행동카드를 선택하세요!</div>
+      <div class="scene-box">${s.q}</div>
+      <div class="action-cards">${cards}</div>
+      <div class="feedback-box" id="fbBox"></div>
+      <button class="next-btn" id="nxtBtn" onclick="nextStep()">다음 단계 →</button>
+    `;
+    answered=false;
+  }
+  updateBar();
+}
+
+function startSteps(){sIdx=1;render();}
+
+function pick(i){
+  if(answered)return;
+  answered=true;
+  const s=missions[mIdx].steps[sIdx-1];
+  const c=s.cards[i];
+  document.querySelectorAll('.action-btn').forEach((b,j)=>{
+    b.classList.add(s.cards[j].ok?'correct':'wrong');
+    b.disabled=true;
+  });
+  const fb=document.getElementById('fbBox');
+  fb.className='feedback-box show '+(c.ok?'ok':'ng');
+  fb.innerHTML=c.fb;
+  const nb=document.getElementById('nxtBtn');
+  nb.style.display='block';
+  if(sIdx>=missions[mIdx].steps.length){
+    nb.textContent=c.ok?'🏅 미션 완료!':'다시 도전!';
+  } else {
+    nb.textContent='다음 단계 →';
+  }
+}
+
+function nextStep(){
+  const m=missions[mIdx];
+  if(sIdx>=m.steps.length){
+    done++;
+    mIdx++;
+    sIdx=0;
+  } else {
+    sIdx++;
+  }
+  render();
+}
+
+function showFinal(){
+  document.getElementById('mainCard').innerHTML=`
+    <div class="complete">
+      <div class="big">🏆</div>
+      <h2>우리 동네 탐험대 완주!</h2>
+      <p style="color:#666;margin-bottom:16px">5개 미션을 모두 완료했어요!</p>
+      <div class="cert">
+        <h3>🎖️ 탐험대 완주 인증서</h3>
+        <p>이 학생은 교실에서 우리 동네의 집, 일터,<br>
+        문화시설, 공공시설을 탐구하고<br>
+        우리 동네 지도를 완성하여 발표하였습니다.</p>
+        <p style="margin-top:12px;color:#F57C00;font-weight:800">🌟 우리 동네 탐험대 대원 인증! 🌟</p>
+      </div>
+      <button class="restart-btn" onclick="restart()">🔄 다시 시작하기</button>
+    </div>
+  `;
+}
+
+function restart(){mIdx=0;sIdx=0;done=0;updateBar();render();}
+
+render();
+</script>
+</body>
+</html>
