@@ -4173,6 +4173,24 @@
             const utt = new SpeechSynthesisUtterance(text);
             utt.lang = 'ko-KR';
             utt.rate = 0.82;
+            utt.pitch = 0.78; // 톤을 낮추어 더 따뜻하고 포근한 저음 목소리로 설정
+
+            // 한국어 목소리 목록 중 더 선명하고 든든한 저음 목소리가 있는지 필터링
+            if (typeof speechSynthesis !== 'undefined') {
+                const voices = speechSynthesis.getVoices();
+                const koVoices = voices.filter(v => v.lang.startsWith('ko'));
+                if (koVoices.length > 0) {
+                    // 남성/구글 고품질 등 저음에 유리한 목소리 우선 선택
+                    const bestVoice = koVoices.find(v => 
+                        v.name.toLowerCase().includes('male') || 
+                        v.name.toLowerCase().includes('yunjin') || 
+                        v.name.toLowerCase().includes('google')
+                    );
+                    if (bestVoice) utt.voice = bestVoice;
+                    else utt.voice = koVoices[0];
+                }
+            }
+
             speechSynthesis.cancel();
             speechSynthesis.speak(utt);
         }
