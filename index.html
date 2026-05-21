@@ -4735,7 +4735,7 @@
             const list = learningUnits[activeUnitKey] || [];
             const listRoot = document.getElementById('my-korean-list');
             listRoot.innerHTML = list.map((item) => {
-                const isOpen = item.step === 0 || item.step <= currentLearningStep + 1;
+                const isOpen = currentUserRole === 'teacher' || item.step === 0 || item.step <= currentLearningStep + 1;
                 const isDone = item.step === 0 ? currentLearningStep >= 0 : item.step <= currentLearningStep;
                 const statusText = isDone ? '복습하기' : (isOpen ? '시작하기' : '잠김');
                 const openAction = (activeUnitKey === 'vowel' && item.step === 0 && isOpen)
@@ -4889,7 +4889,7 @@
                 showModal('아직 준비 중인 배움이에요.');
                 return;
             }
-            if (step > currentLearningStep + 1) {
+            if (step > currentLearningStep + 1 && currentUserRole !== 'teacher') {
                 showModal('이전 배움을 먼저 완료해주세요.');
                 return;
             }
