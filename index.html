@@ -293,17 +293,17 @@
             justify-content: center;
             border-radius: 14px;
         }
-        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 2s ease-in-out 1 forwards; }
-        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 2s ease-in-out 1 forwards; }
-        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 2s ease-in-out 1 forwards; }
-        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 2s ease-in-out 1 forwards; }
+        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 2.5s ease-in-out 1 forwards; }
+        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 2.5s ease-in-out 1 forwards; }
+        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 2.5s ease-in-out 1 forwards; }
+        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 2.5s ease-in-out 1 forwards; }
         .combine-card  { cursor:pointer; transition:box-shadow 0.2s; }
         .combine-card:hover { box-shadow:0 4px 18px rgba(134,239,172,0.5); }
         .combine-replay{ font-size:0.78rem; color:#94a3b8; text-align:center; margin-top:6px; }
-        @keyframes combineLeft  { 0%,30%{transform:translateX(0);opacity:1} 52%{transform:translateX(38px);opacity:0} 100%{transform:translateX(38px);opacity:0} }
-        @keyframes combineRight { 0%,30%{transform:translateX(0);opacity:1} 52%{transform:translateX(-38px);opacity:0} 100%{transform:translateX(-38px);opacity:0} }
-        @keyframes opFade       { 0%,30%{opacity:1} 52%{opacity:0} 100%{opacity:0} }
-        @keyframes resultPop    { 0%,45%{transform:scale(0);opacity:0} 62%{transform:scale(1.2);opacity:1} 78%,100%{transform:scale(1);opacity:1} }
+        @keyframes combineLeft  { 0%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(38px);opacity:0} 68%{transform:translateX(38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
+        @keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(-38px);opacity:0} 68%{transform:translateX(-38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
+        @keyframes opFade       { 0%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
+        @keyframes resultPop    { 0%,42%{transform:scale(0);opacity:0} 58%{transform:scale(1.2);opacity:1} 72%,100%{transform:scale(1);opacity:1} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
