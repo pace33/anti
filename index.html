@@ -304,6 +304,12 @@
         @keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(-38px);opacity:0} 68%{transform:translateX(-38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
         @keyframes opFade       { 0%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
         @keyframes resultPop    { 0%,42%{transform:scale(0);opacity:0} 58%{transform:scale(1.2);opacity:1} 72%,100%{transform:scale(1);opacity:1} }
+        /* 수직 방향 점 사라짐 애니메이션 (ㅗ 위로, ㅜ 아래로) */
+        .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; }
+        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotMoveUp 2.5s ease-in-out 1 forwards; }
+        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotMoveDown 2.5s ease-in-out 1 forwards; }
+        @keyframes dotMoveUp   { 0%,28%{transform:translateY(0);opacity:1} 46%{transform:translateY(-50px);opacity:0} 68%{transform:translateY(-50px);opacity:0} 85%,100%{transform:translateY(0);opacity:1} }
+        @keyframes dotMoveDown { 0%,28%{transform:translateY(0);opacity:1} 46%{transform:translateY(50px);opacity:0} 68%{transform:translateY(50px);opacity:0} 85%,100%{transform:translateY(0);opacity:1} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
@@ -4172,7 +4178,7 @@
 
         // 결합 카드 클릭 시 애니메이션 재시작
         window.restartCombineAnim = function(card) {
-            const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op');
+            const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op,.combine-dot-up,.combine-dot-down');
             els.forEach(el => {
                 el.style.animation = 'none';
                 void el.offsetWidth; // reflow 강제
@@ -4221,12 +4227,18 @@
             // 2) A+B→C 결합 패턴
             const combos = parseCombinations(card);
             if (combos.length) {
+                const vertUp   = ['ㅗ','ㅛ'];
+                const vertDown = ['ㅜ','ㅠ'];
                 const rows = combos.map((c, i) => {
                     const d = `animation-delay:${i * 0.15}s`;
+                    const isUp   = vertUp.includes(c.res);
+                    const isDown = vertDown.includes(c.res);
+                    const leftClass  = (isUp || isDown) ? 'combine-base' : 'combine-left';
+                    const rightClass = isUp ? 'combine-dot-up' : isDown ? 'combine-dot-down' : 'combine-right';
                     return `<div class="combine-row">
-                        <div class="combine-box combine-left"  style="${d}">${c.l}</div>
+                        <div class="combine-box ${leftClass}"  style="${d}">${c.l}</div>
                         <span class="combine-op" style="${d}">+</span>
-                        <div class="combine-box combine-right" style="${d}">${c.r}</div>
+                        <div class="combine-box ${rightClass}" style="${d}">${c.r}</div>
                         <span class="combine-op" style="${d}">→</span>
                         <div class="combine-box combine-result" style="${d}">${c.res}</div>
                     </div>`;
