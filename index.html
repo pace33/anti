@@ -238,6 +238,23 @@
         @media (max-width: 600px) {
             .learning-activity-layout { grid-template-columns: 1fr; }
         }
+        /* 이해하기 2 자음/모음 선택 스타일 */
+        .syllable-consonant {
+            color: #2c3e50;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .syllable-vowel {
+            color: #2c3e50;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .syllable-consonant.selected-consonant {
+            color: #ff6b35;
+            text-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+        }
+        .syllable-vowel.selected-vowel {
+            color: #46b3a5;
+            text-shadow: 0 4px 16px rgba(70, 179, 165, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -914,13 +931,22 @@
 
             <div id="understanding-2-pane" class="learning-pane p-8 mb-8 hidden">
                 <div class="aiedu-badge mb-4">이해하기 2</div>
-                <h4 class="text-2xl font-bold text-[#2c3e50] mb-6">엄마는 모음, 아기는 자음</h4>
-                <div class="bg-white rounded-3xl p-12 shadow-sm">
-                    <div class="grid grid-cols-2 gap-y-12 gap-x-16 text-center text-8xl font-black text-[#2c3e50]">
-                        <div class="hover:text-[#46b3a5] transition-colors">머</div>
-                        <div class="hover:text-[#46b3a5] transition-colors">바</div>
-                        <div class="hover:text-[#46b3a5] transition-colors">나</div>
-                        <div class="hover:text-[#46b3a5] transition-colors">라</div>
+                <h4 class="text-2xl font-bold text-[#2c3e50] mb-4">엄마는 모음, 아기는 자음</h4>
+                <p class="text-sm text-gray-500 mb-6">자음(파란색)이나 모음(노란색) 부분을 터치해보세요!</p>
+                <div class="bg-white rounded-3xl p-8 shadow-sm">
+                    <div class="flex justify-around items-center gap-2">
+                        <div class="flex items-end text-7xl font-black leading-none">
+                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㅁ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅓ</span>
+                        </div>
+                        <div class="flex items-end text-7xl font-black leading-none">
+                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㅂ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅏ</span>
+                        </div>
+                        <div class="flex items-end text-7xl font-black leading-none">
+                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㄴ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅏ</span>
+                        </div>
+                        <div class="flex items-end text-7xl font-black leading-none">
+                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㄹ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅏ</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4019,6 +4045,19 @@
             speechSynthesis.speak(utt);
         }
         window.speakTextKo = speakTextKo;
+
+        // 이해하기 2: 자음 전체 선택 + 음성
+        window.selectConsonants = function() {
+            document.querySelectorAll('.syllable-consonant').forEach(el => el.classList.add('selected-consonant'));
+            document.querySelectorAll('.syllable-vowel').forEach(el => el.classList.remove('selected-vowel'));
+            speakTextKo('자음');
+        };
+        // 이해하기 2: 모음 전체 선택 + 음성
+        window.selectVowels = function() {
+            document.querySelectorAll('.syllable-vowel').forEach(el => el.classList.add('selected-vowel'));
+            document.querySelectorAll('.syllable-consonant').forEach(el => el.classList.remove('selected-consonant'));
+            speakTextKo('모음');
+        };
 
         function renderMyDictationSection() {
             const label = document.getElementById('my-dictation-progress-label');
