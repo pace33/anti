@@ -4013,6 +4013,7 @@
             speechSynthesis.cancel();
             speechSynthesis.speak(utt);
         }
+        window.speakTextKo = speakTextKo;
 
         function renderMyDictationSection() {
             const label = document.getElementById('my-dictation-progress-label');
@@ -4712,14 +4713,13 @@
             showDashboardOnly();
         }
 
-        // ②따라하기 버튼 선택 시 색상 강조 + 음성 재생
+        // ②따라하기 버튼 선택 시 색상 강조만 (소리 없음)
         window.selectChoiceBtn = function(btn, word) {
             const grid = btn.closest('.choice-grid');
             if (grid) {
                 grid.querySelectorAll('.choice-chip-button').forEach(b => b.classList.remove('selected'));
             }
             btn.classList.add('selected');
-            speakTextKo(word);
         };
 
         const learningStartTTSMessage = `한글은 자음과 모음으로 만들어져 있습니다. 모음의 모(母)는 한문으로 엄마를 뜻하고, 자음에서 자(子)는 남자, 여자 할 때 나오는 자로 아들과 딸을 의미합니다. 아래 그림과 글자를 비교하면서 자음과 모음 찾기 활동을 합니다. 그림을 보면서 엄마는 어디에 있나요? 그럼 글자에서 엄마를 뜻하는 모음은 어디에 있나요? 그리고 아기를 뜻하는 자음은 어디에 있나요? 이렇게 찾고 구별하도록 하는 활동입니다.`;
