@@ -293,14 +293,14 @@
             justify-content: center;
             border-radius: 14px;
         }
-        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 3s ease-in-out infinite; }
-        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 3s ease-in-out infinite; }
-        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 3s ease-in-out infinite; }
-        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 3s ease-in-out infinite; }
-        @keyframes combineLeft  { 0%,38%{transform:translateX(0);opacity:1} 52%{transform:translateX(38px);opacity:0} 68%,100%{transform:translateX(0);opacity:1} }
-        @keyframes combineRight { 0%,38%{transform:translateX(0);opacity:1} 52%{transform:translateX(-38px);opacity:0} 68%,100%{transform:translateX(0);opacity:1} }
-        @keyframes opFade       { 0%,38%{opacity:1} 52%{opacity:0} 68%,100%{opacity:1} }
-        @keyframes resultPop    { 0%,40%{transform:scale(0);opacity:0} 56%{transform:scale(1.25);opacity:1} 67%,73%{transform:scale(1);opacity:1} 86%,100%{transform:scale(0);opacity:0} }
+        .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 1.6s ease-in-out 1 forwards; }
+        .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 1.6s ease-in-out 1 forwards; }
+        .combine-result{ background:#ccfbf1; color:#0d9488; border:2px solid #5eead4; animation:resultPop 1.6s ease-in-out 1 forwards; }
+        .combine-op    { font-size:1.3rem; color:#94a3b8; font-weight:bold; animation:opFade 1.6s ease-in-out 1 forwards; }
+        @keyframes combineLeft  { 0%{transform:translateX(0);opacity:1} 55%{transform:translateX(38px);opacity:0} 100%{transform:translateX(38px);opacity:0} }
+        @keyframes combineRight { 0%{transform:translateX(0);opacity:1} 55%{transform:translateX(-38px);opacity:0} 100%{transform:translateX(-38px);opacity:0} }
+        @keyframes opFade       { 0%{opacity:1} 55%{opacity:0} 100%{opacity:0} }
+        @keyframes resultPop    { 0%{transform:scale(0);opacity:0} 65%{transform:scale(0);opacity:0} 82%{transform:scale(1.2);opacity:1} 100%{transform:scale(1);opacity:1} }
     </style>
 </head>
 <body>
