@@ -156,12 +156,34 @@
             padding: 14px 8px;
             font-size: 1.35rem;
             font-weight: 900;
-            transition: transform .15s ease, background .15s ease;
+            transition: transform .15s ease, background .15s ease, border-color .15s ease;
         }
         .choice-chip-button:hover,
         .choice-chip-button:focus {
             transform: translateY(-2px);
             background: #e0f2fe;
+        }
+        .choice-chip-button.selected {
+            background: #0ea5e9;
+            border-color: #0284c7;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.4);
+        }
+        .listen-chip-button {
+            border: 2px solid #bbf7d0;
+            border-radius: 18px;
+            background: #f0fdf4;
+            color: #166534;
+            padding: 10px 8px;
+            font-size: 1.35rem;
+            font-weight: 900;
+            transition: transform .15s ease, background .15s ease;
+            cursor: pointer;
+        }
+        .listen-chip-button:hover {
+            transform: translateY(-2px);
+            background: #dcfce7;
         }
         .trace-canvas-wrap {
             border: 4px solid #fb923c;
@@ -4690,6 +4712,16 @@
             showDashboardOnly();
         }
 
+        // ②따라하기 버튼 선택 시 색상 강조 + 음성 재생
+        window.selectChoiceBtn = function(btn, word) {
+            const grid = btn.closest('.choice-grid');
+            if (grid) {
+                grid.querySelectorAll('.choice-chip-button').forEach(b => b.classList.remove('selected'));
+            }
+            btn.classList.add('selected');
+            speakTextKo(word);
+        };
+
         const learningStartTTSMessage = `한글은 자음과 모음으로 만들어져 있습니다. 모음의 모(母)는 한문으로 엄마를 뜻하고, 자음에서 자(子)는 남자, 여자 할 때 나오는 자로 아들과 딸을 의미합니다. 아래 그림과 글자를 비교하면서 자음과 모음 찾기 활동을 합니다. 그림을 보면서 엄마는 어디에 있나요? 그럼 글자에서 엄마를 뜻하는 모음은 어디에 있나요? 그리고 아기를 뜻하는 자음은 어디에 있나요? 이렇게 찾고 구별하도록 하는 활동입니다.`;
 
         window.openLearningStartActivity = function openLearningStartActivity() {
@@ -4742,12 +4774,15 @@
                                 <div class="grid gap-3">
                                     <div class="practice-step-box">
                                         <div class="practice-step-title"><span class="practice-step-number">1</span> 듣기</div>
-                                        <button class="listen-button" onclick="speakTextKo('${practiceFlow.listen}')">🔊 음성 듣기</button>
+                                        <button class="listen-button mb-3" onclick="speakTextKo('${practiceFlow.listen}')">🔊 음성 듣기</button>
+                                        <div class="choice-grid">
+                                            ${practiceFlow.choices.map((word) => `<button class="listen-chip-button" onclick="speakTextKo('${word}')">${word}</button>`).join('')}
+                                        </div>
                                     </div>
                                     <div class="practice-step-box">
                                         <div class="practice-step-title"><span class="practice-step-number">2</span> 따라하기 · 알맞은 글자 선택</div>
                                         <div class="choice-grid">
-                                            ${practiceFlow.choices.map((word) => `<button class="choice-chip-button" onclick="speakTextKo('${word}')">${word}</button>`).join('')}
+                                            ${practiceFlow.choices.map((word) => `<button class="choice-chip-button" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`).join('')}
                                         </div>
                                     </div>
                                 </div>
