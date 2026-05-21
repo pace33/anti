@@ -304,12 +304,13 @@
         @keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(-38px);opacity:0} 68%{transform:translateX(-38px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
         @keyframes opFade       { 0%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
         @keyframes resultPop    { 0%,42%{transform:scale(0);opacity:0} 58%{transform:scale(1.2);opacity:1} 72%,100%{transform:scale(1);opacity:1} }
-        /* 수직 방향 점 사라짐 애니메이션 (ㅗ 위로, ㅜ 아래로) */
+        /* 점이 오른쪽에서 왜쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
         .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; }
-        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotSlide 2.5s ease-in-out 1 forwards; }
-        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotSlide 2.5s ease-in-out 1 forwards; }
-        .vbuild-group    { display:flex; flex-direction:column; align-items:center; gap:4px; overflow:visible; }
-        @keyframes dotSlide { 0%,20%{transform:translateX(86px);opacity:1} 45%,65%{transform:translateX(0);opacity:1} 82%,100%{transform:translateX(86px);opacity:1} }
+        .combine-row     { overflow:visible; }
+        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 2.5s ease-in-out 1 forwards; }
+        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 2.5s ease-in-out 1 forwards; }
+        @keyframes dotToAbove { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(-66px,-62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
+        @keyframes dotToBelow { 0%,20%{transform:translate(0,0);opacity:1} 45%,65%{transform:translate(-66px,62px);opacity:1} 82%,100%{transform:translate(0,0);opacity:1} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
@@ -4234,14 +4235,12 @@
                     const isUp   = vertUp.includes(c.res);
                     const isDown = vertDown.includes(c.res);
                     if (isUp || isDown) {
-                        // 점(ㆍ)과 기본모음 구분
                         const dotChar  = (c.l === 'ㆍ') ? c.l : c.r;
                         const baseChar = (c.l === 'ㆍ') ? c.r : c.l;
-                        const topEl    = isUp
-                            ? `<div class="combine-box combine-dot-up"   style="${d}">${dotChar}</div><div class="combine-box combine-base">${baseChar}</div>`
-                            : `<div class="combine-box combine-base">${baseChar}</div><div class="combine-box combine-dot-down" style="${d}">${dotChar}</div>`;
+                        const dClass   = isUp ? 'combine-dot-up' : 'combine-dot-down';
                         return `<div class="combine-row">
-                            <div class="vbuild-group">${topEl}</div>
+                            <div class="combine-box combine-base">${baseChar}</div>
+                            <div class="combine-box ${dClass}" style="${d}">${dotChar}</div>
                             <span class="combine-op" style="${d}">→</span>
                             <div class="combine-box combine-result" style="${d}">${c.res}</div>
                         </div>`;
