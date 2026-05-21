@@ -5266,6 +5266,25 @@
                 const p = point(ev);
                 lastX = p.x;
                 lastY = p.y;
+
+                // 터치/클릭한 칸에 해당하는 글자 발음 들려주기
+                const raw = canvas.dataset.guide || '';
+                const chars = raw.split('/').map(c => c.trim()).filter(c => c.length > 0);
+                if (chars.length > 0) {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = ev.touches?.length ? ev.touches[0].clientX : ev.clientX;
+                    const relativeX = clientX - rect.left;
+                    const colIndex = Math.floor(relativeX / (rect.width / chars.length));
+                    if (colIndex >= 0 && colIndex < chars.length) {
+                        const targetChar = chars[colIndex];
+                        // 중복 재생 방지 (동일 글자는 1.2초 내 한 번만 발음)
+                        if (window.lastSpokenChar !== targetChar || (Date.now() - window.lastSpokenTime > 1200)) {
+                            window.speakChar(targetChar);
+                            window.lastSpokenChar = targetChar;
+                            window.lastSpokenTime = Date.now();
+                        }
+                    }
+                }
             };
             const move = (ev) => {
                 if (!drawing) return;
