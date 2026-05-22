@@ -227,6 +227,9 @@
             touch-action: none;
             cursor: crosshair;
         }
+        .trace-writing-canvas.double-row {
+            height: 440px;
+        }
         .trace-canvas-help {
             font-size: 0.85rem;
             font-weight: 800;
@@ -5120,7 +5123,7 @@
                             <div class="practice-step-title mb-3"><span class="practice-step-number">3</span> 쓰기</div>
                             <div class="trace-canvas-wrap">
                                 <div class="trace-canvas-title">✍️ 직접 따라쓰기</div>
-                                <canvas id="trace-writing-canvas" class="trace-writing-canvas" data-guide="${practiceFlow.choices.join('/')}"></canvas>
+                                <canvas id="trace-writing-canvas" class="trace-writing-canvas ${step === 7 ? 'double-row' : ''}" data-guide="${practiceFlow.choices.join('/')}"></canvas>
                                 <div class="trace-canvas-help">터치펜이나 손가락으로 점선 글자 위에 바로 따라 써요.</div>
                             </div>
                             <button class="trace-clear-button mt-3" onclick="resetTraceWritingCanvas()">다시 쓰기</button>
@@ -5193,39 +5196,45 @@
             const chars = raw.split('/').map(c => c.trim()).filter(c => c.length > 0);
             if (chars.length === 0) return;
 
-            // 각 글자 1번씩 → 총 cols = chars.length (4칸)
-            const totalCols = chars.length;
-            const boxW = W / totalCols;
-            const fontSize = Math.min(boxW * 0.72, H * 0.62);
+            // 10글자(배움 7 등)인 경우 5칸씩 2줄로 배치
+            const isDoubleRow = chars.length === 10;
+            const cols = isDoubleRow ? 5 : chars.length;
+            const rows = isDoubleRow ? 2 : 1;
+            const boxW = W / cols;
+            const boxH = H / rows;
+            const fontSize = Math.min(boxW * 0.72, boxH * 0.62);
 
             chars.forEach((char, i) => {
-                const bx = i * boxW;
+                const row = isDoubleRow ? Math.floor(i / 5) : 0;
+                const col = isDoubleRow ? (i % 5) : i;
+                const bx = col * boxW;
+                const by = row * boxH;
 
-                // 박스 배경 (교대 색상)
-                ctx.fillStyle = i % 2 === 0 ? '#fef9f0' : '#fdf6e8';
-                ctx.fillRect(bx, 0, boxW, H);
+                // 박스 배경 (교대 색상 바둑판식 배열)
+                ctx.fillStyle = (row + col) % 2 === 0 ? '#fef9f0' : '#fdf6e8';
+                ctx.fillRect(bx, by, boxW, boxH);
 
                 // 박스 구분선
                 ctx.strokeStyle = '#fdba74';
                 ctx.lineWidth = 1.5;
                 ctx.setLineDash([]);
-                ctx.strokeRect(bx, 0, boxW, H);
+                ctx.strokeRect(bx, by, boxW, boxH);
 
                 // 가로 안내선 (상하 1/3)
                 ctx.strokeStyle = '#fed7aa';
                 ctx.lineWidth = 1;
                 ctx.setLineDash([5, 5]);
                 ctx.beginPath();
-                ctx.moveTo(bx + 6, H / 3);
-                ctx.lineTo(bx + boxW - 6, H / 3);
-                ctx.moveTo(bx + 6, (H / 3) * 2);
-                ctx.lineTo(bx + boxW - 6, (H / 3) * 2);
+                ctx.moveTo(bx + 6, by + boxH / 3);
+                ctx.lineTo(bx + boxW - 6, by + boxH / 3);
+                ctx.moveTo(bx + 6, by + (boxH / 3) * 2);
+                ctx.lineTo(bx + boxW - 6, by + (boxH / 3) * 2);
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // 점선 글자 (회색 예시)
+                // 점선 글자
                 const cx = bx + boxW / 2;
-                const cy = H / 2;
+                const cy = by + boxH / 2;
                 ctx.font = `900 ${Math.max(28, Math.round(fontSize))}px 'Noto Sans KR', sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -5270,10 +5279,22 @@
                 if (chars.length > 0) {
                     const rect = canvas.getBoundingClientRect();
                     const clientX = ev.touches?.length ? ev.touches[0].clientX : ev.clientX;
+                    const clientY = ev.touches?.length ? ev.touches[0].clientY : ev.clientY;
                     const relativeX = clientX - rect.left;
-                    const colIndex = Math.floor(relativeX / (rect.width / chars.length));
-                    if (colIndex >= 0 && colIndex < chars.length) {
-                        const targetChar = chars[colIndex];
+                    const relativeY = clientY - rect.top;
+
+                    const isDoubleRow = chars.length === 10;
+                    const cols = isDoubleRow ? 5 : chars.length;
+                    const rows = isDoubleRow ? 2 : 1;
+                    const colWidth = rect.width / cols;
+                    const rowHeight = rect.height / rows;
+
+                    const colIndex = Math.floor(relativeX / colWidth);
+                    const rowIndex = Math.floor(relativeY / rowHeight);
+                    const charIndex = rowIndex * cols + colIndex;
+
+                    if (charIndex >= 0 && charIndex < chars.length) {
+                        const targetChar = chars[charIndex];
                         // 중복 재생 방지 (동일 글자는 1.2초 내 한 번만 발음)
                         if (window.lastSpokenChar !== targetChar || (Date.now() - window.lastSpokenTime > 1200)) {
                             window.speakChar(targetChar);
