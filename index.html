@@ -4679,7 +4679,7 @@
 
             document.getElementById('letter-clear').addEventListener('click', drawGuide);
             document.getElementById('letter-play-sound').addEventListener('click', () => {
-                const utt = new SpeechSynthesisUtterance(currentChar); utt.lang = 'ko-KR'; speechSynthesis.cancel(); speechSynthesis.speak(utt);
+                speakTextKo(currentChar);
             });
             document.getElementById('letter-grade').addEventListener('click', () => {
                 const tmp = document.createElement('canvas');
@@ -4720,10 +4720,7 @@
             ];
 
             function speakKorean(text) {
-                const utt = new SpeechSynthesisUtterance(text);
-                utt.lang = 'ko-KR';
-                speechSynthesis.cancel();
-                speechSynthesis.speak(utt);
+                speakTextKo(text);
             }
 
             function setPracticeText(targetId, text) {
@@ -4816,7 +4813,7 @@
                 currentWord = list[Math.floor(Math.random() * list.length)];
                 currentEl.textContent = currentWord;
                 drawGuide();
-                const utt = new SpeechSynthesisUtterance(currentWord); utt.lang='ko-KR'; speechSynthesis.cancel(); speechSynthesis.speak(utt);
+                speakTextKo(currentWord);
             }
             function score() {
                 const dpr = window.devicePixelRatio || 1;
@@ -4851,7 +4848,7 @@
             document.getElementById('word-write-clear').addEventListener('click', drawGuide);
             document.getElementById('word-write-grade').addEventListener('click', score);
             document.getElementById('word-write-next').addEventListener('click', nextWord);
-            document.getElementById('word-write-tts').addEventListener('click', ()=>{ const u = new SpeechSynthesisUtterance(currentWord); u.lang='ko-KR'; speechSynthesis.cancel(); speechSynthesis.speak(u); });
+            document.getElementById('word-write-tts').addEventListener('click', ()=>{ speakTextKo(currentWord); });
             document.getElementById('word-write-start-name').addEventListener('click', () => {
                 const val = document.getElementById('word-write-name-input').value.trim();
                 if (!val) return;
@@ -4892,7 +4889,7 @@
                 currentCategory = b.dataset.cat; 
             }));
 
-            const speak = (text) => { if (!text) return; const u = new SpeechSynthesisUtterance(text); u.lang='ko-KR'; u.rate = (currentCategory==='cat6'||currentCategory==='cat8') ? 0.9 : 0.8; speechSynthesis.cancel(); speechSynthesis.speak(u); };
+            const speak = (text) => { if (!text) return; speakTextKo(text); };
 
             function normalizeQuizItems(items) {
                 return (items || [])
@@ -5340,15 +5337,7 @@
         }
 
         window.playLearningStartTTS = function playLearningStartTTS() {
-            if (!('speechSynthesis' in window)) {
-                showModal('현재 브라우저에서는 음성 읽기를 지원하지 않아요.');
-                return;
-            }
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(learningStartTTSMessage);
-            utterance.lang = 'ko-KR';
-            utterance.rate = 0.95;
-            window.speechSynthesis.speak(utterance);
+            speakTextKo(learningStartTTSMessage);
         }
 
         window.completeLearningStartActivity = async function completeLearningStartActivity() {
