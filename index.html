@@ -5092,11 +5092,16 @@
         };
 
         window.selectChoiceBtn = function(btn, word) {
-            // 모든 선택지 버튼 스타일 초기화 (기본/정답/오답 스타일 모두 제거)
+            // 이미 맞춘 글자는 터치 무시
+            if (window.completedChoices && window.completedChoices.includes(word)) {
+                return;
+            }
+
             const grid = btn.closest('.choice-grid-wide') || btn.closest('.choice-grid-three') || btn.closest('.choice-grid');
             if (grid) {
+                // 오답(.wrong) 및 선택 스타일만 일괄 초기화하고, 맞춘 정답(.correct)은 그대로 둡니다!
                 grid.querySelectorAll('.choice-chip-button').forEach(b => {
-                    b.classList.remove('selected', 'correct', 'wrong');
+                    b.classList.remove('selected', 'wrong');
                 });
             }
             btn.classList.add('selected');
@@ -5105,14 +5110,35 @@
 
             if (word === window.currentChoiceQuizTarget) {
                 // 정답!
+                btn.classList.remove('selected');
                 btn.classList.add('correct');
-                if (feedbackEl) {
-                    feedbackEl.className = "text-base font-black text-center my-1 h-5 text-green-600 animate-bounce";
-                    feedbackEl.textContent = "🎉 정답이에요! 참 잘했어요!";
+                if (window.completedChoices) {
+                    window.completedChoices.push(word);
                 }
+                if (window.uncompletedChoices) {
+                    window.uncompletedChoices = window.uncompletedChoices.filter(x => x !== word);
+                }
+
                 playClickSound(); // 명랑한 효과음 재생
-                // "정답!" 음성 연동
-                setTimeout(() => { speakTextKo("정답!"); }, 300);
+
+                if (window.uncompletedChoices && window.uncompletedChoices.length === 0) {
+                    // 전체 완료!
+                    window.currentChoiceQuizTarget = null;
+                    if (feedbackEl) {
+                        feedbackEl.className = "text-base font-black text-center my-1 h-5 text-green-600 animate-bounce";
+                        feedbackEl.textContent = "🏆 대단해요! 모든 글자를 전부 맞췄어요! 🏆";
+                    }
+                    setTimeout(() => { speakTextKo("대단해요! 모든 글자를 전부 맞췄어요!"); }, 300);
+                } else {
+                    // 아직 남음
+                    // 새 정답 단어 설정
+                    window.currentChoiceQuizTarget = window.uncompletedChoices[Math.floor(Math.random() * window.uncompletedChoices.length)];
+                    if (feedbackEl) {
+                        feedbackEl.className = "text-base font-black text-center my-1 h-5 text-green-600";
+                        feedbackEl.textContent = "🎉 정답! 다음 글자 소리를 들으려면 [소리 듣기]를 눌러주세요!";
+                    }
+                    setTimeout(() => { speakTextKo("정답! 다음 소리를 들으려면 소리 듣기 버튼을 눌러주세요."); }, 300);
+                }
             } else {
                 // 오답!
                 btn.classList.add('wrong');
@@ -5122,6 +5148,11 @@
                 }
                 // "다시 들어 보아요." 음성 연동
                 setTimeout(() => { speakTextKo("다시 들어 보아요."); }, 300);
+
+                // 오답 빨간 표시는 1초 뒤에 자동으로 지워서 다음 입력을 편안하게 돕습니다!
+                setTimeout(() => {
+                    btn.classList.remove('selected', 'wrong');
+                }, 1000);
             }
         };
 
@@ -5155,7 +5186,9 @@
                 if (!window.lastChoiceStepSec || window.lastChoiceStepSec !== `${step}-${safeIndex}`) {
                     window.lastChoiceStepSec = `${step}-${safeIndex}`;
                     window.currentShuffledChoices = [...practiceFlow.choices].sort(() => Math.random() - 0.5);
-                    window.currentChoiceQuizTarget = practiceFlow.choices[Math.floor(Math.random() * practiceFlow.choices.length)];
+                    window.uncompletedChoices = [...practiceFlow.choices];
+                    window.currentChoiceQuizTarget = window.uncompletedChoices[Math.floor(Math.random() * window.uncompletedChoices.length)];
+                    window.completedChoices = [];
                 }
                 // 카드 전환 시 자동으로 정답 단어 소리 1회 재생
                 setTimeout(() => {
@@ -5199,7 +5232,10 @@
                                             소리 듣기 버튼을 누르고 알맞은 글자를 골라요!
                                         </div>
                                         <div class="${window.currentShuffledChoices.length > 4 ? 'choice-grid-wide' : window.currentShuffledChoices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
-                                            ${window.currentShuffledChoices.map((word) => `<button class="choice-chip-button" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`).join('')}
+                                            ${window.currentShuffledChoices.map((word) => {
+                                                const isDone = window.completedChoices && window.completedChoices.includes(word);
+                                                return `<button class="choice-chip-button ${isDone ? 'correct' : ''}" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`;
+                                            }).join('')}
                                         </div>
                                     </div>
                                 </div>
