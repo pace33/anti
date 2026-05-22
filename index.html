@@ -183,6 +183,42 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(14, 165, 233, 0.4);
         }
+        .choice-chip-button.correct {
+            background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+            border-color: #15803d !important;
+            color: #ffffff !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4) !important;
+        }
+        .choice-chip-button.wrong {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            border-color: #b91c1c !important;
+            color: #ffffff !important;
+            transform: scale(0.95) !important;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
+        }
+        .listen-quiz-play-btn {
+            background: linear-gradient(135deg, #f97316, #fb923c);
+            color: white;
+            font-size: 0.88rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .listen-quiz-play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4);
+        }
+        .listen-quiz-play-btn:active {
+            transform: scale(0.95);
+        }
         .listen-chip-button {
             border: 2px solid #bbf7d0;
             border-radius: 16px;
@@ -5048,13 +5084,45 @@
             showDashboardOnly();
         }
 
-        // ②따라하기 버튼 선택 시 색상 강조만 (소리 없음)
+        // ② 듣고 알맞은 글자 선택 (소리 듣기 퀴즈 게임)
+        window.playChoiceQuizSound = function() {
+            if (window.currentChoiceQuizTarget) {
+                speakTextKo(window.currentChoiceQuizTarget);
+            }
+        };
+
         window.selectChoiceBtn = function(btn, word) {
-            const grid = btn.closest('.choice-grid');
+            // 모든 선택지 버튼 스타일 초기화 (기본/정답/오답 스타일 모두 제거)
+            const grid = btn.closest('.choice-grid-wide') || btn.closest('.choice-grid-three') || btn.closest('.choice-grid');
             if (grid) {
-                grid.querySelectorAll('.choice-chip-button').forEach(b => b.classList.remove('selected'));
+                grid.querySelectorAll('.choice-chip-button').forEach(b => {
+                    b.classList.remove('selected', 'correct', 'wrong');
+                });
             }
             btn.classList.add('selected');
+
+            const feedbackEl = document.getElementById('choice-feedback-area');
+
+            if (word === window.currentChoiceQuizTarget) {
+                // 정답!
+                btn.classList.add('correct');
+                if (feedbackEl) {
+                    feedbackEl.className = "text-base font-black text-center my-1 h-5 text-green-600 animate-bounce";
+                    feedbackEl.textContent = "🎉 정답이에요! 참 잘했어요!";
+                }
+                playClickSound(); // 명랑한 효과음 재생
+                // "정답!" 음성 연동
+                setTimeout(() => { speakTextKo("정답!"); }, 300);
+            } else {
+                // 오답!
+                btn.classList.add('wrong');
+                if (feedbackEl) {
+                    feedbackEl.className = "text-base font-black text-center my-1 h-5 text-red-500";
+                    feedbackEl.textContent = "😢 다시 들어 보아요.";
+                }
+                // "다시 들어 보아요." 음성 연동
+                setTimeout(() => { speakTextKo("다시 들어 보아요."); }, 300);
+            }
         };
 
         const learningStartTTSMessage = `한글은 자음과 모음으로 만들어져 있습니다. 모음의 모(母)는 한문으로 엄마를 뜻하고, 자음에서 자(子)는 남자, 여자 할 때 나오는 자로 아들과 딸을 의미합니다. 아래 그림과 글자를 비교하면서 자음과 모음 찾기 활동을 합니다. 그림을 보면서 엄마는 어디에 있나요? 그럼 글자에서 엄마를 뜻하는 모음은 어디에 있나요? 그리고 아기를 뜻하는 자음은 어디에 있나요? 이렇게 찾고 구별하도록 하는 활동입니다.`;
@@ -5083,6 +5151,18 @@
             const practiceFlow = learningPracticeFlows[step];
 
             if (visibleActivitySteps.includes(step) && practiceFlow) {
+                // 선택형 소리 퀴즈용 목표 단어 및 셔플 선택지 생성 (화면 진입 시 1회만 고정)
+                if (!window.lastChoiceStepSec || window.lastChoiceStepSec !== `${step}-${safeIndex}`) {
+                    window.lastChoiceStepSec = `${step}-${safeIndex}`;
+                    window.currentShuffledChoices = [...practiceFlow.choices].sort(() => Math.random() - 0.5);
+                    window.currentChoiceQuizTarget = practiceFlow.choices[Math.floor(Math.random() * practiceFlow.choices.length)];
+                }
+                // 카드 전환 시 자동으로 정답 단어 소리 1회 재생
+                setTimeout(() => {
+                    if (window.lastChoiceStepSec === `${step}-${safeIndex}`) {
+                        window.playChoiceQuizSound();
+                    }
+                }, 600);
                 document.getElementById('learning-detail-content').innerHTML = `
                     <div class="learning-pane p-5">
                         <div class="activity-section-title mb-4">
@@ -5111,9 +5191,15 @@
                                         </div>
                                     </div>
                                     <div class="practice-step-box">
-                                        <div class="practice-step-title"><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</div>
-                                        <div class="${practiceFlow.choices.length > 4 ? 'choice-grid-wide' : practiceFlow.choices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
-                                            ${[...practiceFlow.choices].sort(() => Math.random() - 0.5).map((word) => `<button class="choice-chip-button" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`).join('')}
+                                        <div class="practice-step-title flex items-center justify-between">
+                                            <span><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</span>
+                                            <button class="listen-quiz-play-btn ml-3" onclick="playChoiceQuizSound()">🔊 소리 듣기</button>
+                                        </div>
+                                        <div id="choice-feedback-area" class="text-base font-black text-center my-1 h-5 text-orange-500">
+                                            소리 듣기 버튼을 누르고 알맞은 글자를 골라요!
+                                        </div>
+                                        <div class="${window.currentShuffledChoices.length > 4 ? 'choice-grid-wide' : window.currentShuffledChoices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
+                                            ${window.currentShuffledChoices.map((word) => `<button class="choice-chip-button" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`).join('')}
                                         </div>
                                     </div>
                                 </div>
