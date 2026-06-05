@@ -4229,6 +4229,16 @@
             'ㅍ':'프', 'ㅎ':'흐', 'ㄲ':'끄', 'ㄸ':'뜨', 'ㅃ':'쁘', 'ㅆ':'쓰', 'ㅉ':'쯔'
         };
 
+        // 브라우저 음소 목록 사전 로드 (특히 iOS/스마트패드 대응)
+        if (typeof speechSynthesis !== 'undefined') {
+            speechSynthesis.getVoices();
+            if (speechSynthesis.addEventListener) {
+                speechSynthesis.addEventListener('voiceschanged', () => {
+                    speechSynthesis.getVoices();
+                });
+            }
+        }
+
         function speakTextKo(text) {
             let processedText = text;
             if (typeof text === 'string' && text.length === 1) {
@@ -4244,16 +4254,20 @@
             // 한국어 목소리 목록 중 더 선명하고 든든한 저음 목소리가 있는지 필터링
             if (typeof speechSynthesis !== 'undefined') {
                 const voices = speechSynthesis.getVoices();
-                const koVoices = voices.filter(v => v.lang.startsWith('ko'));
+                const koVoices = voices.filter(v => v.lang.startsWith('ko') || v.lang.startsWith('KO'));
                 if (koVoices.length > 0) {
-                    // 남성/구글 고품질 등 저음에 유리한 목소리 우선 선택
-                    const bestVoice = koVoices.find(v => 
-                        v.name.toLowerCase().includes('male') || 
-                        v.name.toLowerCase().includes('yunjin') || 
-                        v.name.toLowerCase().includes('google')
-                    );
-                    if (bestVoice) utt.voice = bestVoice;
-                    else utt.voice = koVoices[0];
+                    // 고품질 저음/기본 목소리 탐색 우선순위 (yunjin -> google -> siri -> heami -> narae -> male)
+                    const voiceKeywords = ['yunjin', 'google', 'siri', 'heami', 'narae', 'male'];
+                    let bestVoice = null;
+                    for (const kw of voiceKeywords) {
+                        bestVoice = koVoices.find(v => v.name.toLowerCase().includes(kw));
+                        if (bestVoice) break;
+                    }
+                    if (bestVoice) {
+                        utt.voice = bestVoice;
+                    } else {
+                        utt.voice = koVoices[0];
+                    }
                 }
             }
 
