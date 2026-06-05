@@ -4247,7 +4247,9 @@
                 globalTtsAudio.currentTime = 0;
             }
             if (typeof speechSynthesis !== 'undefined') {
-                speechSynthesis.cancel();
+                try {
+                    speechSynthesis.cancel();
+                } catch (e) {}
             }
         }
         window.cancelSpeech = cancelSpeech;
@@ -4260,14 +4262,14 @@
                 }
             }
 
-            // 1. 온라인 Google Translate TTS 시도 (일관된 고품질 한국어 발음 보장)
+            // 1. 온라인 Youdao TTS 시도 (모바일 기기 및 안드로이드 크롬/CORS에 가장 안정적이고 속도가 빠름)
             try {
                 if (!globalTtsAudio) {
                     globalTtsAudio = new Audio();
                 }
                 globalTtsAudio.pause();
                 
-                const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&tl=ko-KR&client=tw-ob&q=" + encodeURIComponent(processedText);
+                const ttsUrl = "https://dict.youdao.com/dictvoice?audio=" + encodeURIComponent(processedText) + "&le=ko";
                 globalTtsAudio.src = ttsUrl;
                 globalTtsAudio.playbackRate = 0.85; // 약간 천천히 읽기 (교육용)
                 
@@ -4321,6 +4323,7 @@
             const voices = speechSynthesis.getVoices();
             const koVoices = voices.filter(v => v.lang.startsWith('ko') || v.lang.startsWith('KO'));
             if (koVoices.length > 0) {
+                // yunjin -> google -> siri -> heami -> narae -> male 순 매칭, 없으면 기기 기본 한국어
                 const voiceKeywords = ['yunjin', 'google', 'siri', 'heami', 'narae', 'male'];
                 let bestVoice = null;
                 for (const kw of voiceKeywords) {
@@ -4341,8 +4344,18 @@
                 };
             }
 
-            speechSynthesis.cancel();
-            speechSynthesis.speak(utt);
+            // 안드로이드 크롬의 대표적인 버그(cancel 후 바로 speak 호출 시 묵음 현상) 방지를 위해 100ms 지연 후 재생
+            try {
+                speechSynthesis.cancel();
+            } catch (e) {}
+            
+            setTimeout(() => {
+                try {
+                    speechSynthesis.speak(utt);
+                } catch (e) {
+                    console.log("speechSynthesis.speak failed:", e);
+                }
+            }, 100);
         }
 
         window.speakTextKo = speakTextKo;
