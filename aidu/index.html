@@ -3705,6 +3705,15 @@
         function openDashboard() {
             showDashboardOnly();
             document.getElementById('main-container').style.maxWidth = '1100px';
+            // 로그인 후 대시보드 진입 시 배경음악 정지
+            const bgm = document.getElementById('bg-music');
+            if (bgm) {
+                bgm.pause();
+                bgm.currentTime = 0;
+            }
+            isMuted = true;
+            document.querySelectorAll('.mute-control-btn span').forEach(icon => icon.textContent = '🔇');
+            document.querySelectorAll('.mute-control-btn').forEach(btn => btn.classList.remove('playing'));
         }
 
         window.showDashboardOnly = showDashboardOnly;
