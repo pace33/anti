@@ -4239,41 +4239,112 @@
             }
         }
 
-        function speakTextKo(text) {
+        let globalTtsAudio = null;
+
+        function cancelSpeech() {
+            if (globalTtsAudio) {
+                globalTtsAudio.pause();
+                globalTtsAudio.currentTime = 0;
+            }
+            if (typeof speechSynthesis !== 'undefined') {
+                speechSynthesis.cancel();
+            }
+        }
+        window.cancelSpeech = cancelSpeech;
+
+        function speakTextKo(text, onEndCallback) {
             let processedText = text;
             if (typeof text === 'string' && text.length === 1) {
                 if (consonantSoundMap[text]) {
                     processedText = consonantSoundMap[text];
                 }
             }
-            const utt = new SpeechSynthesisUtterance(processedText);
-            utt.lang = 'ko-KR';
-            utt.rate = 0.82;
-            utt.pitch = 0.78; // 톤을 낮추어 더 따뜻하고 포근한 저음 목소리로 설정
 
-            // 한국어 목소리 목록 중 더 선명하고 든든한 저음 목소리가 있는지 필터링
-            if (typeof speechSynthesis !== 'undefined') {
-                const voices = speechSynthesis.getVoices();
-                const koVoices = voices.filter(v => v.lang.startsWith('ko') || v.lang.startsWith('KO'));
-                if (koVoices.length > 0) {
-                    // 고품질 저음/기본 목소리 탐색 우선순위 (yunjin -> google -> siri -> heami -> narae -> male)
-                    const voiceKeywords = ['yunjin', 'google', 'siri', 'heami', 'narae', 'male'];
-                    let bestVoice = null;
-                    for (const kw of voiceKeywords) {
-                        bestVoice = koVoices.find(v => v.name.toLowerCase().includes(kw));
-                        if (bestVoice) break;
-                    }
-                    if (bestVoice) {
-                        utt.voice = bestVoice;
-                    } else {
-                        utt.voice = koVoices[0];
+            // 1. 온라인 Google Translate TTS 시도 (일관된 고품질 한국어 발음 보장)
+            try {
+                if (!globalTtsAudio) {
+                    globalTtsAudio = new Audio();
+                }
+                globalTtsAudio.pause();
+                
+                const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&tl=ko-KR&client=tw-ob&q=" + encodeURIComponent(processedText);
+                globalTtsAudio.src = ttsUrl;
+                globalTtsAudio.playbackRate = 0.85; // 약간 천천히 읽기 (교육용)
+                
+                let fallbackTriggered = false;
+                const triggerFallback = () => {
+                    if (fallbackTriggered) return;
+                    fallbackTriggered = true;
+                    speakTextKoNative(processedText, onEndCallback);
+                };
+
+                globalTtsAudio.onerror = triggerFallback;
+                
+                const playPromise = globalTtsAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        if (onEndCallback) {
+                            globalTtsAudio.onended = () => {
+                                onEndCallback();
+                                globalTtsAudio.onended = null;
+                            };
+                        }
+                    }).catch(err => {
+                        console.log("Online TTS blocked/failed, using native fallback:", err);
+                        triggerFallback();
+                    });
+                } else {
+                    if (onEndCallback) {
+                        globalTtsAudio.onended = () => {
+                            onEndCallback();
+                            globalTtsAudio.onended = null;
+                        };
                     }
                 }
+            } catch (e) {
+                console.log("Online TTS initialization failed, using native fallback:", e);
+                speakTextKoNative(processedText, onEndCallback);
+            }
+        }
+
+        // 로컬 브라우저 SpeechSynthesis 백업 엔진
+        function speakTextKoNative(text, onEndCallback) {
+            if (typeof speechSynthesis === 'undefined') {
+                if (onEndCallback) onEndCallback();
+                return;
+            }
+            const utt = new SpeechSynthesisUtterance(text);
+            utt.lang = 'ko-KR';
+            utt.rate = 0.82;
+            utt.pitch = 0.82; // 왜곡 방지 및 자연스러운 피치
+
+            const voices = speechSynthesis.getVoices();
+            const koVoices = voices.filter(v => v.lang.startsWith('ko') || v.lang.startsWith('KO'));
+            if (koVoices.length > 0) {
+                const voiceKeywords = ['yunjin', 'google', 'siri', 'heami', 'narae', 'male'];
+                let bestVoice = null;
+                for (const kw of voiceKeywords) {
+                    bestVoice = koVoices.find(v => v.name.toLowerCase().includes(kw));
+                    if (bestVoice) break;
+                }
+                if (bestVoice) {
+                    utt.voice = bestVoice;
+                } else {
+                    utt.voice = koVoices[0];
+                }
+            }
+
+            if (onEndCallback) {
+                utt.onend = () => {
+                    onEndCallback();
+                    utt.onend = null;
+                };
             }
 
             speechSynthesis.cancel();
             speechSynthesis.speak(utt);
         }
+
         window.speakTextKo = speakTextKo;
 
         window.speakChar = function(char) {
@@ -4299,7 +4370,7 @@
             // 기존 진행 중인 모든 합성 음성 대기열 취소
             activeTtsTimeouts.forEach(t => clearTimeout(t));
             activeTtsTimeouts = [];
-            speechSynthesis.cancel();
+            cancelSpeech();
 
             const combosAttr = card.getAttribute('data-combos');
             if (combosAttr) {
@@ -5046,7 +5117,7 @@
             });
             document.getElementById('listening-play').addEventListener('click', () => speak(answer));
             document.getElementById('listening-back').addEventListener('click', () => {
-                speechSynthesis.cancel();
+                cancelSpeech();
                 document.getElementById('listening-quiz').classList.add('hidden');
                 document.getElementById('listening-result').classList.add('hidden');
                 document.getElementById('listening-setup').classList.remove('hidden');
