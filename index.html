@@ -220,24 +220,26 @@
         .listen-quiz-play-btn {
             background: linear-gradient(135deg, #f97316, #fb923c);
             color: white;
-            font-size: 0.88rem;
-            font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 20px;
+            font-size: 1.6rem;
+            font-weight: 900;
+            padding: 14px 48px;
+            border-radius: 999px;
             border: none;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.45);
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            gap: 8px;
         }
         .listen-quiz-play-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4);
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 6px 18px rgba(249, 115, 22, 0.55);
         }
         .listen-quiz-play-btn:active {
-            transform: scale(0.95);
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
         }
         .listen-chip-button {
             border: 2px solid #bbf7d0;
@@ -5396,12 +5398,14 @@
                                     </div>
                                 </div>
                                 <div class="practice-step-box">
-                                    <div class="practice-step-title flex items-center justify-between">
+                                    <div class="practice-step-title">
                                         <span><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</span>
-                                        <button class="listen-quiz-play-btn ml-3" onclick="playChoiceQuizSound()">🔊 소리 듣기</button>
                                     </div>
                                     <div id="choice-feedback-area" class="text-base font-black text-center my-1 h-5 text-orange-500">
                                         소리 듣기 버튼을 누르고 알맞은 글자를 골라요!
+                                    </div>
+                                    <div class="text-center my-4">
+                                        <button class="listen-quiz-play-btn" onclick="playChoiceQuizSound()">🔊 소리 듣기</button>
                                     </div>
                                     <div class="${window.currentShuffledChoices.length > 4 ? 'choice-grid-wide' : window.currentShuffledChoices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
                                         ${window.currentShuffledChoices.map((word) => {
