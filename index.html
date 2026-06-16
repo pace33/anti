@@ -5329,73 +5329,79 @@
         function renderLearningDetail(step, sectionIndex = 0) {
             const detail = learningDetailData[step];
             if (!detail) return;
-            const safeIndex = Math.max(0, Math.min(sectionIndex, detail.sections.length - 1));
+            const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
+            const practiceFlow = learningPracticeFlows[step];
+            const isActivityFlow = visibleActivitySteps.includes(step) && practiceFlow;
+            
+            const totalSections = isActivityFlow ? 3 : detail.sections.length;
+            const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
             currentLearningDetailSectionIndex = safeIndex;
-            const section = detail.sections[safeIndex];
+            const section = detail.sections[Math.min(safeIndex, detail.sections.length - 1)];
 
             document.getElementById('learning-detail-title').innerText = detail.title;
-            document.getElementById('learning-detail-subtitle').innerText = `${detail.subtitle} (${safeIndex + 1}/${detail.sections.length})`;
-            const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
+            document.getElementById('learning-detail-subtitle').innerText = `${detail.subtitle} (${safeIndex + 1}/${totalSections})`;
+            
             const activityCards = section.cards || [];
             const introCards = activityCards.filter((card) => !/쓰기|따라 쓰|빈칸|고르기|활동/.test(card));
-            const practiceFlow = learningPracticeFlows[step];
 
-            if (visibleActivitySteps.includes(step) && practiceFlow) {
+            if (isActivityFlow) {
                 // 선택형 소리 퀴즈용 목표 단어 및 셔플 선택지 생성 (화면 진입 시 1회만 고정)
-                if (!window.lastChoiceStepSec || window.lastChoiceStepSec !== `${step}-${safeIndex}`) {
-                    window.lastChoiceStepSec = `${step}-${safeIndex}`;
+                if (!window.lastChoiceStepSec || window.lastChoiceStepSec !== `${step}`) {
+                    window.lastChoiceStepSec = `${step}`;
                     window.currentShuffledChoices = [...practiceFlow.choices].sort(() => Math.random() - 0.5);
                     window.uncompletedChoices = [...practiceFlow.choices];
                     window.currentChoiceQuizTarget = window.uncompletedChoices[Math.floor(Math.random() * window.uncompletedChoices.length)];
                     window.completedChoices = [];
                 }
 
-                document.getElementById('learning-detail-content').innerHTML = `
-                    <div class="learning-pane p-5">
-                        <div class="activity-section-title mb-4">
-                            <span class="text-xl font-bold text-stone-700">${section.title}</span>
-                        </div>
-                        <div class="learning-activity-layout">
-                            <div class="learning-main-card">
-                                <div class="learning-card-label">📖 이해하기</div>
-                                <div class="grid gap-3">
-                                    ${(introCards.length ? introCards : activityCards.slice(0, 2)).map((card) => renderCardContent(card)).join('')}
-                                </div>
-                                <div class="mt-4">
-                                    <div class="learning-card-label">📖 배움 글자</div>
-                                    <div class="word-chip-wrap">
-                                        ${practiceFlow.choices.map((word) => `<span class="word-chip">${word}</span>`).join('')}
-                                    </div>
-                                </div>
+                let contentHtml = '';
+                if (safeIndex === 0) {
+                    contentHtml = `
+                        <div class="learning-main-card">
+                            <div class="learning-card-label">📖 이해하기</div>
+                            <div class="grid gap-3">
+                                ${(introCards.length ? introCards : activityCards.slice(0, 2)).map((card) => renderCardContent(card)).join('')}
                             </div>
-                            <div class="learning-practice-card">
-                                <div class="learning-card-label practice-label">문제 활동</div>
-                                <div class="grid gap-3">
-                                    <div class="practice-step-box">
-                                        <div class="practice-step-title"><span class="practice-step-number">1</span> 듣기</div>
-                                        <div class="${practiceFlow.choices.length > 4 ? 'choice-grid-wide' : practiceFlow.choices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
-                                            ${practiceFlow.choices.map((word) => `<button class="listen-chip-button" onclick="speakChar('${word}')">${word}</button>`).join('')}
-                                        </div>
-                                    </div>
-                                    <div class="practice-step-box">
-                                        <div class="practice-step-title flex items-center justify-between">
-                                            <span><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</span>
-                                            <button class="listen-quiz-play-btn ml-3" onclick="playChoiceQuizSound()">🔊 소리 듣기</button>
-                                        </div>
-                                        <div id="choice-feedback-area" class="text-base font-black text-center my-1 h-5 text-orange-500">
-                                            소리 듣기 버튼을 누르고 알맞은 글자를 골라요!
-                                        </div>
-                                        <div class="${window.currentShuffledChoices.length > 4 ? 'choice-grid-wide' : window.currentShuffledChoices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
-                                            ${window.currentShuffledChoices.map((word) => {
-                                                const isDone = window.completedChoices && window.completedChoices.includes(word);
-                                                return `<button class="choice-chip-button ${isDone ? 'correct' : ''}" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`;
-                                            }).join('')}
-                                        </div>
-                                    </div>
+                            <div class="mt-4">
+                                <div class="learning-card-label">📖 배움 글자</div>
+                                <div class="word-chip-wrap">
+                                    ${practiceFlow.choices.map((word) => `<span class="word-chip">${word}</span>`).join('')}
                                 </div>
                             </div>
                         </div>
-                        <div class="learning-write-card">
+                    `;
+                } else if (safeIndex === 1) {
+                    contentHtml = `
+                        <div class="learning-practice-card">
+                            <div class="learning-card-label practice-label">문제 활동</div>
+                            <div class="grid gap-3">
+                                <div class="practice-step-box">
+                                    <div class="practice-step-title"><span class="practice-step-number">1</span> 듣기</div>
+                                    <div class="${practiceFlow.choices.length > 4 ? 'choice-grid-wide' : practiceFlow.choices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
+                                        ${practiceFlow.choices.map((word) => `<button class="listen-chip-button" onclick="speakChar('${word}')">${word}</button>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="practice-step-box">
+                                    <div class="practice-step-title flex items-center justify-between">
+                                        <span><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</span>
+                                        <button class="listen-quiz-play-btn ml-3" onclick="playChoiceQuizSound()">🔊 소리 듣기</button>
+                                    </div>
+                                    <div id="choice-feedback-area" class="text-base font-black text-center my-1 h-5 text-orange-500">
+                                        소리 듣기 버튼을 누르고 알맞은 글자를 골라요!
+                                    </div>
+                                    <div class="${window.currentShuffledChoices.length > 4 ? 'choice-grid-wide' : window.currentShuffledChoices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
+                                        ${window.currentShuffledChoices.map((word) => {
+                                            const isDone = window.completedChoices && window.completedChoices.includes(word);
+                                            return `<button class="choice-chip-button ${isDone ? 'correct' : ''}" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentHtml = `
+                        <div class="learning-write-card" style="margin-top:0;">
                             <div class="practice-step-title mb-3"><span class="practice-step-number">3</span> 쓰기</div>
                             <div class="trace-canvas-wrap">
                                 <div class="trace-canvas-title">✍️ 직접 따라쓰기</div>
@@ -5403,6 +5409,17 @@
                                 <div class="trace-canvas-help">터치펜이나 손가락으로 점선 글자 위에 바로 따라 써요.</div>
                             </div>
                             <button class="trace-clear-button mt-3" onclick="resetTraceWritingCanvas()">다시 쓰기</button>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('learning-detail-content').innerHTML = `
+                    <div class="learning-pane p-5">
+                        <div class="activity-section-title mb-4">
+                            <span class="text-xl font-bold text-stone-700">${section.title}</span>
+                        </div>
+                        <div class="learning-activity-layout" style="grid-template-columns: 1fr;">
+                            ${contentHtml}
                         </div>
                     </div>
                 `;
