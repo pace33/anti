@@ -4240,6 +4240,45 @@
         }
 
         let globalTtsAudio = null;
+        let isAudioUnlocked = false;
+
+        function unlockAudioAndSpeech() {
+            // 1. HTML5 Audio Unlock
+            if (!isAudioUnlocked) {
+                if (!globalTtsAudio) {
+                    globalTtsAudio = new Audio();
+                }
+                const originalSrc = globalTtsAudio.src;
+                globalTtsAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA";
+                globalTtsAudio.play().then(() => {
+                    isAudioUnlocked = true;
+                    globalTtsAudio.src = originalSrc;
+                    console.log("HTML5 Audio unlocked.");
+                }).catch((e) => {
+                    console.log("HTML5 Audio unlock failed, will retry:", e);
+                });
+            }
+
+            // 2. SpeechSynthesis Unlock
+            if (typeof speechSynthesis !== 'undefined') {
+                try {
+                    const utt = new SpeechSynthesisUtterance('');
+                    utt.volume = 0;
+                    speechSynthesis.speak(utt);
+                    console.log("SpeechSynthesis unlocked.");
+                } catch (e) {
+                    console.log("SpeechSynthesis unlock error:", e);
+                }
+            }
+
+            // If HTML5 Audio is unlocked, we can remove the listeners
+            if (isAudioUnlocked) {
+                window.removeEventListener('click', unlockAudioAndSpeech);
+                window.removeEventListener('touchstart', unlockAudioAndSpeech);
+            }
+        }
+        window.addEventListener('click', unlockAudioAndSpeech);
+        window.addEventListener('touchstart', unlockAudioAndSpeech);
 
         function cancelSpeech() {
             if (globalTtsAudio) {
@@ -4262,14 +4301,14 @@
                 }
             }
 
-            // 1. 온라인 Youdao TTS 시도 (모바일 기기 및 안드로이드 크롬/CORS에 가장 안정적이고 속도가 빠름)
             try {
                 if (!globalTtsAudio) {
                     globalTtsAudio = new Audio();
                 }
                 globalTtsAudio.pause();
                 
-                const ttsUrl = "https://dict.youdao.com/dictvoice?audio=" + encodeURIComponent(processedText) + "&le=ko";
+                // 1. 온라인 Google Translate TTS 시도 (google-tts-api 패키지 규격의 MP3 오디오 스트림)
+                const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(processedText) + "&tl=ko&total=1&idx=0&textlen=" + processedText.length + "&client=tw-ob&prev=input";
                 globalTtsAudio.src = ttsUrl;
                 globalTtsAudio.playbackRate = 0.85; // 약간 천천히 읽기 (교육용)
                 
@@ -5310,12 +5349,7 @@
                     window.currentChoiceQuizTarget = window.uncompletedChoices[Math.floor(Math.random() * window.uncompletedChoices.length)];
                     window.completedChoices = [];
                 }
-                // 카드 전환 시 자동으로 정답 단어 소리 1회 재생
-                setTimeout(() => {
-                    if (window.lastChoiceStepSec === `${step}-${safeIndex}`) {
-                        window.playChoiceQuizSound();
-                    }
-                }, 600);
+
                 document.getElementById('learning-detail-content').innerHTML = `
                     <div class="learning-pane p-5">
                         <div class="activity-section-title mb-4">
