@@ -33,6 +33,48 @@
         }
         .page-number-hidden { display: none; }
 
+        .activity-loading-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 252, 247, 0.82);
+            backdrop-filter: blur(10px);
+            z-index: 5000;
+            padding: 24px;
+        }
+        .activity-loading-overlay.show {
+            display: flex;
+        }
+        .activity-loading-card {
+            min-width: min(320px, 86vw);
+            border-radius: 28px;
+            border: 2px solid rgba(70, 179, 165, 0.22);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 22px 60px rgba(44, 62, 80, 0.18);
+            padding: 34px 30px;
+            text-align: center;
+        }
+        .activity-loading-spinner {
+            width: 46px;
+            height: 46px;
+            margin: 0 auto 18px;
+            border-radius: 999px;
+            border: 5px solid rgba(70, 179, 165, 0.18);
+            border-top-color: #46b3a5;
+            animation: activityLoadingSpin 0.85s linear infinite;
+        }
+        .activity-loading-text {
+            font-size: 1.45rem;
+            font-weight: 900;
+            color: #2c3e50;
+            letter-spacing: -0.02em;
+        }
+        @keyframes activityLoadingSpin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Component-specific overrides or small tweaks */
         #password-display {
             font-size: 3.5rem;
@@ -1306,6 +1348,15 @@
         </div>
     </div>
 
+
+    <!-- 활동 이동 로딩 오버레이 -->
+    <div id="activity-loading-overlay" class="activity-loading-overlay" aria-live="polite" aria-busy="true">
+        <div class="activity-loading-card">
+            <div class="activity-loading-spinner"></div>
+            <div class="activity-loading-text">로딩중...</div>
+        </div>
+    </div>
+
     <!-- 결과 모달 -->
     <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1000] p-4">
         <div class="modal-content text-center max-w-md w-full scale-in">
@@ -1390,7 +1441,7 @@
         // --- AIEDUE SCHOOL2-COMPATIBLE AUTH + DATA SERVER ENGINE ---
         // Firebase Auth is preserved for login, while Firestore-style app data goes
         // through the same self-hosted Aiedue data-server adapter used by School2.
-        // API keys are injected server-side by Caddy on /anti-db/*, not embedded here.
+        // API keys are injected server-side by Caddy on /korean-db/*, not embedded here.
         // =========================================================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import {
@@ -1419,7 +1470,7 @@
             arrayRemove
         } from "../school-firestore-adapter.js";
 
-        window.AIEDUE_SCHOOL_DB_BASE = window.AIEDUE_SCHOOL_DB_BASE || 'https://aiedue.ddns.net/anti-db/db-api';
+        window.AIEDUE_SCHOOL_DB_BASE = window.AIEDUE_SCHOOL_DB_BASE || 'https://aiedue.ddns.net/korean-db/db-api';
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -1447,10 +1498,19 @@
 
         let pendingActivityRoute = getActivityRouteFromLocation();
 
+        function showActivityLoading() {
+            const overlay = document.getElementById('activity-loading-overlay');
+            if (!overlay) return;
+            overlay.classList.add('show');
+        }
+
         window.openActivityPage = function openActivityPage(activityKey) {
             const route = activityRoutes[activityKey];
             if (!route) return;
-            window.location.href = route.page;
+            showActivityLoading();
+            window.setTimeout(() => {
+                window.location.href = route.page;
+            }, 120);
         }
 
         function openActivityRoute(activityKey, options = {}) {
