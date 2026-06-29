@@ -33,7 +33,7 @@ jobs:
           if ($index -match 'https://aiedue\.ddns\.net/anti-db/db-api') {
             throw 'index.html still references old /anti-db data proxy.'
           }
-          if ($index -notmatch '로딩중\.\.\.') {
+          if ($index -notmatch 'activity-loading-text') {
             throw 'loading overlay marker was not found.'
           }
           if ($index -match 'window\.location\.href\s*=\s*route\.page') {
@@ -74,7 +74,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $url = 'https://aiedue.ddns.net/korean/?v=github-actions'
           $html = (Invoke-WebRequest -UseBasicParsing -Uri $url -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          if ($html -notmatch '로딩중\.\.\.') {
+          if ($html -notmatch 'activity-loading-text') {
             throw 'Public /korean page did not include the loading marker.'
           }
           if ($html -notmatch 'korean-db/db-api') {
