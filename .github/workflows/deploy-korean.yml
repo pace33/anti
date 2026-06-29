@@ -54,6 +54,7 @@ jobs:
           if ($code -ge 8) {
             throw "robocopy failed with exit code $code"
           }
+          $global:LASTEXITCODE = 0
           Write-Host "Deployed repository files to $destination"
 
       - name: Validate and reload Caddy
