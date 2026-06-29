@@ -602,19 +602,19 @@
                 
                 <div class="w-full max-w-[1000px] overflow-hidden py-10">
                     <div class="level-swiper" id="level-swiper">
-                        <div class="level-card" onclick="enterLevel(1)" id="card-level-1">
+                        <div class="level-card" onclick="openActivityPage('drawing')" id="card-level-1">
                             <div class="level-title">1단계</div>
                             <div class="level-desc">에이두 그리기</div>
                         </div>
-                        <div class="level-card" onclick="enterLevel(2)" id="card-level-2">
+                        <div class="level-card" onclick="openActivityPage('hangul')" id="card-level-2">
                             <div class="level-title">2단계</div>
                             <div class="level-desc">에이두 한글 해득</div>
                         </div>
-                        <div class="level-card" onclick="enterLevel(3)" id="card-level-3">
+                        <div class="level-card" onclick="openActivityPage('dictation')" id="card-level-3">
                             <div class="level-title">3단계</div>
                             <div class="level-desc">에이두 받아쓰기</div>
                         </div>
-                        <div class="level-card" onclick="enterLevel(4)" id="card-level-4">
+                        <div class="level-card" onclick="openActivityPage('literacy')" id="card-level-4">
                             <div class="level-title">4단계</div>
                             <div class="level-desc">에이두 문해력</div>
                         </div>
@@ -1705,6 +1705,53 @@
         let loginSuccess = false;
         let currentLearningStep = -1;
         let unlockedLevels = [1, 2, 3, 4]; // Default all levels for testing
+
+        const activityRoutes = {
+            drawing: { level: 1, sectionId: 'drawing-activities-section', page: 'drawing.html', label: '에이두 그리기' },
+            hangul: { level: 2, sectionId: 'hangul-activities-section', page: 'hangul.html', label: '에이두 한글 해득' },
+            dictation: { level: 3, sectionId: 'dictation-activities-section', page: 'dictation.html', label: '에이두 받아쓰기' },
+            literacy: { level: 4, sectionId: 'literacy-activities-section', page: 'literacy.html', label: '에이두 문해력' }
+        };
+
+        function getActivityRouteFromLocation() {
+            const params = new URLSearchParams(window.location.search);
+            const route = params.get('activity');
+            return activityRoutes[route] ? route : null;
+        }
+
+        let pendingActivityRoute = getActivityRouteFromLocation();
+
+        window.openActivityPage = function openActivityPage(activityKey) {
+            const route = activityRoutes[activityKey];
+            if (!route) return;
+            window.location.href = route.page;
+        }
+
+        function openActivityRoute(activityKey, options = {}) {
+            const route = activityRoutes[activityKey];
+            if (!route) return false;
+
+            if (!unlockedLevels.includes(route.level)) {
+                showModal('🔒 이 활동은 아직 잠겨 있어요. 선생님께 열어달라고 하세요!');
+                return false;
+            }
+
+            showTopLevelSection(route.sectionId);
+            document.getElementById('main-container').style.maxWidth = '1100px';
+
+            if (options.replaceUrl && window.history?.replaceState) {
+                window.history.replaceState(null, '', route.page);
+            }
+
+            return true;
+        }
+
+        function openPendingActivityRoute() {
+            if (!pendingActivityRoute || !loginSuccess) return false;
+            const opened = openActivityRoute(pendingActivityRoute, { replaceUrl: true });
+            if (opened) pendingActivityRoute = null;
+            return opened;
+        }
         let activeUnitKey = 'vowel';
         let currentUserId = null;
         let currentUnderstandingStep = 1;
@@ -3680,22 +3727,14 @@
         }
 
         window.enterLevel = function(level) {
-            if (!unlockedLevels.includes(level)) {
-                showModal('🔒 이 단계는 아직 잠겨 있어요. 선생님께 열어달라고 하세요!');
+            const activityByLevel = { 1: 'drawing', 2: 'hangul', 3: 'dictation', 4: 'literacy' };
+            const activityKey = activityByLevel[level];
+            if (activityKey) {
+                openActivityRoute(activityKey);
                 return;
             }
 
-            if (level === 1) {
-                showTopLevelSection('drawing-activities-section');
-            } else if (level === 2) {
-                showTopLevelSection('hangul-activities-section');
-            } else if (level === 3) {
-                showTopLevelSection('dictation-activities-section');
-            } else if (level === 4) {
-                showTopLevelSection('literacy-activities-section');
-            } else {
-                showModal(`✨ ${level}단계 모험은 곧 시작됩니다!`);
-            }
+            showModal(`✨ ${level}단계 모험은 곧 시작됩니다!`);
         }
 
         function hideAllActivitySections() {
@@ -5442,7 +5481,6 @@
                     </div>
                 `;
             } else {
-            } else {
                 document.getElementById('learning-detail-content').innerHTML = `
                     <div class="learning-pane">
                         <div class="activity-section-title">
@@ -5835,7 +5873,7 @@
 
         window.handleModalConfirm = function handleModalConfirm() {
             document.getElementById('result-modal').classList.add('hidden');
-            if (loginSuccess) {
+            if (loginSuccess && !openPendingActivityRoute()) {
                 openDashboard();
             }
         }
@@ -6117,13 +6155,15 @@
                 updateDashboardExperience(userData);
                 loginSuccess = true;
 
-                // 이미 대시보드라면 패스, 아니라면 대시보드 열기
+                // 이미 대시보드/활동 화면이라면 패스, 아니라면 요청된 활동 또는 대시보드 열기
                 if (document.getElementById('dashboard-section').classList.contains('hidden')) {
                     if (document.getElementById('result-modal').classList.contains('hidden')) {
-                        openDashboard();
+                        if (!openPendingActivityRoute()) openDashboard();
                     } else {
-                        // 모달이 떠있다면 확인 버튼 클릭 시 대시보드로 이동하도록 설정되어 있음
+                        // 모달이 떠있다면 확인 버튼 클릭 시 요청된 활동 또는 대시보드로 이동하도록 설정되어 있음
                     }
+                } else {
+                    openPendingActivityRoute();
                 }
             } catch (error) {
                 console.error('Auth state handling error:', error);
