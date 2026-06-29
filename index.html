@@ -5646,23 +5646,97 @@
             }
         }
 
+        const TEST_LOGIN_ACCOUNTS = {
+            student: {
+                email: '9001@abc.com',
+                password: '9001qwerty',
+                name: '학생 테스트',
+                role: 'student',
+                userCode: 9001
+            },
+            teacher: {
+                email: 'teacher9001@abc.com',
+                password: 'teacher9001qwerty',
+                name: '교사 테스트',
+                role: 'teacher',
+                userCode: null
+            }
+        };
+
+        function buildTestUserProfile(user, account) {
+            return {
+                uid: user.uid,
+                name: account.name,
+                email: account.email,
+                userCode: account.userCode,
+                role: account.role,
+                coins: 0,
+                balance: 0,
+                portfolio: {},
+                drawingPortfolio: { missions: {}, free: [] },
+                dictationPortfolio: { missions: {}, aiWords: [] },
+                aeduTokens: 0,
+                aeduExperience: 0,
+                aeduLevel: 1,
+                currentLearningStep: 34,
+                currentDrawingStep: 5,
+                currentDictationStep: 5,
+                unlockedLevels: [1, 2, 3, 4],
+                warningTokens: 0,
+                testAccount: true,
+                updatedAt: serverTimestamp(),
+                ...(account.role === 'student' ? { createdBy: 'test-login-button' } : {})
+            };
+        }
+
+        async function signInOrCreateTestAccount(account) {
+            let credential;
+            try {
+                credential = await signInWithEmailAndPassword(auth, account.email, account.password);
+            } catch (error) {
+                const canCreate = error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential';
+                if (!canCreate) throw error;
+
+                try {
+                    credential = await createUserWithEmailAndPassword(auth, account.email, account.password);
+                } catch (createError) {
+                    if (createError.code === 'auth/email-already-in-use') {
+                        throw new Error('test-account-password-mismatch');
+                    }
+                    throw createError;
+                }
+            }
+
+            const profile = buildTestUserProfile(credential.user, account);
+            await setDoc(doc(db, 'users', credential.user.uid), profile, { merge: true });
+            return { credential, profile };
+        }
+
         window.testLoginStudent = async function testLoginStudent() {
             try {
-                await signInWithEmailAndPassword(auth, '1@abc.com', '1qwerty');
+                inputPassword = '';
+                const display = document.getElementById('password-display');
+                if (display) display.innerText = '';
+                const { profile } = await signInOrCreateTestAccount(TEST_LOGIN_ACCOUNTS.student);
+                updateAccountName(profile.name);
             } catch (error) {
                 console.error('Test student login error:', error);
-                showModal('학생 테스트 로그인 중 오류가 발생했습니다.');
+                showModal('학생 테스트 계정을 준비하거나 로그인하는 중 오류가 발생했습니다.');
             }
         }
 
         window.testLoginTeacher = async function testLoginTeacher() {
             try {
-                const credential = await signInWithEmailAndPassword(auth, 'teacher@abc.com', '12');
-                const profile = await ensureTeacherProfile(credential.user);
-                updateAccountName(profile.name || credential.user.displayName || '선생님');
+                const { credential, profile } = await signInOrCreateTestAccount(TEST_LOGIN_ACCOUNTS.teacher);
+                await ensureTeacherProfile(credential.user, profile.name);
+                updateAccountName(profile.name);
             } catch (error) {
                 console.error('Test teacher login error:', error);
-                showModal('교사 테스트 로그인 중 오류가 발생했습니다.');
+                if (error.message === 'test-account-password-mismatch') {
+                    showModal('교사 테스트 계정은 이미 있지만 비밀번호가 달라요. 다른 테스트 계정으로 다시 만들어야 합니다.');
+                    return;
+                }
+                showModal('교사 테스트 계정을 준비하거나 로그인하는 중 오류가 발생했습니다.');
             }
         }
 
