@@ -1504,12 +1504,25 @@
             overlay.classList.add('show');
         }
 
+        function hideActivityLoading() {
+            const overlay = document.getElementById('activity-loading-overlay');
+            if (!overlay) return;
+            overlay.classList.remove('show');
+        }
+
         window.openActivityPage = function openActivityPage(activityKey) {
             const route = activityRoutes[activityKey];
             if (!route) return;
+            // 버튼 클릭은 중간 HTML로 이동하지 않고 현재 앱 안에서 바로 전환한다.
+            // 그래야 에이두 국어 시작화면이 짧게 깜빡이지 않는다.
             showActivityLoading();
             window.setTimeout(() => {
-                window.location.href = route.page;
+                const opened = openActivityRoute(activityKey, { pushUrl: true });
+                if (opened) {
+                    window.setTimeout(hideActivityLoading, 160);
+                } else {
+                    hideActivityLoading();
+                }
             }, 120);
         }
 
@@ -1527,6 +1540,8 @@
 
             if (options.replaceUrl && window.history?.replaceState) {
                 window.history.replaceState(null, '', route.page);
+            } else if (options.pushUrl && window.history?.pushState) {
+                window.history.pushState(null, '', route.page);
             }
 
             return true;
