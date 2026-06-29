@@ -1,0 +1,87 @@
+name: Deploy Korean site to aiedue.ddns.net
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-korean-site
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy /korean on local domain host
+    # This must run on the Windows PC that serves aiedue.ddns.net with Caddy.
+    # The runner needs file access to C:\Users\y5496\Desktop\Aiedue_Korean
+    # and C:\Users\y5496\aiedue-repo\Caddyfile.
+    runs-on: [self-hosted, Windows]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Korean site configuration
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $index = Get-Content -Raw -Encoding UTF8 .\index.html
+          if ($index -notmatch 'https://aiedue\.ddns\.net/korean-db/db-api') {
+            throw 'index.html does not point to the existing /korean-db data proxy.'
+          }
+          if ($index -match 'https://aiedue\.ddns\.net/anti-db/db-api') {
+            throw 'index.html still references old /anti-db data proxy.'
+          }
+          if ($index -notmatch '로딩중\.\.\.') {
+            throw 'loading overlay marker was not found.'
+          }
+          if ($index -match 'window\.location\.href\s*=\s*route\.page') {
+            throw 'activity buttons still perform full page navigation.'
+          }
+          Write-Host 'Verified: /korean-db, clean loading UI, direct activity switching.'
+
+      - name: Deploy files to Caddy static root
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $source = (Get-Location).Path
+          $destination = 'C:\Users\y5496\Desktop\Aiedue_Korean'
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+
+          robocopy $source $destination /MIR /XD .git .github node_modules .hermes-tmp /XF .gitignore serve-static.ps1
+          $code = $LASTEXITCODE
+          if ($code -ge 8) {
+            throw "robocopy failed with exit code $code"
+          }
+          Write-Host "Deployed repository files to $destination"
+
+      - name: Validate and reload Caddy
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $config = 'C:\Users\y5496\aiedue-repo\Caddyfile'
+          if (!(Test-Path $config)) {
+            throw "Caddyfile not found: $config"
+          }
+          caddy validate --config $config
+          caddy reload --config $config
+          Write-Host 'Caddy config validated and reloaded.'
+
+      - name: Smoke test public /korean site
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = 'https://aiedue.ddns.net/korean/?v=github-actions'
+          $html = (Invoke-WebRequest -UseBasicParsing -Uri $url -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($html -notmatch '로딩중\.\.\.') {
+            throw 'Public /korean page did not include the loading marker.'
+          }
+          if ($html -notmatch 'korean-db/db-api') {
+            throw 'Public /korean page did not include the /korean-db data proxy marker.'
+          }
+          $health = Invoke-RestMethod -Uri 'https://aiedue.ddns.net/korean-db/db-api/health'
+          if (-not $health.ok) {
+            throw 'Data server health check failed.'
+          }
+          Write-Host 'Smoke test passed: /korean and /korean-db are reachable.'
