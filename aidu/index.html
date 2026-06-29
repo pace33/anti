@@ -1386,318 +1386,44 @@
     </div>
 
     <script type="module">
-        // Commented out real Firebase SDK CDN imports for offline local-cache operation
-        /*
+        // =========================================================================
+        // --- AIEDUE SCHOOL2-COMPATIBLE AUTH + DATA SERVER ENGINE ---
+        // Firebase Auth is preserved for login, while Firestore-style app data goes
+        // through the same self-hosted Aiedue data-server adapter used by School2.
+        // API keys are injected server-side by Caddy on /anti-db/*, not embedded here.
+        // =========================================================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { firebaseConfig } from '../firebase-config.js';
-        */
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut,
+            GoogleAuthProvider,
+            signInWithPopup
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { firebaseConfig } from "../firebase-config.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+            updateDoc,
+            collection,
+            query,
+            where,
+            getDocs,
+            runTransaction,
+            serverTimestamp,
+            arrayUnion,
+            arrayRemove
+        } from "../school-firestore-adapter.js";
 
-        // =========================================================================
-        // --- 100% OFFLINE LOCAL STORAGE FIREBASE MOCK ENGINE BY ANTIGRAVITY ---
-        // =========================================================================
-        const getStorageItem = (key, defaultVal) => {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : defaultVal;
-        };
-        const setStorageItem = (key, val) => {
-            localStorage.setItem(key, JSON.stringify(val));
-        };
+        window.AIEDUE_SCHOOL_DB_BASE = window.AIEDUE_SCHOOL_DB_BASE || 'https://aiedue.ddns.net/anti-db/db-api';
 
-        const initSeedData = () => {
-            if (!localStorage.getItem('aiedu_users')) {
-                const users = {
-                    'mock-teacher-uid': {
-                        uid: 'mock-teacher-uid',
-                        name: '홍길동 선생님',
-                        email: 'teacher@abc.com',
-                        role: 'teacher',
-                        userCode: null,
-                        coins: 0,
-                        balance: 0,
-                        portfolio: {},
-                        drawingPortfolio: { missions: {}, free: [] },
-                        dictationPortfolio: { missions: {}, aiWords: [] },
-                        aeduTokens: 0,
-                        aeduExperience: 0,
-                        aeduLevel: 1,
-                        currentDrawingStep: 5,
-                        currentDictationStep: 5,
-                        warningTokens: 0,
-                        createdAt: new Date().toISOString()
-                    },
-                    'mock-student-1': {
-                        uid: 'mock-student-1',
-                        name: '김이듬',
-                        email: '1@abc.com',
-                        userCode: 1,
-                        role: 'student',
-                        coins: 150,
-                        balance: 0,
-                        portfolio: {},
-                        drawingPortfolio: { missions: {}, free: [] },
-                        dictationPortfolio: { missions: {}, aiWords: [] },
-                        aeduExperience: 120,
-                        aeduLevel: 2,
-                        currentLearningStep: 5,
-                        currentDrawingStep: 1,
-                        currentDictationStep: 1,
-                        warningTokens: 0,
-                        unlockedLevels: [2],
-                        teacherId: 'mock-teacher-uid',
-                        createdAt: new Date().toISOString()
-                    },
-                    'mock-student-2': {
-                        uid: 'mock-student-2',
-                        name: '이아름',
-                        email: '2@abc.com',
-                        userCode: 2,
-                        role: 'student',
-                        coins: 40,
-                        balance: 0,
-                        portfolio: {},
-                        drawingPortfolio: { missions: {}, free: [] },
-                        dictationPortfolio: { missions: {}, aiWords: [] },
-                        aeduExperience: 40,
-                        aeduLevel: 1,
-                        currentLearningStep: 1,
-                        currentDrawingStep: 0,
-                        currentDictationStep: 0,
-                        warningTokens: 0,
-                        unlockedLevels: [2],
-                        teacherId: 'mock-teacher-uid',
-                        createdAt: new Date().toISOString()
-                    }
-                };
-                const classes = {
-                    'mock-teacher-uid': {
-                        teacherId: 'mock-teacher-uid',
-                        students: ['mock-student-1', 'mock-student-2']
-                    }
-                };
-                const metadata = {
-                    'counters': { lastUserCode: 2 }
-                };
-                setStorageItem('aiedu_users', users);
-                setStorageItem('aiedu_classes', classes);
-                setStorageItem('aiedu_metadata', metadata);
-            }
-        };
-        initSeedData();
-
-        const firebaseConfig = {};
-        const initializeApp = () => ({});
-        const getFirestore = () => ({});
-
-        window.authCallbacks = window.authCallbacks || [];
-        const getActiveUser = () => {
-            const uid = localStorage.getItem('aiedu_current_uid');
-            if (!uid) return null;
-            const users = getStorageItem('aiedu_users', {});
-            const u = users[uid];
-            if (!u) return null;
-            return {
-                uid: u.uid,
-                email: u.email,
-                displayName: u.name,
-                providerData: u.providerData || []
-            };
-        };
-        const getAuth = () => ({
-            get currentUser() { return getActiveUser(); }
-        });
-
-        const auth = getAuth();
-        const db = getFirestore();
-
-        const triggerAuthCallbacks = () => {
-            const user = getActiveUser();
-            window.authCallbacks.forEach(cb => {
-                try { cb(user); } catch (e) { console.error(e); }
-            });
-        };
-
-        const signInWithEmailAndPassword = async (authObj, email, password) => {
-            const users = getStorageItem('aiedu_users', {});
-            const matchedUser = Object.values(users).find(u => u.email === email);
-            if (!matchedUser) throw new Error('auth/user-not-found');
-            
-            if (matchedUser.role === 'student') {
-                const expectedPw = `${matchedUser.userCode}qwerty`;
-                if (password !== expectedPw) throw new Error('auth/wrong-password');
-            } else {
-                if (matchedUser.uid === 'mock-teacher-uid' && (password === '12' || password === '123456')) {
-                    // Seed teacher password bypass
-                } else if (matchedUser.password && matchedUser.password !== password) {
-                    throw new Error('auth/wrong-password');
-                }
-            }
-            
-            localStorage.setItem('aiedu_current_uid', matchedUser.uid);
-            setTimeout(triggerAuthCallbacks, 50);
-            return { user: getActiveUser() };
-        };
-
-        const createUserWithEmailAndPassword = async (authObj, email, password) => {
-            const users = getStorageItem('aiedu_users', {});
-            const existing = Object.values(users).find(u => u.email === email);
-            if (existing) {
-                const err = new Error('auth/email-already-in-use');
-                err.code = 'auth/email-already-in-use';
-                throw err;
-            }
-            if (password.length < 6) {
-                const err = new Error('auth/weak-password');
-                err.code = 'auth/weak-password';
-                throw err;
-            }
-            const uid = 'uid-' + Math.random().toString(36).substr(2, 9);
-            users[uid] = { uid, email, password };
-            setStorageItem('aiedu_users', users);
-            localStorage.setItem('aiedu_current_uid', uid);
-            setTimeout(triggerAuthCallbacks, 50);
-            return { user: { uid, email } };
-        };
-
-        const onAuthStateChanged = (authObj, callback) => {
-            window.authCallbacks.push(callback);
-            const user = getActiveUser();
-            setTimeout(() => callback(user), 0);
-            return () => {
-                window.authCallbacks = window.authCallbacks.filter(cb => cb !== callback);
-            };
-        };
-
-        const signOut = async (authObj) => {
-            localStorage.removeItem('aiedu_current_uid');
-            setTimeout(triggerAuthCallbacks, 50);
-            return true;
-        };
-
-        class GoogleAuthProvider {
-            constructor() { this.providerId = 'google.com'; }
-        }
-
-        const signInWithPopup = async (authObj, provider) => {
-            const name = prompt('구글 계정의 이름을 입력해주세요:', '구글 선생님') || '구글 선생님';
-            const email = 'google_teacher@abc.com';
-            const uid = 'google-teacher-uid';
-            const users = getStorageItem('aiedu_users', {});
-            if (!users[uid]) {
-                users[uid] = {
-                    uid, name, email, role: 'teacher', userCode: null,
-                    coins: 0, balance: 0, portfolio: {},
-                    drawingPortfolio: { missions: {}, free: [] },
-                    dictationPortfolio: { missions: {}, aiWords: [] },
-                    aeduTokens: 0, aeduExperience: 0, aeduLevel: 1,
-                    currentDrawingStep: 5, currentDictationStep: 5, warningTokens: 0,
-                    providerData: [{ providerId: 'google.com' }],
-                    createdAt: new Date().toISOString()
-                };
-                setStorageItem('aiedu_users', users);
-            }
-            localStorage.setItem('aiedu_current_uid', uid);
-            setTimeout(triggerAuthCallbacks, 50);
-            return { user: getActiveUser() };
-        };
-
-        const doc = (dbObj, collectionName, docId) => ({
-            collection: collectionName, id: docId, path: `${collectionName}/${docId}`
-        });
-
-        const arrayUnion = (...elements) => ({ __type: 'arrayUnion', elements });
-        const arrayRemove = (...elements) => ({ __type: 'arrayRemove', elements });
-
-        const processMergeData = (existing, newData) => {
-            const result = { ...(existing || {}) };
-            for (const key in newData) {
-                const val = newData[key];
-                if (val && typeof val === 'object' && val.__type === 'arrayUnion') {
-                    const currentArr = Array.isArray(result[key]) ? result[key] : [];
-                    const added = val.elements.filter(el => !currentArr.includes(el));
-                    result[key] = [...currentArr, ...added];
-                } else if (val && typeof val === 'object' && val.__type === 'arrayRemove') {
-                    const currentArr = Array.isArray(result[key]) ? result[key] : [];
-                    result[key] = currentArr.filter(el => !val.elements.includes(el));
-                } else if (val === 'serverTimestamp()') {
-                    result[key] = new Date().toISOString();
-                } else {
-                    result[key] = val;
-                }
-            }
-            return result;
-        };
-
-        const getDoc = async (docRef) => {
-            const storeKey = `aiedu_${docRef.collection}`;
-            const collectionData = getStorageItem(storeKey, {});
-            const docData = collectionData[docRef.id];
-            return {
-                exists: () => docData !== undefined,
-                data: () => docData,
-                id: docRef.id,
-                ref: docRef
-            };
-        };
-
-        const setDoc = async (docRef, data, options) => {
-            const storeKey = `aiedu_${docRef.collection}`;
-            const collectionData = getStorageItem(storeKey, {});
-            const existing = collectionData[docRef.id];
-            let merged = (options && options.merge) ? processMergeData(existing, data) : processMergeData(null, data);
-            collectionData[docRef.id] = merged;
-            setStorageItem(storeKey, collectionData);
-
-            if (docRef.collection === 'users' && merged.teacherId) {
-                const classes = getStorageItem('aiedu_classes', {});
-                const teacherUid = merged.teacherId;
-                if (!classes[teacherUid]) classes[teacherUid] = { teacherId: teacherUid, students: [] };
-                if (!classes[teacherUid].students.includes(docRef.id)) {
-                    classes[teacherUid].students.push(docRef.id);
-                    setStorageItem('aiedu_classes', classes);
-                }
-            }
-            return true;
-        };
-
-        const updateDoc = async (docRef, data) => setDoc(docRef, data, { merge: true });
-        const serverTimestamp = () => 'serverTimestamp()';
-
-        const runTransaction = async (dbObj, callback) => {
-            const transaction = {
-                get: async (docRef) => getDoc(docRef),
-                set: async (docRef, data, options) => setDoc(docRef, data, options)
-            };
-            return callback(transaction);
-        };
-
-        const collection = (dbObj, collectionName) => ({ collectionName });
-        const where = (field, operator, value) => ({ field, operator, value });
-        const query = (collectionRef, ...constraints) => ({ collectionRef, constraints });
-
-        const getDocs = async (queryRef) => {
-            const storeKey = `aiedu_${queryRef.collectionRef.collectionName}`;
-            const collectionData = getStorageItem(storeKey, {});
-            let docsList = Object.values(collectionData).map(data => ({
-                id: data.uid || data.id,
-                exists: () => true,
-                data: () => data,
-                ref: { collection: queryRef.collectionRef.collectionName, id: data.uid || data.id }
-            }));
-            queryRef.constraints.forEach(c => {
-                docsList = docsList.filter(docSnap => {
-                    const data = docSnap.data();
-                    const val = data[c.field];
-                    return c.operator === '==' ? val === c.value : true;
-                });
-            });
-            return {
-                docs: docsList,
-                empty: docsList.length === 0,
-                forEach: (cb) => docsList.forEach(cb)
-            };
-        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
         // =========================================================================
 
         let currentView = 'student';
