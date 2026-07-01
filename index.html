@@ -1438,10 +1438,8 @@
 
     <script type="module">
         // =========================================================================
-        // --- AIEDUE SCHOOL2-COMPATIBLE AUTH + DATA SERVER ENGINE ---
-        // Firebase Auth is preserved for login, while Firestore-style app data goes
-        // through the same self-hosted Aiedue data-server adapter used by School2.
-        // API keys are injected server-side by Caddy on /korean-db/*, not embedded here.
+        // --- AIEDUE SCHOOL SHARED FIREBASE AUTH + FIRESTORE ENGINE ---
+        // 에이두 스쿨과 같은 Firebase 프로젝트/Auth/Firestore를 직접 사용합니다.
         // =========================================================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import {
@@ -1468,9 +1466,7 @@
             serverTimestamp,
             arrayUnion,
             arrayRemove
-        } from "./school-firestore-adapter.js";
-
-        window.AIEDUE_SCHOOL_DB_BASE = window.AIEDUE_SCHOOL_DB_BASE || 'https://aiedue.ddns.net/korean-db/db-api';
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
