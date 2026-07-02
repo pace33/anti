@@ -785,34 +785,33 @@
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fff0f0]" onclick="openMyDictationFromDashboard()">
-                        <div class="text-7xl mb-6">📝</div>
-                        <div class="text-5xl font-black text-[#2c3e50]">나의 받아쓰기</div>
-                        <p class="text-gray-500 mt-2 text-lg">내가 연습한 기록을 확인해요</p>
+                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fff0f0]" onclick="openDictationPracticeActivity()">
+                        <div class="text-7xl mb-6">✍️</div>
+                        <div class="text-5xl font-black text-[#2c3e50]">받아쓰기 연습하기</div>
+                        <p class="text-gray-500 mt-2 text-lg">오답/완료 문장을 보고 따라 쓰며 연습해요</p>
                     </div>
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-red-50" onclick="openTodayDictationActivity()">
-                        <div class="aiedu-badge bg-red-500 mb-6">오늘의 미션</div>
-                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">오늘의 받아쓰기</h3>
-                        <p class="text-2xl text-red-500 font-bold">백점을 향해 도전!</p>
+                    <div id="dictation-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-red-50" onclick="openTodayDictationActivity()">
+                        <div id="dictation-lock-badge" class="aiedu-badge bg-red-500 mb-6">오늘의 미션</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">받아쓰기 미션</h3>
+                        <p id="dictation-mission-desc" class="text-2xl text-red-500 font-bold">단어 은행으로 오늘의 받아쓰기를 만들어요!</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLevelDictationActivity()">
-                        <div class="text-5xl mb-3">🏆</div>
-                        <div class="text-xl font-bold">급수별 받아쓰기</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openMyDictationFromDashboard()">
+                        <div class="text-5xl mb-3">📚</div>
+                        <div class="text-xl font-bold">나의 기록</div>
+                        <p id="dictation-bank-summary" class="text-sm text-red-500 font-black mt-2">오답 0개 · 완료 0개</p>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openAiWordPracticeActivity()">
-                        <div class="text-5xl mb-3">🧠</div>
-                        <div class="text-xl font-bold">AI 단어 연습</div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationBankCamera()">
+                        <div class="text-5xl mb-3">📷</div>
+                        <div class="text-xl font-bold">단어 은행 촬영</div>
+                        <p class="text-sm text-gray-500 mt-2">사진에서 단어를 뽑아 은행에 저장해요</p>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openFindMistakesActivity()">
-                        <div class="text-5xl mb-3">🔍</div>
-                        <div class="text-xl font-bold">틀린 글자 찾기</div>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col bg-gray-100 opacity-60" onclick="showModal('받아쓰기 게임은 준비 중입니다! ✨')">
-                        <div class="text-5xl mb-3">🎮</div>
-                        <div class="text-xl font-bold">받아쓰기 게임</div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationBankModal()">
+                        <div class="text-5xl mb-3">🏦</div>
+                        <div class="text-xl font-bold">국어 은행</div>
+                        <p id="korean-bank-summary" class="text-sm text-gray-500 mt-2">단어 0개 · 문장 0개</p>
                     </div>
                 </div>
             </div>
@@ -1027,12 +1026,29 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="stitched p-6 bg-white">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-2xl font-black text-[#2c3e50]">받아쓰기 오답 은행</h3>
+                        <button class="btn-outline px-4 py-2 text-sm" onclick="openDictationPracticeActivity('wrong')">오답 연습</button>
+                    </div>
+                    <div id="dictation-wrong-bank-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+                <div class="stitched p-6 bg-white">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-2xl font-black text-[#2c3e50]">받아쓰기 완료 은행</h3>
+                        <button class="btn-outline px-4 py-2 text-sm" onclick="openDictationPracticeActivity('completed')">완료 연습</button>
+                    </div>
+                    <div id="dictation-completed-bank-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+            </div>
+
             <div class="stitched p-6 bg-white">
                 <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-2xl font-black text-[#2c3e50]">단계별 받아쓰기 기록</h3>
+                    <h3 class="text-2xl font-black text-[#2c3e50]">미션 기록</h3>
                     <button class="btn-outline px-5 py-2 text-sm" onclick="goDictationDashboard()">받아쓰기 대시보드로</button>
                 </div>
-                <div id="my-dictation-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[540px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                <div id="my-dictation-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
         </div>
 
@@ -1052,29 +1068,32 @@
                     <div class="korean-embed-card p-8">
                         <div class="flex items-center justify-between mb-6">
                             <div>
-                                <div class="text-sm font-black text-red-400">문제는 TTS로만 들려요</div>
+                                <div id="dictation-session-kind" class="text-sm font-black text-red-400">문제는 TTS로만 들려요</div>
                                 <div id="dictation-question-label" class="text-2xl font-black text-[#2c3e50]">문제 1</div>
                             </div>
                             <button class="btn-primary bg-red-500 shadow-red-200 px-8 py-4 text-xl" onclick="playDictationPrompt()">▶ 듣기</button>
                         </div>
                         <div class="bg-red-50 border-2 border-red-100 rounded-3xl p-8 text-center">
                             <div class="text-6xl mb-4">🔊</div>
-                            <p class="text-xl font-bold text-gray-500">공책에 들은 말을 받아써요.</p>
-                            <p class="text-sm text-gray-400 mt-2">정답은 사진을 올린 뒤에만 공개됩니다.</p>
+                            <p id="dictation-main-instruction" class="text-xl font-bold text-gray-500">공책에 들은 말을 받아써요.</p>
+                            <p id="dictation-sub-instruction" class="text-sm text-gray-400 mt-2">정답은 사진을 올린 뒤에만 공개됩니다.</p>
                         </div>
+                        <div id="dictation-session-list" class="mt-6 grid grid-cols-1 gap-3"></div>
                         <div id="dictation-answer-box" class="hidden mt-6 bg-white border-4 border-green-200 rounded-3xl p-6">
-                            <div class="text-sm font-black text-green-500 mb-2">정답</div>
-                            <div id="dictation-answer-text" class="text-4xl font-black text-[#2c3e50]"></div>
+                            <div class="text-sm font-black text-green-500 mb-2">채점 결과</div>
+                            <div id="dictation-answer-text" class="text-lg font-bold text-[#2c3e50]"></div>
                         </div>
                     </div>
 
                     <div class="korean-embed-card p-6">
-                        <div class="font-black text-[#2c3e50] mb-4">공책 사진</div>
+                        <div class="font-black text-[#2c3e50] mb-4">공책/단어 은행 사진</div>
                         <input id="dictation-photo-input" type="file" accept="image/*" capture="environment" class="premium-input bg-white text-sm">
                         <img id="dictation-photo-preview" alt="받아쓰기 사진 미리보기" class="hidden w-full h-48 object-contain bg-gray-50 rounded-2xl border mt-4">
-                        <button class="btn-primary w-full mt-5 bg-[#ff9d76] shadow-[#ff9d7633]" onclick="revealDictationAnswer()">사진 올리고 정답 보기</button>
-                        <button id="dictation-save-btn" class="btn-primary w-full mt-3 hidden" onclick="completeDictationItem()">기록 저장</button>
-                        <p id="dictation-photo-hint" class="text-sm text-gray-400 font-bold mt-4">사진을 올려야 정답을 확인할 수 있어요.</p>
+                        <textarea id="dictation-ocr-text" class="premium-input bg-white text-sm mt-4 min-h-[120px]" placeholder="사진에서 읽은 글자가 여기에 들어와요. OCR이 안 되면 직접 고쳐 적어도 돼요."></textarea>
+                        <button id="dictation-bank-save-btn" class="btn-primary w-full mt-4 bg-red-500 shadow-red-200 hidden" onclick="saveDictationBankPhoto()">단어 은행에 저장</button>
+                        <button id="dictation-grade-btn" class="btn-primary w-full mt-5 bg-[#ff9d76] shadow-[#ff9d7633]" onclick="revealDictationAnswer()">사진 촬영 후 채점하기</button>
+                        <button id="dictation-save-btn" class="btn-primary w-full mt-3 hidden" onclick="completeDictationItem()">오답/완료 은행 저장</button>
+                        <p id="dictation-photo-hint" class="text-sm text-gray-400 font-bold mt-4">사진을 올려야 채점할 수 있어요.</p>
                     </div>
                 </div>
             </div>
@@ -1607,8 +1626,9 @@
         let drawingWorkspaceMissionStep = null;
         let drawingCanvasInitialized = false;
         let currentUserDictationStep = -1;
-        let dictationPortfolio = { missions: {}, aiWords: [] };
+        let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [], sentences: [] }, wrongBank: [], completedBank: [], captures: [], dictationLocked: true, hasCompletedOnce: false };
         let activeDictationItem = null;
+        let activeDictationSession = null;
         let activeSpellingQuestion = null;
 
         const learningDetailData = {
@@ -3406,10 +3426,7 @@
                 unpaidCooldownUntil: Number(userData?.drawingPortfolio?.unpaidCooldownUntil || 0)
             };
             currentUserDictationStep = Number.isFinite(Number(userData?.currentDictationStep)) ? Math.max(-1, Math.floor(Number(userData.currentDictationStep))) : -1;
-            dictationPortfolio = {
-                missions: userData?.dictationPortfolio?.missions || {},
-                aiWords: Array.isArray(userData?.dictationPortfolio?.aiWords) ? userData.dictationPortfolio.aiWords : []
-            };
+            dictationPortfolio = normalizeDictationPortfolio(userData?.dictationPortfolio);
             if (currentUserRole === 'teacher') {
                 currentUserDictationStep = Math.max(currentUserDictationStep, dictationItems.length);
             }
@@ -3443,6 +3460,7 @@
 
             updateTodayKoreanPreview();
             updateDrawingDashboardPreview();
+            updateDictationDashboardPreview();
         }
 
         const topLevelSectionIds = [
@@ -4372,6 +4390,7 @@
             showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">친구들 그림 구경하기</h3>${body}</div>`);
         }
 
+
         const dictationItems = [
             { step: 1, title: '1단계: 쉬운 낱말', prompt: '나무', desc: '받침이 없는 쉬운 낱말을 들어요.' },
             { step: 2, title: '2단계: 받침 낱말', prompt: '산책', desc: '받침이 있는 낱말을 들어요.' },
@@ -4379,31 +4398,12 @@
             { step: 4, title: '4단계: 생활 문장', prompt: '친구와 함께 책을 읽어요.', desc: '조금 긴 문장을 듣고 받아써요.' },
             { step: 5, title: '5단계: 도전 문장', prompt: '오늘 배운 낱말을 공책에 바르게 씁니다.', desc: '문장 부호와 띄어쓰기를 생각해요.' }
         ];
-
-        const aiWordPracticeWords = ['구름', '약속', '마음', '발표', '도서관', '운동장', '생각', '질문'];
         const spellingFallbackQuestions = [
-            {
-                options: ['나는 학교에 가요.', '친구와 함께 놀아요.', '사과를 맛있게 먹어요.', '하늘이 참 맑아여.'],
-                answerIndex: 3,
-                reason: "'맑아여'는 잘못된 표현이고 '맑아요'가 바른 표현이에요."
-            },
-            {
-                options: ['오늘은 날씨가 좋아요.', '책을 조용히 읽어요.', '나는 밥을 먹었어요.', '동생이 집에 왔서요.'],
-                answerIndex: 3,
-                reason: "'왔서요'가 아니라 '왔어요'라고 써야 해요."
-            },
-            {
-                options: ['선생님께 인사해요.', '공책에 글씨를 써요.', '친구가 웃었어요.', '나는 학교를 갔어요.'],
-                answerIndex: 3,
-                reason: "문맥상 '학교에 갔어요'가 자연스럽고 조사 '에'를 쓰는 것이 좋아요."
-            }
+            { options: ['나는 학교에 가요.', '친구와 함께 놀아요.', '사과를 맛있게 먹어요.', '하늘이 참 맑아여.'], answerIndex: 3, reason: "'맑아여'는 잘못된 표현이고 '맑아요'가 바른 표현이에요." },
+            { options: ['오늘은 날씨가 좋아요.', '책을 조용히 읽어요.', '나는 밥을 먹었어요.', '동생이 집에 왔서요.'], answerIndex: 3, reason: "'왔서요'가 아니라 '왔어요'라고 써야 해요." },
+            { options: ['선생님께 인사해요.', '공책에 글씨를 써요.', '친구가 웃었어요.', '나는 학교를 갔어요.'], answerIndex: 3, reason: "문맥상 '학교에 갔어요'가 자연스럽고 조사 '에'를 쓰는 것이 좋아요." }
         ];
         let spellingFallbackIndex = 0;
-
-        function getNextDictationItem() {
-            const nextStep = currentUserDictationStep + 1;
-            return dictationItems.find((item) => item.step === nextStep) || null;
-        }
 
         const consonantSoundMap = {
             'ㄱ':'그', 'ㄴ':'느', 'ㄷ':'드', 'ㄹ':'르', 'ㅁ':'므', 'ㅂ':'브',
@@ -4760,208 +4760,166 @@
             speakTextKo('모음');
         };
 
-        function renderMyDictationSection() {
-            const label = document.getElementById('my-dictation-progress-label');
-            if (label) label.innerText = currentUserDictationStep < 0 ? '받아쓰기 새싹' : `받아쓰기 ${currentUserDictationStep}단계`;
-            const root = document.getElementById('my-dictation-list');
-            if (!root) return;
-            root.innerHTML = dictationItems.map((item) => {
-                const record = dictationPortfolio.missions?.[item.step];
-                const isOpen = currentUserRole === 'teacher' || item.step <= currentUserDictationStep + 1;
-                const isDone = Boolean(record);
-                return `
-                    <div class="korean-embed-card p-5 ${isDone ? 'bg-red-50 border-red-100' : ''}">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <div class="text-sm font-black ${isDone ? 'text-red-500' : 'text-gray-400'}">${item.step}단계</div>
-                                <div class="text-xl font-black text-[#2c3e50]">${item.title}</div>
-                                <p class="text-sm text-gray-500 mt-1">${item.desc}</p>
-                            </div>
-                            <div class="text-2xl">${isDone ? '✅' : (isOpen ? '🔊' : '🔒')}</div>
-                        </div>
-                        ${record?.photo ? `<img src="${record.photo}" alt="${item.title} 기록" class="w-full h-36 object-contain bg-white rounded-2xl border mt-4">` : ''}
-                        <button class="${isOpen ? 'btn-primary bg-red-500 shadow-red-200' : 'btn-outline opacity-50 cursor-not-allowed'} w-full mt-4 py-2 text-sm" ${isOpen ? `onclick="openDictationItem(${item.step})"` : 'disabled'}>
-                            ${isDone ? '다시 하기' : (isOpen ? '시작하기' : '잠김')}
-                        </button>
-                    </div>
-                `;
-            }).join('');
-        }
 
-        function configureDictationWorkspace(item, options = {}) {
-            activeDictationItem = { ...item, isAiWord: Boolean(options.isAiWord) };
-            document.getElementById('dictation-workspace-badge').innerText = options.isAiWord ? 'AI 단어 연습' : '급수별 받아쓰기';
-            document.getElementById('dictation-workspace-title').innerText = item.title;
-            document.getElementById('dictation-workspace-desc').innerText = options.isAiWord
-                ? 'AI가 만든 단어를 듣고 공책에 쓴 뒤 사진을 올려 정답을 확인해요.'
-                : '소리를 듣고 공책에 쓴 뒤 사진을 올리면 정답이 열려요.';
-            document.getElementById('dictation-question-label').innerText = item.title;
-            document.getElementById('dictation-answer-text').innerText = item.prompt;
-            document.getElementById('dictation-answer-box').classList.add('hidden');
-            document.getElementById('dictation-save-btn').classList.add('hidden');
-            document.getElementById('dictation-photo-hint').innerText = '사진을 올려야 정답을 확인할 수 있어요.';
-            const input = document.getElementById('dictation-photo-input');
-            const preview = document.getElementById('dictation-photo-preview');
-            input.value = '';
-            preview.src = '';
-            preview.classList.add('hidden');
-            showTopLevelSection('dictation-workspace-section');
-            setTimeout(() => speakTextKo(item.prompt), 300);
+        function cleanKoreanWord(text) { return String(text || '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ]/g, '').trim(); }
+        function cleanKoreanSentence(text) { return String(text || '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?]/g, '').replace(/\s+/g, ' ').trim(); }
+        function normalizeDictationBankItem(item) {
+            const sentence = cleanKoreanSentence(item?.sentence || item?.prompt || '');
+            if (!sentence) return null;
+            return { sentence, source: item?.source || 'dictation', wrongCount: Math.max(0, Number(item?.wrongCount || 0)), correctCount: Math.max(0, Number(item?.correctCount || 0)), lastTriedAt: item?.lastTriedAt || item?.savedAt || null, savedAt: item?.savedAt || new Date().toISOString() };
         }
-
-        window.openMyDictationFromDashboard = function() {
-            renderMyDictationSection();
-            showTopLevelSection('my-dictation-section');
-        }
-
-        window.openTodayDictationActivity = function() {
-            window.openLevelDictationActivity();
-        }
-
-        window.openLevelDictationActivity = function() {
-            const item = getNextDictationItem() || dictationItems[dictationItems.length - 1];
-            configureDictationWorkspace(item);
-        }
-
-        window.openDictationItem = function(step) {
-            const item = dictationItems.find((entry) => entry.step === step);
-            if (item) configureDictationWorkspace(item);
-        }
-
-        window.openAiWordPracticeActivity = async function() {
-            const fallback = aiWordPracticeWords[Math.floor(Math.random() * aiWordPracticeWords.length)];
-            const word = await generateAiWordFallback(fallback);
-            configureDictationWorkspace({
-                step: null,
-                title: 'AI 단어 연습',
-                prompt: word,
-                desc: 'AI가 만든 단어를 듣고 받아써요.'
-            }, { isAiWord: true });
-        }
-
-        async function generateAiWordFallback(fallback) {
-            try {
-                const payload = { contents: [{ role: 'user', parts: [{ text: '초등학생 받아쓰기 연습용 한국어 단어 하나만 출력해줘. 문장 금지.' }]}] };
-                const res = await fetch('/.netlify/functions/generatePlan', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'gemini', payload })
-                });
-                if (!res.ok) throw new Error(`generatePlan ${res.status}`);
-                const data = await res.json();
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()?.replace(/[^\uAC00-\uD7A3\s]/g, '')?.split(/\s+/)[0];
-                return text || fallback;
-            } catch {
-                return fallback;
-            }
-        }
-
-        window.playDictationPrompt = function() {
-            if (activeDictationItem?.prompt) speakTextKo(activeDictationItem.prompt);
-        }
-
-        document.getElementById('dictation-photo-input').addEventListener('change', (event) => {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                const preview = document.getElementById('dictation-photo-preview');
-                preview.src = reader.result;
-                preview.classList.remove('hidden');
-                document.getElementById('dictation-photo-hint').innerText = '사진이 올라갔어요. 이제 정답을 볼 수 있어요.';
+        function normalizeDictationPortfolio(raw = {}) {
+            const bank = raw?.koreanBank || {};
+            return {
+                missions: raw?.missions || {},
+                aiWords: Array.isArray(raw?.aiWords) ? raw.aiWords : [],
+                koreanBank: {
+                    words: Array.from(new Set((Array.isArray(bank.words) ? bank.words : []).map(cleanKoreanWord).filter(Boolean))).slice(0, 300),
+                    sentences: Array.from(new Set((Array.isArray(bank.sentences) ? bank.sentences : []).map(cleanKoreanSentence).filter(Boolean))).slice(0, 200)
+                },
+                wrongBank: Array.isArray(raw?.wrongBank) ? raw.wrongBank.map(normalizeDictationBankItem).filter(Boolean) : [],
+                completedBank: Array.isArray(raw?.completedBank) ? raw.completedBank.map(normalizeDictationBankItem).filter(Boolean) : [],
+                captures: Array.isArray(raw?.captures) ? raw.captures.slice(0, 20) : [],
+                dictationLocked: raw?.dictationLocked !== false,
+                hasCompletedOnce: Boolean(raw?.hasCompletedOnce)
             };
-            reader.readAsDataURL(file);
+        }
+        function extractKoreanBankFromText(text) {
+            const sentences = String(text || '').split(/[\n.!?。]+/).map(cleanKoreanSentence).filter((line) => line.length >= 4).slice(0, 50);
+            const words = Array.from(new Set(String(text || '').match(/[가-힣]{2,}/g) || [])).map(cleanKoreanWord).filter((word) => word.length >= 2 && word.length <= 8).slice(0, 80);
+            return { words, sentences };
+        }
+        function mergeKoreanBank({ words = [], sentences = [] }) {
+            const bank = dictationPortfolio.koreanBank || { words: [], sentences: [] };
+            dictationPortfolio.koreanBank = {
+                words: Array.from(new Set([...(bank.words || []), ...words.map(cleanKoreanWord).filter(Boolean)])).slice(0, 300),
+                sentences: Array.from(new Set([...(bank.sentences || []), ...sentences.map(cleanKoreanSentence).filter(Boolean)])).slice(0, 200)
+            };
+        }
+        async function persistDictationData(extra = {}) {
+            dictationPortfolio = normalizeDictationPortfolio(dictationPortfolio);
+            if (currentUserId) await setDoc(doc(db, 'users', currentUserId), { currentDictationStep: currentUserDictationStep, dictationPortfolio, ...extra }, { merge: true });
+            updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
+        }
+        function isDictationMissionLocked() {
+            const words = dictationPortfolio?.koreanBank?.words?.length || 0;
+            if (words <= 0) return true;
+            if (!dictationPortfolio.hasCompletedOnce) return false;
+            return dictationPortfolio.dictationLocked !== false;
+        }
+        function updateDictationDashboardPreview() {
+            dictationPortfolio = normalizeDictationPortfolio(dictationPortfolio);
+            const wrong = dictationPortfolio.wrongBank.length, done = dictationPortfolio.completedBank.length;
+            const words = dictationPortfolio.koreanBank.words.length, sentences = dictationPortfolio.koreanBank.sentences.length;
+            const summary = document.getElementById('dictation-bank-summary'); if (summary) summary.innerText = `오답 ${wrong}개 · 완료 ${done}개`;
+            const bankSummary = document.getElementById('korean-bank-summary'); if (bankSummary) bankSummary.innerText = `단어 ${words}개 · 문장 ${sentences}개`;
+            const badge = document.getElementById('dictation-lock-badge'); const desc = document.getElementById('dictation-mission-desc'); const card = document.getElementById('dictation-mission-card');
+            const locked = isDictationMissionLocked();
+            if (badge) badge.innerText = locked ? '잠겨 있음' : '오늘의 미션';
+            if (desc) desc.innerText = locked ? '미션을 하려면 단어 은행 사진을 먼저 찍어야 해요!' : '오답 5개 + 새 문장 5개로 도전해요!';
+            if (card) card.classList.toggle('opacity-70', locked);
+        }
+        function makeSentenceFromWords(words, index = 0) {
+            const picked = words.filter(Boolean); const w1 = picked[index % picked.length] || '나무'; const w2 = picked[(index + 1) % picked.length] || '학교';
+            const frames = [`${w1}을 바르게 써요.`, `${w1}와 ${w2}를 배워요.`, `나는 ${w1}을 좋아해요.`, `${w1}이 있는 문장을 읽어요.`, `오늘은 ${w1} 공부를 해요.`];
+            return frames[index % frames.length];
+        }
+        function createDictationMissionSession() {
+            const wrongItems = [...(dictationPortfolio.wrongBank || [])].sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0)).slice(0, 5).map((item) => ({ sentence: item.sentence, source: 'wrong-bank' }));
+            const bank = dictationPortfolio.koreanBank || { words: [], sentences: [] }; const generated = []; const existing = new Set(wrongItems.map((item) => item.sentence));
+            for (const sentence of bank.sentences || []) { if (generated.length >= 5) break; const clean = cleanKoreanSentence(sentence); if (clean && !existing.has(clean)) generated.push({ sentence: clean, source: 'bank-sentence' }); }
+            for (let i = 0; generated.length < 5 && i < 20; i += 1) { const sentence = makeSentenceFromWords(bank.words || [], i); if (!existing.has(sentence) && !generated.some((item) => item.sentence === sentence)) generated.push({ sentence, source: 'generated-word' }); }
+            return { kind: 'mission', items: [...wrongItems, ...generated].slice(0, 10), currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() };
+        }
+        function renderDictationSessionList() {
+            const root = document.getElementById('dictation-session-list'); if (!root || !activeDictationSession) return;
+            root.innerHTML = activeDictationSession.items.map((item, index) => `<button class="btn-choice text-left ${index === activeDictationSession.currentIndex ? '!border-red-400 !bg-red-50' : ''}" onclick="selectDictationSessionItem(${index})"><span class="font-black text-red-500">문제 ${index + 1}</span><span class="text-xs text-gray-400 ml-2">${item.source === 'wrong-bank' ? '오답 복습' : '새 문장'}</span><span class="float-right">${activeDictationSession.graded?.[index]?.correct ? '✅' : activeDictationSession.graded?.[index] ? '🟡' : '🔊'}</span></button>`).join('');
+            document.getElementById('dictation-question-label').innerText = `문제 ${activeDictationSession.currentIndex + 1} / ${activeDictationSession.items.length}`;
+        }
+        window.selectDictationSessionItem = function(index) { if (!activeDictationSession?.items?.[index]) return; activeDictationSession.currentIndex = index; renderDictationSessionList(); speakTextKo(activeDictationSession.items[index].sentence); }
+        window.playDictationPrompt = function() { const sentence = activeDictationSession?.items?.[activeDictationSession.currentIndex]?.sentence || activeDictationItem?.prompt; if (sentence) speakTextKo(sentence); }
+        function configureDictationWorkspace(session, options = {}) {
+            activeDictationSession = session; activeDictationItem = session?.items?.[0] ? { prompt: session.items[0].sentence, step: options.step || null } : null;
+            document.getElementById('dictation-workspace-badge').innerText = options.badge || (session.kind === 'practice' ? '받아쓰기 연습하기' : '오늘의 미션');
+            document.getElementById('dictation-workspace-title').innerText = options.title || (session.kind === 'practice' ? '문장 따라 쓰기 연습' : '받아쓰기 미션');
+            document.getElementById('dictation-workspace-desc').innerText = options.desc || '소리만 듣고 공책에 받아쓴 뒤 사진을 촬영하면 채점해요.';
+            document.getElementById('dictation-session-kind').innerText = session.kind === 'practice' ? '연습에서는 문장을 보고 따라 써요' : '문제는 TTS로만 들려요';
+            document.getElementById('dictation-main-instruction').innerText = session.kind === 'practice' ? '아래 문장을 보고 공책에 따라 써요.' : '공책에 들은 말을 받아써요.';
+            document.getElementById('dictation-sub-instruction').innerText = session.kind === 'practice' ? '연습 기록도 사진으로 저장할 수 있어요.' : '정답은 사진을 촬영해 채점한 뒤 공개됩니다.';
+            document.getElementById('dictation-answer-box').classList.add('hidden'); document.getElementById('dictation-answer-text').innerHTML = ''; document.getElementById('dictation-save-btn').classList.add('hidden'); document.getElementById('dictation-bank-save-btn').classList.add('hidden'); document.getElementById('dictation-grade-btn').classList.toggle('hidden', session.kind === 'bank-camera');
+            document.getElementById('dictation-photo-hint').innerText = session.kind === 'practice' ? '사진을 올리면 연습 기록으로 저장할 수 있어요.' : '사진을 올려야 채점할 수 있어요.';
+            const input = document.getElementById('dictation-photo-input'), preview = document.getElementById('dictation-photo-preview'), ocr = document.getElementById('dictation-ocr-text'); input.value = ''; preview.src = ''; preview.classList.add('hidden'); ocr.value = '';
+            renderDictationSessionList(); showTopLevelSection('dictation-workspace-section'); setTimeout(() => window.playDictationPrompt(), 300);
+        }
+        function renderBankList(rootId, items, emptyText) { const root = document.getElementById(rootId); if (!root) return; root.innerHTML = items.length ? items.map((item) => `<div class="rounded-2xl border-2 border-red-100 bg-red-50/40 p-4"><div class="text-lg font-black text-[#2c3e50]">${item.sentence}</div><div class="text-xs text-gray-500 font-bold mt-1">오답 ${item.wrongCount || 0}회 · 정답 ${item.correctCount || 0}회</div></div>`).join('') : `<div class="text-gray-400 font-bold text-center py-8">${emptyText}</div>`; }
+        function renderMyDictationSection() {
+            const label = document.getElementById('my-dictation-progress-label'); if (label) label.innerText = currentUserDictationStep < 0 ? '받아쓰기 새싹' : `받아쓰기 ${currentUserDictationStep}회 완료`;
+            renderBankList('dictation-wrong-bank-list', dictationPortfolio.wrongBank || [], '아직 오답 문장이 없어요.'); renderBankList('dictation-completed-bank-list', dictationPortfolio.completedBank || [], '아직 완료 문장이 없어요.');
+            const root = document.getElementById('my-dictation-list'); if (!root) return; const missions = Object.values(dictationPortfolio.missions || {}).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))).slice(0, 20);
+            root.innerHTML = missions.length ? missions.map((record, index) => `<div class="korean-embed-card p-5 bg-red-50 border-red-100"><div class="text-sm font-black text-red-500">미션 ${missions.length - index}</div><div class="text-xl font-black text-[#2c3e50]">${record.correctCount || 0}/${record.total || 0}개 정답</div><p class="text-sm text-gray-500 mt-1">${(record.savedAt || '').slice(0, 10)} · 오답 ${record.wrongCount || 0}개</p>${record.photo ? `<img src="${record.photo}" alt="받아쓰기 기록" class="w-full h-36 object-contain bg-white rounded-2xl border mt-4">` : ''}</div>`).join('') : '<div class="text-center text-gray-400 font-bold py-10 md:col-span-2">아직 미션 기록이 없어요.</div>';
+        }
+        window.openMyDictationFromDashboard = function() { renderMyDictationSection(); showTopLevelSection('my-dictation-section'); }
+        window.openTodayDictationActivity = function() { if (isDictationMissionLocked()) { showModal('받아쓰기 미션이 잠겨 있어요. 단어 은행 촬영을 먼저 해주세요.'); openDictationBankCamera(); return; } configureDictationWorkspace(createDictationMissionSession(), { badge: '오늘의 미션', title: '받아쓰기 미션' }); }
+        window.openLevelDictationActivity = function() { window.openTodayDictationActivity(); }
+        window.openDictationItem = function() { window.openTodayDictationActivity(); }
+        window.openAiWordPracticeActivity = function() { window.openDictationPracticeActivity(); }
+        window.openDictationPracticeActivity = function(filter = 'all') {
+            const wrong = filter === 'completed' ? [] : (dictationPortfolio.wrongBank || []); const done = filter === 'wrong' ? [] : (dictationPortfolio.completedBank || []);
+            const items = [...wrong, ...done].slice(0, 20).map((item) => ({ sentence: item.sentence, source: item.correctCount >= 3 ? 'completed-bank' : 'wrong-bank' }));
+            if (!items.length) { items.push(...(dictationPortfolio.koreanBank?.sentences || []).slice(0, 10).map((sentence) => ({ sentence, source: 'bank-sentence' }))); items.push(...(dictationPortfolio.koreanBank?.words || []).slice(0, 10).map((_, i) => ({ sentence: makeSentenceFromWords(dictationPortfolio.koreanBank.words, i), source: 'generated-word' }))); }
+            if (!items.length) { showModal('연습할 문장이 아직 없어요. 단어 은행 촬영을 먼저 해주세요.'); openDictationBankCamera(); return; }
+            configureDictationWorkspace({ kind: 'practice', items, currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() }, { badge: '받아쓰기 연습하기', title: '받아쓰기 연습하기', desc: '오답/완료/단어 은행 문장을 보고 따라 써요.' });
+        }
+        window.openDictationBankCamera = function() {
+            configureDictationWorkspace({ kind: 'bank-camera', items: [{ sentence: '사진을 찍어 단어 은행을 만들어요.', source: 'bank-camera' }], currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() }, { badge: '단어 은행 촬영', title: '국어 은행 사진 촬영', desc: '책이나 공책 사진을 찍으면 요소와 OCR 단어를 단어 은행/문장 은행에 저장해요.' });
+            document.getElementById('dictation-bank-save-btn').classList.remove('hidden'); document.getElementById('dictation-grade-btn').classList.add('hidden'); document.getElementById('dictation-session-list').innerHTML = '<div class="bg-red-50 rounded-3xl p-6 text-center font-bold text-gray-600">사진을 촬영하면 OCR 글자를 추출해요. 추출 글자를 고친 뒤 저장하세요.</div>';
+        }
+        async function runDictationOcr(file) {
+            const fallbackText = '나무 학교 친구 마음 생각 책 공책 선생님 오늘 공부\n나는 학교에서 책을 읽어요.';
+            try { if (!window.Tesseract) await new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; script.onload = resolve; script.onerror = reject; document.head.appendChild(script); }); const result = await window.Tesseract.recognize(file, 'kor+eng'); return result?.data?.text?.trim() || fallbackText; } catch (error) { console.warn('dictation OCR fallback', error); return fallbackText; }
+        }
+        document.getElementById('dictation-photo-input').addEventListener('change', async (event) => {
+            const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { const preview = document.getElementById('dictation-photo-preview'); preview.src = reader.result; preview.classList.remove('hidden'); }; reader.readAsDataURL(file);
+            document.getElementById('dictation-photo-hint').innerText = '사진에서 글자를 읽는 중이에요...'; const text = await runDictationOcr(file); document.getElementById('dictation-ocr-text').value = text; document.getElementById('dictation-photo-hint').innerText = activeDictationSession?.kind === 'bank-camera' ? '추출된 글자를 확인하고 단어 은행에 저장하세요.' : '사진이 올라갔어요. 이제 채점할 수 있어요.';
         });
-
+        window.saveDictationBankPhoto = async function() {
+            const text = document.getElementById('dictation-ocr-text').value; const extracted = extractKoreanBankFromText(text);
+            if (!extracted.words.length && !extracted.sentences.length) { showModal('사진에서 저장할 단어를 찾지 못했어요. 추출 글자를 직접 적어주세요.'); return; }
+            mergeKoreanBank(extracted); dictationPortfolio.captures = [{ text, words: extracted.words, sentences: extracted.sentences, photo: document.getElementById('dictation-photo-preview').src || '', savedAt: new Date().toISOString() }, ...(dictationPortfolio.captures || [])].slice(0, 20); dictationPortfolio.dictationLocked = false;
+            await persistDictationData(); showModal(`단어 ${extracted.words.length}개, 문장 ${extracted.sentences.length}개를 국어 은행에 저장했어요. 받아쓰기 잠금이 해제됐어요!`);
+        }
+        function normalizeForGrade(text) { return String(text || '').replace(/[^가-힣0-9]/g, '').trim(); }
+        function gradeDictationSession(ocrText) { const normalizedOcr = normalizeForGrade(ocrText); return (activeDictationSession?.items || []).map((item) => { const target = normalizeForGrade(item.sentence); return { sentence: item.sentence, source: item.source, correct: Boolean(target && normalizedOcr.includes(target)), target }; }); }
         window.revealDictationAnswer = function() {
-            const preview = document.getElementById('dictation-photo-preview');
-            if (!preview.src) {
-                showModal('공책 사진을 먼저 올려주세요.');
-                return;
-            }
-            document.getElementById('dictation-answer-box').classList.remove('hidden');
-            document.getElementById('dictation-save-btn').classList.remove('hidden');
-            document.getElementById('dictation-photo-hint').innerText = 'AI 분석 채점은 다음 단계에서 연결하고, 지금은 정답을 보고 스스로 확인해요.';
+            const preview = document.getElementById('dictation-photo-preview'); if (!preview.src) { showModal('공책 사진을 먼저 올려주세요.'); return; } if (!activeDictationSession || activeDictationSession.kind === 'bank-camera') return;
+            const ocrText = document.getElementById('dictation-ocr-text').value; activeDictationSession.graded = activeDictationSession.kind === 'practice' ? activeDictationSession.items.map((item) => ({ sentence: item.sentence, source: item.source, correct: true, practiceOnly: true })) : gradeDictationSession(ocrText);
+            const correctCount = activeDictationSession.graded.filter((item) => item.correct).length; document.getElementById('dictation-answer-box').classList.remove('hidden'); document.getElementById('dictation-save-btn').classList.remove('hidden');
+            document.getElementById('dictation-answer-text').innerHTML = activeDictationSession.graded.map((item, index) => `<div class="rounded-2xl p-3 mb-2 ${item.correct ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}"><span class="font-black">${index + 1}. ${item.correct ? '정답' : '오답/확인 필요'}</span> ${item.sentence}</div>`).join('') + `<div class="mt-3 text-red-500 font-black">총 ${correctCount}/${activeDictationSession.graded.length}개 정답</div>`;
+            document.getElementById('dictation-photo-hint').innerText = '결과를 확인한 뒤 오답/완료 은행에 저장하세요.'; renderDictationSessionList();
         }
-
+        function upsertWrongOrCompleted(result, now) {
+            const wrongBank = [...(dictationPortfolio.wrongBank || [])]; const completedBank = [...(dictationPortfolio.completedBank || [])]; const removeFrom = (arr, sentence) => arr.filter((item) => item.sentence !== sentence);
+            for (const graded of result) { const sentence = cleanKoreanSentence(graded.sentence); const existingWrong = wrongBank.find((item) => item.sentence === sentence); const existingDone = completedBank.find((item) => item.sentence === sentence);
+                if (graded.correct) { const item = existingWrong || existingDone || { sentence, source: graded.source, wrongCount: 0, correctCount: 0, savedAt: now }; item.correctCount = (item.correctCount || 0) + 1; item.lastTriedAt = now; if (item.correctCount >= 3 || !existingWrong) { completedBank.splice(0, completedBank.length, ...removeFrom(completedBank, sentence)); completedBank.unshift(item); wrongBank.splice(0, wrongBank.length, ...removeFrom(wrongBank, sentence)); } else if (existingWrong) { existingWrong.correctCount = item.correctCount; existingWrong.lastTriedAt = now; } }
+                else { const item = existingWrong || { sentence, source: graded.source, wrongCount: 0, correctCount: 0, savedAt: now }; item.wrongCount = (item.wrongCount || 0) + 1; item.lastTriedAt = now; if (!existingWrong) wrongBank.unshift(item); completedBank.splice(0, completedBank.length, ...removeFrom(completedBank, sentence)); }
+            }
+            dictationPortfolio.wrongBank = wrongBank.sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0)).slice(0, 100); dictationPortfolio.completedBank = completedBank.slice(0, 150);
+        }
         window.completeDictationItem = async function() {
-            if (!activeDictationItem) return;
-            const photo = document.getElementById('dictation-photo-preview').src;
-            const now = new Date().toISOString();
-            if (activeDictationItem.isAiWord) {
-                dictationPortfolio.aiWords = [{ prompt: activeDictationItem.prompt, photo, savedAt: now }, ...(dictationPortfolio.aiWords || [])].slice(0, 20);
-            } else {
-                dictationPortfolio.missions = {
-                    ...dictationPortfolio.missions,
-                    [activeDictationItem.step]: { prompt: activeDictationItem.prompt, photo, savedAt: now }
-                };
-                currentUserDictationStep = Math.max(currentUserDictationStep, activeDictationItem.step);
-            }
-            if (currentUserId) {
-                await setDoc(doc(db, 'users', currentUserId), {
-                    currentDictationStep: currentUserDictationStep,
-                    dictationPortfolio
-                }, { merge: true });
-            }
-            showModal('받아쓰기 기록을 저장했어요.');
+            if (!activeDictationSession?.graded) { showModal('먼저 사진 촬영 후 채점하기를 눌러주세요.'); return; }
+            const now = new Date().toISOString(); const photo = document.getElementById('dictation-photo-preview').src;
+            if (activeDictationSession.kind !== 'practice') { upsertWrongOrCompleted(activeDictationSession.graded, now); const correctCount = activeDictationSession.graded.filter((item) => item.correct).length; currentUserDictationStep += 1; dictationPortfolio.hasCompletedOnce = true; dictationPortfolio.dictationLocked = true; dictationPortfolio.missions = { ...(dictationPortfolio.missions || {}), [now]: { total: activeDictationSession.graded.length, correctCount, wrongCount: activeDictationSession.graded.length - correctCount, items: activeDictationSession.graded, photo, savedAt: now } }; await persistDictationData(); showModal(`받아쓰기 결과를 저장했어요. 정답 ${correctCount}개! 다음 받아쓰기는 새 사진을 찍어야 열려요.`); }
+            else { dictationPortfolio.aiWords = [{ prompt: activeDictationSession.items.map((item) => item.sentence).join(' / '), photo, savedAt: now, practice: true }, ...(dictationPortfolio.aiWords || [])].slice(0, 20); await persistDictationData(); showModal('연습 기록을 저장했어요.'); }
         }
+        window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [], sentences: [] }; showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">국어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto">${(bank.words || []).map((word) => `<span class="px-3 py-1 rounded-full bg-red-50 text-red-500 font-bold">${word}</span>`).join('') || '<span class="text-gray-400">아직 단어가 없어요.</span>'}</div></div><div><div class="font-black text-red-500 mb-2">문장 은행 ${bank.sentences.length}개</div><div class="space-y-2 max-h-56 overflow-y-auto">${(bank.sentences || []).map((sentence) => `<div class="p-3 rounded-2xl bg-gray-50 font-bold text-gray-600">${sentence}</div>`).join('') || '<div class="text-gray-400">아직 문장이 없어요.</div>'}</div></div></div>`); }
 
-        window.openFindMistakesActivity = function() {
-            showTopLevelSection('spelling-quiz-section');
-            generateSpellingQuestion();
-        }
-
-        window.generateSpellingQuestion = async function() {
-            activeSpellingQuestion = await createSpellingQuestion();
-            const root = document.getElementById('spelling-quiz-options');
-            document.getElementById('spelling-quiz-feedback').classList.add('hidden');
-            root.innerHTML = activeSpellingQuestion.options.map((text, index) => `
-                <button class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${text}</button>
-            `).join('');
-        }
-
+        window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
+        window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${text}</button>`).join(''); }
         async function createSpellingQuestion() {
-            try {
-                const prompt = '초등학생용 맞춤법/문법 객관식 문제를 JSON으로 만들어줘. 문항 4개 중 하나만 틀린 문장. 형식 {"options":["","","",""],"answerIndex":0,"reason":""}';
-                const payload = { contents: [{ role: 'user', parts: [{ text: prompt }]}], generationConfig: { responseMimeType: 'application/json' } };
-                const res = await fetch('/.netlify/functions/generatePlan', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'gemini', payload })
-                });
-                if (!res.ok) throw new Error(`generatePlan ${res.status}`);
-                const data = await res.json();
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                const parsed = JSON.parse(text);
-                if (Array.isArray(parsed.options) && parsed.options.length === 4 && Number.isInteger(parsed.answerIndex)) {
-                    return parsed;
-                }
-                throw new Error('bad spelling quiz');
-            } catch {
-                const fallback = spellingFallbackQuestions[spellingFallbackIndex % spellingFallbackQuestions.length];
-                spellingFallbackIndex += 1;
-                return fallback;
-            }
+            try { const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 10).join(', '); const prompt = `초등학생용 맞춤법/문법 객관식 문제를 JSON으로 만들어줘. 가능하면 다음 국어 단어 은행을 반영해: ${bankWords}. 문항 4개 중 하나만 틀린 문장. 형식 {"options":["","","",""],"answerIndex":0,"reason":""}`; const payload = { contents: [{ role: 'user', parts: [{ text: prompt }]}], generationConfig: { responseMimeType: 'application/json' } }; const res = await fetch('/.netlify/functions/generatePlan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'gemini', payload }) }); if (!res.ok) throw new Error(`generatePlan ${res.status}`); const data = await res.json(); const text = data?.candidates?.[0]?.content?.parts?.[0]?.text; const parsed = JSON.parse(text); if (Array.isArray(parsed.options) && parsed.options.length === 4 && Number.isInteger(parsed.answerIndex)) return parsed; throw new Error('bad spelling quiz'); }
+            catch { const fallback = spellingFallbackQuestions[spellingFallbackIndex % spellingFallbackQuestions.length]; spellingFallbackIndex += 1; return fallback; }
         }
-
-        window.checkSpellingAnswer = function(index) {
-            if (!activeSpellingQuestion) return;
-            const buttons = document.querySelectorAll('#spelling-quiz-options .btn-choice');
-            buttons.forEach((button, buttonIndex) => {
-                button.disabled = true;
-                if (buttonIndex === activeSpellingQuestion.answerIndex) {
-                    button.classList.add('!bg-green-100', '!border-green-400');
-                }
-            });
-            const isCorrect = index === activeSpellingQuestion.answerIndex;
-            const feedback = document.getElementById('spelling-quiz-feedback');
-            feedback.classList.remove('hidden');
-            feedback.innerHTML = `
-                <div class="text-xl font-black ${isCorrect ? 'text-green-600' : 'text-red-500'}">${isCorrect ? '정답이에요!' : '아쉬워요. 초록색 문장이 틀린 문장이에요.'}</div>
-                <div class="mt-3 text-2xl font-black text-[#2c3e50]">${activeSpellingQuestion.options[activeSpellingQuestion.answerIndex]}</div>
-                <p class="mt-3 text-gray-600 font-bold">${activeSpellingQuestion.reason || '틀린 부분을 바르게 고쳐 읽어봐요.'}</p>
-            `;
-        }
+        window.checkSpellingAnswer = function(index) { if (!activeSpellingQuestion) return; const buttons = document.querySelectorAll('#spelling-quiz-options .btn-choice'); buttons.forEach((button, buttonIndex) => { button.disabled = true; if (buttonIndex === activeSpellingQuestion.answerIndex) button.classList.add('!bg-green-100', '!border-green-400'); }); const isCorrect = index === activeSpellingQuestion.answerIndex; const feedback = document.getElementById('spelling-quiz-feedback'); feedback.classList.remove('hidden'); feedback.innerHTML = `<div class="text-xl font-black ${isCorrect ? 'text-green-600' : 'text-red-500'}">${isCorrect ? '정답이에요!' : '아쉬워요. 초록색 문장이 틀린 문장이에요.'}</div><div class="mt-3 text-2xl font-black text-[#2c3e50]">${activeSpellingQuestion.options[activeSpellingQuestion.answerIndex]}</div><p class="mt-3 text-gray-600 font-bold">${activeSpellingQuestion.reason || '틀린 부분을 바르게 고쳐 읽어봐요.'}</p>`; }
 
         // Literacy Activities Stubs (Level 4)
         window.openMyLiteracyFromDashboard = function() {
