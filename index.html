@@ -5553,6 +5553,9 @@
                     window.completedChoices = [];
                 }
 
+                const sectionTitle = step === 7 && safeIndex === 1
+                    ? '기본 모음 전체 따라 쓰기'
+                    : (step === 7 && safeIndex === 2 ? detail.sections[1].title : section.title);
                 let contentHtml = '';
                 if (safeIndex === 0) {
                     contentHtml = `
@@ -5564,13 +5567,23 @@
                             <div class="mt-4">
                                 <div class="learning-card-label">📖 배움 글자</div>
                                 <div class="word-chip-wrap">
-                                    ${practiceFlow.choices.map((word) => `<span class="word-chip" onclick="speakChar('${word}')">${word}</span>`).join('')}
+                                    ${practiceFlow.choices.map((word) => `<button type="button" class="word-chip" onclick="speakChar('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}
                                 </div>
                             </div>
                         </div>
                     `;
                 } else if (safeIndex === 1) {
-                    contentHtml = `
+                    contentHtml = step === 7 ? `
+                        <div class="learning-write-card" style="margin-top:0;">
+                            <div class="practice-step-title mb-3"><span class="practice-step-number">2</span> 쓰기</div>
+                            <div class="trace-canvas-wrap">
+                                <div class="trace-canvas-title">✍️ 아 야 어 여 오 / 요 우 유 으 이</div>
+                                <canvas id="trace-writing-canvas" class="trace-writing-canvas double-row" data-guide="${practiceFlow.choices.join('/')}"></canvas>
+                                <div class="trace-canvas-help">찬찬한글 예시처럼 순서대로 읽고, 획순을 따라 써요.</div>
+                            </div>
+                            <button class="trace-clear-button mt-3" onclick="resetTraceWritingCanvas()">다시 쓰기</button>
+                        </div>
+                    ` : `
                         <div class="learning-practice-card">
                             <div class="learning-card-label practice-label">문제 활동</div>
                             <div class="grid gap-3">
@@ -5601,7 +5614,35 @@
                         </div>
                     `;
                 } else {
-                    contentHtml = `
+                    contentHtml = step === 7 ? `
+                        <div class="learning-practice-card">
+                            <div class="learning-card-label practice-label">읽기 · 듣고 찾기</div>
+                            <div class="grid gap-3">
+                                <div class="practice-step-box">
+                                    <div class="practice-step-title"><span class="practice-step-number">3</span> 단어 읽기</div>
+                                    <div class="word-chip-wrap">
+                                        ${['아이', '여우', '오이', '우유'].map((word) => `<button type="button" class="word-chip" onclick="speakChar('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="practice-step-box">
+                                    <div class="practice-step-title"><span class="practice-step-number">4</span> 단어 속 모음 찾기</div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        ${[
+                                            ['아이', '아 · 이'],
+                                            ['여우', '여 · 우'],
+                                            ['오이', '오 · 이'],
+                                            ['우유', '우 · 유']
+                                        ].map(([word, vowels]) => `
+                                            <button type="button" class="listen-chip-button" onclick="speakChar('${word}')">
+                                                <span class="block text-2xl">${word}</span>
+                                                <span class="block text-sm text-orange-600 mt-1">${vowels}</span>
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
                         <div class="learning-write-card" style="margin-top:0;">
                             <div class="practice-step-title mb-3"><span class="practice-step-number">3</span> 쓰기</div>
                             <div class="trace-canvas-wrap">
@@ -5617,7 +5658,7 @@
                 document.getElementById('learning-detail-content').innerHTML = `
                     <div class="learning-pane p-5">
                         <div class="activity-section-title mb-4">
-                            <span class="text-xl font-bold text-stone-700">${section.title}</span>
+                            <span class="text-xl font-bold text-stone-700">${sectionTitle}</span>
                         </div>
                         <div class="learning-activity-layout" style="grid-template-columns: 1fr;">
                             ${contentHtml}
@@ -5642,7 +5683,7 @@
 
             const nextBtn = document.getElementById('learning-detail-next-btn');
             const completeBtn = document.getElementById('learning-detail-complete-btn');
-            const isLast = safeIndex === detail.sections.length - 1;
+            const isLast = safeIndex === totalSections - 1;
             nextBtn.classList.toggle('hidden', isLast);
             completeBtn.classList.toggle('hidden', !isLast);
             requestAnimationFrame(initializeTraceWritingCanvas);
