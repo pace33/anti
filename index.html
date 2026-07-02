@@ -124,6 +124,125 @@
             border-radius: 999px;
             margin-bottom: 10px;
         }
+        .vowel-origin-scene {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+            padding: 14px;
+            border: 2px solid rgba(70, 179, 165, 0.2);
+            border-radius: 20px;
+            background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+        }
+        .vowel-origin-card {
+            position: relative;
+            min-height: 150px;
+            border: 2px solid rgba(148, 163, 184, 0.24);
+            border-radius: 18px;
+            background: #ffffff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 14px 10px;
+            cursor: pointer;
+            animation: originCardGlow 6s ease-in-out infinite;
+        }
+        .vowel-origin-card:nth-child(2) { animation-delay: 1.4s; }
+        .vowel-origin-card:nth-child(3) { animation-delay: 2.8s; }
+        .origin-sky-band {
+            position: absolute;
+            inset: 0 0 44%;
+            background: linear-gradient(180deg, #dff7ff 0%, #f8fffb 100%);
+        }
+        .origin-ground-band {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 46%;
+            background: linear-gradient(180deg, #e8f8df 0%, #cdeec0 100%);
+        }
+        .origin-ground-line {
+            position: absolute;
+            left: 23%;
+            right: 23%;
+            bottom: 54px;
+            height: 12px;
+            border-radius: 999px;
+            background: #8b5a2b;
+            transform-origin: left center;
+            animation: originGroundDraw 6s ease-in-out infinite;
+        }
+        .origin-person-shape {
+            position: absolute;
+            bottom: 48px;
+            width: 18px;
+            height: 66px;
+            border-radius: 999px;
+            background: #2563eb;
+            animation: originPersonRise 6s ease-in-out infinite;
+        }
+        .origin-person-shape::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: -24px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #f4b183;
+            border: 3px solid #7c2d12;
+            transform: translateX(-50%);
+        }
+        .origin-sun-dot {
+            position: absolute;
+            top: 30px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #a83b12;
+            box-shadow: 0 0 0 10px rgba(251, 146, 60, 0.14);
+            animation: originSunFloat 6s ease-in-out infinite;
+        }
+        .origin-letter {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            color: #9a3412;
+            font-size: 2.1rem;
+            font-weight: 900;
+            line-height: 1;
+            z-index: 1;
+        }
+        .origin-card-label {
+            position: relative;
+            z-index: 1;
+            margin-top: auto;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.82);
+            color: #2c3e50;
+            font-weight: 900;
+            font-size: 1rem;
+        }
+        @keyframes originCardGlow {
+            0%, 18%, 100% { border-color: rgba(148, 163, 184, 0.24); transform: translateY(0); }
+            8% { border-color: rgba(70, 179, 165, 0.7); transform: translateY(-3px); }
+        }
+        @keyframes originGroundDraw {
+            0%, 4% { transform: scaleX(0); opacity: 0; }
+            12%, 100% { transform: scaleX(1); opacity: 1; }
+        }
+        @keyframes originPersonRise {
+            0%, 24% { transform: translateY(16px); opacity: 0; }
+            34%, 100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes originSunFloat {
+            0%, 48% { transform: translateY(20px) scale(0.82); opacity: 0; }
+            60%, 100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
         .practice-label {
             color: #f97316;
             background: rgba(249, 115, 22, 0.12);
@@ -371,6 +490,48 @@
         }
         @media (max-width: 600px) {
             .learning-activity-layout { grid-template-columns: 1fr; }
+            .vowel-origin-scene {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                padding: 8px;
+            }
+            .vowel-origin-card {
+                min-height: 108px;
+                border-radius: 14px;
+                padding: 8px;
+            }
+            .origin-letter {
+                top: 10px;
+                left: 10px;
+                font-size: 1.55rem;
+            }
+            .origin-ground-line {
+                bottom: 38px;
+                left: 28%;
+                right: 28%;
+                height: 9px;
+            }
+            .origin-person-shape {
+                bottom: 34px;
+                width: 13px;
+                height: 46px;
+            }
+            .origin-person-shape::before {
+                top: -18px;
+                width: 18px;
+                height: 18px;
+                border-width: 2px;
+            }
+            .origin-sun-dot {
+                top: 20px;
+                width: 34px;
+                height: 34px;
+                box-shadow: 0 0 0 7px rgba(251, 146, 60, 0.14);
+            }
+            .origin-card-label {
+                padding: 5px 10px;
+                font-size: 0.85rem;
+            }
         }
         /* 이해하기 2 자음/모음 선택 스타일 */
         .syllable-consonant {
@@ -4747,6 +4908,32 @@
             return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
         }
 
+        function renderVowelOriginScene() {
+            return `<div class="vowel-origin-scene" aria-label="땅, 사람, 하늘에서 모음이 시작되는 그림">
+                <button type="button" class="vowel-origin-card" onclick="speakChar('ㅡ')" aria-label="땅, 으 소리 듣기">
+                    <div class="origin-sky-band"></div>
+                    <div class="origin-ground-band"></div>
+                    <div class="origin-letter">ㅡ</div>
+                    <div class="origin-ground-line"></div>
+                    <div class="origin-card-label">땅</div>
+                </button>
+                <button type="button" class="vowel-origin-card" onclick="speakChar('ㅣ')" aria-label="사람, 이 소리 듣기">
+                    <div class="origin-sky-band"></div>
+                    <div class="origin-ground-band"></div>
+                    <div class="origin-letter">ㅣ</div>
+                    <div class="origin-person-shape"></div>
+                    <div class="origin-card-label">사람</div>
+                </button>
+                <button type="button" class="vowel-origin-card" onclick="speakChar('●')" aria-label="하늘 점 소리 듣기">
+                    <div class="origin-sky-band"></div>
+                    <div class="origin-ground-band"></div>
+                    <div class="origin-letter"><span class="small-dot-char">●</span></div>
+                    <div class="origin-sun-dot"></div>
+                    <div class="origin-card-label">하늘</div>
+                </button>
+            </div>`;
+        }
+
         // 이해하기 2: 자음 전체 선택 + 음성
         window.selectConsonants = function() {
             document.querySelectorAll('.syllable-consonant').forEach(el => el.classList.add('selected-consonant'));
@@ -5553,6 +5740,7 @@
                         <div class="learning-main-card">
                             ${step === 7 ? '' : `
                                 <div class="learning-card-label">📖 이해하기</div>
+                                ${step === 1 ? renderVowelOriginScene() : ''}
                                 <div class="grid gap-3">
                                     ${introHtml}
                                 </div>
