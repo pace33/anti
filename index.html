@@ -5595,14 +5595,14 @@
         }
 
         function drawTraceNumber(ctx, x, y, number, scale) {
-            const r = Math.max(9, scale * 0.07);
+            const r = Math.max(10, scale * 0.085);
             ctx.save();
             ctx.fillStyle = '#fb923c';
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.font = `900 ${Math.max(10, r * 1.15)}px 'Outfit', sans-serif`;
+            ctx.font = `900 ${Math.max(10, r * 0.95)}px 'Outfit', sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(String(number), x, y + 0.5);
@@ -5611,7 +5611,7 @@
 
         function drawTraceArrowHead(ctx, fromX, fromY, toX, toY, scale) {
             const angle = Math.atan2(toY - fromY, toX - fromX);
-            const size = Math.max(8, scale * 0.08);
+            const size = Math.max(10, scale * 0.11);
             ctx.beginPath();
             ctx.moveTo(toX, toY);
             ctx.lineTo(toX - Math.cos(angle - Math.PI / 6) * size, toY - Math.sin(angle - Math.PI / 6) * size);
@@ -5632,14 +5632,14 @@
             ctx.globalAlpha = alpha;
             ctx.strokeStyle = color;
             ctx.fillStyle = color;
-            ctx.lineWidth = Math.max(8, scale * (options.completed ? 0.055 : 0.075));
+            ctx.lineWidth = Math.max(11, scale * (options.completed ? 0.075 : 0.105));
 
             if (stroke.dot) {
                 const p = tx(stroke.points[0]);
-                if (!options.completed) drawTraceNumber(ctx, p.x - scale * 0.12, p.y - scale * 0.12, number, scale);
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, Math.max(10, scale * 0.1), 0, Math.PI * 2);
                 ctx.fill();
+                if (!options.completed) drawTraceNumber(ctx, p.x, p.y, number, scale);
                 ctx.restore();
                 return;
             }
@@ -5655,12 +5655,12 @@
                 ctx.ellipse(x, y, radiusX, radiusY, 0, -Math.PI * 0.75, Math.PI * 1.35);
                 ctx.stroke();
                 if (!options.completed) drawTraceArrowHead(ctx, x + radiusX * 0.55, y + radiusY * 0.8, x + radiusX * 0.85, y + radiusY * 0.35, scale);
+                if (!options.completed) drawTraceNumber(ctx, x - radiusX * 0.8, y - radiusY * 0.9, number, scale);
                 ctx.restore();
                 return;
             }
 
             const points = stroke.points.map(tx);
-            if (!options.completed) drawTraceNumber(ctx, points[0].x, points[0].y, number, scale);
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
             points.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
@@ -5668,6 +5668,7 @@
             const prev = points[Math.max(0, points.length - 2)];
             const last = points[points.length - 1];
             if (!options.completed) drawTraceArrowHead(ctx, prev.x, prev.y, last.x, last.y, scale);
+            if (!options.completed) drawTraceNumber(ctx, points[0].x, points[0].y, number, scale);
             ctx.restore();
         }
 
