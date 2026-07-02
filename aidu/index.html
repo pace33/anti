@@ -5625,20 +5625,13 @@
                                     </div>
                                 </div>
                                 <div class="practice-step-box">
-                                    <div class="practice-step-title"><span class="practice-step-number">4</span> 단어 속 모음 찾기</div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        ${[
-                                            ['아이', '아 · 이'],
-                                            ['여우', '여 · 우'],
-                                            ['오이', '오 · 이'],
-                                            ['우유', '우 · 유']
-                                        ].map(([word, vowels]) => `
-                                            <button type="button" class="listen-chip-button" onclick="speakChar('${word}')">
-                                                <span class="block text-2xl">${word}</span>
-                                                <span class="block text-sm text-orange-600 mt-1">${vowels}</span>
-                                            </button>
-                                        `).join('')}
+                                    <div class="practice-step-title"><span class="practice-step-number">4</span> 단어 쓰기</div>
+                                    <div class="trace-canvas-wrap">
+                                        <div class="trace-canvas-title">✍️ 아이 여우 오이 우유</div>
+                                        <canvas id="trace-writing-canvas" class="trace-writing-canvas" data-guide="아이/여우/오이/우유"></canvas>
+                                        <div class="trace-canvas-help">단어를 누르면 소리를 듣고, 획순에 맞게 따라 써요.</div>
                                     </div>
+                                    <button class="trace-clear-button mt-3" onclick="resetTraceWritingCanvas()">다시 쓰기</button>
                                 </div>
                             </div>
                         </div>
