@@ -1614,40 +1614,31 @@
         const learningDetailData = {
             1: {
                 title: '배움 1: 모음의 시작',
-                subtitle: '모음이 우리 삶에서 시작된다는 내용을 익혀요.',
+                subtitle: '땅, 사람, 하늘 모양에서 모음이 시작된다는 내용을 익혀요.',
                 sections: [
                     {
                         label: '이해하기',
                         title: '모음은 우리가 살고 있는 세상에서 시작해요.',
                         cards: [
-                            'ㅣ+ㆍ→ㅏ',
-                            'ㆍ+ㅣ→ㅓ'
+                            'ㅡ는 땅을 나타내요. 소리는 “으”예요.',
+                            'ㅣ는 서 있는 사람을 나타내요. 소리는 “이”예요.',
+                            '●는 하늘 또는 둥근 해를 나타내요.'
                         ]
                     },
                     {
-                        label: '이렇게 글자가 만들어져요',
-                        title: '기본 모양을 합쳐 글자를 만들어요.',
+                        label: '듣고 찾기',
+                        title: '소리를 듣고 기본 모양을 찾아요.',
                         cards: [
-                            'ㅣ + ㆍ → ㅏ',
-                            'ㆍ + ㅣ → ㅓ'
+                            '선생님이 말한 소리를 듣고 ㅡ, ㅣ, ● 중에서 알맞은 모양을 골라요.',
+                            '땅, 사람, 하늘 모양을 보며 모음이 시작되는 원리를 익혀요.'
                         ]
                     },
                     {
-                        label: '단어 예시',
-                        title: '모음이 들어간 쉬운 말을 찾아요',
+                        label: '쓰기',
+                        title: '하늘, 땅, 사람 모양 따라 쓰기',
                         cards: [
-                            'ㅏ가 들어간 말: 아기, 나무, 사과',
-                            'ㅓ가 들어간 말: 버스, 거미, 어머니',
-                            '활동: 말 속에서 ㅏ와 ㅓ 소리가 들리는 부분을 손가락으로 짚어 봐요.'
-                        ]
-                    },
-                    {
-                        label: '쓰기 활동',
-                        title: '모양을 보고 공책에 따라 써요',
-                        cards: [
-                            '공책에 ㆍ, ㅣ, ㅡ를 크게 한 번씩 쓰고 이름을 말해요.',
-                            'ㅏ와 ㅓ를 세 번씩 따라 쓰며 “아, 어”라고 읽어요.',
-                            '빈칸 활동: ㅣ + ㆍ = __ / ㆍ + ㅣ = __ 를 완성해요.'
+                            'ㅡ, ㅣ, ●를 크게 한 번씩 따라 써요.',
+                            '쓰기 순서를 보며 땅, 사람, 하늘 모양을 천천히 써요.'
                         ]
                     }
                 ]
@@ -3233,7 +3224,7 @@
         };
 
         const learningPracticeFlows = {
-            1: { listen: 'ㅡ, ㅣ, 해. 모음은 우리가 살고 있는 세상에서 시작해요.', choices: ['ㅡ', 'ㅣ', '●', 'ㅏ'], writeLines: ['ㅡ ㅡ ㅡ ㅡ', 'ㅣ ㅣ ㅣ ㅣ'] },
+            1: { listen: 'ㅡ, ㅣ, 하늘 점. 모음은 땅, 사람, 하늘에서 시작해요.', choices: ['ㅡ', 'ㅣ', '●'], writeLines: ['ㅡ ㅡ ㅡ ㅡ', 'ㅣ ㅣ ㅣ ㅣ', '● ● ● ●'] },
             2: { listen: 'ㅏ, ㅓ. ㅏ는 밝은 느낌, ㅓ는 어두운 느낌이에요.', choices: ['ㅏ', 'ㅓ', 'ㅡ', 'ㅣ'], writeLines: ['ㅏ ㅏ ㅏ ㅏ', 'ㅓ ㅓ ㅓ ㅓ'] },
             3: { listen: 'ㅗ, ㅜ. ㅗ는 올라가는 느낌, ㅜ는 내려가는 느낌이에요.', choices: ['ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'], writeLines: ['ㅗ ㅗ ㅗ ㅗ', 'ㅜ ㅜ ㅜ ㅜ'] },
             4: { listen: 'ㅡ, ㅣ. 가로선이 ㅡ, 세로선이 ㅣ예요.', choices: ['ㅡ', 'ㅣ', 'ㅗ', 'ㅏ'], writeLines: ['ㅡ ㅡ ㅡ ㅡ', 'ㅣ ㅣ ㅣ ㅣ'] },
@@ -4590,8 +4581,12 @@
 
         window.speakTextKo = speakTextKo;
 
+        function spokenLabelForChar(char) {
+            return char === '●' || char === 'ㆍ' ? '하늘 점' : char;
+        }
+
         window.speakChar = function(char) {
-            speakTextKo(char);
+            speakTextKo(spokenLabelForChar(char));
         };
 
         // 결합 카드 클릭 시 애니메이션 재시작 + 순차적 자모음 음성(므, 아, 마) 출력
@@ -5464,7 +5459,7 @@
         // ② 듣고 알맞은 글자 선택 (소리 듣기 퀴즈 게임)
         window.playChoiceQuizSound = function() {
             if (window.currentChoiceQuizTarget) {
-                speakTextKo(window.currentChoiceQuizTarget);
+                speakTextKo(spokenLabelForChar(window.currentChoiceQuizTarget));
             }
         };
 
