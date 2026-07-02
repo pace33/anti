@@ -805,6 +805,180 @@
         .mouth-arr { font-size: 1.3rem; color: #94a3b8; font-weight: bold; opacity:0; animation: mouthStepIn 0.3s ease-out forwards; }
         .mouth-text { font-size: 0.95rem; color: #78350f; line-height: 1.4; margin-top: 4px; }
         @keyframes mouthStepIn { from{opacity:0;transform:scale(0.5) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+        /* --- Dashboard Stage Grid Board --- */
+        .dashboard-stage-board {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 28px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 30px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .dashboard-stage-card.level-card {
+            flex: 1;
+            min-width: 220px;
+            max-width: 260px;
+            height: 350px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 4px solid #ffffff;
+            border-radius: 45px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 34px 20px;
+            box-sizing: border-box;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(85, 179, 70, 0.12),
+                        0 5px 15px rgba(0, 0, 0, 0.05),
+                        inset 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+
+        .dashboard-stage-card.level-card:hover {
+            transform: translateY(-20px) scale(1.04);
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #ffffff;
+            box-shadow: 0 30px 50px rgba(85, 179, 70, 0.25),
+                        0 10px 25px rgba(0, 0, 0, 0.08),
+                        0 0 30px rgba(255, 255, 255, 0.8);
+        }
+
+
+        .dashboard-stage-card.level-card:active {
+            transform: translateY(-10px) scale(0.98);
+            box-shadow: 0 15px 25px rgba(85, 179, 70, 0.2);
+            transition: all 0.1s ease;
+        }
+
+        .dashboard-stage-card .stage-badge {
+            position: absolute;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 86px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            background: rgba(70, 179, 165, 0.14);
+            color: #159b8f;
+            font-size: 0.92rem;
+            font-weight: 900;
+            border: 2px solid rgba(70, 179, 165, 0.22);
+        }
+
+        .dashboard-stage-card .stage-emoji {
+            font-size: 4.8rem;
+            line-height: 1;
+            margin: 34px 0 22px;
+            filter: drop-shadow(0 12px 18px rgba(44, 62, 80, 0.14));
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .dashboard-stage-card.level-card:hover .stage-emoji {
+            transform: scale(1.18) rotate(6deg) translateY(-8px);
+        }
+
+        .dashboard-stage-card.level-card .level-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            color: #1a5b4a;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: color 0.3s ease;
+        }
+
+        .dashboard-stage-card.level-card .level-desc {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #2c3e50;
+            opacity: 0.9;
+        }
+
+        .dashboard-stage-card .stage-note {
+            margin-top: 14px;
+            min-height: 42px;
+            color: #64748b;
+            font-size: 0.92rem;
+            font-weight: 800;
+            line-height: 1.45;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-stage-board {
+                gap: 20px;
+                padding: 20px;
+                max-width: 950px;
+            }
+            .dashboard-stage-card.level-card {
+                height: 330px;
+                padding: 30px 15px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-stage-board {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                justify-items: center;
+                gap: 24px;
+                padding-top: 140px;
+                padding-bottom: 100px;
+                overflow-y: auto;
+                max-width: 600px;
+            }
+            .dashboard-stage-card.level-card {
+                width: 100%;
+                max-width: 250px;
+                height: 290px;
+                padding: 25px 15px;
+            }
+            .dashboard-stage-card .stage-emoji { font-size: 4rem; margin: 30px 0 18px; }
+            .dashboard-stage-card.level-card .level-title {
+                font-size: 1.9rem;
+                margin-bottom: 6px;
+            }
+            .dashboard-stage-card.level-card .level-desc {
+                font-size: 1.05rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .dashboard-stage-board {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                max-width: 290px;
+                padding-top: 150px;
+            }
+            .dashboard-stage-card.level-card {
+                width: 100%;
+                max-width: 260px;
+                height: 250px;
+                padding: 20px;
+            }
+            .dashboard-stage-card .stage-emoji { font-size: 3.4rem; margin: 28px 0 14px; }
+            .dashboard-stage-card.level-card .level-title {
+                font-size: 1.6rem;
+                margin-bottom: 4px;
+            }
+            .dashboard-stage-card.level-card .level-desc {
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -817,7 +991,7 @@
     </audio>
 
     <div class="premium-card fade-in-up" id="main-container">
-        
+
         <!-- [1. 시작 화면 섹션] -->
         <div id="start-screen" class="view-section" style="background-image: url('aiedu_korean_nature_bg.png')">
             <span class="page-number">01</span>
@@ -847,7 +1021,7 @@
 
             <!-- 로그인 카드 영역 -->
             <div class="flex flex-col items-center justify-center h-full">
-                
+
                 <div class="relative"> <!-- 카드와 책갈피를 묶는 새로운 컨테이너 -->
                     <!-- 오른쪽 책갈피 탭 (카드와 형제 관계로 이동) -->
                     <div class="login-tabs-container">
@@ -862,7 +1036,7 @@
                                 <h2 class="text-3xl font-bold text-[#45963a]">학생 로그인</h2>
                                 <p class="text-gray-500 mt-1">에이두 국어로 떠나요!</p>
                             </div>
-                        
+
                         <div class="flex justify-center items-center gap-4 mb-6">
                             <div id="password-display" class="stitched flex-1 bg-white text-[#45963a] font-bold text-center h-20 flex items-center justify-center text-5xl rounded-3xl border-2 border-dashed border-[#b7e4a1] shadow-inner"></div>
                             <button class="btn-primary w-28 h-20 rounded-3xl text-xl font-black shadow-lg flex items-center justify-center whitespace-nowrap" onclick="checkStudentLogin()">시작</button>
@@ -990,32 +1164,36 @@
                 </div>
             </div>
 
-            <!-- 레벨 선택기 (Slider) -->
-            <div class="flex-1 relative flex items-center justify-center overflow-hidden px-12">
-                <button class="slider-btn left-btn" onclick="prevLevel()">◀</button>
-                
-                <div class="w-full max-w-[1000px] overflow-hidden py-10">
-                    <div class="level-swiper" id="level-swiper">
-                        <div class="level-card" onclick="openActivityPage('drawing')" id="card-level-1">
-                            <div class="level-title">1단계</div>
-                            <div class="level-desc">에이두 그리기</div>
-                        </div>
-                        <div class="level-card" onclick="openActivityPage('hangul')" id="card-level-2">
-                            <div class="level-title">2단계</div>
-                            <div class="level-desc">에이두 한글 해득</div>
-                        </div>
-                        <div class="level-card" onclick="openActivityPage('dictation')" id="card-level-3">
-                            <div class="level-title">3단계</div>
-                            <div class="level-desc">에이두 받아쓰기</div>
-                        </div>
-                        <div class="level-card" onclick="openActivityPage('literacy')" id="card-level-4">
-                            <div class="level-title">4단계</div>
-                            <div class="level-desc">에이두 문해력</div>
-                        </div>
-                    </div>
+            <!-- 메인 단계 선택: 1·2·3·4단계 분리 -->
+            <div class="dashboard-stage-board" aria-label="에이두 국어 단계 선택">
+                <div class="dashboard-stage-card level-card" onclick="openActivityPage('drawing')" id="card-level-1" role="button" tabindex="0">
+                    <div class="stage-badge">STEP 1</div>
+                    <div class="stage-emoji" aria-hidden="true">🎨</div>
+                    <div class="level-title">1단계</div>
+                    <div class="level-desc">에이두 그리기</div>
+                    <p class="stage-note">그림 미션 · 스케치북 · 도안 해금</p>
                 </div>
-
-                <button class="slider-btn right-btn" onclick="nextLevel()">▶</button>
+                <div class="dashboard-stage-card level-card" onclick="openActivityPage('hangul')" id="card-level-2" role="button" tabindex="0">
+                    <div class="stage-badge">STEP 2</div>
+                    <div class="stage-emoji" aria-hidden="true">🔤</div>
+                    <div class="level-title">2단계</div>
+                    <div class="level-desc">에이두 한글 해득</div>
+                    <p class="stage-note">자음 · 모음 · 낱말 익히기</p>
+                </div>
+                <div class="dashboard-stage-card level-card" onclick="openActivityPage('dictation')" id="card-level-3" role="button" tabindex="0">
+                    <div class="stage-badge">STEP 3</div>
+                    <div class="stage-emoji" aria-hidden="true">✍️</div>
+                    <div class="level-title">3단계</div>
+                    <div class="level-desc">에이두 받아쓰기</div>
+                    <p class="stage-note">단어 은행 · 오답 연습 · 받아쓰기</p>
+                </div>
+                <div class="dashboard-stage-card level-card" onclick="openActivityPage('literacy')" id="card-level-4" role="button" tabindex="0">
+                    <div class="stage-badge">STEP 4</div>
+                    <div class="stage-emoji" aria-hidden="true">📚</div>
+                    <div class="level-title">4단계</div>
+                    <div class="level-desc">에이두 문해력</div>
+                    <p class="stage-note">독해 · 어휘 · 문장 만들기</p>
+                </div>
             </div>
 
             <!-- 하단 고정 버튼 -->
@@ -1602,7 +1780,7 @@
                 </div>
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
-            
+
             <div class="learning-pane p-8 min-h-[600px]">
                 <div class="flex gap-4 mb-8" id="letter-top-categories">
                     <button data-category="letter" class="letter-top-btn nav-tab active">글자 연습</button>
@@ -1625,7 +1803,7 @@
                             <div id="letter-words" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
-                    
+
                     <div class="korean-embed-card h-[320px] relative p-2 overflow-hidden shadow-inner">
                         <canvas id="letter-writing-canvas" class="korean-embed-canvas"></canvas>
                         <div id="letter-feedback" class="absolute inset-0 hidden items-center justify-center text-6xl font-black"></div>
@@ -1671,7 +1849,7 @@
                 <div class="text-3xl font-black text-[#2c3e50]">낱말 쓰기 퀴즈</div>
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
-            
+
             <div class="learning-pane p-8 min-h-[600px]">
                 <div id="word-write-mode-tabs" class="flex gap-4 mb-8">
                     <button data-mode="syllable" class="word-mode-tab nav-tab active">낱말 연습</button>
@@ -1711,18 +1889,18 @@
                 <div class="text-3xl font-black text-[#2c3e50]">낱말 듣기 퀴즈</div>
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
-            
+
             <div class="learning-pane p-8 min-h-[600px]">
                 <div id="listening-setup">
                     <div class="text-2xl font-bold text-[#2c3e50] mb-6">1. 학습 단계 선택하기</div>
                     <div id="listening-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
-                    
+
                     <div class="flex items-center gap-4 mb-10 p-6 bg-gray-50 rounded-2xl">
                         <span class="text-xl font-bold text-[#2c3e50]">문제 수:</span>
                         <input type="number" id="listening-question-count" value="10" min="1" max="20" class="premium-input bg-white w-32 text-center">
                         <span class="text-xl">문제</span>
                     </div>
-                    
+
                     <button id="listening-start" class="btn-primary w-full py-5 text-2xl bg-[#ff9d76] shadow-[#ff9d7633]">퀴즈 시작!</button>
                 </div>
 
@@ -1732,7 +1910,7 @@
                         <button id="listening-back" class="btn-outline px-6 py-2 text-base">돌아가기</button>
                     </div>
                     <p id="listening-msg" class="text-3xl font-black text-center mb-10 text-[#2c3e50]">소리를 듣고 정답을 골라봐!</p>
-                    
+
                     <div class="flex justify-center mb-10">
                         <button id="listening-play" class="btn-primary py-6 px-12 text-2xl flex items-center gap-3">
                             <span>▶</span> 소리 다시 듣기
@@ -1779,7 +1957,7 @@
                 <h3 class="text-3xl font-black text-[#2c3e50]">🏫 우리 학급 관리</h3>
                 <button class="btn-outline px-4 py-2" onclick="closeClassManagement()">닫기</button>
             </div>
-            
+
             <div class="bg-gray-50 p-6 rounded-3xl mb-8 flex gap-4">
                 <input type="text" id="new-student-name" placeholder="학생 이름을 입력하세요" class="premium-input bg-white">
                 <button class="btn-primary px-8" onclick="addStudentByTeacher()">학생 추가</button>
@@ -3741,7 +3919,7 @@
             currentUserRole = (userData?.role || 'student').toLowerCase();
             const rawLearningStep = Number(userData?.currentLearningStep);
             currentLearningStep = Number.isFinite(rawLearningStep) ? Math.max(-1, Math.floor(rawLearningStep)) : -1;
-            
+
             // Level Unlocking Logic
             // 인호 요청: 에이두 그리기/한글/받아쓰기/문해력 등 모든 상위 활동은 학생도 항상 열림.
             // 기존 데이터 서버의 unlockedLevels 값이 일부만 들어 있어도 잠금 모달을 띄우지 않는다.
@@ -3776,7 +3954,7 @@
             if (currentUserRole === 'teacher') {
                 currentUserDictationStep = Math.max(currentUserDictationStep, dictationItems.length);
             }
-            
+
             // Main Sidebar/Drawer Info
             document.getElementById('dashboard-account-name').innerText = name;
             document.getElementById('user-role-badge').innerText = currentUserRole === 'teacher' ? '선생님' : '학생';
@@ -3788,7 +3966,7 @@
             const headerName = document.getElementById('dashboard-account-name-header');
             const headerCoins = document.getElementById('dashboard-coins-header');
             const headerIcon = document.getElementById('dashboard-user-icon-header');
-            
+
             if (headerName) headerName.innerText = name;
             if (headerCoins) headerCoins.innerText = coins;
             if (headerIcon) headerIcon.innerText = icon;
@@ -3869,7 +4047,7 @@
 
         window.showLoginFromStart = function() {
             showTopLevelSection('login-section');
-            
+
             // 만약 이미 음악이 켜져 있다면 계속 유지, 꺼져 있다면 그대로 유지
         }
 
@@ -3897,7 +4075,7 @@
             const bgm = document.getElementById('bg-music');
             const icons = document.querySelectorAll('.mute-control-btn span');
             const btns = document.querySelectorAll('.mute-control-btn');
-            
+
             if (isMuted) {
                 bgm.volume = 0.3;
                 bgm.play().catch(e => console.log("Play blocked:", e));
@@ -4834,12 +5012,12 @@
                     globalTtsAudio = new Audio();
                 }
                 globalTtsAudio.pause();
-                
+
                 // 1. 온라인 Google Translate TTS 시도 (google-tts-api 패키지 규격의 MP3 오디오 스트림)
                 const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(processedText) + "&tl=ko&total=1&idx=0&textlen=" + processedText.length + "&client=tw-ob&prev=input";
                 globalTtsAudio.src = ttsUrl;
                 globalTtsAudio.playbackRate = 0.85; // 약간 천천히 읽기 (교육용)
-                
+
                 let fallbackTriggered = false;
                 const triggerFallback = () => {
                     if (fallbackTriggered) return;
@@ -4848,7 +5026,7 @@
                 };
 
                 globalTtsAudio.onerror = triggerFallback;
-                
+
                 const playPromise = globalTtsAudio.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
@@ -4915,7 +5093,7 @@
             try {
                 speechSynthesis.cancel();
             } catch (e) {}
-            
+
             setTimeout(() => {
                 try {
                     speechSynthesis.speak(utt);
@@ -5698,11 +5876,11 @@ ${text}
                 if (mode === 'syllable') root.innerHTML = `<button data-sub="no_jongsung" class="btn-outline px-4 py-1 text-base ${sub === 'no_jongsung' ? 'active' : ''}">받침 없음</button><button data-sub="with_jongsung" class="btn-outline px-4 py-1 text-base ${sub === 'with_jongsung' ? 'active' : ''}">받침 있음</button>`;
                 else if (mode === 'word') root.innerHTML = `<button data-sub="two_letters" class="btn-outline px-4 py-1 text-base ${sub === 'two_letters' ? 'active' : ''}">2글자</button><button data-sub="three_letters" class="btn-outline px-4 py-1 text-base ${sub === 'three_letters' ? 'active' : ''}">3글자</button>`;
                 else root.innerHTML = '';
-                root.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { 
+                root.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
                     root.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
                     b.classList.add('active');
-                    sub = b.dataset.sub; 
-                    nextWord(); 
+                    sub = b.dataset.sub;
+                    nextWord();
                 }));
             }
             async function nextWord() {
@@ -5780,11 +5958,11 @@ ${text}
             const categories = document.getElementById('listening-categories');
             categories.innerHTML = Object.entries(labels).map(([k,v]) => `<button data-cat="${k}" class="btn-outline px-3 py-2 text-sm ${k==='cat5'?'active':''}">${v}</button>`).join('');
             let currentCategory = 'cat5', total = 10, idx = 0, score = 0, quiz = [], answer = '';
-            
-            categories.querySelectorAll('button').forEach((b)=>b.addEventListener('click', ()=>{ 
-                categories.querySelectorAll('button').forEach((x)=>x.classList.remove('active')); 
-                b.classList.add('active'); 
-                currentCategory = b.dataset.cat; 
+
+            categories.querySelectorAll('button').forEach((b)=>b.addEventListener('click', ()=>{
+                categories.querySelectorAll('button').forEach((x)=>x.classList.remove('active'));
+                b.classList.add('active');
+                currentCategory = b.dataset.cat;
             }));
 
             const speak = (text) => { if (!text) return; speakTextKo(text); };
@@ -5887,7 +6065,7 @@ ${text}
                 const isLongLabel = ['complexVowel', 'complexBatchim'].includes(key);
                 const tabTextSizeClass = isLongLabel ? 'text-base md:text-lg' : 'text-lg md:text-xl';
                 return `
-                <button class="nav-tab ${tabTextSizeClass} whitespace-nowrap ${key === activeUnitKey ? 'active' : ''}" 
+                <button class="nav-tab ${tabTextSizeClass} whitespace-nowrap ${key === activeUnitKey ? 'active' : ''}"
                     style="${key === activeUnitKey ? `background:var(--mint-light); color:var(--mint-primary); border-color:var(--mint-primary);` : ''}"
                     onclick="selectLearningUnit('${key}')">
                     ${meta.label.replace(' 단원', '')}
@@ -6033,7 +6211,7 @@ ${text}
             const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
             const practiceFlow = learningPracticeFlows[step];
             const isActivityFlow = visibleActivitySteps.includes(step) && practiceFlow;
-            
+
             const totalSections = isActivityFlow ? 3 : detail.sections.length;
             const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
             currentLearningDetailSectionIndex = safeIndex;
@@ -6044,7 +6222,7 @@ ${text}
                 ? '아, 야, 어, 여, 오, 요, 우, 유, 으, 이를 순서대로 읽어요.'
                 : detail.subtitle;
             document.getElementById('learning-detail-subtitle').innerText = `${subtitleText} (${safeIndex + 1}/${totalSections})`;
-            
+
             const activityCards = section.cards || [];
             const introCards = activityCards.filter((card) => !/쓰기|따라 쓰|빈칸|고르기|활동/.test(card));
 
@@ -7201,11 +7379,11 @@ ${text}
             const tbody = document.getElementById('student-list-tbody');
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="3" class="text-center py-10">목록을 불러오는 중...</td></tr>';
-            
+
             try {
                 const classRef = doc(db, 'classes', currentUserId);
                 const classSnap = await getDoc(classRef);
-                
+
                 if (!classSnap.exists() || !classSnap.data().students || classSnap.data().students.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-gray-400">학급에 등록된 학생이 없어요.</td></tr>';
                     return;
@@ -7215,13 +7393,13 @@ ${text}
                 tbody.innerHTML = '';
 
                 const studentSnaps = await Promise.all(studentIds.map(sid => getDoc(doc(db, 'users', sid))));
-                
+
                 studentSnaps.forEach(docSnap => {
                     if (!docSnap.exists()) return;
                     const student = docSnap.data();
                     const sid = docSnap.id;
                     const unlocked = student.unlockedLevels || [2];
-                    
+
                     let toggleHtml = '';
                     for (let i = 1; i <= 4; i++) {
                         const active = unlocked.includes(i);
@@ -7253,7 +7431,7 @@ ${text}
                 // Find student by name (simplified for now, ideally search by userCode)
                 const q = query(collection(db, 'users'), where('role', '==', 'student'), where('name', '==', name));
                 const snap = await getDocs(q);
-                
+
                 if (snap.empty) {
                     showModal('해당 이름의 학생을 찾을 수 없어요. 학생이 먼저 회원가입을 해야 합니다.');
                     return;
@@ -7261,7 +7439,7 @@ ${text}
 
                 const studentDoc = snap.docs[0];
                 await updateDoc(studentDoc.ref, { teacherId: currentUserId });
-                
+
                 document.getElementById('new-student-name').value = '';
                 showModal(`${name} 학생을 우리 반으로 등록했어요!`);
                 await loadStudents();
@@ -7302,7 +7480,7 @@ ${text}
                 currentUserId = user.uid;
                 let userRef = doc(db, 'users', user.uid);
                 let userSnap = await getDoc(userRef);
-                
+
                 // 만약 구글 로그인 직후라 문서가 아직 없다면, 선생님으로 간주하고 생성 대기 또는 직접 생성
                 if (!userSnap.exists()) {
                     // 구글 로그인의 경우 이메일이 존재함. 이를 통해 선생님 계정을 자동 생성하거나 확인
@@ -7318,13 +7496,13 @@ ${text}
 
                 const userData = userSnap.data();
                 updateAccountName(userData.name || user.displayName || '이름 없음');
-                
+
                 // 선생님인 경우 학습 단계를 34단계로 고정
                 if ((userData.role || '').toLowerCase() === 'teacher' && Number(userData.currentLearningStep) !== 34) {
                     await setDoc(doc(db, 'users', user.uid), { currentLearningStep: 34 }, { merge: true });
                     userData.currentLearningStep = 34;
                 }
-                
+
                 updateDashboardExperience(userData);
                 loginSuccess = true;
 
@@ -7356,7 +7534,7 @@ ${text}
             const gap = 30;
             const offset = -currentLevelIndex * (cardWidth + gap);
             swiper.style.transform = `translateX(${offset}px)`;
-            
+
             // 버튼 투명도 조절
             const prevBtn = document.querySelector('button[onclick="prevLevel()"]');
             const nextBtn = document.querySelector('button[onclick="nextLevel()"]');
@@ -7424,7 +7602,7 @@ ${text}
         window.openIconModal = function() {
             const grid = document.getElementById('icon-grid');
             grid.innerHTML = userIcons.map(icon => `
-                <div class="w-20 h-20 bg-gray-50 hover:bg-yellow-100 rounded-2xl flex items-center justify-center text-4xl cursor-pointer transition-all border-2 border-transparent hover:border-yellow-400" 
+                <div class="w-20 h-20 bg-gray-50 hover:bg-yellow-100 rounded-2xl flex items-center justify-center text-4xl cursor-pointer transition-all border-2 border-transparent hover:border-yellow-400"
                      onclick="selectIcon('${icon}')">
                     ${icon}
                 </div>
@@ -7459,13 +7637,13 @@ ${text}
                 <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">⚙️</div>
                 <h3 class="text-2xl font-black text-[#2c3e50]">설정</h3>
             </div>
-            
+
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-bold text-gray-400 mb-2 ml-1">이름 변경</label>
                     <input type="text" id="settings-name-input" class="premium-input bg-gray-50 border-transparent focus:bg-white" placeholder="이름을 입력하세요">
                 </div>
-                
+
                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                     <div class="flex items-center gap-3">
                         <span id="settings-sound-icon" class="text-2xl">🔊</span>
@@ -7489,7 +7667,7 @@ ${text}
                 <h3 class="text-2xl font-black text-[#2c3e50]">아이콘 선택</h3>
                 <p class="text-gray-400 font-medium">마음에 드는 아이콘을 골라보세요!</p>
             </div>
-            
+
             <div class="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto p-2 custom-scrollbar" id="icon-grid">
                 <!-- Emojis will be populated here -->
             </div>
