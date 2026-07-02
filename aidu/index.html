@@ -5548,7 +5548,10 @@
             const section = detail.sections[Math.min(safeIndex, detail.sections.length - 1)];
 
             document.getElementById('learning-detail-title').innerText = detail.title;
-            document.getElementById('learning-detail-subtitle').innerText = `${detail.subtitle} (${safeIndex + 1}/${totalSections})`;
+            const subtitleText = step === 7 && safeIndex === 0
+                ? '아, 야, 어, 여, 오, 요, 우, 유, 으, 이를 순서대로 읽어요.'
+                : detail.subtitle;
+            document.getElementById('learning-detail-subtitle').innerText = `${subtitleText} (${safeIndex + 1}/${totalSections})`;
             
             const activityCards = section.cards || [];
             const introCards = activityCards.filter((card) => !/쓰기|따라 쓰|빈칸|고르기|활동/.test(card));
@@ -5585,15 +5588,17 @@
                 if (safeIndex === 0) {
                     contentHtml = `
                         <div class="learning-main-card">
-                            <div class="learning-card-label">📖 이해하기</div>
-                            <div class="grid gap-3">
-                                ${introHtml}
-                            </div>
-                            <div class="mt-4">
-                                <div class="learning-card-label">📖 배움 글자</div>
-                                <div class="${wordChipWrapClass}">
-                                    ${practiceFlow.choices.map((word) => `<button type="button" class="${wordChipClass}" onclick="speakChar('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}
+                            ${step === 7 ? '' : `
+                                <div class="learning-card-label">📖 이해하기</div>
+                                <div class="grid gap-3">
+                                    ${introHtml}
                                 </div>
+                            `}
+                            <div class="${step === 7 ? '' : 'mt-4'}">
+                            <div class="learning-card-label">📖 배움 글자</div>
+                            <div class="${wordChipWrapClass}">
+                                ${practiceFlow.choices.map((word) => `<button type="button" class="${wordChipClass}" onclick="speakChar('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}
+                            </div>
                             </div>
                         </div>
                     `;
