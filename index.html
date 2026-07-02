@@ -708,30 +708,31 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <!-- 상단 주요 활동 (2개) -->
+                <!-- 상단 주요 활동: 도형 미션과 AI 그림은 같은 가로 길이 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff]" onclick="openMyDrawingFromDashboard()">
-                        <div class="text-7xl mb-6">🎨</div>
-                        <div class="text-5xl font-black text-[#2c3e50]">나의 그림</div>
-                        <p class="text-gray-500 mt-2 text-lg">다양한 그림을 그려보고 그림을 해제해요</p>
-                    </div>
                     <div class="grid-item p-10 flex flex-col items-center justify-center bg-purple-50" onclick="openTodayDrawingActivity()">
                         <div class="aiedu-badge bg-purple-500 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도형 미션</h3>
                         <p class="text-2xl text-purple-500 font-bold">동그라미·세모·꾸불선을 정확히 따라 그려요!</p>
                     </div>
+                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#f3e8ff]" onclick="openAiDrawingQuizActivity()">
+                        <div class="text-7xl mb-6">🤖</div>
+                        <div class="text-5xl font-black text-[#2c3e50]">AI 그림</div>
+                        <p class="text-gray-500 mt-2 text-lg">부족한 도형이 들어간 해금 도안을 그려요</p>
+                    </div>
                 </div>
 
-                <!-- 하단 보조 활동 (4개) -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col md:col-span-3" onclick="openSketchbookActivity()">
+                <!-- 하단 활동: 그림 미션 이어하기와 스케치북 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-[#fdf0ff]" onclick="openMyDrawingFromDashboard()">
+                        <div class="text-5xl mb-3">🎨</div>
+                        <div class="text-xl font-bold">그림 미션</div>
+                        <p id="drawing-mission-next-label" class="text-sm text-purple-500 font-black mt-2">1단계 할 차례예요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openSketchbookActivity()">
                         <div class="text-5xl mb-3">📒</div>
                         <div class="text-xl font-bold">스케치북</div>
                         <p class="text-sm text-gray-500 mt-2">해금한 도안을 골라 자유롭게 그려요</p>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openAiDrawingQuizActivity()">
-                        <div class="text-5xl mb-3">🤖</div>
-                        <div class="text-xl font-bold">AI 그림</div>
                     </div>
                 </div>
             </div>
@@ -899,16 +900,16 @@
             </div>
         </div>
 
-        <!-- [그리기 시리즈: 나의 그림] -->
+        <!-- [그리기 시리즈: 그림 미션] -->
         <div id="my-drawing-section" class="fade-in hidden">
             <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between">
                 <button class="flex flex-col gap-1 items-start text-left" onclick="goDrawingDashboard()">
                     <span class="aiedu-badge bg-purple-500">에이두 그리기 시리즈</span>
-                    <h1 class="text-4xl font-bold text-[#7c3aed] tracking-tight">나의 그림</h1>
+                    <h1 class="text-4xl font-bold text-[#7c3aed] tracking-tight">그림 미션</h1>
                 </button>
                 <div class="text-right">
                     <div class="text-2xl font-bold text-gray-800 sync-account-name">이름</div>
-                    <div id="my-drawing-progress-label" class="text-lg text-purple-600 font-semibold">그리기 새싹</div>
+                    <div id="my-drawing-progress-label" class="text-lg text-purple-600 font-semibold">그림 미션 1단계 할 차례</div>
                 </div>
             </div>
 
@@ -930,7 +931,7 @@
 
             <div class="stitched p-6 bg-white">
                 <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-2xl font-black text-[#2c3e50]">단계별 나의 그림 기록</h3>
+                    <h3 class="text-2xl font-black text-[#2c3e50]">단계별 그림 미션 기록</h3>
                     <button class="btn-outline px-5 py-2 text-sm" onclick="goDrawingDashboard()">그리기 대시보드로</button>
                 </div>
                 <div id="my-drawing-mission-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[430px] overflow-y-auto pr-2 custom-scrollbar"></div>
@@ -3648,6 +3649,7 @@
         }
 
         window.goDrawingDashboard = function goDrawingDashboard() {
+            updateDrawingDashboardPreview();
             showTopLevelSection('drawing-activities-section');
         }
 
@@ -3813,9 +3815,12 @@
             const nextMission = getNextDrawingMission();
             const progressLabel = document.getElementById('my-drawing-progress-label');
             const nextTitle = document.getElementById('my-drawing-next-title');
+            const dashboardNextLabel = document.getElementById('drawing-mission-next-label');
             const completedCount = document.getElementById('my-drawing-completed-count');
             const freeCount = document.getElementById('my-drawing-free-count');
-            if (progressLabel) progressLabel.innerText = currentUserDrawingStep < 0 ? '그리기 새싹' : `그리기 ${currentUserDrawingStep}단계`;
+            const nextStepText = nextMission ? `${nextMission.step}단계 할 차례예요` : '모든 그림 미션 완료!';
+            if (progressLabel) progressLabel.innerText = nextMission ? `그림 미션 ${nextStepText}` : '그림 미션 완료';
+            if (dashboardNextLabel) dashboardNextLabel.innerText = nextStepText;
             if (nextTitle) nextTitle.innerText = nextMission ? `${nextMission.step}단계: ${nextMission.title}` : '모든 미션 완료';
             if (completedCount) completedCount.innerText = Object.keys(drawingPortfolio.missions || {}).length;
             if (freeCount) freeCount.innerText = drawingPortfolio.free?.length || 0;
@@ -3859,7 +3864,7 @@
             drawingActiveTemplate = template;
             drawingActiveTargetTemplate = shapeMissionTemplates.find((item) => item.key === template) || drawingTemplateLibrary.find((item) => item.key === template) || drawingTemplateLibrary[0];
             drawingUserTracePoints = [];
-            document.getElementById('drawing-workspace-badge').innerText = aiQuiz ? 'AI 그림' : (missionStep ? `나의 그림 ${missionStep}단계` : (mode === 'shape-mission' ? '도형 미션' : title));
+            document.getElementById('drawing-workspace-badge').innerText = aiQuiz ? 'AI 그림' : (missionStep ? `그림 미션 ${missionStep}단계` : (mode === 'shape-mission' ? '도형 미션' : title));
             document.getElementById('drawing-workspace-title').innerText = title;
             document.getElementById('drawing-workspace-desc').innerText = desc;
             document.getElementById('drawing-template-panel').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
@@ -3957,7 +3962,7 @@
             }
             const unlocked = getUnlockedDrawingTemplates();
             if (!unlocked.includes(template)) {
-                showModal('아직 해금되지 않은 도안이에요. 나의 그림 단계를 완료하면 열려요!');
+                showModal('아직 해금되지 않은 도안이에요. 그림 미션 단계를 완료하면 열려요!');
                 return;
             }
             drawingActiveTemplate = template;
@@ -4261,13 +4266,15 @@
         window.saveCurrentDrawing = async function() {
             const image = captureDrawingImage();
             const now = new Date().toISOString();
-            const record = buildDrawingRecord({ image, kind: drawingWorkspaceMissionStep ? 'mission' : 'sketchbook', missionStep: drawingWorkspaceMissionStep, savedAt: now });
-            if (drawingWorkspaceMissionStep) drawingPortfolio.missions = { ...drawingPortfolio.missions, [drawingWorkspaceMissionStep]: record };
-            else drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
+            const kind = drawingWorkspaceMissionStep ? 'mission-draft' : 'sketchbook';
+            const record = buildDrawingRecord({ image, kind, missionStep: drawingWorkspaceMissionStep, savedAt: now });
+            // 저장은 현재 활동 화면에 그대로 머물며 작품만 보관한다.
+            // 그림 미션 단계 완료/해금/이어하기 변경은 완료하기 버튼에서만 처리한다.
+            drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
             await persistDrawingData();
             await mirrorDrawingToAiedueDataServer(record);
             updateDrawingDashboardPreview();
-            showModal('그림을 저장했어요!');
+            showModal(drawingWorkspaceMissionStep ? '현재 그림 미션 작품을 저장했어요. 계속 그릴 수 있어요!' : '그림을 저장했어요!');
         }
 
         window.completeTodayDrawingMission = async function() {

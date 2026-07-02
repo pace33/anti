@@ -8,6 +8,8 @@ $files = @(
 
 $requiredMarkers = @(
   'openSketchbookActivity',
+  'drawing-mission-next-label',
+  'mission-draft',
   'drawingBrushSizeMap',
   'selectDrawingBrushSize(1)',
   'selectDrawingBrushSize(2)',
