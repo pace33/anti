@@ -4151,32 +4151,46 @@
             const canvas = document.getElementById('drawing-canvas');
             const rect = canvas.getBoundingClientRect();
             const template = drawingActiveTargetTemplate || drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
-            const threshold = Math.max(18, drawingBrushSize * 1.8);
+            // 도형 하나를 조금 건드린 것만으로 전체 도안이 통과되지 않도록
+            // 브러시가 커져도 판정 반경은 제한하고, 도형 인스턴스별 정확도를 따로 계산한다.
+            const threshold = Math.min(22, Math.max(10, drawingBrushSize * 0.9));
             const byShape = {};
+            const instances = [];
             let total = 0;
             let hit = 0;
-            (template.shapes || []).forEach((shape) => {
+            let accuracySum = 0;
+            let instanceCount = 0;
+            (template.shapes || []).forEach((shape, index) => {
                 const pts = getShapePoints(shape, rect.width, rect.height);
                 let shapeHit = 0;
                 pts.forEach((target) => {
                     const matched = drawingUserTracePoints.some((p) => Math.hypot(p.x - target.x, p.y - target.y) <= threshold);
                     if (matched) shapeHit += 1;
                 });
+                const instanceAccuracy = pts.length ? Math.round((shapeHit / pts.length) * 100) : 0;
                 total += pts.length;
                 hit += shapeHit;
+                accuracySum += instanceAccuracy;
+                instanceCount += 1;
                 const key = shape.shape;
-                byShape[key] = byShape[key] || { hit: 0, total: 0 };
+                byShape[key] = byShape[key] || { hit: 0, total: 0, accuracySum: 0, instanceCount: 0, instances: [] };
                 byShape[key].hit += shapeHit;
                 byShape[key].total += pts.length;
+                byShape[key].accuracySum += instanceAccuracy;
+                byShape[key].instanceCount += 1;
+                byShape[key].instances.push({ index, hit: shapeHit, total: pts.length, accuracy: instanceAccuracy });
+                instances.push({ shape: key, index, hit: shapeHit, total: pts.length, accuracy: instanceAccuracy });
             });
-            return { accuracy: total ? Math.round((hit / total) * 100) : 0, hit, total, byShape };
+            const accuracy = instanceCount ? Math.round(accuracySum / instanceCount) : 0;
+            return { accuracy, hit, total, byShape, instances };
         }
 
         function applyShapeAccuracyStats(result) {
             ensureDrawingPortfolioShapeFields();
             Object.entries(result.byShape || {}).forEach(([shapeKey, stat]) => {
-                const prev = drawingPortfolio.shapeStats[shapeKey] || { attempts: 0, bestAccuracy: 0, accuracySum: 0, accuracy: 0, pointsHit: 0, pointsTotal: 0 };
-                const acc = stat.total ? Math.round((stat.hit / stat.total) * 100) : 0;
+                const prev = drawingPortfolio.shapeStats[shapeKey] || { attempts: 0, bestAccuracy: 0, accuracySum: 0, accuracy: 0, pointsHit: 0, pointsTotal: 0, instanceCount: 0 };
+                // 같은 도형이 여러 개 있으면 해당 도안 안의 도형별 평균을 한 번의 시도값으로 반영한다.
+                const acc = stat.instanceCount ? Math.round(Number(stat.accuracySum || 0) / stat.instanceCount) : (stat.total ? Math.round((stat.hit / stat.total) * 100) : 0);
                 const attempts = Number(prev.attempts || 0) + 1;
                 const accuracySum = Number(prev.accuracySum || 0) + acc;
                 drawingPortfolio.shapeStats[shapeKey] = {
@@ -4184,8 +4198,9 @@
                     bestAccuracy: Math.max(Number(prev.bestAccuracy || 0), acc),
                     accuracySum,
                     accuracy: Math.round(accuracySum / attempts),
-                    pointsHit: Number(prev.pointsHit || 0) + stat.hit,
-                    pointsTotal: Number(prev.pointsTotal || 0) + stat.total,
+                    pointsHit: Number(prev.pointsHit || 0) + Number(stat.hit || 0),
+                    pointsTotal: Number(prev.pointsTotal || 0) + Number(stat.total || 0),
+                    instanceCount: Number(prev.instanceCount || 0) + Number(stat.instanceCount || 0),
                     lastAccuracy: acc,
                     updatedAt: new Date().toISOString()
                 };
