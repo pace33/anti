@@ -710,17 +710,10 @@
 
                 <!-- 하단 보조 활동 (4개) -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openFreeDrawingActivity()">
-                        <div class="text-5xl mb-3">✨</div>
-                        <div class="text-xl font-bold">자유 그리기</div>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openTraceDrawingActivity()">
-                        <div class="text-5xl mb-3">🖋️</div>
-                        <div class="text-xl font-bold">따라 그리기</div>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openColoringActivity()">
-                        <div class="text-5xl mb-3">🖍️</div>
-                        <div class="text-xl font-bold">색칠하기</div>
+                    <div class="grid-item p-6 text-center flex flex-col md:col-span-3" onclick="openSketchbookActivity()">
+                        <div class="text-5xl mb-3">📒</div>
+                        <div class="text-xl font-bold">스케치북</div>
+                        <p class="text-sm text-gray-500 mt-2">해금한 도안을 골라 자유롭게 그려요</p>
                     </div>
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openAiDrawingQuizActivity()">
                         <div class="text-5xl mb-3">🤖</div>
@@ -949,16 +942,22 @@
                             <div id="drawing-color-palette" class="grid grid-cols-5 gap-2"></div>
                         </div>
                         <div class="korean-embed-card p-4">
-                            <label for="drawing-brush-size" class="font-black text-[#2c3e50] block mb-3">붓 크기</label>
-                            <input id="drawing-brush-size" type="range" min="3" max="36" value="12" class="w-full">
-                            <div id="drawing-brush-size-label" class="text-sm text-gray-500 font-bold mt-2">12px</div>
+                            <div class="font-black text-[#2c3e50] block mb-3">붓 크기</div>
+                            <div id="drawing-brush-size-buttons" class="grid grid-cols-4 gap-2">
+                                <button class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(1)">1</button>
+                                <button class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(2)">2</button>
+                                <button class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(3)">3</button>
+                                <button class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(4)">4</button>
+                            </div>
+                            <div id="drawing-brush-size-label" class="text-sm text-gray-500 font-bold mt-2">2단계</div>
                         </div>
                         <div id="drawing-template-panel" class="korean-embed-card p-4 hidden">
-                            <div class="font-black text-[#2c3e50] mb-3">연습 모양</div>
-                            <div id="drawing-template-buttons" class="grid grid-cols-2 gap-2"></div>
+                            <div class="font-black text-[#2c3e50] mb-3">도안 선택</div>
+                            <div id="drawing-template-buttons" class="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto custom-scrollbar pr-1"></div>
                         </div>
                         <div class="grid grid-cols-1 gap-3">
                             <button id="drawing-save-btn" class="btn-primary bg-purple-500 shadow-purple-200" onclick="saveCurrentDrawing()">저장하기</button>
+                            <button id="drawing-friends-btn" class="btn-outline" onclick="openFriendsDrawingGallery()">친구들 그림 보기</button>
                             <button id="drawing-complete-mission-btn" class="btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden" onclick="completeTodayDrawingMission()">미션 완료</button>
                             <button class="btn-outline" onclick="clearDrawingCanvas()">지우기</button>
                         </div>
@@ -1359,7 +1358,7 @@
 
     <!-- 결과 모달 -->
     <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1000] p-4">
-        <div class="modal-content text-center max-w-md w-full scale-in">
+        <div class="modal-content text-center max-w-5xl w-full scale-in">
             <div class="text-5xl mb-6">📢</div>
             <h2 id="modal-message" class="text-2xl font-bold text-[#2c3e50] mb-10 leading-relaxed">메시지</h2>
             <button id="modal-confirm-btn" class="btn-primary w-full text-xl py-4" onclick="handleModalConfirm()">확인했습니다</button>
@@ -1551,6 +1550,9 @@
         }
         let activeUnitKey = 'vowel';
         let currentUserId = null;
+        let currentUserName = '이름 없음';
+        let currentUserIcon = '🐻';
+        let currentUserCoins = 0;
         let currentUnderstandingStep = 1;
         let currentLearningActivityStep = null;
         let currentLearningDetailSectionIndex = 0;
@@ -3357,9 +3359,14 @@
             if (currentUserRole === 'teacher') {
                 currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingMissions.length);
             }
+            currentUserName = name;
+            currentUserIcon = icon;
+            currentUserCoins = Number(coins) || 0;
             drawingPortfolio = {
                 missions: userData?.drawingPortfolio?.missions || {},
-                free: Array.isArray(userData?.drawingPortfolio?.free) ? userData.drawingPortfolio.free : []
+                free: Array.isArray(userData?.drawingPortfolio?.free) ? userData.drawingPortfolio.free : [],
+                unlockedTemplates: Array.isArray(userData?.drawingPortfolio?.unlockedTemplates) ? userData.drawingPortfolio.unlockedTemplates : [],
+                rewardedMilestones: Array.isArray(userData?.drawingPortfolio?.rewardedMilestones) ? userData.drawingPortfolio.rewardedMilestones : []
             };
             currentUserDictationStep = Number.isFinite(Number(userData?.currentDictationStep)) ? Math.max(-1, Math.floor(Number(userData.currentDictationStep))) : -1;
             dictationPortfolio = {
@@ -3659,30 +3666,62 @@
             showTopLevelSection('word-listening-quiz-section');
         }
 
-        const drawingMissions = [
-            { step: 1, title: '선으로 산책하기', type: 'trace', desc: '회색 직선과 꾸불꾸불선을 천천히 따라 그려요.', template: 'waves' },
-            { step: 2, title: '동그라미 친구', type: 'trace', desc: '동그라미와 타원을 따라 그리며 손 힘을 길러요.', template: 'circles' },
-            { step: 3, title: '세모 네모 마을', type: 'trace', desc: '세모, 네모, 집 모양을 따라 그려요.', template: 'shapes' },
-            { step: 4, title: '알록달록 꽃밭', type: 'coloring', desc: '꽃과 해 도안을 보고 원하는 색으로 칠해요.', template: 'flower' },
-            { step: 5, title: '내 마음 그림', type: 'free', desc: '오늘 마음을 자유롭게 그림으로 표현해요.', template: 'blank' }
+        const drawingTemplateLibrary = [
+            { key: 'blank', label: '빈 종이', type: 'free', emoji: '📄' },
+            { key: 'line', label: '곧은 선', type: 'trace', emoji: '➖' },
+            { key: 'waves', label: '꾸불선', type: 'trace', emoji: '〰️' },
+            { key: 'circles', label: '동그라미', type: 'trace', emoji: '⭕' },
+            { key: 'shapes', label: '도형 마을', type: 'trace', emoji: '🔺' },
+            { key: 'flower', label: '꽃밭', type: 'coloring', emoji: '🌸' },
+            { key: 'house', label: '우리 집', type: 'coloring', emoji: '🏠' },
+            { key: 'tree', label: '나무', type: 'coloring', emoji: '🌳' },
+            { key: 'butterfly', label: '나비', type: 'coloring', emoji: '🦋' },
+            { key: 'fish', label: '물고기', type: 'coloring', emoji: '🐟' },
+            { key: 'cat', label: '고양이', type: 'coloring', emoji: '🐱' },
+            { key: 'rabbit', label: '토끼', type: 'coloring', emoji: '🐰' },
+            { key: 'car', label: '자동차', type: 'coloring', emoji: '🚗' },
+            { key: 'rocket', label: '로켓', type: 'coloring', emoji: '🚀' },
+            { key: 'castle', label: '성', type: 'coloring', emoji: '🏰' },
+            { key: 'rainbow', label: '무지개', type: 'coloring', emoji: '🌈' },
+            { key: 'star', label: '별', type: 'trace', emoji: '⭐' },
+            { key: 'heart', label: '하트', type: 'trace', emoji: '💗' },
+            { key: 'face', label: '웃는 얼굴', type: 'trace', emoji: '😊' },
+            { key: 'mountain', label: '산', type: 'coloring', emoji: '⛰️' },
+            { key: 'sea', label: '바다', type: 'coloring', emoji: '🌊' },
+            { key: 'school', label: '학교', type: 'coloring', emoji: '🏫' },
+            { key: 'book', label: '책', type: 'coloring', emoji: '📚' },
+            { key: 'pencil', label: '연필', type: 'trace', emoji: '✏️' },
+            { key: 'cloud', label: '구름', type: 'coloring', emoji: '☁️' },
+            { key: 'sun', label: '해님', type: 'coloring', emoji: '☀️' },
+            { key: 'moon', label: '달님', type: 'coloring', emoji: '🌙' },
+            { key: 'train', label: '기차', type: 'coloring', emoji: '🚂' },
+            { key: 'boat', label: '배', type: 'coloring', emoji: '⛵' },
+            { key: 'dinosaur', label: '공룡', type: 'coloring', emoji: '🦕' }
         ];
 
-        const drawingTemplates = {
-            line: '선',
-            waves: '꾸불선',
-            circles: '동그라미',
-            shapes: '도형',
-            flower: '꽃밭',
-            house: '집'
-        };
+        const drawingTemplates = Object.fromEntries(drawingTemplateLibrary.map((item) => [item.key, item.label]));
+        const missionTitleWords = ['선 따라 걷기', '모양 찾기', '색 채우기', '상상 더하기', '배경 꾸미기', '친구 그리기', '이야기 그림', '나만의 작품'];
+        const drawingMissions = Array.from({ length: 100 }, (_, index) => {
+            const step = index + 1;
+            const template = drawingTemplateLibrary[(index % (drawingTemplateLibrary.length - 1)) + 1];
+            return {
+                step,
+                title: `${template.label} ${missionTitleWords[index % missionTitleWords.length]}`,
+                type: template.type,
+                desc: `${template.label} 도안을 보고 천천히 그린 뒤, 잘 그렸으면 완료해서 도안을 해금해요.`,
+                template: template.key
+            };
+        });
 
         const drawingColors = ['#111827', '#ef4444', '#f97316', '#facc15', '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff'];
+        const drawingBrushSizeMap = { 1: 4, 2: 9, 3: 16, 4: 26 };
         let drawingBrushColor = drawingColors[0];
-        let drawingBrushSize = 12;
+        let drawingBrushLevel = 2;
+        let drawingBrushSize = drawingBrushSizeMap[drawingBrushLevel];
         let drawingActiveTemplate = 'blank';
 
         function getNextDrawingMission() {
-            const nextStep = currentUserDrawingStep + 1;
+            const nextStep = Math.max(1, currentUserDrawingStep + 1);
             return drawingMissions.find((mission) => mission.step === nextStep) || null;
         }
 
@@ -3704,7 +3743,7 @@
             if (!root) return;
             root.innerHTML = drawingMissions.map((mission) => {
                 const record = drawingPortfolio.missions?.[mission.step];
-                const isOpen = currentUserRole === 'teacher' || mission.step <= currentUserDrawingStep + 1;
+                const isOpen = currentUserRole === 'teacher' || mission.step <= Math.max(1, currentUserDrawingStep + 1);
                 const isDone = Boolean(record);
                 return `
                     <div class="korean-embed-card p-4 ${isDone ? 'bg-purple-50 border-purple-100' : ''}">
@@ -3732,8 +3771,9 @@
             document.getElementById('drawing-workspace-badge').innerText = missionStep ? `오늘의 그리기 ${missionStep}단계` : title;
             document.getElementById('drawing-workspace-title').innerText = title;
             document.getElementById('drawing-workspace-desc').innerText = desc;
-            document.getElementById('drawing-template-panel').classList.toggle('hidden', mode === 'free');
+            document.getElementById('drawing-template-panel').classList.remove('hidden');
             document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !missionStep);
+            document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep));
             showTopLevelSection('drawing-workspace-section');
             requestAnimationFrame(() => {
                 initializeDrawingCanvas();
@@ -3774,13 +3814,18 @@
             });
         }
 
-        window.openFreeDrawingActivity = function() {
+        window.openSketchbookActivity = function() {
+            const firstUnlocked = getUnlockedDrawingTemplates()[0] || 'blank';
             configureDrawingWorkspace({
-                mode: 'free',
-                title: '자유 그리기',
-                desc: '말 그대로 그림판이에요. 원하는 색과 굵기로 마음껏 그려요.',
-                template: 'blank'
+                mode: 'sketchbook',
+                title: '스케치북',
+                desc: '자유 그리기, 따라 그리기, 색칠하기를 하나로 모았어요. 해금한 도안을 골라 그려요.',
+                template: firstUnlocked
             });
+        }
+
+        window.openFreeDrawingActivity = function() {
+            openSketchbookActivity();
         }
 
         window.openTraceDrawingActivity = function() {
@@ -3804,19 +3849,48 @@
             showModal('🤖 AI 그림 퀴즈 기능은 준비 중입니다! ✨');
         }
 
+        function getUnlockedDrawingTemplates() {
+            const unlocked = new Set(['blank', 'line', ...(drawingPortfolio.unlockedTemplates || [])]);
+            Object.entries(drawingPortfolio.missions || {}).forEach(([step, record]) => {
+                const mission = drawingMissions.find((item) => String(item.step) === String(step));
+                if (record && mission?.template) unlocked.add(mission.template);
+            });
+            return drawingTemplateLibrary.filter((item) => unlocked.has(item.key)).map((item) => item.key);
+        }
+
         function renderDrawingTemplateButtons(mode) {
             const root = document.getElementById('drawing-template-buttons');
             if (!root) return;
-            const keys = mode === 'coloring' ? ['flower', 'house'] : ['line', 'waves', 'circles', 'shapes'];
-            root.innerHTML = keys.map((key) => `
-                <button class="btn-outline px-3 py-2 text-sm ${drawingActiveTemplate === key ? 'active' : ''}" onclick="selectDrawingTemplate('${key}')">
-                    ${drawingTemplates[key]}
-                </button>
-            `).join('');
+            const activeInfo = drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
+            if (drawingWorkspaceMissionStep) {
+                root.innerHTML = `<button class="btn-outline px-3 py-2 text-sm opacity-70 cursor-not-allowed" disabled title="활동 중에는 연습 모양을 바꿀 수 없어요.">${activeInfo.emoji || '🎨'} ${activeInfo.label} 🔒</button>`;
+                return;
+            }
+            const unlocked = getUnlockedDrawingTemplates();
+            root.innerHTML = drawingTemplateLibrary.map((item) => {
+                const isOpen = unlocked.includes(item.key);
+                const cls = drawingActiveTemplate === item.key ? 'active bg-purple-50 border-purple-300' : '';
+                return `
+                    <button class="btn-outline px-3 py-2 text-sm ${cls} ${isOpen ? '' : 'opacity-40 cursor-not-allowed'}" ${isOpen ? `onclick="selectDrawingTemplate('${item.key}')"` : 'disabled'}>
+                        ${item.emoji || '🎨'} ${item.label}${isOpen ? '' : ' 🔒'}
+                    </button>
+                `;
+            }).join('');
         }
 
         window.selectDrawingTemplate = function(template) {
+            if (drawingWorkspaceMissionStep) {
+                showModal('활동 중에는 연습 모양을 바꿀 수 없어요.');
+                return;
+            }
+            const unlocked = getUnlockedDrawingTemplates();
+            if (!unlocked.includes(template)) {
+                showModal('아직 해금되지 않은 도안이에요. 나의 그림 단계를 완료하면 열려요!');
+                return;
+            }
             drawingActiveTemplate = template;
+            const info = drawingTemplateLibrary.find((item) => item.key === template);
+            drawingWorkspaceMode = info?.type || 'sketchbook';
             renderDrawingTemplateButtons(drawingWorkspaceMode);
             resetDrawingCanvas();
         }
@@ -3874,11 +3948,7 @@
             canvas.addEventListener('touchmove', move, { passive: false });
             canvas.addEventListener('touchend', stop);
 
-            const sizeInput = document.getElementById('drawing-brush-size');
-            sizeInput.addEventListener('input', () => {
-                drawingBrushSize = Number(sizeInput.value);
-                document.getElementById('drawing-brush-size-label').innerText = `${drawingBrushSize}px`;
-            });
+            renderDrawingBrushSizeButtons();
 
             const palette = document.getElementById('drawing-color-palette');
             palette.innerHTML = drawingColors.map((color) => `
@@ -3891,6 +3961,22 @@
                     resetDrawingCanvas();
                 }
             });
+        }
+
+        function renderDrawingBrushSizeButtons() {
+            document.querySelectorAll('#drawing-brush-size-buttons button').forEach((btn) => {
+                const level = Number(btn.textContent.trim());
+                btn.classList.toggle('active', level === drawingBrushLevel);
+                btn.classList.toggle('bg-purple-50', level === drawingBrushLevel);
+            });
+            const label = document.getElementById('drawing-brush-size-label');
+            if (label) label.innerText = `${drawingBrushLevel}단계`;
+        }
+
+        window.selectDrawingBrushSize = function(level) {
+            drawingBrushLevel = Math.min(4, Math.max(1, Number(level) || 2));
+            drawingBrushSize = drawingBrushSizeMap[drawingBrushLevel];
+            renderDrawingBrushSizeButtons();
         }
 
         window.selectDrawingColor = function(color) {
@@ -3923,7 +4009,7 @@
         }
 
         function drawDrawingTemplate(ctx, width, height) {
-            if (drawingWorkspaceMode === 'free' || drawingActiveTemplate === 'blank') return;
+            if (drawingActiveTemplate === 'blank') return;
             ctx.save();
             ctx.strokeStyle = '#cbd5e1';
             ctx.fillStyle = '#f8fafc';
@@ -3986,6 +4072,21 @@
                 ctx.strokeRect(width * 0.46, height * 0.57, width * 0.1, height * 0.19);
                 ctx.strokeRect(width * 0.34, height * 0.5, width * 0.1, height * 0.1);
                 ctx.strokeRect(width * 0.6, height * 0.5, width * 0.1, height * 0.1);
+            } else {
+                const info = drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || { label: '도안', emoji: '🎨' };
+                ctx.setLineDash([]);
+                ctx.lineWidth = 7;
+                ctx.strokeStyle = '#94a3b8';
+                ctx.fillStyle = '#f8fafc';
+                ctx.strokeRect(width * 0.18, height * 0.2, width * 0.64, height * 0.58);
+                ctx.font = `${Math.max(54, Math.min(width, height) * 0.18)}px system-ui, Apple Color Emoji, Segoe UI Emoji`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillText(info.emoji || '🎨', width * 0.5, height * 0.43);
+                ctx.font = 'bold 28px system-ui, sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(info.label, width * 0.5, height * 0.68);
             }
             ctx.restore();
         }
@@ -4013,18 +4114,64 @@
             return canvas.toDataURL('image/png');
         }
 
+        async function mirrorDrawingToAiedueDataServer(record) {
+            try {
+                await fetch('/korean-db/db-api/collections', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: 'aiedue_korean_drawings', description: '에이두 국어 스케치북 작품' })
+                }).catch(() => null);
+                await fetch('/korean-db/db-api/items/aiedue_korean_drawings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: record })
+                });
+            } catch (error) {
+                console.warn('Aiedue data server drawing mirror failed', error);
+            }
+        }
+
+        async function loadFriendsDrawingsFromAiedueDataServer() {
+            try {
+                const res = await fetch('/korean-db/db-api/items/aiedue_korean_drawings?limit=60');
+                if (!res.ok) throw new Error(`drawings ${res.status}`);
+                const data = await res.json();
+                return Array.isArray(data.items) ? data.items.map((item) => item.data || item) : [];
+            } catch (error) {
+                console.warn('Aiedue data server drawing list failed', error);
+                return [];
+            }
+        }
+
+        function buildDrawingRecord({ image, kind, missionStep = null, savedAt }) {
+            const templateInfo = drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
+            return {
+                image,
+                kind,
+                missionStep,
+                template: drawingActiveTemplate,
+                templateLabel: templateInfo.label,
+                savedAt,
+                userId: currentUserId || 'anonymous',
+                userName: currentUserName || '이름 없음',
+                userIcon: currentUserIcon || '🐻'
+            };
+        }
+
         window.saveCurrentDrawing = async function() {
             const image = captureDrawingImage();
             const now = new Date().toISOString();
+            const record = buildDrawingRecord({ image, kind: drawingWorkspaceMissionStep ? 'mission' : 'sketchbook', missionStep: drawingWorkspaceMissionStep, savedAt: now });
             if (drawingWorkspaceMissionStep) {
                 drawingPortfolio.missions = {
                     ...drawingPortfolio.missions,
-                    [drawingWorkspaceMissionStep]: { image, savedAt: now }
+                    [drawingWorkspaceMissionStep]: record
                 };
             } else {
-                drawingPortfolio.free = [{ image, savedAt: now }, ...(drawingPortfolio.free || [])].slice(0, 12);
+                drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
             }
             await persistDrawingData();
+            await mirrorDrawingToAiedueDataServer(record);
             updateDrawingDashboardPreview();
             showModal('그림을 저장했어요!');
         }
@@ -4033,14 +4180,51 @@
             if (!drawingWorkspaceMissionStep) return;
             const image = captureDrawingImage();
             const now = new Date().toISOString();
+            const record = buildDrawingRecord({ image, kind: 'mission', missionStep: drawingWorkspaceMissionStep, savedAt: now });
+            const mission = drawingMissions.find((item) => item.step === drawingWorkspaceMissionStep);
+            const wasAlreadyDone = Boolean(drawingPortfolio.missions?.[drawingWorkspaceMissionStep]);
             drawingPortfolio.missions = {
                 ...drawingPortfolio.missions,
-                [drawingWorkspaceMissionStep]: { image, savedAt: now }
+                [drawingWorkspaceMissionStep]: record
             };
+            drawingPortfolio.unlockedTemplates = Array.from(new Set([...(drawingPortfolio.unlockedTemplates || []), mission?.template].filter(Boolean)));
             currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingWorkspaceMissionStep);
-            await persistDrawingData();
+            const completedCount = Object.keys(drawingPortfolio.missions || {}).length;
+            const rewardMilestone = Math.floor(completedCount / 5) * 5;
+            const rewardedMilestones = new Set(drawingPortfolio.rewardedMilestones || []);
+            let rewardMessage = '';
+            if (!wasAlreadyDone && rewardMilestone >= 5 && completedCount % 5 === 0 && !rewardedMilestones.has(rewardMilestone)) {
+                rewardedMilestones.add(rewardMilestone);
+                drawingPortfolio.rewardedMilestones = Array.from(rewardedMilestones).sort((a, b) => a - b);
+                currentUserCoins += 10;
+                rewardMessage = ' 포인트 10도 받았어요!';
+            }
+            await persistDrawingData({ coins: currentUserCoins });
+            await mirrorDrawingToAiedueDataServer(record);
+            updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
             updateDrawingDashboardPreview();
-            showModal(`${drawingWorkspaceMissionStep}단계 오늘의 그리기를 완료했어요!`);
+            showModal(`${drawingWorkspaceMissionStep}단계 오늘의 그리기를 완료했어요! ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardMessage}`);
+        }
+
+        window.openFriendsDrawingGallery = async function() {
+            const drawings = await loadFriendsDrawingsFromAiedueDataServer();
+            const localWorks = (drawingPortfolio.free || []).map((item) => ({ ...item, userName: currentUserName, userIcon: currentUserIcon, kind: item.kind || 'sketchbook' }));
+            const merged = [...drawings, ...localWorks]
+                .filter((item) => item?.image)
+                .sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
+                .slice(0, 60);
+            const body = merged.length ? `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
+                    ${merged.map((item) => `
+                        <div class="korean-embed-card p-3 bg-white">
+                            <img src="${item.image}" alt="친구 그림" class="w-full h-44 object-contain bg-gray-50 rounded-2xl border">
+                            <div class="mt-2 text-sm font-black text-[#2c3e50]">${item.userIcon || '👤'} ${item.userName || '친구'}</div>
+                            <div class="text-xs text-gray-500 font-bold">${item.templateLabel || drawingTemplates[item.template] || '스케치북'} · ${(item.savedAt || '').slice(0, 10)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<div class="text-center text-gray-500 font-bold py-10">아직 저장된 친구 그림이 없어요.</div>';
+            showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">친구들 그림 구경하기</h3>${body}</div>`);
         }
 
         const dictationItems = [
