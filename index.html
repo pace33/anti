@@ -202,8 +202,9 @@
             width: 52px;
             height: 52px;
             border-radius: 50%;
-            background: #a83b12;
-            box-shadow: 0 0 0 10px rgba(251, 146, 60, 0.14);
+            background: #facc15;
+            border: 4px solid #f59e0b;
+            box-shadow: 0 0 0 10px rgba(250, 204, 21, 0.22);
             animation: originSunFloat 6s ease-in-out infinite;
         }
         .origin-letter {
@@ -535,20 +536,175 @@
         }
         /* 이해하기 2 자음/모음 선택 스타일 */
         .syllable-consonant {
-            color: #2c3e50;
+            color: #2563eb;
             transition: color 0.2s ease, transform 0.2s ease;
         }
         .syllable-vowel {
-            color: #2c3e50;
+            color: #f59e0b;
             transition: color 0.2s ease, transform 0.2s ease;
         }
         .syllable-consonant.selected-consonant {
-            color: #ff6b35;
-            text-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+            color: #1d4ed8;
+            text-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
         }
         .syllable-vowel.selected-vowel {
-            color: #46b3a5;
-            text-shadow: 0 4px 16px rgba(70, 179, 165, 0.4);
+            color: #d97706;
+            text-shadow: 0 4px 16px rgba(245, 158, 11, 0.45);
+        }
+        .cv-animation-board {
+            border: 2px solid rgba(70, 179, 165, 0.22);
+            border-radius: 26px;
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+            padding: 22px;
+            margin-bottom: 22px;
+            overflow: hidden;
+        }
+        .cv-demo-row {
+            display: grid;
+            grid-template-columns: minmax(120px, 1fr) 42px minmax(120px, 1fr) 42px minmax(110px, 0.8fr);
+            align-items: center;
+            gap: 12px;
+        }
+        .cv-character {
+            position: relative;
+            min-height: 188px;
+            border-radius: 22px;
+            background: #ffffff;
+            border: 2px solid #e0f2fe;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            box-shadow: 0 10px 22px rgba(44, 62, 80, 0.08);
+        }
+        .cv-character img {
+            height: 104px;
+            object-fit: contain;
+        }
+        .cv-baby {
+            animation: cvBabyMove 5.6s ease-in-out infinite;
+        }
+        .cv-mom {
+            animation: cvMomMove 5.6s ease-in-out infinite;
+        }
+        .cv-role-label {
+            margin-top: 8px;
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #2c3e50;
+        }
+        .cv-floating-letter {
+            position: absolute;
+            top: 12px;
+            left: 14px;
+            font-size: 2.7rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+        .cv-floating-letter.consonant {
+            color: #2563eb;
+        }
+        .cv-floating-letter.vowel {
+            color: #f59e0b;
+        }
+        .cv-symbol {
+            color: #94a3b8;
+            font-size: 3rem;
+            font-weight: 900;
+            text-align: center;
+            animation: cvSymbolBlink 5.6s ease-in-out infinite;
+        }
+        .cv-result-card {
+            min-height: 188px;
+            border-radius: 24px;
+            border: 2px solid #99f6e4;
+            background: #ccfbf1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #0f766e;
+            box-shadow: 0 12px 24px rgba(20, 184, 166, 0.16);
+            animation: cvResultPop 5.6s ease-in-out infinite;
+        }
+        .cv-result-letter {
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+        .cv-result-label {
+            margin-top: 8px;
+            font-size: 0.95rem;
+            font-weight: 900;
+        }
+        .cv-merge-caption {
+            margin-top: 14px;
+            text-align: center;
+            color: #475569;
+            font-weight: 800;
+        }
+        .cv-syllable-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .cv-syllable-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 18px;
+            background: #ffffff;
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .cv-syllable-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(44, 62, 80, 0.1);
+        }
+        .cv-syllable-card .syllable-consonant,
+        .cv-syllable-card .syllable-vowel {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+        @keyframes cvBabyMove {
+            0%, 18%, 100% { transform: translateX(0); }
+            42%, 62% { transform: translateX(26px); }
+        }
+        @keyframes cvMomMove {
+            0%, 18%, 100% { transform: translateX(0); }
+            42%, 62% { transform: translateX(-26px); }
+        }
+        @keyframes cvSymbolBlink {
+            0%, 30% { opacity: 1; }
+            44%, 70% { opacity: 0.28; }
+            100% { opacity: 1; }
+        }
+        @keyframes cvResultPop {
+            0%, 48% { transform: scale(0.86); opacity: 0.2; }
+            62% { transform: scale(1.08); opacity: 1; }
+            74%, 100% { transform: scale(1); opacity: 1; }
+        }
+        @media (max-width: 760px) {
+            .cv-demo-row {
+                grid-template-columns: 1fr;
+            }
+            .cv-symbol {
+                font-size: 2.1rem;
+                line-height: 1;
+            }
+            .cv-character,
+            .cv-result-card {
+                min-height: 140px;
+            }
+            .cv-character img {
+                height: 78px;
+            }
+            .cv-syllable-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
         /* ===== 글자 결합 애니메이션 ===== */
         .combine-card {
@@ -1359,24 +1515,40 @@
             <div id="understanding-2-pane" class="learning-pane p-8 mb-8 hidden">
                 <div class="aiedu-badge mb-4">이해하기 2</div>
                 <h4 class="text-2xl font-bold text-[#2c3e50] mb-4">엄마는 모음, 아기는 자음</h4>
-                <p class="text-sm text-gray-500 mb-6">자음(파란색)이나 모음(노란색) 부분을 터치해보세요!</p>
-                <div class="text-center mb-6">
-                    <img src="consonant_vowel_concept.png" alt="자음 모음 아기 엄마 개념도" class="mx-auto rounded-2xl shadow-sm" style="max-height:220px;object-fit:contain;">
-                </div>
-                <div class="bg-white rounded-3xl p-8 shadow-sm">
-                    <div class="flex justify-around items-center gap-2">
-                        <div class="flex items-end text-7xl font-black leading-none">
-                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㅁ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅓ</span>
-                        </div>
-                        <div class="flex items-end text-7xl font-black leading-none">
-                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㅂ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅏ</span>
-                        </div>
-                        <div class="flex items-end text-7xl font-black leading-none">
-                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㄴ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅏ</span>
-                        </div>
-                        <div class="flex items-end text-7xl font-black leading-none">
-                            <span class="syllable-consonant cursor-pointer hover:scale-110 select-none inline-block" onclick="selectConsonants()">ㄹ</span><span class="syllable-vowel cursor-pointer hover:scale-110 select-none inline-block" onclick="selectVowels()">ㅏ</span>
-                        </div>
+                <p class="text-sm text-gray-500 mb-6">아기 자음과 엄마 모음이 만나 글자가 되는 모습을 살펴봐요. 파란 자음이나 노란 모음을 터치하면 소리가 나요.</p>
+                <div class="cv-animation-board">
+                    <div class="cv-demo-row">
+                        <button type="button" class="cv-character cv-baby" onclick="speakTextKo('자음 기역')" aria-label="자음 기역 소리 듣기">
+                            <span class="cv-floating-letter consonant">ㄱ</span>
+                            <img src="baby_giyeok.png" alt="자음 아기">
+                            <span class="cv-role-label">자음 아기</span>
+                        </button>
+                        <div class="cv-symbol">+</div>
+                        <button type="button" class="cv-character cv-mom" onclick="speakTextKo('모음 아')" aria-label="모음 아 소리 듣기">
+                            <span class="cv-floating-letter vowel">ㅏ</span>
+                            <img src="mom_ah.png" alt="모음 엄마">
+                            <span class="cv-role-label">모음 엄마</span>
+                        </button>
+                        <div class="cv-symbol">=</div>
+                        <button type="button" class="cv-result-card" onclick="speakChar('가')" aria-label="가 소리 듣기">
+                            <span class="cv-result-letter">가</span>
+                            <span class="cv-result-label">글자 완성</span>
+                        </button>
+                    </div>
+                    <div class="cv-merge-caption">자음 ㄱ이 모음 ㅏ를 만나면 “가”가 돼요.</div>
+                    <div class="cv-syllable-strip" aria-label="자음과 모음으로 만들어진 글자">
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('머')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㅁ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅓ</span>
+                        </button>
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('바')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㅂ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅏ</span>
+                        </button>
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('나')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㄴ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅏ</span>
+                        </button>
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('라')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㄹ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅏ</span>
+                        </button>
                     </div>
                 </div>
             </div>
