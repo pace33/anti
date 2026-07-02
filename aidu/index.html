@@ -1639,7 +1639,7 @@
                         label: '쓰기',
                         title: '쓰면서 소리 내어 읽기',
                         cards: [
-                            '점선 글자 위에 ㅏ, ㅓ를 세 번씩 따라 쓰고, 완성한 글자를 읽어요.',
+                            '획순 번호와 화살표를 보며 ㅏ, ㅓ를 세 번씩 따라 쓰고, 완성한 글자를 읽어요.',
                             '공책 빈칸에 ㅏ/ㅓ 중 알맞은 모음을 골라 써요: ㄱ + __ = 가, ㄱ + __ = 거'
                         ]
                     },
@@ -5444,9 +5444,9 @@
                         <div class="learning-write-card" style="margin-top:0;">
                             <div class="practice-step-title mb-3"><span class="practice-step-number">3</span> 쓰기</div>
                             <div class="trace-canvas-wrap">
-                                <div class="trace-canvas-title">✍️ 직접 따라쓰기</div>
+                                <div class="trace-canvas-title">✍️ 획순 따라쓰기</div>
                                 <canvas id="trace-writing-canvas" class="trace-writing-canvas ${step === 7 ? 'double-row' : ''}" data-guide="${practiceFlow.choices.join('/')}"></canvas>
-                                <div class="trace-canvas-help">터치펜이나 손가락으로 점선 글자 위에 바로 따라 써요.</div>
+                                <div class="trace-canvas-help">주황색 번호와 화살표 순서대로 천천히 따라 써요.</div>
                             </div>
                             <button class="trace-clear-button mt-3" onclick="resetTraceWritingCanvas()">다시 쓰기</button>
                         </div>
@@ -5509,6 +5509,234 @@
             currentLearningDetailSectionIndex = 0;
             openMyKoreanSection();
         }
+
+        const traceInitials = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        const traceMedials = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+        const traceFinals = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        const traceVerticalVowels = new Set(['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅣ']);
+        const traceCompositeJamo = {
+            'ㄲ': ['ㄱ', 'ㄱ'],
+            'ㄸ': ['ㄷ', 'ㄷ'],
+            'ㅃ': ['ㅂ', 'ㅂ'],
+            'ㅆ': ['ㅅ', 'ㅅ'],
+            'ㅉ': ['ㅈ', 'ㅈ'],
+            'ㅘ': ['ㅗ', 'ㅏ'],
+            'ㅙ': ['ㅗ', 'ㅐ'],
+            'ㅚ': ['ㅗ', 'ㅣ'],
+            'ㅝ': ['ㅜ', 'ㅓ'],
+            'ㅞ': ['ㅜ', 'ㅔ'],
+            'ㅟ': ['ㅜ', 'ㅣ'],
+            'ㅢ': ['ㅡ', 'ㅣ'],
+            'ㄳ': ['ㄱ', 'ㅅ'],
+            'ㄵ': ['ㄴ', 'ㅈ'],
+            'ㄶ': ['ㄴ', 'ㅎ'],
+            'ㄺ': ['ㄹ', 'ㄱ'],
+            'ㄻ': ['ㄹ', 'ㅁ'],
+            'ㄼ': ['ㄹ', 'ㅂ'],
+            'ㄽ': ['ㄹ', 'ㅅ'],
+            'ㄾ': ['ㄹ', 'ㅌ'],
+            'ㄿ': ['ㄹ', 'ㅍ'],
+            'ㅀ': ['ㄹ', 'ㅎ'],
+            'ㅄ': ['ㅂ', 'ㅅ']
+        };
+        const traceStrokeMap = {
+            'ㆍ': [{ points: [[0.5, 0.5], [0.5, 0.5]], dot: true }],
+            '●': [{ points: [[0.5, 0.5], [0.5, 0.5]], dot: true }],
+            'ㅣ': [{ points: [[0.5, 0.18], [0.5, 0.82]] }],
+            'ㅡ': [{ points: [[0.2, 0.55], [0.8, 0.55]] }],
+            'ㅏ': [{ points: [[0.45, 0.18], [0.45, 0.82]] }, { points: [[0.45, 0.5], [0.78, 0.5]] }],
+            'ㅓ': [{ points: [[0.62, 0.18], [0.62, 0.82]] }, { points: [[0.28, 0.5], [0.62, 0.5]] }],
+            'ㅑ': [{ points: [[0.42, 0.16], [0.42, 0.84]] }, { points: [[0.42, 0.4], [0.78, 0.4]] }, { points: [[0.42, 0.62], [0.78, 0.62]] }],
+            'ㅕ': [{ points: [[0.66, 0.16], [0.66, 0.84]] }, { points: [[0.28, 0.4], [0.66, 0.4]] }, { points: [[0.28, 0.62], [0.66, 0.62]] }],
+            'ㅗ': [{ points: [[0.5, 0.24], [0.5, 0.54]] }, { points: [[0.22, 0.64], [0.78, 0.64]] }],
+            'ㅜ': [{ points: [[0.22, 0.36], [0.78, 0.36]] }, { points: [[0.5, 0.46], [0.5, 0.76]] }],
+            'ㅛ': [{ points: [[0.4, 0.22], [0.4, 0.5]] }, { points: [[0.6, 0.22], [0.6, 0.5]] }, { points: [[0.22, 0.64], [0.78, 0.64]] }],
+            'ㅠ': [{ points: [[0.22, 0.36], [0.78, 0.36]] }, { points: [[0.4, 0.48], [0.4, 0.78]] }, { points: [[0.6, 0.48], [0.6, 0.78]] }],
+            'ㅐ': [{ points: [[0.36, 0.18], [0.36, 0.82]] }, { points: [[0.36, 0.5], [0.58, 0.5]] }, { points: [[0.7, 0.18], [0.7, 0.82]] }],
+            'ㅔ': [{ points: [[0.62, 0.18], [0.62, 0.82]] }, { points: [[0.32, 0.5], [0.62, 0.5]] }, { points: [[0.78, 0.18], [0.78, 0.82]] }],
+            'ㅒ': [{ points: [[0.34, 0.16], [0.34, 0.84]] }, { points: [[0.34, 0.4], [0.56, 0.4]] }, { points: [[0.34, 0.62], [0.56, 0.62]] }, { points: [[0.72, 0.16], [0.72, 0.84]] }],
+            'ㅖ': [{ points: [[0.58, 0.16], [0.58, 0.84]] }, { points: [[0.28, 0.4], [0.58, 0.4]] }, { points: [[0.28, 0.62], [0.58, 0.62]] }, { points: [[0.78, 0.16], [0.78, 0.84]] }],
+            'ㄱ': [{ points: [[0.22, 0.24], [0.78, 0.24], [0.78, 0.78]] }],
+            'ㄴ': [{ points: [[0.24, 0.2], [0.24, 0.76], [0.78, 0.76]] }],
+            'ㄷ': [{ points: [[0.74, 0.24], [0.28, 0.24]] }, { points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
+            'ㅌ': [{ points: [[0.74, 0.22], [0.28, 0.22]] }, { points: [[0.28, 0.22], [0.28, 0.78]] }, { points: [[0.28, 0.5], [0.68, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
+            'ㅁ': [{ points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.24], [0.74, 0.24], [0.74, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
+            'ㅂ': [{ points: [[0.3, 0.2], [0.3, 0.78]] }, { points: [[0.72, 0.2], [0.72, 0.78]] }, { points: [[0.3, 0.5], [0.72, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
+            'ㅍ': [{ points: [[0.26, 0.22], [0.76, 0.22]] }, { points: [[0.32, 0.32], [0.32, 0.72]] }, { points: [[0.7, 0.32], [0.7, 0.72]] }, { points: [[0.28, 0.5], [0.74, 0.5]] }, { points: [[0.26, 0.78], [0.76, 0.78]] }],
+            'ㅅ': [{ points: [[0.5, 0.22], [0.28, 0.78]] }, { points: [[0.5, 0.22], [0.76, 0.78]] }],
+            'ㅈ': [{ points: [[0.24, 0.24], [0.78, 0.24]] }, { points: [[0.5, 0.28], [0.28, 0.78]] }, { points: [[0.5, 0.28], [0.76, 0.78]] }],
+            'ㅊ': [{ points: [[0.5, 0.16], [0.5, 0.3]] }, { points: [[0.24, 0.34], [0.78, 0.34]] }, { points: [[0.5, 0.38], [0.28, 0.8]] }, { points: [[0.5, 0.38], [0.76, 0.8]] }],
+            'ㅋ': [{ points: [[0.22, 0.22], [0.78, 0.22], [0.78, 0.78]] }, { points: [[0.44, 0.5], [0.78, 0.5]] }],
+            'ㅇ': [{ circle: [0.5, 0.52, 0.25, 0.3] }],
+            'ㅎ': [{ points: [[0.5, 0.14], [0.5, 0.28]] }, { points: [[0.28, 0.34], [0.72, 0.34]] }, { circle: [0.5, 0.62, 0.24, 0.24] }],
+            'ㄹ': [{ points: [[0.26, 0.22], [0.72, 0.22], [0.72, 0.46], [0.34, 0.46], [0.34, 0.72], [0.76, 0.72]] }]
+        };
+
+        function decomposeTraceSyllable(char) {
+            const code = char.charCodeAt(0) - 0xAC00;
+            if (code < 0 || code > 11171) return null;
+            const initialIndex = Math.floor(code / 588);
+            const medialIndex = Math.floor((code % 588) / 28);
+            const finalIndex = code % 28;
+            return {
+                initial: traceInitials[initialIndex],
+                medial: traceMedials[medialIndex],
+                final: traceFinals[finalIndex]
+            };
+        }
+
+        function traceSubBox(box, x, y, w, h) {
+            return {
+                x: box.x + box.w * x,
+                y: box.y + box.h * y,
+                w: box.w * w,
+                h: box.h * h
+            };
+        }
+
+        function drawTraceNumber(ctx, x, y, number, scale) {
+            const r = Math.max(9, scale * 0.07);
+            ctx.save();
+            ctx.fillStyle = '#fb923c';
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `900 ${Math.max(10, r * 1.15)}px 'Outfit', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(number), x, y + 0.5);
+            ctx.restore();
+        }
+
+        function drawTraceArrowHead(ctx, fromX, fromY, toX, toY, scale) {
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            const size = Math.max(8, scale * 0.08);
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - Math.cos(angle - Math.PI / 6) * size, toY - Math.sin(angle - Math.PI / 6) * size);
+            ctx.lineTo(toX - Math.cos(angle + Math.PI / 6) * size, toY - Math.sin(angle + Math.PI / 6) * size);
+            ctx.closePath();
+            ctx.fillStyle = '#f97316';
+            ctx.fill();
+        }
+
+        function drawTraceStroke(ctx, stroke, box, number) {
+            const scale = Math.min(box.w, box.h);
+            const tx = (p) => ({ x: box.x + p[0] * box.w, y: box.y + p[1] * box.h });
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#f97316';
+            ctx.fillStyle = '#f97316';
+            ctx.lineWidth = Math.max(4, scale * 0.045);
+
+            if (stroke.dot) {
+                const p = tx(stroke.points[0]);
+                drawTraceNumber(ctx, p.x - scale * 0.12, p.y - scale * 0.12, number, scale);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, Math.max(8, scale * 0.08), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                return;
+            }
+
+            if (stroke.circle) {
+                const [cx, cy, rx, ry] = stroke.circle;
+                const x = box.x + cx * box.w;
+                const y = box.y + cy * box.h;
+                const radiusX = rx * box.w;
+                const radiusY = ry * box.h;
+                drawTraceNumber(ctx, x - radiusX * 0.8, y - radiusY * 0.9, number, scale);
+                ctx.beginPath();
+                ctx.ellipse(x, y, radiusX, radiusY, 0, -Math.PI * 0.75, Math.PI * 1.35);
+                ctx.stroke();
+                drawTraceArrowHead(ctx, x + radiusX * 0.55, y + radiusY * 0.8, x + radiusX * 0.85, y + radiusY * 0.35, scale);
+                ctx.restore();
+                return;
+            }
+
+            const points = stroke.points.map(tx);
+            drawTraceNumber(ctx, points[0].x, points[0].y, number, scale);
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            points.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
+            ctx.stroke();
+            const prev = points[Math.max(0, points.length - 2)];
+            const last = points[points.length - 1];
+            drawTraceArrowHead(ctx, prev.x, prev.y, last.x, last.y, scale);
+            ctx.restore();
+        }
+
+        function drawSingleTraceChar(ctx, char, box) {
+            if (traceCompositeJamo[char]) {
+                const parts = traceCompositeJamo[char];
+                parts.forEach((part, idx) => {
+                    const child = traceSubBox(box, idx / parts.length, 0, 1 / parts.length, 1);
+                    drawSingleTraceChar(ctx, part, child);
+                });
+                return;
+            }
+
+            const syllable = decomposeTraceSyllable(char);
+            if (syllable) {
+                const hasFinal = Boolean(syllable.final);
+                const top = hasFinal ? traceSubBox(box, 0.08, 0.05, 0.84, 0.62) : traceSubBox(box, 0.08, 0.08, 0.84, 0.82);
+                if (traceVerticalVowels.has(syllable.medial)) {
+                    drawSingleTraceChar(ctx, syllable.initial, traceSubBox(top, 0.0, 0.02, 0.48, 0.96));
+                    drawSingleTraceChar(ctx, syllable.medial, traceSubBox(top, 0.48, 0.0, 0.52, 1));
+                } else {
+                    drawSingleTraceChar(ctx, syllable.initial, traceSubBox(top, 0.18, 0.0, 0.64, 0.52));
+                    drawSingleTraceChar(ctx, syllable.medial, traceSubBox(top, 0.0, 0.45, 1, 0.55));
+                }
+                if (hasFinal) {
+                    drawSingleTraceChar(ctx, syllable.final, traceSubBox(box, 0.16, 0.68, 0.68, 0.28));
+                }
+                return;
+            }
+
+            const strokes = traceStrokeMap[char];
+            if (!strokes) {
+                ctx.save();
+                ctx.fillStyle = '#c2410c';
+                ctx.font = `900 ${Math.max(24, Math.min(box.w, box.h) * 0.5)}px 'Noto Sans KR', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(char, box.x + box.w / 2, box.y + box.h / 2);
+                ctx.restore();
+                return;
+            }
+            strokes.forEach((stroke, idx) => drawTraceStroke(ctx, stroke, box, idx + 1));
+        }
+
+        function drawTraceStrokeOrder(ctx, text, bx, by, boxW, boxH) {
+            const chars = Array.from(text || '');
+            const labelSize = Math.max(14, Math.min(boxW, boxH) * 0.12);
+            ctx.save();
+            ctx.fillStyle = '#c2410c';
+            ctx.font = `900 ${labelSize}px 'Noto Sans KR', sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(text, bx + 12, by + 10);
+            ctx.restore();
+
+            if (chars.length <= 1) {
+                drawSingleTraceChar(ctx, chars[0] || text, { x: bx + boxW * 0.18, y: by + boxH * 0.16, w: boxW * 0.64, h: boxH * 0.7 });
+                return;
+            }
+
+            const gap = boxW * 0.03;
+            const charW = (boxW * 0.82 - gap * (chars.length - 1)) / chars.length;
+            chars.forEach((char, idx) => {
+                drawSingleTraceChar(ctx, char, {
+                    x: bx + boxW * 0.09 + idx * (charW + gap),
+                    y: by + boxH * 0.18,
+                    w: charW,
+                    h: boxH * 0.68
+                });
+            });
+        }
+
         function drawTraceWritingGuide() {
             const canvas = document.getElementById('trace-writing-canvas');
             if (!canvas) return;
@@ -5532,7 +5760,6 @@
             const rows = isDoubleRow ? 2 : 1;
             const boxW = W / cols;
             const boxH = H / rows;
-            const fontSize = Math.min(boxW * 0.72, boxH * 0.62);
 
             chars.forEach((char, i) => {
                 const row = isDoubleRow ? Math.floor(i / 5) : 0;
@@ -5562,19 +5789,7 @@
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // 점선 글자
-                const cx = bx + boxW / 2;
-                const cy = by + boxH / 2;
-                ctx.font = `900 ${Math.max(28, Math.round(fontSize))}px 'Noto Sans KR', sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.setLineDash([6, 6]);
-                ctx.lineWidth = Math.max(2, fontSize * 0.07);
-                ctx.strokeStyle = 'rgba(160, 175, 200, 0.55)';
-                ctx.strokeText(char, cx, cy);
-                ctx.setLineDash([]);
-                ctx.fillStyle = 'rgba(190, 200, 220, 0.65)';
-                ctx.fillText(char, cx, cy);
+                drawTraceStrokeOrder(ctx, char, bx, by, boxW, boxH);
             });
         }
 
