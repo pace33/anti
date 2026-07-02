@@ -22,6 +22,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify Korean sketchbook patch guard
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\tools\verify-korean-sketchbook.ps1
+
       - name: Verify Korean site configuration
         shell: powershell
         run: |
@@ -40,6 +46,7 @@ jobs:
             throw 'activity buttons still perform full page navigation.'
           }
           Write-Host 'Verified: /korean-db, clean loading UI, direct activity switching.'
+
 
       - name: Deploy files to Caddy static root
         shell: powershell
