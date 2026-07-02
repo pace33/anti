@@ -14,6 +14,15 @@ $requiredMarkers = @(
   'selectDrawingBrushSize(3)',
   'selectDrawingBrushSize(4)',
   'Array.from({ length: 100 }',
+  'drawingShapeLibrary',
+  'shapeMissionTemplates',
+  'shape-mission',
+  'ai-drawing',
+  'evaluateDrawingAccuracy',
+  'applyShapeAccuracyStats',
+  'openMyShapeStats',
+  'shapeStats',
+  'unpaidCooldownUntil',
   'aiedue_korean_drawings',
   'openFriendsDrawingGallery',
   'completeTodayDrawingMission',
@@ -24,7 +33,9 @@ $requiredMarkers = @(
 
 $forbiddenMarkers = @(
   'anti-db/db-api',
-  'window.location.href = route.page'
+  'window.location.href = route.page',
+  'fillText(info.emoji',
+  'fillText(info.label'
 )
 
 foreach ($file in $files) {
@@ -44,4 +55,4 @@ foreach ($file in $files) {
   }
 }
 
-Write-Host 'Verified Korean sketchbook patch guard: both app copies keep brush buttons, 100 stages, unlock/save/gallery/reward markers, and /korean-db.'
+Write-Host 'Verified Korean sketchbook/shape mission guard: brush buttons, 100 stages, real shape templates, accuracy stats, rewards/cooldown, gallery, and /korean-db are preserved.'

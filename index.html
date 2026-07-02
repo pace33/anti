@@ -713,12 +713,12 @@
                     <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff]" onclick="openMyDrawingFromDashboard()">
                         <div class="text-7xl mb-6">🎨</div>
                         <div class="text-5xl font-black text-[#2c3e50]">나의 그림</div>
-                        <p class="text-gray-500 mt-2 text-lg">내가 그린 멋진 작품들을 확인해요</p>
+                        <p class="text-gray-500 mt-2 text-lg">다양한 그림을 그려보고 그림을 해제해요</p>
                     </div>
                     <div class="grid-item p-10 flex flex-col items-center justify-center bg-purple-50" onclick="openTodayDrawingActivity()">
                         <div class="aiedu-badge bg-purple-500 mb-6">오늘의 미션</div>
-                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">오늘의 그리기</h3>
-                        <p class="text-2xl text-purple-500 font-bold">창의력이 쑥쑥!</p>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도형 미션</h3>
+                        <p class="text-2xl text-purple-500 font-bold">동그라미·세모·꾸불선을 정확히 따라 그려요!</p>
                     </div>
                 </div>
 
@@ -731,7 +731,7 @@
                     </div>
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openAiDrawingQuizActivity()">
                         <div class="text-5xl mb-3">🤖</div>
-                        <div class="text-xl font-bold">AI 그림 퀴즈</div>
+                        <div class="text-xl font-bold">AI 그림</div>
                     </div>
                 </div>
             </div>
@@ -914,7 +914,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                 <div class="korean-embed-card p-6 bg-purple-50 border-purple-100">
-                    <div class="text-sm font-black text-purple-500 mb-2">오늘의 그리기</div>
+                    <div class="text-sm font-black text-purple-500 mb-2">도형 미션</div>
                     <div id="my-drawing-next-title" class="text-2xl font-black text-[#2c3e50]">1단계 미션</div>
                     <button class="btn-primary mt-5 bg-purple-500 shadow-purple-200" onclick="openTodayDrawingActivity()">이어하기</button>
                 </div>
@@ -930,7 +930,7 @@
 
             <div class="stitched p-6 bg-white">
                 <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-2xl font-black text-[#2c3e50]">단계별 오늘의 그리기 기록</h3>
+                    <h3 class="text-2xl font-black text-[#2c3e50]">단계별 나의 그림 기록</h3>
                     <button class="btn-outline px-5 py-2 text-sm" onclick="goDrawingDashboard()">그리기 대시보드로</button>
                 </div>
                 <div id="my-drawing-mission-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[430px] overflow-y-auto pr-2 custom-scrollbar"></div>
@@ -945,7 +945,10 @@
                     <div id="drawing-workspace-title" class="text-3xl font-black text-[#2c3e50]">그림판</div>
                     <p id="drawing-workspace-desc" class="text-lg text-gray-500 mt-1">마음껏 그리고 저장해요.</p>
                 </div>
-                <button class="btn-outline py-2 px-6" onclick="goDrawingDashboard()">그리기 대시보드로</button>
+                <div class="flex gap-2">
+                    <button class="btn-outline py-2 px-5" onclick="openMyShapeStats()">나의 도형</button>
+                    <button class="btn-outline py-2 px-6" onclick="goDrawingDashboard()">그리기 대시보드로</button>
+                </div>
             </div>
 
             <div class="learning-pane p-6">
@@ -1572,7 +1575,7 @@
         let currentLearningDetailSectionIndex = 0;
         let currentUserRole = 'student';
         let currentUserDrawingStep = -1;
-        let drawingPortfolio = { missions: {}, free: [] };
+        let drawingPortfolio = { missions: {}, free: [], unlockedTemplates: [], rewardedMilestones: [], shapeStats: {}, unpaidCooldownUntil: 0 };
         let drawingWorkspaceMode = 'free';
         let drawingWorkspaceMissionStep = null;
         let drawingCanvasInitialized = false;
@@ -3380,7 +3383,9 @@
                 missions: userData?.drawingPortfolio?.missions || {},
                 free: Array.isArray(userData?.drawingPortfolio?.free) ? userData.drawingPortfolio.free : [],
                 unlockedTemplates: Array.isArray(userData?.drawingPortfolio?.unlockedTemplates) ? userData.drawingPortfolio.unlockedTemplates : [],
-                rewardedMilestones: Array.isArray(userData?.drawingPortfolio?.rewardedMilestones) ? userData.drawingPortfolio.rewardedMilestones : []
+                rewardedMilestones: Array.isArray(userData?.drawingPortfolio?.rewardedMilestones) ? userData.drawingPortfolio.rewardedMilestones : [],
+                shapeStats: userData?.drawingPortfolio?.shapeStats || {},
+                unpaidCooldownUntil: Number(userData?.drawingPortfolio?.unpaidCooldownUntil || 0)
             };
             currentUserDictationStep = Number.isFinite(Number(userData?.currentDictationStep)) ? Math.max(-1, Math.floor(Number(userData.currentDictationStep))) : -1;
             dictationPortfolio = {
@@ -3680,49 +3685,68 @@
             showTopLevelSection('word-listening-quiz-section');
         }
 
+        const drawingShapeLibrary = [
+            { key: 'line', label: '직선', color: '#7c3aed' },
+            { key: 'wave', label: '꾸불선', color: '#0ea5e9' },
+            { key: 'circle', label: '동그라미', color: '#ef4444' },
+            { key: 'triangle', label: '세모', color: '#f97316' },
+            { key: 'square', label: '네모', color: '#22c55e' },
+            { key: 'star', label: '별', color: '#facc15' },
+            { key: 'pentagon', label: '오각형', color: '#14b8a6' },
+            { key: 'heart', label: '하트', color: '#ec4899' },
+            { key: 'diamond', label: '마름모', color: '#8b5cf6' },
+            { key: 'zigzag', label: '지그재그', color: '#64748b' }
+        ];
+        const drawingShapeMap = Object.fromEntries(drawingShapeLibrary.map((item) => [item.key, item]));
+
         const drawingTemplateLibrary = [
-            { key: 'blank', label: '빈 종이', type: 'free', emoji: '📄' },
-            { key: 'line', label: '곧은 선', type: 'trace', emoji: '➖' },
-            { key: 'waves', label: '꾸불선', type: 'trace', emoji: '〰️' },
-            { key: 'circles', label: '동그라미', type: 'trace', emoji: '⭕' },
-            { key: 'shapes', label: '도형 마을', type: 'trace', emoji: '🔺' },
-            { key: 'flower', label: '꽃밭', type: 'coloring', emoji: '🌸' },
-            { key: 'house', label: '우리 집', type: 'coloring', emoji: '🏠' },
-            { key: 'tree', label: '나무', type: 'coloring', emoji: '🌳' },
-            { key: 'butterfly', label: '나비', type: 'coloring', emoji: '🦋' },
-            { key: 'fish', label: '물고기', type: 'coloring', emoji: '🐟' },
-            { key: 'cat', label: '고양이', type: 'coloring', emoji: '🐱' },
-            { key: 'rabbit', label: '토끼', type: 'coloring', emoji: '🐰' },
-            { key: 'car', label: '자동차', type: 'coloring', emoji: '🚗' },
-            { key: 'rocket', label: '로켓', type: 'coloring', emoji: '🚀' },
-            { key: 'castle', label: '성', type: 'coloring', emoji: '🏰' },
-            { key: 'rainbow', label: '무지개', type: 'coloring', emoji: '🌈' },
-            { key: 'star', label: '별', type: 'trace', emoji: '⭐' },
-            { key: 'heart', label: '하트', type: 'trace', emoji: '💗' },
-            { key: 'face', label: '웃는 얼굴', type: 'trace', emoji: '😊' },
-            { key: 'mountain', label: '산', type: 'coloring', emoji: '⛰️' },
-            { key: 'sea', label: '바다', type: 'coloring', emoji: '🌊' },
-            { key: 'school', label: '학교', type: 'coloring', emoji: '🏫' },
-            { key: 'book', label: '책', type: 'coloring', emoji: '📚' },
-            { key: 'pencil', label: '연필', type: 'trace', emoji: '✏️' },
-            { key: 'cloud', label: '구름', type: 'coloring', emoji: '☁️' },
-            { key: 'sun', label: '해님', type: 'coloring', emoji: '☀️' },
-            { key: 'moon', label: '달님', type: 'coloring', emoji: '🌙' },
-            { key: 'train', label: '기차', type: 'coloring', emoji: '🚂' },
-            { key: 'boat', label: '배', type: 'coloring', emoji: '⛵' },
-            { key: 'dinosaur', label: '공룡', type: 'coloring', emoji: '🦕' }
+            { key: 'blank', label: '빈 종이', type: 'free', shapes: [] },
+            { key: 'line', label: '직선 연습', type: 'trace', shapes: [{ shape: 'line', x: 0.18, y: 0.3, w: 0.64, h: 0.01 }, { shape: 'line', x: 0.18, y: 0.5, w: 0.64, h: 0.01 }, { shape: 'line', x: 0.18, y: 0.7, w: 0.64, h: 0.01 }] },
+            { key: 'waves', label: '꾸불선 연습', type: 'trace', shapes: [{ shape: 'wave', x: 0.15, y: 0.35, w: 0.7, h: 0.16 }, { shape: 'wave', x: 0.15, y: 0.6, w: 0.7, h: 0.14 }] },
+            { key: 'circles', label: '동그라미 연습', type: 'trace', shapes: [{ shape: 'circle', x: 0.32, y: 0.48, w: 0.24, h: 0.24 }, { shape: 'circle', x: 0.66, y: 0.52, w: 0.3, h: 0.2 }] },
+            { key: 'shapes', label: '도형 마을', type: 'trace', shapes: [{ shape: 'square', x: 0.22, y: 0.48, w: 0.22, h: 0.22 }, { shape: 'triangle', x: 0.62, y: 0.5, w: 0.28, h: 0.28 }, { shape: 'circle', x: 0.48, y: 0.28, w: 0.16, h: 0.16 }] },
+            { key: 'flower', label: '꽃밭', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.42, w: 0.14, h: 0.14 }, { shape: 'circle', x: 0.38, y: 0.42, w: 0.13, h: 0.13 }, { shape: 'circle', x: 0.62, y: 0.42, w: 0.13, h: 0.13 }, { shape: 'circle', x: 0.5, y: 0.3, w: 0.13, h: 0.13 }, { shape: 'circle', x: 0.5, y: 0.55, w: 0.13, h: 0.13 }, { shape: 'line', x: 0.5, y: 0.62, w: 0, h: 0.24 }, { shape: 'wave', x: 0.36, y: 0.74, w: 0.28, h: 0.08 }] },
+            { key: 'house', label: '우리 집', type: 'coloring', shapes: [{ shape: 'square', x: 0.5, y: 0.58, w: 0.36, h: 0.3 }, { shape: 'triangle', x: 0.5, y: 0.33, w: 0.46, h: 0.28 }, { shape: 'square', x: 0.43, y: 0.6, w: 0.09, h: 0.09 }, { shape: 'square', x: 0.6, y: 0.6, w: 0.09, h: 0.09 }] },
+            { key: 'tree', label: '나무', type: 'coloring', shapes: [{ shape: 'line', x: 0.5, y: 0.52, w: 0, h: 0.32 }, { shape: 'circle', x: 0.5, y: 0.34, w: 0.28, h: 0.24 }, { shape: 'circle', x: 0.38, y: 0.42, w: 0.22, h: 0.18 }, { shape: 'circle', x: 0.62, y: 0.42, w: 0.22, h: 0.18 }] },
+            { key: 'butterfly', label: '나비', type: 'coloring', shapes: [{ shape: 'line', x: 0.5, y: 0.35, w: 0, h: 0.34 }, { shape: 'heart', x: 0.38, y: 0.45, w: 0.22, h: 0.24 }, { shape: 'heart', x: 0.62, y: 0.45, w: 0.22, h: 0.24 }, { shape: 'wave', x: 0.43, y: 0.22, w: 0.14, h: 0.08 }, { shape: 'wave', x: 0.57, y: 0.22, w: 0.14, h: 0.08 }] },
+            { key: 'fish', label: '물고기', type: 'coloring', shapes: [{ shape: 'circle', x: 0.46, y: 0.5, w: 0.34, h: 0.2 }, { shape: 'triangle', x: 0.72, y: 0.5, w: 0.22, h: 0.2 }, { shape: 'circle', x: 0.35, y: 0.46, w: 0.04, h: 0.04 }, { shape: 'wave', x: 0.24, y: 0.68, w: 0.52, h: 0.08 }] },
+            { key: 'cat', label: '고양이', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.28, h: 0.24 }, { shape: 'triangle', x: 0.4, y: 0.32, w: 0.12, h: 0.14 }, { shape: 'triangle', x: 0.6, y: 0.32, w: 0.12, h: 0.14 }, { shape: 'wave', x: 0.32, y: 0.55, w: 0.15, h: 0.06 }, { shape: 'wave', x: 0.53, y: 0.55, w: 0.15, h: 0.06 }] },
+            { key: 'rabbit', label: '토끼', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.54, w: 0.24, h: 0.22 }, { shape: 'circle', x: 0.43, y: 0.3, w: 0.09, h: 0.26 }, { shape: 'circle', x: 0.57, y: 0.3, w: 0.09, h: 0.26 }] },
+            { key: 'car', label: '자동차', type: 'coloring', shapes: [{ shape: 'square', x: 0.5, y: 0.54, w: 0.48, h: 0.18 }, { shape: 'square', x: 0.5, y: 0.4, w: 0.28, h: 0.14 }, { shape: 'circle', x: 0.35, y: 0.68, w: 0.09, h: 0.09 }, { shape: 'circle', x: 0.65, y: 0.68, w: 0.09, h: 0.09 }] },
+            { key: 'rocket', label: '로켓', type: 'coloring', shapes: [{ shape: 'triangle', x: 0.5, y: 0.22, w: 0.18, h: 0.2 }, { shape: 'square', x: 0.5, y: 0.48, w: 0.18, h: 0.32 }, { shape: 'circle', x: 0.5, y: 0.4, w: 0.08, h: 0.08 }, { shape: 'triangle', x: 0.38, y: 0.66, w: 0.12, h: 0.16 }, { shape: 'triangle', x: 0.62, y: 0.66, w: 0.12, h: 0.16 }] },
+            { key: 'castle', label: '성', type: 'coloring', shapes: [{ shape: 'square', x: 0.34, y: 0.58, w: 0.18, h: 0.3 }, { shape: 'square', x: 0.66, y: 0.58, w: 0.18, h: 0.3 }, { shape: 'square', x: 0.5, y: 0.64, w: 0.26, h: 0.22 }, { shape: 'triangle', x: 0.34, y: 0.34, w: 0.2, h: 0.18 }, { shape: 'triangle', x: 0.66, y: 0.34, w: 0.2, h: 0.18 }] },
+            { key: 'rainbow', label: '무지개', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.74, w: 0.62, h: 0.62 }, { shape: 'circle', x: 0.5, y: 0.74, w: 0.48, h: 0.48 }, { shape: 'circle', x: 0.5, y: 0.74, w: 0.34, h: 0.34 }] },
+            { key: 'star', label: '별', type: 'trace', shapes: [{ shape: 'star', x: 0.5, y: 0.5, w: 0.36, h: 0.36 }] },
+            { key: 'heart', label: '하트', type: 'trace', shapes: [{ shape: 'heart', x: 0.5, y: 0.5, w: 0.36, h: 0.32 }] },
+            { key: 'face', label: '웃는 얼굴', type: 'trace', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.34, h: 0.34 }, { shape: 'circle', x: 0.43, y: 0.44, w: 0.04, h: 0.04 }, { shape: 'circle', x: 0.57, y: 0.44, w: 0.04, h: 0.04 }, { shape: 'wave', x: 0.4, y: 0.56, w: 0.2, h: 0.08 }] },
+            { key: 'mountain', label: '산', type: 'coloring', shapes: [{ shape: 'triangle', x: 0.4, y: 0.58, w: 0.34, h: 0.34 }, { shape: 'triangle', x: 0.62, y: 0.56, w: 0.34, h: 0.38 }, { shape: 'circle', x: 0.78, y: 0.24, w: 0.12, h: 0.12 }] },
+            { key: 'sea', label: '바다', type: 'coloring', shapes: [{ shape: 'wave', x: 0.15, y: 0.42, w: 0.7, h: 0.1 }, { shape: 'wave', x: 0.12, y: 0.58, w: 0.76, h: 0.1 }, { shape: 'circle', x: 0.72, y: 0.25, w: 0.12, h: 0.12 }] },
+            { key: 'school', label: '학교', type: 'coloring', shapes: [{ shape: 'square', x: 0.5, y: 0.58, w: 0.46, h: 0.32 }, { shape: 'triangle', x: 0.5, y: 0.34, w: 0.5, h: 0.18 }, { shape: 'square', x: 0.42, y: 0.56, w: 0.08, h: 0.08 }, { shape: 'square', x: 0.58, y: 0.56, w: 0.08, h: 0.08 }] },
+            { key: 'book', label: '책', type: 'coloring', shapes: [{ shape: 'square', x: 0.4, y: 0.52, w: 0.24, h: 0.34 }, { shape: 'square', x: 0.6, y: 0.52, w: 0.24, h: 0.34 }, { shape: 'line', x: 0.5, y: 0.35, w: 0, h: 0.34 }] },
+            { key: 'pencil', label: '연필', type: 'trace', shapes: [{ shape: 'line', x: 0.3, y: 0.68, w: 0.38, h: -0.38 }, { shape: 'triangle', x: 0.7, y: 0.28, w: 0.12, h: 0.12 }, { shape: 'square', x: 0.34, y: 0.64, w: 0.12, h: 0.08 }] },
+            { key: 'cloud', label: '구름', type: 'coloring', shapes: [{ shape: 'circle', x: 0.38, y: 0.5, w: 0.2, h: 0.16 }, { shape: 'circle', x: 0.5, y: 0.44, w: 0.24, h: 0.2 }, { shape: 'circle', x: 0.64, y: 0.5, w: 0.22, h: 0.16 }, { shape: 'line', x: 0.34, y: 0.58, w: 0.34, h: 0 }] },
+            { key: 'sun', label: '해님', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.24, h: 0.24 }, { shape: 'line', x: 0.5, y: 0.16, w: 0, h: 0.12 }, { shape: 'line', x: 0.5, y: 0.72, w: 0, h: 0.12 }, { shape: 'line', x: 0.16, y: 0.5, w: 0.12, h: 0 }, { shape: 'line', x: 0.72, y: 0.5, w: 0.12, h: 0 }] },
+            { key: 'moon', label: '달님', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.48, w: 0.28, h: 0.34 }, { shape: 'circle', x: 0.58, y: 0.42, w: 0.22, h: 0.28 }] },
+            { key: 'train', label: '기차', type: 'coloring', shapes: [{ shape: 'square', x: 0.42, y: 0.52, w: 0.32, h: 0.22 }, { shape: 'square', x: 0.68, y: 0.52, w: 0.2, h: 0.22 }, { shape: 'circle', x: 0.34, y: 0.68, w: 0.08, h: 0.08 }, { shape: 'circle', x: 0.56, y: 0.68, w: 0.08, h: 0.08 }, { shape: 'circle', x: 0.72, y: 0.68, w: 0.08, h: 0.08 }] },
+            { key: 'boat', label: '배', type: 'coloring', shapes: [{ shape: 'triangle', x: 0.5, y: 0.36, w: 0.28, h: 0.28 }, { shape: 'line', x: 0.5, y: 0.28, w: 0, h: 0.36 }, { shape: 'wave', x: 0.2, y: 0.68, w: 0.6, h: 0.08 }, { shape: 'pentagon', x: 0.5, y: 0.58, w: 0.42, h: 0.18 }] },
+            { key: 'dinosaur', label: '공룡', type: 'coloring', shapes: [{ shape: 'circle', x: 0.46, y: 0.52, w: 0.34, h: 0.22 }, { shape: 'circle', x: 0.68, y: 0.38, w: 0.16, h: 0.16 }, { shape: 'triangle', x: 0.38, y: 0.34, w: 0.1, h: 0.12 }, { shape: 'triangle', x: 0.5, y: 0.32, w: 0.1, h: 0.12 }, { shape: 'line', x: 0.34, y: 0.66, w: 0, h: 0.14 }, { shape: 'line', x: 0.56, y: 0.66, w: 0, h: 0.14 }] }
         ];
 
         const drawingTemplates = Object.fromEntries(drawingTemplateLibrary.map((item) => [item.key, item.label]));
-        const missionTitleWords = ['선 따라 걷기', '모양 찾기', '색 채우기', '상상 더하기', '배경 꾸미기', '친구 그리기', '이야기 그림', '나만의 작품'];
+        const shapeMissionTemplates = drawingShapeLibrary.map((shape) => ({
+            key: `shape-${shape.key}`,
+            label: shape.label,
+            type: 'shape-mission',
+            shapes: [{ shape: shape.key, x: 0.5, y: 0.5, w: shape.key === 'line' || shape.key === 'wave' || shape.key === 'zigzag' ? 0.62 : 0.34, h: shape.key === 'line' ? 0 : 0.28 }]
+        }));
+        const drawingMissionPool = drawingTemplateLibrary.filter((item) => item.key !== 'blank');
         const drawingMissions = Array.from({ length: 100 }, (_, index) => {
-            const step = index + 1;
-            const template = drawingTemplateLibrary[(index % (drawingTemplateLibrary.length - 1)) + 1];
+            const template = drawingMissionPool[index % drawingMissionPool.length];
             return {
-                step,
-                title: `${template.label} ${missionTitleWords[index % missionTitleWords.length]}`,
+                step: index + 1,
+                title: `${template.label} 도형 도안`,
                 type: template.type,
-                desc: `${template.label} 도안을 보고 천천히 그린 뒤, 잘 그렸으면 완료해서 도안을 해금해요.`,
+                desc: '다양한 그림을 그려보고 그림을 해제해요',
                 template: template.key
             };
         });
@@ -3733,13 +3757,59 @@
         let drawingBrushLevel = 2;
         let drawingBrushSize = drawingBrushSizeMap[drawingBrushLevel];
         let drawingActiveTemplate = 'blank';
+        let drawingActiveTargetTemplate = null;
+        let drawingUserTracePoints = [];
+        let drawingWorkspaceAiQuiz = false;
+        let shapeMissionIndex = 0;
+
+        function ensureDrawingPortfolioShapeFields() {
+            drawingPortfolio.missions = drawingPortfolio.missions || {};
+            drawingPortfolio.free = Array.isArray(drawingPortfolio.free) ? drawingPortfolio.free : [];
+            drawingPortfolio.unlockedTemplates = Array.isArray(drawingPortfolio.unlockedTemplates) ? drawingPortfolio.unlockedTemplates : [];
+            drawingPortfolio.rewardedMilestones = Array.isArray(drawingPortfolio.rewardedMilestones) ? drawingPortfolio.rewardedMilestones : [];
+            drawingPortfolio.shapeStats = drawingPortfolio.shapeStats || {};
+            drawingPortfolio.unpaidCooldownUntil = Number(drawingPortfolio.unpaidCooldownUntil || 0);
+        }
 
         function getNextDrawingMission() {
             const nextStep = Math.max(1, currentUserDrawingStep + 1);
             return drawingMissions.find((mission) => mission.step === nextStep) || null;
         }
 
+        function getNextShapeMissionTemplate() {
+            const stats = drawingPortfolio.shapeStats || {};
+            const sorted = [...shapeMissionTemplates].sort((a, b) => (stats[a.shapes[0].shape]?.accuracy || 0) - (stats[b.shapes[0].shape]?.accuracy || 0));
+            const pick = sorted[shapeMissionIndex % Math.min(sorted.length, 5)];
+            shapeMissionIndex += 1;
+            return pick || shapeMissionTemplates[0];
+        }
+
+        function getWeakShapeKey() {
+            const stats = drawingPortfolio.shapeStats || {};
+            return [...drawingShapeLibrary].sort((a, b) => (stats[a.key]?.accuracy || 0) - (stats[b.key]?.accuracy || 0))[0]?.key || 'circle';
+        }
+
+        function getUnlockedDrawingTemplates() {
+            ensureDrawingPortfolioShapeFields();
+            const unlocked = new Set(['blank', 'line', ...(drawingPortfolio.unlockedTemplates || [])]);
+            Object.entries(drawingPortfolio.missions || {}).forEach(([step, record]) => {
+                const mission = drawingMissions.find((item) => String(item.step) === String(step));
+                if (record && mission?.template) unlocked.add(mission.template);
+            });
+            return drawingTemplateLibrary.filter((item) => unlocked.has(item.key)).map((item) => item.key);
+        }
+
+        function getAiDrawingTemplate() {
+            const weak = getWeakShapeKey();
+            const unlocked = new Set(getUnlockedDrawingTemplates());
+            const candidates = drawingTemplateLibrary.filter((item) => item.key !== 'blank' && unlocked.has(item.key) && item.shapes?.some((shape) => shape.shape === weak));
+            const fallback = drawingTemplateLibrary.filter((item) => item.key !== 'blank' && unlocked.has(item.key));
+            const pool = candidates.length ? candidates : fallback;
+            return pool[Math.floor(Math.random() * pool.length)] || drawingTemplateLibrary.find((item) => item.key === 'line');
+        }
+
         function updateDrawingDashboardPreview() {
+            ensureDrawingPortfolioShapeFields();
             const nextMission = getNextDrawingMission();
             const progressLabel = document.getElementById('my-drawing-progress-label');
             const nextTitle = document.getElementById('my-drawing-next-title');
@@ -3752,6 +3822,7 @@
         }
 
         function renderMyDrawingSection() {
+            ensureDrawingPortfolioShapeFields();
             updateDrawingDashboardPreview();
             const root = document.getElementById('my-drawing-mission-list');
             if (!root) return;
@@ -3759,13 +3830,15 @@
                 const record = drawingPortfolio.missions?.[mission.step];
                 const isOpen = currentUserRole === 'teacher' || mission.step <= Math.max(1, currentUserDrawingStep + 1);
                 const isDone = Boolean(record);
+                const accuracy = Number(record?.accuracy || 0);
                 return `
                     <div class="korean-embed-card p-4 ${isDone ? 'bg-purple-50 border-purple-100' : ''}">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <div class="text-sm font-black ${isDone ? 'text-purple-600' : 'text-gray-400'}">${mission.step}단계</div>
                                 <div class="text-xl font-black text-[#2c3e50]">${mission.title}</div>
-                                <p class="text-sm text-gray-500 mt-1">${mission.desc}</p>
+                                <p class="text-sm text-gray-500 mt-1">다양한 그림을 그려보고 그림을 해제해요</p>
+                                ${isDone ? `<p class="text-xs text-purple-500 font-black mt-1">정확도 ${accuracy}% · ${record.rewardedPoints || 0}포인트</p>` : ''}
                             </div>
                             <div class="text-2xl">${isDone ? '✅' : (isOpen ? '🎨' : '🔒')}</div>
                         </div>
@@ -3778,16 +3851,21 @@
             }).join('');
         }
 
-        function configureDrawingWorkspace({ mode, title, desc, template = 'blank', missionStep = null }) {
+        function configureDrawingWorkspace({ mode, title, desc, template = 'blank', missionStep = null, aiQuiz = false }) {
+            ensureDrawingPortfolioShapeFields();
             drawingWorkspaceMode = mode;
             drawingWorkspaceMissionStep = missionStep;
+            drawingWorkspaceAiQuiz = Boolean(aiQuiz);
             drawingActiveTemplate = template;
-            document.getElementById('drawing-workspace-badge').innerText = missionStep ? `오늘의 그리기 ${missionStep}단계` : title;
+            drawingActiveTargetTemplate = shapeMissionTemplates.find((item) => item.key === template) || drawingTemplateLibrary.find((item) => item.key === template) || drawingTemplateLibrary[0];
+            drawingUserTracePoints = [];
+            document.getElementById('drawing-workspace-badge').innerText = aiQuiz ? 'AI 그림' : (missionStep ? `나의 그림 ${missionStep}단계` : (mode === 'shape-mission' ? '도형 미션' : title));
             document.getElementById('drawing-workspace-title').innerText = title;
             document.getElementById('drawing-workspace-desc').innerText = desc;
-            document.getElementById('drawing-template-panel').classList.remove('hidden');
-            document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !missionStep);
-            document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep));
+            document.getElementById('drawing-template-panel').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
+            document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !(missionStep || aiQuiz || mode === 'shape-mission'));
+            document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
+            updateDrawingCompleteButtonCooldown();
             showTopLevelSection('drawing-workspace-section');
             requestAnimationFrame(() => {
                 initializeDrawingCanvas();
@@ -3802,27 +3880,27 @@
         }
 
         window.openTodayDrawingActivity = function() {
-            const mission = getNextDrawingMission();
-            if (!mission) {
-                showModal('🎉 오늘의 그리기 미션을 모두 마쳤어요!');
-                return;
-            }
+            const template = getNextShapeMissionTemplate();
             configureDrawingWorkspace({
-                mode: mission.type,
-                title: mission.title,
-                desc: mission.desc,
-                template: mission.template,
-                missionStep: mission.step
+                mode: 'shape-mission',
+                title: `도형 미션: ${template.label}`,
+                desc: '도형의 점을 50% 이상 지나가면 에이두 포인트 1점을 받아요. 꾸불선과 직선도 나와요.',
+                template: template.key
             });
         }
 
         window.openDrawingMission = function(step) {
             const mission = drawingMissions.find((item) => item.step === step);
             if (!mission) return;
+            const isOpen = currentUserRole === 'teacher' || mission.step <= Math.max(1, currentUserDrawingStep + 1);
+            if (!isOpen) {
+                showModal('아직 잠긴 단계예요. 앞 단계를 먼저 완료해요!');
+                return;
+            }
             configureDrawingWorkspace({
                 mode: mission.type,
                 title: mission.title,
-                desc: mission.desc,
+                desc: '다양한 그림을 그려보고 그림을 해제해요',
                 template: mission.template,
                 missionStep: mission.step
             });
@@ -3838,46 +3916,26 @@
             });
         }
 
-        window.openFreeDrawingActivity = function() {
-            openSketchbookActivity();
-        }
+        window.openFreeDrawingActivity = function() { openSketchbookActivity(); }
+        window.openTraceDrawingActivity = function() { openSketchbookActivity(); }
+        window.openColoringActivity = function() { openSketchbookActivity(); }
 
-        window.openTraceDrawingActivity = function() {
-            configureDrawingWorkspace({
-                mode: 'trace',
-                title: '따라 그리기',
-                desc: '회색 선, 꾸불꾸불선, 도형을 보고 천천히 따라 그려요.',
-                template: 'waves'
-            });
-        }
-
-        window.openColoringActivity = function() {
-            configureDrawingWorkspace({
-                mode: 'coloring',
-                title: '색칠하기',
-                desc: '색칠 도안을 보고 빈 곳을 알록달록 채워요.',
-                template: 'flower'
-            });
-        }
         window.openAiDrawingQuizActivity = function() {
-            showModal('🤖 AI 그림 퀴즈 기능은 준비 중입니다! ✨');
-        }
-
-        function getUnlockedDrawingTemplates() {
-            const unlocked = new Set(['blank', 'line', ...(drawingPortfolio.unlockedTemplates || [])]);
-            Object.entries(drawingPortfolio.missions || {}).forEach(([step, record]) => {
-                const mission = drawingMissions.find((item) => String(item.step) === String(step));
-                if (record && mission?.template) unlocked.add(mission.template);
+            const template = getAiDrawingTemplate();
+            configureDrawingWorkspace({
+                mode: 'ai-drawing',
+                title: `AI 그림: ${template.label}`,
+                desc: '정확도가 낮은 도형이 들어간 해금 도안이 나와요. 도형 50% 이상은 1점, 도안 50% 이상은 5점을 받아요.',
+                template: template.key,
+                aiQuiz: true
             });
-            return drawingTemplateLibrary.filter((item) => unlocked.has(item.key)).map((item) => item.key);
         }
 
         function renderDrawingTemplateButtons(mode) {
             const root = document.getElementById('drawing-template-buttons');
             if (!root) return;
-            const activeInfo = drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
-            if (drawingWorkspaceMissionStep) {
-                root.innerHTML = `<button class="btn-outline px-3 py-2 text-sm opacity-70 cursor-not-allowed" disabled title="활동 중에는 연습 모양을 바꿀 수 없어요.">${activeInfo.emoji || '🎨'} ${activeInfo.label} 🔒</button>`;
+            if (drawingWorkspaceMissionStep || drawingWorkspaceAiQuiz || mode === 'shape-mission') {
+                root.innerHTML = '';
                 return;
             }
             const unlocked = getUnlockedDrawingTemplates();
@@ -3886,14 +3944,14 @@
                 const cls = drawingActiveTemplate === item.key ? 'active bg-purple-50 border-purple-300' : '';
                 return `
                     <button class="btn-outline px-3 py-2 text-sm ${cls} ${isOpen ? '' : 'opacity-40 cursor-not-allowed'}" ${isOpen ? `onclick="selectDrawingTemplate('${item.key}')"` : 'disabled'}>
-                        ${item.emoji || '🎨'} ${item.label}${isOpen ? '' : ' 🔒'}
+                        ${item.label}${isOpen ? '' : ' 🔒'}
                     </button>
                 `;
             }).join('');
         }
 
         window.selectDrawingTemplate = function(template) {
-            if (drawingWorkspaceMissionStep) {
+            if (drawingWorkspaceMissionStep || drawingWorkspaceAiQuiz || drawingWorkspaceMode === 'shape-mission') {
                 showModal('활동 중에는 연습 모양을 바꿀 수 없어요.');
                 return;
             }
@@ -3903,17 +3961,15 @@
                 return;
             }
             drawingActiveTemplate = template;
-            const info = drawingTemplateLibrary.find((item) => item.key === template);
-            drawingWorkspaceMode = info?.type || 'sketchbook';
+            drawingActiveTargetTemplate = drawingTemplateLibrary.find((item) => item.key === template) || drawingTemplateLibrary[0];
+            drawingWorkspaceMode = drawingActiveTargetTemplate?.type || 'sketchbook';
             renderDrawingTemplateButtons(drawingWorkspaceMode);
             resetDrawingCanvas();
         }
 
         function initializeDrawingCanvas() {
             const canvas = document.getElementById('drawing-canvas');
-            if (!canvas || drawingCanvasInitialized) {
-                return;
-            }
+            if (!canvas || drawingCanvasInitialized) return;
             const ctx = canvas.getContext('2d');
             let isDrawing = false;
             let lastX = 0;
@@ -3921,19 +3977,14 @@
 
             const point = (ev) => {
                 const rect = canvas.getBoundingClientRect();
-                if (ev.touches?.length) {
-                    return { x: ev.touches[0].clientX - rect.left, y: ev.touches[0].clientY - rect.top };
-                }
-                return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+                const source = ev.touches?.length ? ev.touches[0] : ev;
+                return { x: source.clientX - rect.left, y: source.clientY - rect.top };
             };
-
-            const start = (ev) => {
-                isDrawing = true;
-                const p = point(ev);
-                lastX = p.x;
-                lastY = p.y;
+            const rememberPoint = (p) => {
+                drawingUserTracePoints.push(p);
+                if (drawingUserTracePoints.length > 12000) drawingUserTracePoints.shift();
             };
-
+            const start = (ev) => { isDrawing = true; const p = point(ev); lastX = p.x; lastY = p.y; rememberPoint(p); };
             const move = (ev) => {
                 if (!isDrawing) return;
                 ev.preventDefault();
@@ -3946,14 +3997,11 @@
                 ctx.moveTo(lastX, lastY);
                 ctx.lineTo(p.x, p.y);
                 ctx.stroke();
+                rememberPoint(p);
                 lastX = p.x;
                 lastY = p.y;
             };
-
-            const stop = () => {
-                isDrawing = false;
-            };
-
+            const stop = () => { isDrawing = false; };
             canvas.addEventListener('mousedown', start);
             canvas.addEventListener('mousemove', move);
             canvas.addEventListener('mouseup', stop);
@@ -3961,19 +4009,12 @@
             canvas.addEventListener('touchstart', start, { passive: false });
             canvas.addEventListener('touchmove', move, { passive: false });
             canvas.addEventListener('touchend', stop);
-
             renderDrawingBrushSizeButtons();
-
             const palette = document.getElementById('drawing-color-palette');
-            palette.innerHTML = drawingColors.map((color) => `
-                <button class="drawing-color-swatch" style="background:${color}" onclick="selectDrawingColor('${color}')" title="${color}"></button>
-            `).join('');
-
+            palette.innerHTML = drawingColors.map((color) => `<button class="drawing-color-swatch" style="background:${color}" onclick="selectDrawingColor('${color}')" title="${color}"></button>`).join('');
             drawingCanvasInitialized = true;
             window.addEventListener('resize', () => {
-                if (!document.getElementById('drawing-workspace-section').classList.contains('hidden')) {
-                    resetDrawingCanvas();
-                }
+                if (!document.getElementById('drawing-workspace-section').classList.contains('hidden')) resetDrawingCanvas();
             });
         }
 
@@ -4013,114 +4054,167 @@
             return { canvas, ctx, width: rect.width, height: rect.height };
         }
 
-        function drawDashedPath(ctx, points) {
-            ctx.beginPath();
-            points.forEach(([x, y], index) => {
-                if (index === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+        function sampleLine(x1, y1, x2, y2, count = 28) {
+            return Array.from({ length: count }, (_, i) => {
+                const t = count === 1 ? 0 : i / (count - 1);
+                return { x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t };
             });
+        }
+
+        function getShapePoints(item, width, height) {
+            const cx = item.x * width;
+            const cy = item.y * height;
+            const w = Math.max(30, Math.abs(item.w || 0.28) * width);
+            const h = Math.max(24, Math.abs(item.h || 0.28) * height);
+            const left = cx - w / 2, right = cx + w / 2, top = cy - h / 2, bottom = cy + h / 2;
+            const points = [];
+            const pushPolygon = (vertices) => vertices.forEach((p, i) => points.push(...sampleLine(p.x, p.y, vertices[(i + 1) % vertices.length].x, vertices[(i + 1) % vertices.length].y, 18)));
+            if (item.shape === 'line') return sampleLine(item.x * width, item.y * height, (item.x + (item.w || 0)) * width, (item.y + (item.h || 0)) * height, 38);
+            if (item.shape === 'wave') {
+                for (let i = 0; i < 60; i++) {
+                    const t = i / 59;
+                    points.push({ x: left + w * t, y: cy + Math.sin(t * Math.PI * 4) * h * 0.45 });
+                }
+                return points;
+            }
+            if (item.shape === 'zigzag') {
+                const vertices = Array.from({ length: 7 }, (_, i) => ({ x: left + (w / 6) * i, y: cy + (i % 2 ? h * 0.45 : -h * 0.45) }));
+                vertices.forEach((p, i) => { if (i < vertices.length - 1) points.push(...sampleLine(p.x, p.y, vertices[i + 1].x, vertices[i + 1].y, 12)); });
+                return points;
+            }
+            if (item.shape === 'circle') {
+                for (let i = 0; i < 72; i++) {
+                    const a = Math.PI * 2 * i / 72;
+                    points.push({ x: cx + Math.cos(a) * w / 2, y: cy + Math.sin(a) * h / 2 });
+                }
+                return points;
+            }
+            if (item.shape === 'square') pushPolygon([{ x: left, y: top }, { x: right, y: top }, { x: right, y: bottom }, { x: left, y: bottom }]);
+            else if (item.shape === 'triangle') pushPolygon([{ x: cx, y: top }, { x: right, y: bottom }, { x: left, y: bottom }]);
+            else if (item.shape === 'pentagon') {
+                const v = Array.from({ length: 5 }, (_, i) => { const a = -Math.PI / 2 + Math.PI * 2 * i / 5; return { x: cx + Math.cos(a) * w / 2, y: cy + Math.sin(a) * h / 2 }; });
+                pushPolygon(v);
+            } else if (item.shape === 'star') {
+                const v = Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + Math.PI * 2 * i / 10; const r = (i % 2 ? 0.23 : 0.5); return { x: cx + Math.cos(a) * w * r, y: cy + Math.sin(a) * h * r }; });
+                pushPolygon(v);
+            } else if (item.shape === 'heart') {
+                for (let i = 0; i < 80; i++) {
+                    const t = Math.PI * 2 * i / 80;
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+                    const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                    points.push({ x: cx + x * w / 34, y: cy + y * h / 30 });
+                }
+            }
+            return points;
+        }
+
+        function strokeShapePath(ctx, item, width, height) {
+            const pts = getShapePoints(item, width, height);
+            if (!pts.length) return;
+            ctx.beginPath();
+            pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+            if (!['line', 'wave', 'zigzag'].includes(item.shape)) ctx.closePath();
             ctx.stroke();
         }
 
         function drawDrawingTemplate(ctx, width, height) {
-            if (drawingActiveTemplate === 'blank') return;
+            const template = drawingActiveTargetTemplate || drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
+            if (!template?.shapes?.length) return;
             ctx.save();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.fillStyle = '#f8fafc';
-            ctx.lineWidth = 10;
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 7;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.setLineDash([18, 16]);
-
-            if (drawingActiveTemplate === 'line') {
-                drawDashedPath(ctx, [[60, height * 0.25], [width - 60, height * 0.25]]);
-                drawDashedPath(ctx, [[60, height * 0.5], [width - 60, height * 0.5]]);
-                drawDashedPath(ctx, [[60, height * 0.75], [width - 60, height * 0.75]]);
-            } else if (drawingActiveTemplate === 'waves') {
-                for (let row = 0; row < 3; row++) {
-                    const y = height * (0.25 + row * 0.25);
-                    ctx.beginPath();
-                    ctx.moveTo(60, y);
-                    for (let x = 60; x < width - 60; x += 60) {
-                        ctx.quadraticCurveTo(x + 30, y + (row % 2 ? -45 : 45), x + 60, y);
-                    }
-                    ctx.stroke();
-                }
-            } else if (drawingActiveTemplate === 'circles') {
-                ctx.beginPath(); ctx.arc(width * 0.35, height * 0.42, 95, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.ellipse(width * 0.65, height * 0.58, 120, 75, 0, 0, Math.PI * 2); ctx.stroke();
-            } else if (drawingActiveTemplate === 'shapes') {
-                ctx.strokeRect(width * 0.16, height * 0.25, 160, 160);
-                ctx.beginPath();
-                ctx.moveTo(width * 0.56, height * 0.62);
-                ctx.lineTo(width * 0.72, height * 0.25);
-                ctx.lineTo(width * 0.88, height * 0.62);
-                ctx.closePath();
-                ctx.stroke();
-            } else if (drawingActiveTemplate === 'flower') {
-                ctx.setLineDash([]);
-                ctx.lineWidth = 7;
-                ctx.strokeStyle = '#94a3b8';
-                ctx.beginPath(); ctx.arc(width * 0.2, height * 0.18, 45, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(width * 0.5, height * 0.45, 38, 0, Math.PI * 2); ctx.stroke();
-                for (let i = 0; i < 8; i++) {
-                    const angle = (Math.PI * 2 * i) / 8;
-                    ctx.beginPath();
-                    ctx.ellipse(width * 0.5 + Math.cos(angle) * 70, height * 0.45 + Math.sin(angle) * 70, 34, 50, angle, 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-                ctx.beginPath(); ctx.moveTo(width * 0.5, height * 0.53); ctx.lineTo(width * 0.5, height * 0.84); ctx.stroke();
-                ctx.beginPath(); ctx.ellipse(width * 0.42, height * 0.68, 42, 22, -0.6, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.ellipse(width * 0.58, height * 0.72, 42, 22, 0.6, 0, Math.PI * 2); ctx.stroke();
-            } else if (drawingActiveTemplate === 'house') {
-                ctx.setLineDash([]);
-                ctx.lineWidth = 7;
-                ctx.strokeStyle = '#94a3b8';
-                ctx.strokeRect(width * 0.28, height * 0.42, width * 0.44, height * 0.34);
-                ctx.beginPath();
-                ctx.moveTo(width * 0.24, height * 0.42);
-                ctx.lineTo(width * 0.5, height * 0.18);
-                ctx.lineTo(width * 0.76, height * 0.42);
-                ctx.closePath();
-                ctx.stroke();
-                ctx.strokeRect(width * 0.46, height * 0.57, width * 0.1, height * 0.19);
-                ctx.strokeRect(width * 0.34, height * 0.5, width * 0.1, height * 0.1);
-                ctx.strokeRect(width * 0.6, height * 0.5, width * 0.1, height * 0.1);
-            } else {
-                const info = drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || { label: '도안', emoji: '🎨' };
-                ctx.setLineDash([]);
-                ctx.lineWidth = 7;
-                ctx.strokeStyle = '#94a3b8';
-                ctx.fillStyle = '#f8fafc';
-                ctx.strokeRect(width * 0.18, height * 0.2, width * 0.64, height * 0.58);
-                ctx.font = `${Math.max(54, Math.min(width, height) * 0.18)}px system-ui, Apple Color Emoji, Segoe UI Emoji`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#e2e8f0';
-                ctx.fillText(info.emoji || '🎨', width * 0.5, height * 0.43);
-                ctx.font = 'bold 28px system-ui, sans-serif';
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillText(info.label, width * 0.5, height * 0.68);
-            }
+            ctx.setLineDash([14, 12]);
+            template.shapes.forEach((shape) => {
+                ctx.strokeStyle = drawingShapeMap[shape.shape]?.color || '#94a3b8';
+                strokeShapePath(ctx, shape, width, height);
+            });
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 18px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(template.label, width * 0.5, 34);
             ctx.restore();
         }
 
         function resetDrawingCanvas() {
             const { ctx, width, height } = prepareDrawingCanvas();
+            drawingUserTracePoints = [];
             drawDrawingTemplate(ctx, width, height);
+            updateDrawingCompleteButtonCooldown();
         }
 
-        window.clearDrawingCanvas = function() {
-            resetDrawingCanvas();
+        window.clearDrawingCanvas = function() { resetDrawingCanvas(); }
+
+        function evaluateDrawingAccuracy() {
+            const canvas = document.getElementById('drawing-canvas');
+            const rect = canvas.getBoundingClientRect();
+            const template = drawingActiveTargetTemplate || drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
+            const threshold = Math.max(18, drawingBrushSize * 1.8);
+            const byShape = {};
+            let total = 0;
+            let hit = 0;
+            (template.shapes || []).forEach((shape) => {
+                const pts = getShapePoints(shape, rect.width, rect.height);
+                let shapeHit = 0;
+                pts.forEach((target) => {
+                    const matched = drawingUserTracePoints.some((p) => Math.hypot(p.x - target.x, p.y - target.y) <= threshold);
+                    if (matched) shapeHit += 1;
+                });
+                total += pts.length;
+                hit += shapeHit;
+                const key = shape.shape;
+                byShape[key] = byShape[key] || { hit: 0, total: 0 };
+                byShape[key].hit += shapeHit;
+                byShape[key].total += pts.length;
+            });
+            return { accuracy: total ? Math.round((hit / total) * 100) : 0, hit, total, byShape };
+        }
+
+        function applyShapeAccuracyStats(result) {
+            ensureDrawingPortfolioShapeFields();
+            Object.entries(result.byShape || {}).forEach(([shapeKey, stat]) => {
+                const prev = drawingPortfolio.shapeStats[shapeKey] || { attempts: 0, bestAccuracy: 0, accuracySum: 0, accuracy: 0, pointsHit: 0, pointsTotal: 0 };
+                const acc = stat.total ? Math.round((stat.hit / stat.total) * 100) : 0;
+                const attempts = Number(prev.attempts || 0) + 1;
+                const accuracySum = Number(prev.accuracySum || 0) + acc;
+                drawingPortfolio.shapeStats[shapeKey] = {
+                    attempts,
+                    bestAccuracy: Math.max(Number(prev.bestAccuracy || 0), acc),
+                    accuracySum,
+                    accuracy: Math.round(accuracySum / attempts),
+                    pointsHit: Number(prev.pointsHit || 0) + stat.hit,
+                    pointsTotal: Number(prev.pointsTotal || 0) + stat.total,
+                    lastAccuracy: acc,
+                    updatedAt: new Date().toISOString()
+                };
+            });
+        }
+
+        window.openMyShapeStats = function() {
+            ensureDrawingPortfolioShapeFields();
+            const rows = drawingShapeLibrary.map((shape) => {
+                const stat = drawingPortfolio.shapeStats?.[shape.key] || {};
+                const acc = Number(stat.accuracy || 0);
+                return `<div class="korean-embed-card p-4"><div class="flex justify-between items-center"><div class="font-black text-[#2c3e50]">${shape.label}</div><div class="text-purple-600 font-black">${acc}%</div></div><div class="text-xs text-gray-500 mt-1">시도 ${stat.attempts || 0}회 · 최고 ${stat.bestAccuracy || 0}% · 최근 ${stat.lastAccuracy || 0}%</div><div class="w-full h-3 bg-gray-100 rounded-full mt-3 overflow-hidden"><div class="h-full bg-purple-400" style="width:${Math.min(100, acc)}%"></div></div></div>`;
+            }).join('');
+            showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">나의 도형 정확도</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div></div>`);
+        }
+
+        function updateDrawingCompleteButtonCooldown() {
+            const btn = document.getElementById('drawing-complete-mission-btn');
+            if (!btn) return;
+            const waitMs = Math.max(0, Number(drawingPortfolio.unpaidCooldownUntil || 0) - Date.now());
+            btn.disabled = waitMs > 0;
+            btn.classList.toggle('opacity-50', waitMs > 0);
+            btn.innerText = waitMs > 0 ? `완료하기 (${Math.ceil(waitMs / 1000)}초)` : '완료하기';
+            if (waitMs > 0) setTimeout(updateDrawingCompleteButtonCooldown, 1000);
         }
 
         async function persistDrawingData(extra = {}) {
             if (!currentUserId) return;
-            await setDoc(doc(db, 'users', currentUserId), {
-                currentDrawingStep: currentUserDrawingStep,
-                drawingPortfolio,
-                ...extra
-            }, { merge: true });
+            await setDoc(doc(db, 'users', currentUserId), { currentDrawingStep: currentUserDrawingStep, drawingPortfolio, ...extra }, { merge: true });
         }
 
         function captureDrawingImage() {
@@ -4130,19 +4224,9 @@
 
         async function mirrorDrawingToAiedueDataServer(record) {
             try {
-                await fetch('/korean-db/db-api/collections', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: 'aiedue_korean_drawings', description: '에이두 국어 스케치북 작품' })
-                }).catch(() => null);
-                await fetch('/korean-db/db-api/items/aiedue_korean_drawings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: record })
-                });
-            } catch (error) {
-                console.warn('Aiedue data server drawing mirror failed', error);
-            }
+                await fetch('/korean-db/db-api/collections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'aiedue_korean_drawings', description: '에이두 국어 스케치북 작품' }) }).catch(() => null);
+                await fetch('/korean-db/db-api/items/aiedue_korean_drawings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: record }) });
+            } catch (error) { console.warn('Aiedue data server drawing mirror failed', error); }
         }
 
         async function loadFriendsDrawingsFromAiedueDataServer() {
@@ -4151,39 +4235,20 @@
                 if (!res.ok) throw new Error(`drawings ${res.status}`);
                 const data = await res.json();
                 return Array.isArray(data.items) ? data.items.map((item) => item.data || item) : [];
-            } catch (error) {
-                console.warn('Aiedue data server drawing list failed', error);
-                return [];
-            }
+            } catch (error) { console.warn('Aiedue data server drawing list failed', error); return []; }
         }
 
-        function buildDrawingRecord({ image, kind, missionStep = null, savedAt }) {
-            const templateInfo = drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
-            return {
-                image,
-                kind,
-                missionStep,
-                template: drawingActiveTemplate,
-                templateLabel: templateInfo.label,
-                savedAt,
-                userId: currentUserId || 'anonymous',
-                userName: currentUserName || '이름 없음',
-                userIcon: currentUserIcon || '🐻'
-            };
+        function buildDrawingRecord({ image, kind, missionStep = null, savedAt, accuracy = null, rewardedPoints = 0, shapeAccuracy = null }) {
+            const templateInfo = drawingActiveTargetTemplate || drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
+            return { image, kind, missionStep, template: drawingActiveTemplate, templateLabel: templateInfo.label, accuracy, rewardedPoints, shapeAccuracy, savedAt, userId: currentUserId || 'anonymous', userName: currentUserName || '이름 없음', userIcon: currentUserIcon || '🐻' };
         }
 
         window.saveCurrentDrawing = async function() {
             const image = captureDrawingImage();
             const now = new Date().toISOString();
             const record = buildDrawingRecord({ image, kind: drawingWorkspaceMissionStep ? 'mission' : 'sketchbook', missionStep: drawingWorkspaceMissionStep, savedAt: now });
-            if (drawingWorkspaceMissionStep) {
-                drawingPortfolio.missions = {
-                    ...drawingPortfolio.missions,
-                    [drawingWorkspaceMissionStep]: record
-                };
-            } else {
-                drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
-            }
+            if (drawingWorkspaceMissionStep) drawingPortfolio.missions = { ...drawingPortfolio.missions, [drawingWorkspaceMissionStep]: record };
+            else drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
             await persistDrawingData();
             await mirrorDrawingToAiedueDataServer(record);
             updateDrawingDashboardPreview();
@@ -4191,51 +4256,65 @@
         }
 
         window.completeTodayDrawingMission = async function() {
-            if (!drawingWorkspaceMissionStep) return;
+            ensureDrawingPortfolioShapeFields();
+            if (Date.now() < Number(drawingPortfolio.unpaidCooldownUntil || 0)) {
+                updateDrawingCompleteButtonCooldown();
+                showModal('조금만 기다렸다가 완료할 수 있어요.');
+                return;
+            }
+            const result = evaluateDrawingAccuracy();
+            applyShapeAccuracyStats(result);
             const image = captureDrawingImage();
             const now = new Date().toISOString();
-            const record = buildDrawingRecord({ image, kind: 'mission', missionStep: drawingWorkspaceMissionStep, savedAt: now });
             const mission = drawingMissions.find((item) => item.step === drawingWorkspaceMissionStep);
-            const wasAlreadyDone = Boolean(drawingPortfolio.missions?.[drawingWorkspaceMissionStep]);
-            drawingPortfolio.missions = {
-                ...drawingPortfolio.missions,
-                [drawingWorkspaceMissionStep]: record
-            };
-            drawingPortfolio.unlockedTemplates = Array.from(new Set([...(drawingPortfolio.unlockedTemplates || []), mission?.template].filter(Boolean)));
-            currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingWorkspaceMissionStep);
-            const completedCount = Object.keys(drawingPortfolio.missions || {}).length;
-            const rewardMilestone = Math.floor(completedCount / 5) * 5;
-            const rewardedMilestones = new Set(drawingPortfolio.rewardedMilestones || []);
-            let rewardMessage = '';
-            if (!wasAlreadyDone && rewardMilestone >= 5 && completedCount % 5 === 0 && !rewardedMilestones.has(rewardMilestone)) {
-                rewardedMilestones.add(rewardMilestone);
-                drawingPortfolio.rewardedMilestones = Array.from(rewardedMilestones).sort((a, b) => a - b);
-                currentUserCoins += 10;
-                rewardMessage = ' 포인트 10도 받았어요!';
+            const wasAlreadyDone = Boolean(drawingWorkspaceMissionStep && drawingPortfolio.missions?.[drawingWorkspaceMissionStep]);
+            let rewardPoints = 0;
+            let message = '';
+            if (drawingWorkspaceAiQuiz) {
+                rewardPoints = result.accuracy >= 50 ? 6 : 0;
+                message = result.accuracy >= 50 ? `AI 그림 정확도 ${result.accuracy}%! 도형 1점 + 도안 5점, 총 6점을 받았어요.` : `AI 그림 정확도 ${result.accuracy}%. 50% 미만이라 포인트는 없어요.`;
+                if (rewardPoints > 0) currentUserCoins += rewardPoints;
+            } else if (drawingWorkspaceMode === 'shape-mission') {
+                rewardPoints = result.accuracy >= 50 ? 1 : 0;
+                if (rewardPoints > 0) {
+                    currentUserCoins += 1;
+                    drawingPortfolio.unpaidCooldownUntil = 0;
+                    message = `도형 정확도 ${result.accuracy}%! 에이두 포인트 1점을 받았어요.`;
+                } else {
+                    drawingPortfolio.unpaidCooldownUntil = Date.now() + 60000;
+                    message = `도형 정확도 ${result.accuracy}%. 포인트 없이 다음 도형으로 넘어가요. 다음 완료는 1분 뒤에 누를 수 있어요.`;
+                }
+            } else if (drawingWorkspaceMissionStep) {
+                rewardPoints = result.accuracy >= 50 ? 5 : 0;
+                const record = buildDrawingRecord({ image, kind: 'mission', missionStep: drawingWorkspaceMissionStep, savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
+                drawingPortfolio.missions = { ...drawingPortfolio.missions, [drawingWorkspaceMissionStep]: record };
+                drawingPortfolio.unlockedTemplates = Array.from(new Set([...(drawingPortfolio.unlockedTemplates || []), mission?.template].filter(Boolean)));
+                currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingWorkspaceMissionStep);
+                if (!wasAlreadyDone && rewardPoints > 0) currentUserCoins += rewardPoints;
+                await mirrorDrawingToAiedueDataServer(record);
+                message = `${drawingWorkspaceMissionStep}단계 정확도 ${result.accuracy}%. ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardPoints ? ` 에이두 포인트 ${rewardPoints}점을 받았어요.` : ' 50% 미만이라 포인트는 없어요.'}`;
+            }
+            if (!drawingWorkspaceMissionStep) {
+                const record = buildDrawingRecord({ image, kind: drawingWorkspaceAiQuiz ? 'ai-drawing' : 'shape-mission', savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
+                drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
+                await mirrorDrawingToAiedueDataServer(record);
             }
             await persistDrawingData({ coins: currentUserCoins });
-            await mirrorDrawingToAiedueDataServer(record);
             updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
             updateDrawingDashboardPreview();
-            showModal(`${drawingWorkspaceMissionStep}단계 오늘의 그리기를 완료했어요! ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardMessage}`);
+            updateDrawingCompleteButtonCooldown();
+            showModal(message);
+            if (drawingWorkspaceMode === 'shape-mission') setTimeout(openTodayDrawingActivity, 500);
+            if (drawingWorkspaceAiQuiz) setTimeout(openAiDrawingQuizActivity, 500);
         }
 
         window.openFriendsDrawingGallery = async function() {
             const drawings = await loadFriendsDrawingsFromAiedueDataServer();
             const localWorks = (drawingPortfolio.free || []).map((item) => ({ ...item, userName: currentUserName, userIcon: currentUserIcon, kind: item.kind || 'sketchbook' }));
-            const merged = [...drawings, ...localWorks]
-                .filter((item) => item?.image)
-                .sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
-                .slice(0, 60);
+            const merged = [...drawings, ...localWorks].filter((item) => item?.image).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))).slice(0, 60);
             const body = merged.length ? `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
-                    ${merged.map((item) => `
-                        <div class="korean-embed-card p-3 bg-white">
-                            <img src="${item.image}" alt="친구 그림" class="w-full h-44 object-contain bg-gray-50 rounded-2xl border">
-                            <div class="mt-2 text-sm font-black text-[#2c3e50]">${item.userIcon || '👤'} ${item.userName || '친구'}</div>
-                            <div class="text-xs text-gray-500 font-bold">${item.templateLabel || drawingTemplates[item.template] || '스케치북'} · ${(item.savedAt || '').slice(0, 10)}</div>
-                        </div>
-                    `).join('')}
+                    ${merged.map((item) => `<div class="korean-embed-card p-3 bg-white"><img src="${item.image}" alt="친구 그림" class="w-full h-44 object-contain bg-gray-50 rounded-2xl border"><div class="mt-2 text-sm font-black text-[#2c3e50]">${item.userIcon || '👤'} ${item.userName || '친구'}</div><div class="text-xs text-gray-500 font-bold">${item.templateLabel || drawingTemplates[item.template] || '스케치북'} · 정확도 ${item.accuracy ?? '-'}% · ${(item.savedAt || '').slice(0, 10)}</div></div>`).join('')}
                 </div>
             ` : '<div class="text-center text-gray-500 font-bold py-10">아직 저장된 친구 그림이 없어요.</div>';
             showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">친구들 그림 구경하기</h3>${body}</div>`);
