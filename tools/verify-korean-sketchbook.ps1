@@ -8,6 +8,8 @@ $files = @(
 
 $requiredMarkers = @(
   'openSketchbookActivity',
+  'openCurrentDrawingMission',
+  'drawing-mission-badge',
   'drawing-mission-next-label',
   'mission-draft',
   'drawingBrushSizeMap',

@@ -708,31 +708,36 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <!-- 상단 주요 활동: 도형 미션과 AI 그림은 같은 가로 길이 -->
+                <!-- 상단 주요 활동: 그림 미션 / 도형 미션 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
+                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff]" onclick="openCurrentDrawingMission()">
+                        <div id="drawing-mission-badge" class="aiedu-badge bg-purple-500 mb-6">오늘의 미션[1단계]</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">그림 미션</h3>
+                        <p class="text-2xl text-purple-500 font-bold">도형을 사용해서 그림을 그려요!</p>
+                    </div>
                     <div class="grid-item p-10 flex flex-col items-center justify-center bg-purple-50" onclick="openTodayDrawingActivity()">
                         <div class="aiedu-badge bg-purple-500 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도형 미션</h3>
                         <p class="text-2xl text-purple-500 font-bold">동그라미·세모·꾸불선을 정확히 따라 그려요!</p>
                     </div>
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#f3e8ff]" onclick="openAiDrawingQuizActivity()">
-                        <div class="text-7xl mb-6">🤖</div>
-                        <div class="text-5xl font-black text-[#2c3e50]">AI 그림</div>
-                        <p class="text-gray-500 mt-2 text-lg">부족한 도형이 들어간 해금 도안을 그려요</p>
-                    </div>
                 </div>
 
-                <!-- 하단 활동: 그림 미션 이어하기와 스케치북 -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-[#fdf0ff]" onclick="openMyDrawingFromDashboard()">
-                        <div class="text-5xl mb-3">🎨</div>
-                        <div class="text-xl font-bold">그림 미션</div>
+                <!-- 하단 활동: 나의 그림 / 스케치북 / AI 그림 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openMyDrawingFromDashboard()">
+                        <div class="text-5xl mb-3">🖼️</div>
+                        <div class="text-xl font-bold">나의 그림</div>
                         <p id="drawing-mission-next-label" class="text-sm text-purple-500 font-black mt-2">1단계 할 차례예요</p>
                     </div>
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openSketchbookActivity()">
                         <div class="text-5xl mb-3">📒</div>
                         <div class="text-xl font-bold">스케치북</div>
                         <p class="text-sm text-gray-500 mt-2">해금한 도안을 골라 자유롭게 그려요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openAiDrawingQuizActivity()">
+                        <div class="text-5xl mb-3">🤖</div>
+                        <div class="text-xl font-bold">AI 그림</div>
+                        <p class="text-sm text-gray-500 mt-2">부족한 도형이 들어간 도안을 그려요</p>
                     </div>
                 </div>
             </div>
@@ -3816,11 +3821,13 @@
             const progressLabel = document.getElementById('my-drawing-progress-label');
             const nextTitle = document.getElementById('my-drawing-next-title');
             const dashboardNextLabel = document.getElementById('drawing-mission-next-label');
+            const missionBadge = document.getElementById('drawing-mission-badge');
             const completedCount = document.getElementById('my-drawing-completed-count');
             const freeCount = document.getElementById('my-drawing-free-count');
             const nextStepText = nextMission ? `${nextMission.step}단계 할 차례예요` : '모든 그림 미션 완료!';
             if (progressLabel) progressLabel.innerText = nextMission ? `그림 미션 ${nextStepText}` : '그림 미션 완료';
             if (dashboardNextLabel) dashboardNextLabel.innerText = nextStepText;
+            if (missionBadge) missionBadge.innerText = nextMission ? `오늘의 미션[${nextMission.step}단계]` : '오늘의 미션[완료]';
             if (nextTitle) nextTitle.innerText = nextMission ? `${nextMission.step}단계: ${nextMission.title}` : '모든 미션 완료';
             if (completedCount) completedCount.innerText = Object.keys(drawingPortfolio.missions || {}).length;
             if (freeCount) freeCount.innerText = drawingPortfolio.free?.length || 0;
@@ -3882,6 +3889,17 @@
         window.openMyDrawingFromDashboard = function() {
             renderMyDrawingSection();
             showTopLevelSection('my-drawing-section');
+        }
+
+        window.openCurrentDrawingMission = function() {
+            const nextMission = getNextDrawingMission();
+            if (!nextMission) {
+                renderMyDrawingSection();
+                showModal('모든 그림 미션을 완료했어요! 나의 그림에서 기록을 볼 수 있어요.');
+                showTopLevelSection('my-drawing-section');
+                return;
+            }
+            openDrawingMission(nextMission.step);
         }
 
         window.openTodayDrawingActivity = function() {
