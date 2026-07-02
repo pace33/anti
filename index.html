@@ -419,6 +419,12 @@
         @keyframes baseFadeIn { 0%,15%{opacity:0} 20%,100%{opacity:1} }
         @keyframes baseToBelowForO { 0%,15%{transform:translateY(0);opacity:0} 20%,30%{transform:translateY(0);opacity:1} 48%,66%{transform:translateY(36px);opacity:1} 74%,100%{transform:translateY(36px);opacity:0} }
         @keyframes baseToAboveForU { 0%,15%{transform:translateY(0);opacity:0} 20%,30%{transform:translateY(0);opacity:1} 48%,66%{transform:translateY(-36px);opacity:1} 74%,100%{transform:translateY(-36px);opacity:0} }
+        .combine-vowel-base { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:verticalBaseHold 4.7s ease-in-out 1 both; }
+        .combine-dot-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToRightOfVertical 4.7s ease-in-out 1 both; }
+        .combine-dot-left { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToLeftOfVertical 4.7s ease-in-out 1 both; }
+        @keyframes verticalBaseHold { 0%,15%{opacity:0} 20%,66%{opacity:1} 74%,100%{opacity:0} }
+        @keyframes dotToRightOfVertical { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(-144px,0);opacity:1} 74%,100%{transform:translate(-144px,0);opacity:0} }
+        @keyframes dotToLeftOfVertical { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(144px,0);opacity:1} 74%,100%{transform:translate(144px,0);opacity:0} }
 
         /* ===== 입 벌림 진행 애니메이션 ===== */
         .mouth-card {
@@ -4447,7 +4453,7 @@
         // 결합 카드 클릭 시 애니메이션 재시작 + 순차적 자모음 음성(므, 아, 마) 출력
         let activeTtsTimeouts = [];
         window.restartCombineAnim = function(card) {
-            const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op,.combine-dot-up,.combine-dot-down,.combine-base');
+            const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op,.combine-dot-up,.combine-dot-down,.combine-base,.combine-vowel-base,.combine-dot-right,.combine-dot-left');
             card.style.visibility = 'hidden';
             els.forEach(el => {
                 el.style.animation = 'none';
@@ -4545,10 +4551,14 @@
                 const combosData = JSON.stringify(combos).replace(/"/g, '&quot;');
                 const vertUp   = ['ㅗ','ㅛ'];
                 const vertDown = ['ㅜ','ㅠ'];
+                const vertRight = ['ㅏ','ㅑ','ㅐ','ㅒ'];
+                const vertLeft  = ['ㅓ','ㅕ','ㅔ','ㅖ'];
                 const rows = combos.map((c, i) => {
                     const d = `animation-delay:${i * 4.7}s`;
                     const isUp   = vertUp.includes(c.res);
                     const isDown = vertDown.includes(c.res);
+                    const isRight = vertRight.includes(c.res);
+                    const isLeft = vertLeft.includes(c.res);
                     if (isUp || isDown) {
                         const dotChar  = (c.l === 'ㆍ') ? c.l : c.r;
                         const baseChar = (c.l === 'ㆍ') ? c.r : c.l;
@@ -4557,6 +4567,27 @@
                         return `<div class="combine-row">
                             <div class="combine-box ${dClass}" style="${d}">${dotChar}</div>
                             <div class="combine-box combine-base ${baseClass}" style="${d}">${baseChar}</div>
+                            <span class="combine-op" style="${d}">→</span>
+                            <div class="combine-box combine-result" style="${d}">${c.res}</div>
+                        </div>`;
+                    }
+                    if (isRight || isLeft) {
+                        const dotChar  = (c.l === 'ㆍ') ? c.l : c.r;
+                        const baseChar = (c.l === 'ㆍ') ? c.r : c.l;
+                        const dotClass = isRight ? 'combine-dot-right' : 'combine-dot-left';
+                        if (isLeft) {
+                            return `<div class="combine-row">
+                                <div class="combine-box ${dotClass}" style="${d}">${dotChar}</div>
+                                <span class="combine-op" style="${d}">+</span>
+                                <div class="combine-box combine-vowel-base" style="${d}">${baseChar}</div>
+                                <span class="combine-op" style="${d}">→</span>
+                                <div class="combine-box combine-result" style="${d}">${c.res}</div>
+                            </div>`;
+                        }
+                        return `<div class="combine-row">
+                            <div class="combine-box combine-vowel-base" style="${d}">${baseChar}</div>
+                            <span class="combine-op" style="${d}">+</span>
+                            <div class="combine-box ${dotClass}" style="${d}">${dotChar}</div>
                             <span class="combine-op" style="${d}">→</span>
                             <div class="combine-box combine-result" style="${d}">${c.res}</div>
                         </div>`;
