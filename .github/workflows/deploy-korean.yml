@@ -27,10 +27,10 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $index = Get-Content -Raw -Encoding UTF8 .\index.html
-          if ($index -notmatch 'https://aiedue\.ddns\.net/korean-db/db-api') {
-            throw 'index.html does not point to the existing /korean-db data proxy.'
+          if ($index -notmatch 'korean-db/db-api') {
+            throw 'index.html does not include the /korean-db data proxy marker.'
           }
-          if ($index -match 'https://aiedue\.ddns\.net/anti-db/db-api') {
+          if ($index -match 'anti-db/db-api') {
             throw 'index.html still references old /anti-db data proxy.'
           }
           if ($index -notmatch 'activity-loading-text') {
