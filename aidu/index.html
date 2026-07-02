@@ -157,6 +157,16 @@
             transform: translateY(1px);
             box-shadow: none;
         }
+        .review-word-chip-wrap {
+            gap: 18px;
+            margin-top: 18px;
+        }
+        .review-word-chip {
+            min-width: 126px;
+            padding: 18px 30px;
+            border-radius: 34px;
+            font-size: 4.4rem;
+        }
         .writing-line {
             min-height: 58px;
             border: 2px dashed #cbd5e1;
@@ -5553,21 +5563,36 @@
                     window.completedChoices = [];
                 }
 
-                const sectionTitle = step === 7 && safeIndex === 1
+                const sectionTitle = step === 7 && safeIndex === 0
+                    ? ''
+                    : step === 7 && safeIndex === 1
                     ? '기본 모음 전체 따라 쓰기'
                     : (step === 7 && safeIndex === 2 ? detail.sections[1].title : section.title);
+                const sectionHeadingHtml = sectionTitle
+                    ? `<div class="activity-section-title mb-4">
+                            <span class="text-xl font-bold text-stone-700">${sectionTitle}</span>
+                        </div>`
+                    : '';
+                const introHtml = step === 7 && safeIndex === 0
+                    ? `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">
+                            <div>아, 야, 어, 여, 오, 요, 우, 유, 으, 이를 순서대로 읽어요.</div>
+                            <div class="mt-2">같은 글자 배열을 따라 쓰며 소리 내어 읽어요.</div>
+                        </div>`
+                    : (introCards.length ? introCards : activityCards.slice(0, 2)).map((card) => renderCardContent(card)).join('');
+                const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
+                const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
                 let contentHtml = '';
                 if (safeIndex === 0) {
                     contentHtml = `
                         <div class="learning-main-card">
                             <div class="learning-card-label">📖 이해하기</div>
                             <div class="grid gap-3">
-                                ${(introCards.length ? introCards : activityCards.slice(0, 2)).map((card) => renderCardContent(card)).join('')}
+                                ${introHtml}
                             </div>
                             <div class="mt-4">
                                 <div class="learning-card-label">📖 배움 글자</div>
-                                <div class="word-chip-wrap">
-                                    ${practiceFlow.choices.map((word) => `<button type="button" class="word-chip" onclick="speakChar('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}
+                                <div class="${wordChipWrapClass}">
+                                    ${practiceFlow.choices.map((word) => `<button type="button" class="${wordChipClass}" onclick="speakChar('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}
                                 </div>
                             </div>
                         </div>
@@ -5650,9 +5675,7 @@
 
                 document.getElementById('learning-detail-content').innerHTML = `
                     <div class="learning-pane p-5">
-                        <div class="activity-section-title mb-4">
-                            <span class="text-xl font-bold text-stone-700">${sectionTitle}</span>
-                        </div>
+                        ${sectionHeadingHtml}
                         <div class="learning-activity-layout" style="grid-template-columns: 1fr;">
                             ${contentHtml}
                         </div>
@@ -5958,7 +5981,7 @@
         }
 
         function drawTraceStrokeOrder(ctx, text, bx, by, boxW, boxH, completedCount = 0) {
-            const labelSize = Math.max(14, Math.min(boxW, boxH) * 0.12);
+            const labelSize = Math.max(22, Math.min(boxW, boxH) * 0.18);
             ctx.save();
             ctx.fillStyle = '#c2410c';
             ctx.font = `900 ${labelSize}px 'Noto Sans KR', sans-serif`;
