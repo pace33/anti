@@ -395,6 +395,8 @@
             align-items: center;
             justify-content: center;
             border-radius: 26px;
+            position: relative;
+            z-index: 1;
         }
         .combine-left  { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:combineLeft 4.7s ease-in-out 1 both; }
         .combine-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:combineRight 4.7s ease-in-out 1 both; }
@@ -408,20 +410,20 @@
         @keyframes opFade       { 0%,15%{opacity:0} 20%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
         @keyframes resultPop    { 0%,66%{transform:scale(0);opacity:0} 76%{transform:scale(1.2);opacity:1} 88%,100%{transform:scale(1);opacity:1} }
         /* 점이 오른쪽에서 왼쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
-        .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:baseFadeIn 4.7s ease-in-out 1 both; }
+        .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:baseFadeIn 4.7s ease-in-out 1 both; z-index:2; }
         .combine-base-up { animation:baseToBelowForO 4.7s ease-in-out 1 both; }
         .combine-base-down { animation:baseToAboveForU 4.7s ease-in-out 1 both; }
         .combine-row     { overflow:visible; }
-        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 4.7s ease-in-out 1 both; }
-        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 4.7s ease-in-out 1 both; }
+        .combine-dot-up  { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToAbove 4.7s ease-in-out 1 both; z-index:5; }
+        .combine-dot-down{ background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 4.7s ease-in-out 1 both; z-index:5; }
         @keyframes dotToAbove { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(170px,-74px);opacity:1} 74%,100%{transform:translate(170px,-74px);opacity:0} }
         @keyframes dotToBelow { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(170px,74px);opacity:1} 74%,100%{transform:translate(170px,74px);opacity:0} }
         @keyframes baseFadeIn { 0%,15%{opacity:0} 20%,100%{opacity:1} }
         @keyframes baseToBelowForO { 0%,15%{transform:translateY(0);opacity:0} 20%,30%{transform:translateY(0);opacity:1} 48%,66%{transform:translateY(36px);opacity:1} 74%,100%{transform:translateY(36px);opacity:0} }
         @keyframes baseToAboveForU { 0%,15%{transform:translateY(0);opacity:0} 20%,30%{transform:translateY(0);opacity:1} 48%,66%{transform:translateY(-36px);opacity:1} 74%,100%{transform:translateY(-36px);opacity:0} }
-        .combine-vowel-base { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:verticalBaseHold 4.7s ease-in-out 1 both; }
-        .combine-dot-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToRightOfVertical 4.7s ease-in-out 1 both; }
-        .combine-dot-left { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToLeftOfVertical 4.7s ease-in-out 1 both; }
+        .combine-vowel-base { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:verticalBaseHold 4.7s ease-in-out 1 both; z-index:2; }
+        .combine-dot-right { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToRightOfVertical 4.7s ease-in-out 1 both; z-index:5; }
+        .combine-dot-left { background:#fce7f3; color:#9d174d; border:2px solid #f9a8d4; animation:dotToLeftOfVertical 4.7s ease-in-out 1 both; z-index:5; }
         @keyframes verticalBaseHold { 0%,15%{opacity:0} 20%,66%{opacity:1} 74%,100%{opacity:0} }
         @keyframes dotToRightOfVertical { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(-144px,0);opacity:1} 74%,100%{transform:translate(-144px,0);opacity:0} }
         @keyframes dotToLeftOfVertical { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(144px,0);opacity:1} 74%,100%{transform:translate(144px,0);opacity:0} }
