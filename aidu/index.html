@@ -5307,20 +5307,43 @@
             try { if (!window.Tesseract) await new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; script.onload = resolve; script.onerror = reject; document.head.appendChild(script); }); const result = await window.Tesseract.recognize(file, 'kor+eng'); return result?.data?.text?.trim() || ''; } catch (error) { console.warn('dictation OCR failed', error); return ''; }
         }
 
+        function getAiTextFromResponse(data) {
+            return (data?.text || data?.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('\n') || '').trim();
+        }
+
+        async function callKoreanAiGenerate(prompt, options = {}) {
+            const body = { prompt, model: options.model || '', printTimeout: options.printTimeout || '2m' };
+            if (options.imageBase64) {
+                body.imageBase64 = options.imageBase64;
+                body.imageMime = options.imageMime || 'image/jpeg';
+                body.model = options.model || '';
+                body.printTimeout = options.printTimeout || '4m';
+            }
+            const endpoint = '/korean-ai/generate';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `AI ${res.status}`);
+            return getAiTextFromResponse(data);
+        }
+
         async function analyzeDictationImageWithAi(dataUrl) {
             try {
                 if (!dataUrl || !dataUrl.startsWith('data:image/')) return '';
                 const [header, base64] = dataUrl.split(',');
                 const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
-                const payload = { contents: [{ role: 'user', parts: [
-                    { text: '이 이미지는 초등 국어 단어 은행 촬영 사진입니다. 이미지에 보이는 모든 한국어 문구, 낱말, 사물/요소 이름을 한국어로 최대한 많이 추출해 주세요. 설명 없이 줄바꿈 텍스트로만 출력하세요.' },
-                    { inline_data: { mime_type: mime, data: base64 } }
-                ]}] };
-                const res = await fetch('/.netlify/functions/generatePlan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'gemini', payload }) });
-                if (!res.ok) throw new Error(`image analysis ${res.status}`);
-                const data = await res.json();
-                return data?.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('\n').trim() || '';
-            } catch (error) { console.warn('dictation AI image analysis failed', error); return ''; }
+                const prompt = '이 이미지는 초등 국어 단어 은행 촬영 사진입니다. OCR처럼 글자만 읽지 말고, 이미지 자체를 보고 보이는 한국어 문구, 낱말, 그림/사물/요소 이름을 한국어로 최대한 많이 추출해 주세요. 설명 없이 줄바꿈 텍스트로만 출력하세요.';
+                const text = await callKoreanAiGenerate(prompt, { imageBase64: base64, imageMime: mime });
+                return text || '';
+            } catch (error) {
+                console.warn('dictation AI image analysis failed', error);
+                const hint = document.getElementById('dictation-ai-word-preview');
+                if (hint) { hint.classList.remove('hidden'); hint.innerText = `AI 사진 분석 실패: ${error.message || error}. OCR 결과로만 임시 추출합니다.`; }
+                return '';
+            }
         }
 
         async function extractDictationWordsWithAi(text) {
@@ -5333,12 +5356,9 @@
 ${text}
 
 반드시 JSON만 출력: {"words":["단어"],"sentences":["짧은 문장"]}`;
-                const payload = { contents: [{ role: 'user', parts: [{ text: prompt }]}], generationConfig: { responseMimeType: 'application/json' } };
-                const res = await fetch('/.netlify/functions/generatePlan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'gemini', payload }) });
-                if (!res.ok) throw new Error(`word extraction ${res.status}`);
-                const data = await res.json();
-                const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-                const parsed = JSON.parse(raw);
+                const raw = await callKoreanAiGenerate(prompt, { printTimeout: '3m' }) || '{}';
+                const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+                const parsed = JSON.parse(cleaned);
                 return {
                     words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter((word) => word.length >= 2))),
                     sentences: Array.from(new Set((Array.isArray(parsed.sentences) ? parsed.sentences : []).map(cleanKoreanSentence).filter((sentence) => sentence.length >= 4)))
@@ -5356,7 +5376,7 @@ ${text}
             const setPreview = (src) => { preview.src = src; preview.classList.remove('hidden'); };
             if (previewDataUrl) setPreview(previewDataUrl);
             else { const reader = new FileReader(); reader.onload = () => setPreview(reader.result); reader.readAsDataURL(file); }
-            document.getElementById('dictation-photo-hint').innerText = activeDictationSession?.kind === 'bank-camera' ? 'OCR + AI 사진 분석 중이에요...' : '사진에서 글자를 읽는 중이에요...';
+            document.getElementById('dictation-photo-hint').innerText = activeDictationSession?.kind === 'bank-camera' ? 'OCR을 돌리면서, 별도로 AI가 사진 자체를 분석하고 있어요...' : '사진에서 글자를 읽는 중이에요...';
             const dataUrl = previewDataUrl || await new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(file); });
             const [ocrText, aiText] = await Promise.all([runDictationOcr(file), activeDictationSession?.kind === 'bank-camera' ? analyzeDictationImageWithAi(dataUrl) : Promise.resolve('')]);
             activeDictationImageAnalysis = aiText;
