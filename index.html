@@ -5621,21 +5621,24 @@
             ctx.fill();
         }
 
-        function drawTraceStroke(ctx, stroke, box, number) {
+        function drawTraceStroke(ctx, stroke, box, number, options = {}) {
             const scale = Math.min(box.w, box.h);
             const tx = (p) => ({ x: box.x + p[0] * box.w, y: box.y + p[1] * box.h });
+            const alpha = options.alpha ?? 1;
+            const color = options.color || '#f97316';
             ctx.save();
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#f97316';
-            ctx.fillStyle = '#f97316';
-            ctx.lineWidth = Math.max(4, scale * 0.045);
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = Math.max(8, scale * (options.completed ? 0.055 : 0.075));
 
             if (stroke.dot) {
                 const p = tx(stroke.points[0]);
-                drawTraceNumber(ctx, p.x - scale * 0.12, p.y - scale * 0.12, number, scale);
+                if (!options.completed) drawTraceNumber(ctx, p.x - scale * 0.12, p.y - scale * 0.12, number, scale);
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, Math.max(8, scale * 0.08), 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, Math.max(10, scale * 0.1), 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
                 return;
@@ -5647,24 +5650,24 @@
                 const y = box.y + cy * box.h;
                 const radiusX = rx * box.w;
                 const radiusY = ry * box.h;
-                drawTraceNumber(ctx, x - radiusX * 0.8, y - radiusY * 0.9, number, scale);
+                if (!options.completed) drawTraceNumber(ctx, x - radiusX * 0.8, y - radiusY * 0.9, number, scale);
                 ctx.beginPath();
                 ctx.ellipse(x, y, radiusX, radiusY, 0, -Math.PI * 0.75, Math.PI * 1.35);
                 ctx.stroke();
-                drawTraceArrowHead(ctx, x + radiusX * 0.55, y + radiusY * 0.8, x + radiusX * 0.85, y + radiusY * 0.35, scale);
+                if (!options.completed) drawTraceArrowHead(ctx, x + radiusX * 0.55, y + radiusY * 0.8, x + radiusX * 0.85, y + radiusY * 0.35, scale);
                 ctx.restore();
                 return;
             }
 
             const points = stroke.points.map(tx);
-            drawTraceNumber(ctx, points[0].x, points[0].y, number, scale);
+            if (!options.completed) drawTraceNumber(ctx, points[0].x, points[0].y, number, scale);
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
             points.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
             ctx.stroke();
             const prev = points[Math.max(0, points.length - 2)];
             const last = points[points.length - 1];
-            drawTraceArrowHead(ctx, prev.x, prev.y, last.x, last.y, scale);
+            if (!options.completed) drawTraceArrowHead(ctx, prev.x, prev.y, last.x, last.y, scale);
             ctx.restore();
         }
 
@@ -5709,8 +5712,56 @@
             strokes.forEach((stroke, idx) => drawTraceStroke(ctx, stroke, box, idx + 1));
         }
 
-        function drawTraceStrokeOrder(ctx, text, bx, by, boxW, boxH) {
+        function collectSingleTraceChar(char, box, out) {
+            if (traceCompositeJamo[char]) {
+                const parts = traceCompositeJamo[char];
+                parts.forEach((part, idx) => {
+                    collectSingleTraceChar(part, traceSubBox(box, idx / parts.length, 0, 1 / parts.length, 1), out);
+                });
+                return;
+            }
+
+            const syllable = decomposeTraceSyllable(char);
+            if (syllable) {
+                const hasFinal = Boolean(syllable.final);
+                const top = hasFinal ? traceSubBox(box, 0.08, 0.05, 0.84, 0.62) : traceSubBox(box, 0.08, 0.08, 0.84, 0.82);
+                if (traceVerticalVowels.has(syllable.medial)) {
+                    collectSingleTraceChar(syllable.initial, traceSubBox(top, 0.0, 0.02, 0.48, 0.96), out);
+                    collectSingleTraceChar(syllable.medial, traceSubBox(top, 0.48, 0.0, 0.52, 1), out);
+                } else {
+                    collectSingleTraceChar(syllable.initial, traceSubBox(top, 0.18, 0.0, 0.64, 0.52), out);
+                    collectSingleTraceChar(syllable.medial, traceSubBox(top, 0.0, 0.45, 1, 0.55), out);
+                }
+                if (hasFinal) collectSingleTraceChar(syllable.final, traceSubBox(box, 0.16, 0.68, 0.68, 0.28), out);
+                return;
+            }
+
+            const strokes = traceStrokeMap[char] || [];
+            strokes.forEach((stroke) => out.push({ stroke, box }));
+        }
+
+        function collectTraceStrokeOrder(text, bx, by, boxW, boxH) {
             const chars = Array.from(text || '');
+            const out = [];
+            if (chars.length <= 1) {
+                collectSingleTraceChar(chars[0] || text, { x: bx + boxW * 0.18, y: by + boxH * 0.16, w: boxW * 0.64, h: boxH * 0.7 }, out);
+                return out;
+            }
+
+            const gap = boxW * 0.03;
+            const charW = (boxW * 0.82 - gap * (chars.length - 1)) / chars.length;
+            chars.forEach((char, idx) => {
+                collectSingleTraceChar(char, {
+                    x: bx + boxW * 0.09 + idx * (charW + gap),
+                    y: by + boxH * 0.18,
+                    w: charW,
+                    h: boxH * 0.68
+                }, out);
+            });
+            return out;
+        }
+
+        function drawTraceStrokeOrder(ctx, text, bx, by, boxW, boxH, completedCount = 0) {
             const labelSize = Math.max(14, Math.min(boxW, boxH) * 0.12);
             ctx.save();
             ctx.fillStyle = '#c2410c';
@@ -5720,21 +5771,15 @@
             ctx.fillText(text, bx + 12, by + 10);
             ctx.restore();
 
-            if (chars.length <= 1) {
-                drawSingleTraceChar(ctx, chars[0] || text, { x: bx + boxW * 0.18, y: by + boxH * 0.16, w: boxW * 0.64, h: boxH * 0.7 });
-                return;
-            }
-
-            const gap = boxW * 0.03;
-            const charW = (boxW * 0.82 - gap * (chars.length - 1)) / chars.length;
-            chars.forEach((char, idx) => {
-                drawSingleTraceChar(ctx, char, {
-                    x: bx + boxW * 0.09 + idx * (charW + gap),
-                    y: by + boxH * 0.18,
-                    w: charW,
-                    h: boxH * 0.68
-                });
+            const strokes = collectTraceStrokeOrder(text, bx, by, boxW, boxH);
+            strokes.forEach((item, idx) => {
+                if (idx < completedCount) {
+                    drawTraceStroke(ctx, item.stroke, item.box, idx + 1, { completed: true, alpha: 0.45, color: '#fb923c' });
+                } else if (idx === completedCount) {
+                    drawTraceStroke(ctx, item.stroke, item.box, idx + 1);
+                }
             });
+            return strokes;
         }
 
         function drawTraceWritingGuide() {
@@ -5760,6 +5805,8 @@
             const rows = isDoubleRow ? 2 : 1;
             const boxW = W / cols;
             const boxH = H / rows;
+            const completedMap = canvas._traceCompleted || {};
+            const cells = [];
 
             chars.forEach((char, i) => {
                 const row = isDoubleRow ? Math.floor(i / 5) : 0;
@@ -5789,8 +5836,81 @@
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                drawTraceStrokeOrder(ctx, char, bx, by, boxW, boxH);
+                const strokes = drawTraceStrokeOrder(ctx, char, bx, by, boxW, boxH, completedMap[i] || 0);
+                cells.push({ index: i, char, bx, by, boxW, boxH, strokes });
             });
+            canvas._traceCells = cells;
+        }
+
+        function drawSavedTracePaths(ctx, paths) {
+            paths.forEach((path) => {
+                if (!path || path.length < 2) return;
+                ctx.save();
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 12;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(path[0].x, path[0].y);
+                path.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
+                ctx.stroke();
+                ctx.restore();
+            });
+        }
+
+        function tracePointInBox(p, box) {
+            return p.x >= box.bx && p.x <= box.bx + box.boxW && p.y >= box.by && p.y <= box.by + box.boxH;
+        }
+
+        function tracePointForStroke(strokeItem, point) {
+            return {
+                x: strokeItem.box.x + point[0] * strokeItem.box.w,
+                y: strokeItem.box.y + point[1] * strokeItem.box.h
+            };
+        }
+
+        function traceStrokeStartPoint(strokeItem) {
+            const stroke = strokeItem.stroke;
+            if (stroke.dot) return tracePointForStroke(strokeItem, stroke.points[0]);
+            if (stroke.circle) {
+                const [cx, cy, rx, ry] = stroke.circle;
+                return { x: strokeItem.box.x + (cx - rx * 0.55) * strokeItem.box.w, y: strokeItem.box.y + (cy - ry * 0.75) * strokeItem.box.h };
+            }
+            return tracePointForStroke(strokeItem, stroke.points[0]);
+        }
+
+        function traceStrokeEndPoint(strokeItem) {
+            const stroke = strokeItem.stroke;
+            if (stroke.dot) return tracePointForStroke(strokeItem, stroke.points[0]);
+            if (stroke.circle) {
+                const [cx, cy, rx, ry] = stroke.circle;
+                return { x: strokeItem.box.x + (cx + rx * 0.85) * strokeItem.box.w, y: strokeItem.box.y + (cy + ry * 0.35) * strokeItem.box.h };
+            }
+            return tracePointForStroke(strokeItem, stroke.points[stroke.points.length - 1]);
+        }
+
+        function traceDistance(a, b) {
+            return Math.hypot(a.x - b.x, a.y - b.y);
+        }
+
+        function tracePathLength(path) {
+            let total = 0;
+            for (let i = 1; i < path.length; i += 1) total += traceDistance(path[i - 1], path[i]);
+            return total;
+        }
+
+        function traceIsNearCurrentStrokeStart(point, strokeItem) {
+            const scale = Math.min(strokeItem.box.w, strokeItem.box.h);
+            return traceDistance(point, traceStrokeStartPoint(strokeItem)) <= Math.max(24, scale * 0.22);
+        }
+
+        function traceDidCompleteStroke(path, strokeItem) {
+            const scale = Math.min(strokeItem.box.w, strokeItem.box.h);
+            if (!path || path.length < 2) return false;
+            if (strokeItem.stroke.dot) return tracePathLength(path) >= Math.max(8, scale * 0.06);
+            if (strokeItem.stroke.circle) return tracePathLength(path) >= scale * 0.6;
+            const last = path[path.length - 1];
+            return tracePathLength(path) >= scale * 0.18 && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= Math.max(30, scale * 0.26);
         }
 
         function initializeTraceWritingCanvas() {
@@ -5801,10 +5921,15 @@
             let lastX = 0;
             let lastY = 0;
             let viewWidth = 0;
+            let activeTrace = null;
+            let activePath = [];
             const refreshGuide = () => {
                 const size = resizeCanvasForDisplay(canvas, ctx);
                 viewWidth = size.width;
+                canvas._traceCompleted = canvas._traceCompleted || {};
+                canvas._tracePaths = canvas._tracePaths || [];
                 drawTraceWritingGuide();
+                drawSavedTracePaths(ctx, canvas._tracePaths);
             };
             const point = (ev) => {
                 const rect = canvas.getBoundingClientRect();
@@ -5813,10 +5938,12 @@
             };
             const start = (ev) => {
                 ev.preventDefault();
-                drawing = true;
                 const p = point(ev);
                 lastX = p.x;
                 lastY = p.y;
+                drawing = false;
+                activeTrace = null;
+                activePath = [];
 
                 // 터치/클릭한 칸에 해당하는 글자 발음 들려주기
                 const raw = canvas.dataset.guide || '';
@@ -5839,6 +5966,18 @@
                     const charIndex = rowIndex * cols + colIndex;
 
                     if (charIndex >= 0 && charIndex < chars.length) {
+                        const cell = (canvas._traceCells || []).find((item) => item.index === charIndex && tracePointInBox(p, item));
+                        const completed = canvas._traceCompleted || {};
+                        const nextStrokeIndex = completed[charIndex] || 0;
+                        const nextStroke = cell?.strokes?.[nextStrokeIndex];
+                        if (!nextStroke || !traceIsNearCurrentStrokeStart(p, nextStroke)) {
+                            return;
+                        }
+
+                        drawing = true;
+                        activeTrace = { cellIndex: charIndex, strokeIndex: nextStrokeIndex, stroke: nextStroke };
+                        activePath = [p];
+
                         const targetChar = chars[charIndex];
                         // 중복 재생 방지 (동일 글자는 1.2초 내 한 번만 발음)
                         if (window.lastSpokenChar !== targetChar || (Date.now() - window.lastSpokenTime > 1200)) {
@@ -5863,8 +6002,21 @@
                 ctx.stroke();
                 lastX = p.x;
                 lastY = p.y;
+                activePath.push(p);
             };
-            const stop = () => { drawing = false; };
+            const stop = () => {
+                if (!drawing) return;
+                drawing = false;
+                if (activeTrace && traceDidCompleteStroke(activePath, activeTrace.stroke)) {
+                    canvas._tracePaths = canvas._tracePaths || [];
+                    canvas._traceCompleted = canvas._traceCompleted || {};
+                    canvas._tracePaths.push(activePath);
+                    canvas._traceCompleted[activeTrace.cellIndex] = activeTrace.strokeIndex + 1;
+                }
+                activeTrace = null;
+                activePath = [];
+                refreshGuide();
+            };
             canvas.addEventListener('mousedown', start);
             canvas.addEventListener('mousemove', move);
             canvas.addEventListener('mouseup', stop);
@@ -5881,6 +6033,11 @@
         }
 
         window.resetTraceWritingCanvas = function resetTraceWritingCanvas() {
+            const canvas = document.getElementById('trace-writing-canvas');
+            if (canvas) {
+                canvas._traceCompleted = {};
+                canvas._tracePaths = [];
+            }
             drawTraceWritingGuide();
         }
 
