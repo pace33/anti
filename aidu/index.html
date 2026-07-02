@@ -6030,18 +6030,19 @@
             const chars = raw.split('/').map(c => c.trim()).filter(c => c.length > 0);
             if (chars.length === 0) return;
 
-            // 10글자(배움 7 등)인 경우 5칸씩 2줄로 배치
+            // 10글자 복습은 5칸씩 2줄, 4개 단어 쓰기는 2칸씩 2줄로 배치
             const isDoubleRow = chars.length === 10;
-            const cols = isDoubleRow ? 5 : chars.length;
-            const rows = isDoubleRow ? 2 : 1;
+            const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
+            const cols = isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length);
+            const rows = isDoubleRow || isWordDoubleRow ? 2 : 1;
             const boxW = W / cols;
             const boxH = H / rows;
             const completedMap = canvas._traceCompleted || {};
             const cells = [];
 
             chars.forEach((char, i) => {
-                const row = isDoubleRow ? Math.floor(i / 5) : 0;
-                const col = isDoubleRow ? (i % 5) : i;
+                const row = rows > 1 ? Math.floor(i / cols) : 0;
+                const col = rows > 1 ? (i % cols) : i;
                 const bx = col * boxW;
                 const by = row * boxH;
 
@@ -6187,8 +6188,9 @@
                     const relativeY = clientY - rect.top;
 
                     const isDoubleRow = chars.length === 10;
-                    const cols = isDoubleRow ? 5 : chars.length;
-                    const rows = isDoubleRow ? 2 : 1;
+                    const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
+                    const cols = isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length);
+                    const rows = isDoubleRow || isWordDoubleRow ? 2 : 1;
                     const colWidth = rect.width / cols;
                     const rowHeight = rect.height / rows;
 
