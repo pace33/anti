@@ -469,6 +469,25 @@
         .trace-writing-canvas.word-grid {
             height: 440px;
         }
+        .trace-writing-canvas.fill-trace-canvas {
+            width: min(220px, 100%);
+            height: 150px;
+            border-width: 2px;
+            border-radius: 16px;
+            background: #fffaf2;
+        }
+        .fill-writing-row {
+            display: grid;
+            grid-template-columns: auto minmax(110px, 150px) minmax(180px, 220px) auto 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+        .fill-writing-prompt {
+            font-size: 2.2rem;
+            font-weight: 1000;
+            color: #2c3e50;
+            white-space: nowrap;
+        }
         .trace-canvas-help {
             font-size: 0.85rem;
             font-weight: 800;
@@ -612,6 +631,7 @@
         }
         @media (max-width: 600px) {
             .learning-activity-layout { grid-template-columns: 1fr; }
+            .fill-writing-row { grid-template-columns: 1fr; }
             .vowel-origin-scene {
                 grid-template-columns: 1fr;
                 gap: 8px;
@@ -6673,12 +6693,12 @@ ${text}
                     <div class="learning-card-label practice-label">찬찬한글 활동</div>
                     <div class="grid gap-4">
                         ${(lesson.activities || []).map((activity) => {
-                            if (activity === 'listenAndFind') return renderListenAndFindActivity(lesson);
+                            if (activity === 'listenAndFind') return '';
                             if (activity === 'readThreeTimes') return renderReadThreeTimesActivity(lesson);
                             if (activity === 'fillOneJamo') return renderFillOneJamoActivity(lesson);
                             if (activity === 'wordPictureMatch') return renderWordPictureMatchActivity(lesson);
                             if (activity === 'nonsenseWordRead') return renderNonsenseWordReadActivity(lesson);
-                            if (activity === 'writeOnCanvas') return renderWriteOnCanvasActivity(lesson);
+                            if (activity === 'writeOnCanvas') return '';
                             if (activity === 'batchimFamily') return renderBatchimFamilyActivity(lesson);
                             if (activity === 'finalAssessment') return renderFinalAssessmentActivity(lesson);
                             return '';
@@ -6719,11 +6739,11 @@ ${text}
             return `<div class="practice-step-box">
                 <div class="practice-step-title"><span class="practice-step-number">완성</span> 빈칸 완성</div>
                 <div class="grid gap-3">
-                    ${items.map((item, index) => `<div class="flex flex-wrap items-center gap-3 border-2 border-orange-100 rounded-2xl p-3 bg-white">
+                    ${items.map((item, index) => `<div class="fill-writing-row border-2 border-orange-100 rounded-2xl p-3 bg-white">
                         <button class="btn-outline py-2 px-4" onclick="speakChar('${item.word}')">🔊 ${item.word}</button>
-                        <span class="text-3xl font-black text-[#2c3e50]">${item.prompt}</span>
-                        <input id="fill-${lesson.id}-${index}" class="premium-input bg-white !w-28 !py-2 text-center" maxlength="2" placeholder="?">
-                        <button class="btn-primary py-2 px-5" onclick="submitFillOneJamo('${lesson.id}',${index})">확인</button>
+                        <span class="fill-writing-prompt">${item.prompt}</span>
+                        <canvas id="fill-trace-${lesson.id}-${index}" class="trace-writing-canvas fill-trace-canvas" data-guide="${item.answer}"></canvas>
+                        <button class="btn-primary py-2 px-5" onclick="submitFillOneJamo('${lesson.id}',${index})">다 썼어요</button>
                         <span id="fill-feedback-${lesson.id}-${index}" class="text-sm font-black text-gray-500">${item.hint || ''}</span>
                     </div>`).join('')}
                 </div>
@@ -6903,17 +6923,26 @@ ${text}
             const lesson = getChanchanLesson(lessonId);
             const item = lesson?.fillItems?.[index];
             if (!item) return;
-            const input = document.getElementById(`fill-${lessonId}-${index}`);
             const feedback = document.getElementById(`fill-feedback-${lessonId}-${index}`);
-            const userAnswer = input.value.trim();
-            const isCorrect = userAnswer === item.answer;
-            const retryIndex = nextKoreanRetryIndex({ lessonId, activityType: 'fillOneJamo', word: item.word, answer: item.answer });
-            await recordKoreanAttempt({ lessonId, lessonTitle: lesson.title, unitId: lesson.unit, activityType: 'fillOneJamo', word: item.word, prompt: item.prompt, answer: item.answer, userAnswer, isCorrect, retryIndex, hintUsed: !isCorrect, errorType: isCorrect ? null : inferKoreanErrorType({ lessonId, activityType: 'fillOneJamo', answer: item.answer, word: item.word }) });
+            await recordKoreanAttempt({
+                lessonId,
+                lessonTitle: lesson.title,
+                unitId: lesson.unit,
+                activityType: 'fillOneJamo',
+                word: item.word,
+                prompt: item.prompt,
+                answer: item.answer,
+                userAnswer: `${item.answer} 직접 쓰기 완료`,
+                isCorrect: true,
+                retryIndex: 1,
+                hintUsed: false,
+                errorType: null
+            });
             if (feedback) {
-                feedback.className = `text-sm font-black ${isCorrect ? 'text-green-600' : 'text-red-500'}`;
-                feedback.textContent = isCorrect ? '좋아요!' : (item.hint || '다시 들어 봐요.');
+                feedback.className = 'text-sm font-black text-green-600';
+                feedback.textContent = `${item.answer} 쓰기 완료로 기록했어요.`;
             }
-            if (isCorrect) resetKoreanRetryIndex({ lessonId, activityType: 'fillOneJamo', word: item.word, answer: item.answer });
+            resetKoreanRetryIndex({ lessonId, activityType: 'fillOneJamo', word: item.word, answer: item.answer });
         };
 
         window.selectWordPicture = async function(lessonId, answer, userAnswer, btn) {
@@ -7413,7 +7442,7 @@ ${text}
             const isLast = safeIndex === totalSections - 1;
             nextBtn.classList.toggle('hidden', isLast);
             completeBtn.classList.toggle('hidden', !isLast);
-            requestAnimationFrame(initializeTraceWritingCanvas);
+            requestAnimationFrame(initializeVisibleTraceWritingCanvases);
         }
 
         window.openLearningDetailActivity = function openLearningDetailActivity(step) {
@@ -7969,6 +7998,12 @@ ${text}
             refreshGuide();
             window.addEventListener('resize', () => {
                 if (document.getElementById('trace-writing-canvas') === canvas) refreshGuide();
+            });
+        }
+
+        function initializeVisibleTraceWritingCanvases() {
+            document.querySelectorAll('.view-section:not(.hidden) .trace-writing-canvas').forEach((canvas) => {
+                initializeTraceWritingCanvas(canvas);
             });
         }
 
