@@ -478,7 +478,7 @@
         }
         .fill-writing-row {
             display: grid;
-            grid-template-columns: auto minmax(110px, 150px) minmax(180px, 220px) auto 1fr;
+            grid-template-columns: auto minmax(220px, 280px) auto 1fr;
             gap: 12px;
             align-items: center;
         }
@@ -6741,8 +6741,7 @@ ${text}
                 <div class="grid gap-3">
                     ${items.map((item, index) => `<div class="fill-writing-row border-2 border-orange-100 rounded-2xl p-3 bg-white">
                         <button class="btn-outline py-2 px-4" onclick="speakChar('${item.word}')">🔊 ${item.word}</button>
-                        <span class="fill-writing-prompt">${item.prompt}</span>
-                        <canvas id="fill-trace-${lesson.id}-${index}" class="trace-writing-canvas fill-trace-canvas" data-guide="${item.answer}"></canvas>
+                        <canvas id="fill-trace-${lesson.id}-${index}" class="trace-writing-canvas fill-trace-canvas" data-guide="${item.answer}" data-fill-word="${item.word}"></canvas>
                         <button class="btn-primary py-2 px-5" onclick="submitFillOneJamo('${lesson.id}',${index})">다 썼어요</button>
                         <span id="fill-feedback-${lesson.id}-${index}" class="text-sm font-black text-gray-500">${item.hint || ''}</span>
                     </div>`).join('')}
@@ -7765,6 +7764,51 @@ ${text}
             const raw = canvas.dataset.guide || '';
             const chars = raw.split('/').map(c => c.trim()).filter(c => c.length > 0);
             if (chars.length === 0) return;
+            const fillWord = canvas.dataset.fillWord || '';
+
+            if (fillWord) {
+                ctx.fillStyle = '#fef9f0';
+                ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = '#fdba74';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
+                ctx.strokeRect(0, 0, W, H);
+
+                ctx.strokeStyle = '#fed7aa';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(6, H / 3);
+                ctx.lineTo(W - 6, H / 3);
+                ctx.moveTo(6, (H / 3) * 2);
+                ctx.lineTo(W - 6, (H / 3) * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.save();
+                ctx.fillStyle = '#c2410c';
+                ctx.font = `900 ${Math.max(28, Math.min(W, H) * 0.24)}px 'Noto Sans KR', sans-serif`;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(fillWord, 14, 10);
+                ctx.restore();
+
+                const completedMap = canvas._traceCompleted || {};
+                const answerBoxW = W * 0.58;
+                const answerBoxH = H * 0.68;
+                const bx = W * 0.27;
+                const by = H * 0.22;
+                const strokes = collectTraceStrokeOrder(raw, bx, by, answerBoxW, answerBoxH);
+                strokes.forEach((item, idx) => {
+                    if (idx < (completedMap[0] || 0)) {
+                        drawTraceStroke(ctx, item.stroke, item.box, idx + 1, { completed: true, alpha: 0.45, color: '#fb923c' });
+                    } else if (idx === (completedMap[0] || 0)) {
+                        drawTraceStroke(ctx, item.stroke, item.box, idx + 1);
+                    }
+                });
+                canvas._traceCells = [{ index: 0, char: raw, bx: 0, by: 0, boxW: W, boxH: H, strokes }];
+                return;
+            }
 
             // 10글자 복습은 5칸씩 2줄, 4개 단어 쓰기는 2칸씩 2줄로 배치
             const isDoubleRow = chars.length === 10;
