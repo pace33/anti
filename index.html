@@ -3173,10 +3173,13 @@
                 sections: [
                     {
                         label: '비교하기 1',
-                        title: 'ㅖ, ㅒ 소리 차이 비교하기',
+                        title: '입모양을 보고 ㅖ와 ㅒ 소리를 알아봐요',
                         cards: [
-                            'ㅣ→ㅖ→ㅒ 순서로 입이 점점 크게 벌어져요.',
-                            'ㅖ보다 ㅒ가 입이 더 크게 벌어지는 차이를 확인해요.'
+                            'ㅣ는 입을 조금 벌려요.',
+                            'ㅖ는 ㅣ에서 시작해 입을 더 벌려요.',
+                            'ㅒ는 ㅖ보다 입을 더 크게 벌려요.',
+                            '소리를 듣고 입모양을 함께 살펴보세요.',
+                            '이제 ㅖ와 ㅒ 소리를 듣고 알맞은 글자를 골라 보세요.'
                         ]
                     },
                     {
@@ -6781,35 +6784,69 @@ ${text}
             </div>`;
         }
 
-        const LESSON15_MOUTH_ITEMS = [
-            { char: 'ㅣ', label: '입을 조금 벌려요', description: 'ㅣ는 입을 조금 벌려요.' },
-            { char: 'ㅐ', label: '입을 더 벌려요', description: 'ㅐ는 입을 더 벌려요.' },
-            { char: 'ㅔ', label: '입을 가장 크게 벌려요', description: 'ㅔ는 입을 가장 크게 벌려요.' }
-        ];
-        const LESSON15_AUDIO_SOURCES = {
+        const LESSON_MOUTH_ACTIVITY_CONFIGS = {
+            15: {
+                title: '입모양을 보고 소리의 차이를 알아봐요',
+                items: [
+                    { char: 'ㅣ', label: '입을 조금 벌려요', description: 'ㅣ는 입을 조금 벌려요.' },
+                    { char: 'ㅐ', label: '입을 더 벌려요', description: 'ㅐ는 입을 더 벌려요.' },
+                    { char: 'ㅔ', label: '입을 가장 크게 벌려요', description: 'ㅔ는 입을 가장 크게 벌려요.' }
+                ],
+                quizChoices: ['ㅐ', 'ㅔ'],
+                quizTitle: 'ㅐ와 ㅔ 소리 구별',
+                quizPrompt: '이제 ㅐ와 ㅔ 소리를 듣고 알맞은 글자를 골라 보세요.',
+                defaultFollow: 'ㅐ',
+                activityType: 'aeEVowelDiscrimination'
+            },
+            16: {
+                title: '입모양을 보고 ㅖ와 ㅒ 소리를 알아봐요',
+                items: [
+                    { char: 'ㅣ', label: '입을 조금 벌려요', description: 'ㅣ는 입을 조금 벌려요.' },
+                    { char: 'ㅖ', label: '입을 더 벌려요', description: 'ㅖ는 ㅣ에서 시작해 입을 더 벌려요.' },
+                    { char: 'ㅒ', label: '입을 가장 크게 벌려요', description: 'ㅒ는 ㅖ보다 입을 더 크게 벌려요.' }
+                ],
+                quizChoices: ['ㅖ', 'ㅒ'],
+                quizTitle: 'ㅖ와 ㅒ 소리 구별',
+                quizPrompt: '이제 ㅖ와 ㅒ 소리를 듣고 알맞은 글자를 골라 보세요.',
+                defaultFollow: 'ㅖ',
+                activityType: 'yeYaeVowelDiscrimination'
+            }
+        };
+        const LESSON_MOUTH_AUDIO_SOURCES = {
             'ㅣ': ['audio/vowels/i.mp3', 'sounds/vowels/i.mp3', 'assets/audio/i.mp3'],
             'ㅐ': ['audio/vowels/ae.mp3', 'sounds/vowels/ae.mp3', 'assets/audio/ae.mp3'],
-            'ㅔ': ['audio/vowels/e.mp3', 'sounds/vowels/e.mp3', 'assets/audio/e.mp3']
+            'ㅔ': ['audio/vowels/e.mp3', 'sounds/vowels/e.mp3', 'assets/audio/e.mp3'],
+            'ㅖ': ['audio/vowels/ye.mp3', 'sounds/vowels/ye.mp3', 'assets/audio/ye.mp3'],
+            'ㅒ': ['audio/vowels/yae.mp3', 'sounds/vowels/yae.mp3', 'assets/audio/yae.mp3']
         };
-        window.lesson15FollowChar = 'ㅐ';
-        window.lesson15QuizTarget = window.lesson15QuizTarget || 'ㅐ';
+        const LESSON_MOUTH_FALLBACK_TEXTS = {
+            'ㅣ': { normal: '이', slow: '이. 입을 조금 벌려요.' },
+            'ㅐ': { normal: '애. 개.', slow: '애. 개. 입을 더 벌려요.' },
+            'ㅔ': { normal: '에. 게.', slow: '에. 게. 입을 가장 크게 벌려요.' },
+            'ㅖ': { normal: '예. 시계.', slow: '예. 시계. 입을 더 벌려요.' },
+            'ㅒ': { normal: '얘. 얘기.', slow: '얘. 얘기. 입을 가장 크게 벌려요.' }
+        };
+        window.lessonMouthFollowChar = window.lessonMouthFollowChar || { 15: 'ㅐ', 16: 'ㅖ' };
+        window.lessonMouthQuizTarget = window.lessonMouthQuizTarget || {};
 
-        function renderLesson15MouthIntro() {
+        function renderLessonMouthIntro(step) {
+            const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+            if (!config) return '';
             return `
                 <div class="learning-main-card">
                     <div class="learning-card-label">📖 이해하기</div>
-                    <div class="text-xl font-black text-[#2c3e50] mb-2">입모양을 보고 소리의 차이를 알아봐요</div>
+                    <div class="text-xl font-black text-[#2c3e50] mb-2">${config.title}</div>
                     <div class="text-base font-bold text-stone-600 mb-4">소리를 듣고 입모양을 함께 살펴보세요.</div>
                     <div class="mouth-flow-grid">
-                        ${LESSON15_MOUTH_ITEMS.map((item) => `
+                        ${config.items.map((item) => `
                             <div class="mouth-sound-card">
                                 <div class="mouth-letter">${item.char}</div>
                                 <div class="mouth-visual" aria-hidden="true"><div class="mouth-shape"></div></div>
                                 <div class="text-lg font-black text-[#2c3e50]">${item.label}</div>
                                 <div class="text-sm font-bold text-gray-500 mt-1">${item.description}</div>
                                 <div class="mouth-listen-row">
-                                    <button type="button" class="mouth-listen-button" onclick="playLesson15MouthSound('${item.char}', false)">🔊 ${item.char} 듣기</button>
-                                    <button type="button" class="mouth-listen-button slow" onclick="playLesson15MouthSound('${item.char}', true)">천천히</button>
+                                    <button type="button" class="mouth-listen-button" onclick="playLessonMouthSound(${step}, '${item.char}', false)">🔊 ${item.char} 듣기</button>
+                                    <button type="button" class="mouth-listen-button slow" onclick="playLessonMouthSound(${step}, '${item.char}', true)">천천히</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -6819,38 +6856,42 @@ ${text}
                         <div class="text-lg font-black text-[#2c3e50]">소리를 듣고 따라 말해 보세요.</div>
                         <div class="text-base font-bold text-stone-600 mt-1">거울을 보고 입모양도 따라 해 보세요.</div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                            <button type="button" class="listen-quiz-play-btn !text-lg" onclick="playLesson15MouthSound(window.lesson15FollowChar || 'ㅐ', true)">🔊 다시 듣기</button>
-                            <button type="button" class="btn-primary bg-[#46b3a5] shadow-[#46b3a533]" onclick="completeLesson15Repeat(this)">따라 했어요</button>
+                            <button type="button" class="listen-quiz-play-btn !text-lg" onclick="playLessonMouthSound(${step}, window.lessonMouthFollowChar?.[${step}] || '${config.defaultFollow}', true)">🔊 다시 듣기</button>
+                            <button type="button" class="btn-primary bg-[#46b3a5] shadow-[#46b3a533]" onclick="completeLessonMouthRepeat(${step}, this)">따라 했어요</button>
                         </div>
-                        <div id="lesson15-repeat-feedback" class="text-center text-green-600 font-black mt-3 min-h-[1.4rem]"></div>
+                        <div id="lesson-mouth-repeat-feedback-${step}" class="text-center text-green-600 font-black mt-3 min-h-[1.4rem]"></div>
                     </div>
                 </div>
             `;
         }
 
-        function renderLesson15SoundQuiz() {
-            window.lesson15QuizTarget = Math.random() > 0.5 ? 'ㅐ' : 'ㅔ';
+        function renderLessonMouthSoundQuiz(step) {
+            const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+            if (!config) return '';
+            window.lessonMouthQuizTarget[step] = config.quizChoices[Math.floor(Math.random() * config.quizChoices.length)];
             return `
                 <div class="learning-practice-card">
                     <div class="learning-card-label practice-label">듣고 구별하기</div>
                     <div class="lesson15-quiz-box">
-                        <div class="practice-step-title"><span class="practice-step-number">1</span> ㅐ와 ㅔ 소리 구별</div>
-                        <div class="text-lg font-black text-[#2c3e50]">이제 ㅐ와 ㅔ 소리를 듣고 알맞은 글자를 골라 보세요.</div>
+                        <div class="practice-step-title"><span class="practice-step-number">1</span> ${config.quizTitle}</div>
+                        <div class="text-lg font-black text-[#2c3e50]">${config.quizPrompt}</div>
                         <div class="text-center mt-4">
-                            <button type="button" class="listen-quiz-play-btn" onclick="playLesson15QuizSound()">🔊 문제 소리 듣기</button>
+                            <button type="button" class="listen-quiz-play-btn" onclick="playLessonMouthQuizSound(${step})">🔊 문제 소리 듣기</button>
                         </div>
-                        <div id="lesson15-quiz-feedback" class="text-center text-orange-500 font-black mt-3 min-h-[1.6rem]">
+                        <div id="lesson-mouth-quiz-feedback-${step}" class="text-center text-orange-500 font-black mt-3 min-h-[1.6rem]">
                             소리를 듣고 알맞은 글자를 골라요.
                         </div>
                         <div class="lesson15-choice-row">
-                            <button type="button" class="lesson15-choice-btn" onclick="selectLesson15SoundAnswer(this, 'ㅐ')">ㅐ</button>
-                            <button type="button" class="lesson15-choice-btn" onclick="selectLesson15SoundAnswer(this, 'ㅔ')">ㅔ</button>
+                            ${config.quizChoices.map((char) => `<button type="button" class="lesson15-choice-btn" onclick="selectLessonMouthSoundAnswer(${step}, this, '${char}')">${char}</button>`).join('')}
                         </div>
-                        <button type="button" class="trace-clear-button mt-4" onclick="nextLesson15SoundQuiz()">다음 문제</button>
+                        <button type="button" class="trace-clear-button mt-4" onclick="nextLessonMouthSoundQuiz(${step})">다음 문제</button>
                     </div>
                 </div>
             `;
         }
+
+        const renderLesson15MouthIntro = () => renderLessonMouthIntro(15);
+        const renderLesson15SoundQuiz = () => renderLessonMouthSoundQuiz(15);
 
         window.recordReadThreeTimes = async function(lessonId, word, readCount, btn) {
             await recordKoreanAttempt({ lessonId, lessonTitle: getLessonTitleForReport(lessonId), unitId: getUnitIdForLesson(lessonId), activityType: 'readThreeTimes', word, isCorrect: true, readCount, retryIndex: 1 });
@@ -6907,37 +6948,57 @@ ${text}
             btn.classList.add('active');
         };
 
-        function playLesson15AudioFallback(char, slow = false) {
+        function playLessonMouthAudioFallback(char, slow = false) {
+            const fallbackText = LESSON_MOUTH_FALLBACK_TEXTS[char]?.[slow ? 'slow' : 'normal'] || spokenLabelForChar(char);
+            try {
+                if (!globalTtsAudio) {
+                    globalTtsAudio = new Audio();
+                }
+                globalTtsAudio.pause();
+                const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(fallbackText) + "&tl=ko&total=1&idx=0&textlen=" + fallbackText.length + "&client=tw-ob&prev=input";
+                globalTtsAudio.src = ttsUrl;
+                globalTtsAudio.playbackRate = slow ? 0.72 : 0.9;
+                globalTtsAudio.play().catch(() => playLessonMouthNativeFallback(fallbackText, slow));
+                return;
+            } catch {
+                playLessonMouthNativeFallback(fallbackText, slow);
+            }
+        }
+
+        function playLessonMouthNativeFallback(text, slow = false) {
             if (typeof speechSynthesis === 'undefined') {
-                speakTextKo(spokenLabelForChar(char));
+                speakTextKo(text);
                 return;
             }
             try {
                 speechSynthesis.cancel();
-                const utt = new SpeechSynthesisUtterance(char);
+                const utt = new SpeechSynthesisUtterance(text);
                 utt.lang = 'ko-KR';
-                utt.rate = slow ? 0.48 : 0.76;
-                utt.pitch = 0.9;
+                utt.rate = slow ? 0.54 : 0.82;
+                utt.pitch = 0.92;
                 const voices = speechSynthesis.getVoices();
                 const koVoice = voices.find(v => v.lang?.toLowerCase().startsWith('ko'));
                 if (koVoice) utt.voice = koVoice;
                 speechSynthesis.speak(utt);
             } catch {
-                speakTextKo(spokenLabelForChar(char));
+                speakTextKo(text);
             }
         }
 
-        window.playLesson15MouthSound = async function(char, slow = false) {
-            window.lesson15FollowChar = char;
+        window.playLessonMouthSound = async function(step, char, slow = false) {
+            const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+            if (!config) return;
+            window.lessonMouthFollowChar = window.lessonMouthFollowChar || {};
+            window.lessonMouthFollowChar[step] = char;
             const audioReplayCount = incrementKoreanAudioReplayCount({
-                lessonId: 15,
+                lessonId: step,
                 activityType: slow ? 'mouthSoundSlowListen' : 'mouthSoundListen',
                 answer: char
             });
             await recordKoreanAttempt({
-                lessonId: 15,
-                lessonTitle: getLessonTitleForReport(15),
-                unitId: getUnitIdForLesson(15),
+                lessonId: step,
+                lessonTitle: getLessonTitleForReport(step),
+                unitId: getUnitIdForLesson(step),
                 activityType: slow ? 'mouthSoundSlowListen' : 'mouthSoundListen',
                 word: char,
                 answer: char,
@@ -6947,11 +7008,11 @@ ${text}
                 audioReplayCount
             });
 
-            const sources = LESSON15_AUDIO_SOURCES[char] || [];
+            const sources = LESSON_MOUTH_AUDIO_SOURCES[char] || [];
             let played = false;
             const trySource = (index) => {
                 if (index >= sources.length) {
-                    if (!played) playLesson15AudioFallback(char, slow);
+                    if (!played) playLessonMouthAudioFallback(char, slow);
                     return;
                 }
                 const audio = new Audio(sources[index]);
@@ -6962,12 +7023,13 @@ ${text}
             trySource(0);
         };
 
-        window.completeLesson15Repeat = async function(btn) {
-            const target = window.lesson15FollowChar || 'ㅐ';
+        window.completeLessonMouthRepeat = async function(step, btn) {
+            const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+            const target = window.lessonMouthFollowChar?.[step] || config?.defaultFollow || 'ㅐ';
             await recordKoreanAttempt({
-                lessonId: 15,
-                lessonTitle: getLessonTitleForReport(15),
-                unitId: getUnitIdForLesson(15),
+                lessonId: step,
+                lessonTitle: getLessonTitleForReport(step),
+                unitId: getUnitIdForLesson(step),
                 activityType: 'repeatAfterListen',
                 word: target,
                 answer: target,
@@ -6976,52 +7038,64 @@ ${text}
                 errorType: null
             });
             btn.classList.add('active');
-            const feedback = document.getElementById('lesson15-repeat-feedback');
+            const feedback = document.getElementById(`lesson-mouth-repeat-feedback-${step}`);
             if (feedback) feedback.textContent = `${target} 소리를 따라 말한 것으로 기록했어요.`;
         };
 
-        window.playLesson15QuizSound = function() {
-            playLesson15MouthSound(window.lesson15QuizTarget || 'ㅐ', false);
+        window.playLessonMouthQuizSound = function(step) {
+            const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+            const answer = window.lessonMouthQuizTarget?.[step] || config?.defaultFollow || 'ㅐ';
+            window.playLessonMouthSound(step, answer, false);
         };
 
-        window.nextLesson15SoundQuiz = function() {
-            window.lesson15QuizTarget = Math.random() > 0.5 ? 'ㅐ' : 'ㅔ';
+        window.nextLessonMouthSoundQuiz = function(step) {
+            const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+            if (!config) return;
+            window.lessonMouthQuizTarget[step] = config.quizChoices[Math.floor(Math.random() * config.quizChoices.length)];
             document.querySelectorAll('.lesson15-choice-btn').forEach(btn => btn.classList.remove('correct', 'wrong'));
-            const feedback = document.getElementById('lesson15-quiz-feedback');
+            const feedback = document.getElementById(`lesson-mouth-quiz-feedback-${step}`);
             if (feedback) {
                 feedback.className = 'text-center text-orange-500 font-black mt-3 min-h-[1.6rem]';
                 feedback.textContent = '소리를 듣고 알맞은 글자를 골라요.';
             }
         };
 
-        window.selectLesson15SoundAnswer = async function(btn, userAnswer) {
-            const answer = window.lesson15QuizTarget || 'ㅐ';
+        window.selectLessonMouthSoundAnswer = async function(step, btn, userAnswer) {
+            const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+            if (!config) return;
+            const answer = window.lessonMouthQuizTarget?.[step] || config.defaultFollow;
             const isCorrect = userAnswer === answer;
-            const retryIndex = nextKoreanRetryIndex({ lessonId: 15, activityType: 'aeEVowelDiscrimination', word: answer, answer });
+            const retryIndex = nextKoreanRetryIndex({ lessonId: step, activityType: config.activityType, word: answer, answer });
             await recordKoreanAttempt({
-                lessonId: 15,
-                lessonTitle: getLessonTitleForReport(15),
-                unitId: getUnitIdForLesson(15),
-                activityType: 'aeEVowelDiscrimination',
+                lessonId: step,
+                lessonTitle: getLessonTitleForReport(step),
+                unitId: getUnitIdForLesson(step),
+                activityType: config.activityType,
                 word: answer,
-                prompt: '소리를 듣고 ㅐ/ㅔ 고르기',
+                prompt: `소리를 듣고 ${config.quizChoices.join('/')} 고르기`,
                 answer,
                 userAnswer,
                 isCorrect,
                 errorType: isCorrect ? null : KOREAN_ERROR_TYPES.COMPLEX_VOWEL,
                 retryIndex,
                 hintUsed: !isCorrect,
-                audioReplayCount: getKoreanAudioReplayCount({ lessonId: 15, activityType: 'mouthSoundListen', answer })
+                audioReplayCount: getKoreanAudioReplayCount({ lessonId: step, activityType: 'mouthSoundListen', answer })
             });
             document.querySelectorAll('.lesson15-choice-btn').forEach(choice => choice.classList.remove('correct', 'wrong'));
             btn.classList.add(isCorrect ? 'correct' : 'wrong');
-            const feedback = document.getElementById('lesson15-quiz-feedback');
+            const feedback = document.getElementById(`lesson-mouth-quiz-feedback-${step}`);
             if (feedback) {
                 feedback.className = `text-center font-black mt-3 min-h-[1.6rem] ${isCorrect ? 'text-green-600' : 'text-red-500'}`;
                 feedback.textContent = isCorrect ? `좋아요! 이 소리는 ${answer}예요.` : '다시 들어 보고 입모양도 떠올려 보세요.';
             }
-            if (isCorrect) resetKoreanRetryIndex({ lessonId: 15, activityType: 'aeEVowelDiscrimination', word: answer, answer });
+            if (isCorrect) resetKoreanRetryIndex({ lessonId: step, activityType: config.activityType, word: answer, answer });
         };
+
+        window.playLesson15MouthSound = (char, slow = false) => window.playLessonMouthSound(15, char, slow);
+        window.completeLesson15Repeat = (btn) => window.completeLessonMouthRepeat(15, btn);
+        window.playLesson15QuizSound = () => window.playLessonMouthQuizSound(15);
+        window.nextLesson15SoundQuiz = () => window.nextLessonMouthSoundQuiz(15);
+        window.selectLesson15SoundAnswer = (btn, userAnswer) => window.selectLessonMouthSoundAnswer(15, btn, userAnswer);
 
         // ② 듣고 알맞은 글자 선택 (소리 듣기 퀴즈 게임)
         window.playChoiceQuizSound = function() {
@@ -7206,10 +7280,10 @@ ${text}
                 const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
                 const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
                 let contentHtml = '';
-                if (step === 15 && safeIndex === 0) {
-                    contentHtml = renderLesson15MouthIntro();
-                } else if (step === 15 && safeIndex === 1) {
-                    contentHtml = renderLesson15SoundQuiz();
+                if ((step === 15 || step === 16) && safeIndex === 0) {
+                    contentHtml = renderLessonMouthIntro(step);
+                } else if ((step === 15 || step === 16) && safeIndex === 1) {
+                    contentHtml = renderLessonMouthSoundQuiz(step);
                 } else if (safeIndex === 0) {
                     contentHtml = `
                         <div class="learning-main-card">
