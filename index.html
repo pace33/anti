@@ -1480,34 +1480,108 @@
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#f0f9ff]" onclick="openMyLiteracyFromDashboard()">
-                        <div class="text-7xl mb-6">📖</div>
-                        <div class="text-5xl font-black text-[#2c3e50]">나의 읽기 기록</div>
-                        <p class="text-gray-500 mt-2 text-lg">차곡차곡 쌓인 읽기 실력!</p>
+                    <!-- 오늘의 미션 -->
+                    <div id="literacy-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-blue-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openTodayLiteracyMission()">
+                        <div class="aiedu-badge bg-blue-600 mb-6">오늘의 미션</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">에이두 문해력 문제</h3>
+                        <p id="literacy-mission-desc" class="text-xl text-blue-600 font-bold">난이도와 유형별 문해력 문제를 풀어보세요!</p>
                     </div>
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-blue-50" onclick="openTodayLiteracyActivity()">
-                        <div class="aiedu-badge bg-blue-500 mb-6">오늘의 미션</div>
-                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">오늘의 문해력</h3>
-                        <p class="text-2xl text-blue-500 font-bold">생각하는 힘을 길러요</p>
+                    <!-- 한계 돌파 -->
+                    <div id="literacy-limit-break-card" class="grid-item p-10 flex flex-col items-center justify-center bg-purple-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyLimitBreak()">
+                        <div class="aiedu-badge bg-purple-600 mb-6">한계 돌파</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도전! 한계 돌파</h3>
+                        <p id="literacy-limit-break-desc" class="text-xl text-purple-600 font-bold">공용 한계돌파 은행의 오답에 도전하세요!</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openShortStoryReadingActivity()">
-                        <div class="text-5xl mb-3">📄</div>
-                        <div class="text-xl font-bold">짧은 글 읽기</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                    <!-- 나의 기록 -->
+                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openMyLiteracyRecord()">
+                        <div class="text-5xl mb-3">📚</div>
+                        <div class="text-xl font-bold">나의 기록</div>
+                        <p id="literacy-record-summary" class="text-sm text-blue-600 font-black mt-2">정답 0개 · 오답 0개</p>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openVocabularyBoostActivity()">
-                        <div class="text-5xl mb-3">🌳</div>
-                        <div class="text-xl font-bold">어휘 쑥쑥</div>
+                    <!-- 단어 은행 촬영 -->
+                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openDictationBankCamera()">
+                        <div class="text-5xl mb-3">📷</div>
+                        <div class="text-xl font-bold">단어 은행 촬영</div>
+                        <p class="text-sm text-gray-500 mt-2">사진에서 단어를 뽑아 은행에 저장해요</p>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openSentenceBuilderActivity()">
-                        <div class="text-5xl mb-3">🔨</div>
-                        <div class="text-xl font-bold">문장 만들기</div>
+                    <!-- 국어 은행 -->
+                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openDictationBankModal()">
+                        <div class="text-5xl mb-3">🏦</div>
+                        <div class="text-xl font-bold">국어 은행</div>
+                        <p id="literacy-korean-bank-summary" class="text-sm text-gray-500 mt-2">단어 0개 · 문장 0개</p>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openComprehensionQuizActivity()">
-                        <div class="text-5xl mb-3">💡</div>
-                        <div class="text-xl font-bold">독해 퀴즈</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [에이두 문해력 워크스페이스 섹션] -->
+        <div id="literacy-workspace-section" class="view-section hidden bg-white">
+            <span class="page-number">08</span>
+            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                    <img src="aiedu_korean_logo.png" alt="에이두 국어" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
+                <div class="w-full flex justify-between items-center mb-6">
+                    <div>
+                        <span id="literacy-workspace-badge" class="aiedu-badge bg-blue-600">오늘의 미션</span>
+                        <h2 id="literacy-workspace-title" class="text-4xl font-black text-[#2c3e50] mt-2">에이두 문해력 문제</h2>
+                    </div>
+                    <button class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all" onclick="goLiteracyDashboard()">
+                        목록으로 돌아가기
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+                    <div class="bg-gray-50 border-4 border-gray-200 rounded-[30px] p-8 flex flex-col min-h-[400px]">
+                        <h3 class="text-2xl font-black text-gray-700 mb-4 flex items-center gap-2">📖 읽기 지문 <span id="literacy-passage-difficulty" class="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Easy</span></h3>
+                        <div id="literacy-passage-content" class="text-xl font-bold text-gray-800 leading-relaxed whitespace-pre-wrap flex-grow overflow-y-auto max-h-[450px] custom-scrollbar">
+                            문제를 불러오는 중입니다...
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-4 border-blue-100 rounded-[30px] p-8 flex flex-col shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-2xl font-black text-blue-700">✏️ 문제</h3>
+                            <span id="literacy-question-type" class="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-bold">객관식</span>
+                        </div>
+                        <div id="literacy-question-content" class="text-2xl font-black text-gray-800 mb-6">
+                            지문을 읽고 문제를 풀어보세요.
+                        </div>
+
+                        <div id="literacy-options-container" class="space-y-3 hidden"></div>
+
+                        <div id="literacy-short-answer-container" class="hidden">
+                            <input type="text" id="literacy-short-input" class="w-full p-4 border-4 border-gray-200 rounded-2xl font-bold text-xl focus:border-blue-400 focus:outline-none mb-4" placeholder="답을 입력하세요.">
+                            <button class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all" onclick="window.submitLiteracyShortAnswer()">정답 제출하기</button>
+                        </div>
+
+                        <div id="literacy-essay-container" class="hidden">
+                            <textarea id="literacy-essay-input" class="w-full p-4 border-4 border-gray-200 rounded-2xl font-bold text-lg focus:border-blue-400 focus:outline-none mb-4 min-h-[150px]" placeholder="생각을 서술형으로 자세히 적어주세요. AI가 채점합니다."></textarea>
+                            <button class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all" onclick="window.submitLiteracyEssayAnswer()">AI 채점 받기</button>
+                        </div>
+
+                        <div id="literacy-feedback-container" class="mt-6 p-6 border-4 rounded-2xl hidden">
+                            <div id="literacy-feedback-title" class="text-2xl font-black mb-2"></div>
+                            <div id="literacy-feedback-detail" class="text-lg font-bold text-gray-700 leading-relaxed whitespace-pre-wrap mb-4"></div>
+                            <div id="literacy-feedback-explanation" class="pt-4 border-t-2 border-dashed border-gray-200 text-base text-gray-500 font-bold"></div>
+                            <button class="mt-6 w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-black text-lg rounded-2xl transition-all" onclick="window.nextLiteracyQuestion()">확인 (다음 단계로)</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2197,6 +2271,7 @@
             getDoc,
             setDoc,
             updateDoc,
+            deleteDoc,
             collection,
             query,
             where,
@@ -2311,6 +2386,10 @@
         let activeDictationPhotoDataUrl = '';
         let activeDictationImageAnalysis = '';
         let activeSpellingQuestion = null;
+        let literacyPortfolio = { history: [], stats: { "easy-multipleChoice": { attempts: 0, corrects: 0, wrongs: 0 } } };
+        let activeLiteracyQuestion = null;
+        let isLiteracyLimitBreakMode = false;
+        let userLiteracyAnswerChecked = false;
 
         const KOREAN_ERROR_TYPES = {
             VOWEL: "vowel",
@@ -4303,6 +4382,7 @@
             if (currentUserRole === 'teacher') {
                 currentUserDictationStep = Math.max(currentUserDictationStep, dictationItems.length);
             }
+            literacyPortfolio = normalizeLiteracyPortfolio(userData?.literacyPortfolio);
 
             // Main Sidebar/Drawer Info
             document.getElementById('dashboard-account-name').innerText = name;
@@ -4334,6 +4414,7 @@
             updateTodayKoreanPreview();
             updateDrawingDashboardPreview();
             updateDictationDashboardPreview();
+            updateLiteracyDashboardPreview();
         }
 
         const topLevelSectionIds = [
@@ -4354,7 +4435,8 @@
             'learning-detail-section',
             'letter-writing-section',
             'word-writing-quiz-section',
-            'word-listening-quiz-section'
+            'word-listening-quiz-section',
+            'literacy-workspace-section'
         ];
 
         function getVisibleDisplayValue(section) {
@@ -6062,25 +6144,777 @@ ${JSON.stringify(targets, null, 2)}
         }
         window.checkSpellingAnswer = function(index) { if (!activeSpellingQuestion) return; const buttons = document.querySelectorAll('#spelling-quiz-options .btn-choice'); buttons.forEach((button, buttonIndex) => { button.disabled = true; if (buttonIndex === activeSpellingQuestion.answerIndex) button.classList.add('!bg-green-100', '!border-green-400'); }); const isCorrect = index === activeSpellingQuestion.answerIndex; const feedback = document.getElementById('spelling-quiz-feedback'); feedback.classList.remove('hidden'); feedback.innerHTML = `<div class="text-xl font-black ${isCorrect ? 'text-green-600' : 'text-red-500'}">${isCorrect ? '정답이에요!' : '아쉬워요. 초록색 문장이 틀린 문장이에요.'}</div><div class="mt-3 text-2xl font-black text-[#2c3e50]">${activeSpellingQuestion.options[activeSpellingQuestion.answerIndex]}</div><p class="mt-3 text-gray-600 font-bold">${activeSpellingQuestion.reason || '틀린 부분을 바르게 고쳐 읽어봐요.'}</p>`; }
 
-        // Literacy Activities Stubs (Level 4)
-        window.openMyLiteracyFromDashboard = function() {
-            showModal('📖 나의 읽기 기록은 준비 중입니다! ✨');
+        // --- 에이두 문해력 핵심 로직 ---
+        function normalizeLiteracyPortfolio(raw = {}) {
+            if (!raw || typeof raw !== 'object') raw = {};
+            const history = Array.isArray(raw.history) ? raw.history : [];
+            const stats = raw.stats || {};
+            const keys = [
+                'easy-multipleChoice', 'easy-shortAnswer', 'easy-essay',
+                'normal-multipleChoice', 'normal-shortAnswer', 'normal-essay',
+                'hard-multipleChoice', 'hard-shortAnswer', 'hard-essay',
+                'expert-multipleChoice', 'expert-shortAnswer', 'expert-essay'
+            ];
+            keys.forEach(k => {
+                if (!stats[k]) {
+                    stats[k] = { attempts: 0, corrects: 0, wrongs: 0 };
+                }
+            });
+            return { history, stats };
         }
-        window.openTodayLiteracyActivity = function() {
-            showModal('📖 오늘의 문해력 미션은 준비 중입니다! ✨');
+
+        async function persistLiteracyData(extra = {}) {
+            literacyPortfolio = normalizeLiteracyPortfolio(literacyPortfolio);
+            if (currentUserId) {
+                await setDoc(doc(db, 'users', currentUserId), { literacyPortfolio, ...extra }, { merge: true });
+            }
+            updateDashboardExperience({
+                name: currentUserName,
+                icon: currentUserIcon,
+                coins: currentUserCoins,
+                role: currentUserRole,
+                currentLearningStep,
+                currentDrawingStep: currentUserDrawingStep,
+                drawingPortfolio,
+                currentDictationStep: currentUserDictationStep,
+                dictationPortfolio,
+                literacyPortfolio
+            });
         }
-        window.openShortStoryReadingActivity = function() {
-            showModal('📄 짧은 글 읽기 기능은 준비 중입니다! ✨');
+
+        function getLiteracyStat(difficulty, type) {
+            return literacyPortfolio?.stats?.[`${difficulty}-${type}`] || { attempts: 0, corrects: 0, wrongs: 0 };
         }
-        window.openVocabularyBoostActivity = function() {
-            showModal('🌳 어휘 쑥쑥 기능은 준비 중입니다! ✨');
+
+        function getLiteracyWrongRate(difficulty, type) {
+            const stat = getLiteracyStat(difficulty, type);
+            if (!stat.attempts) return 1;
+            return (stat.wrongs || 0) / stat.attempts;
         }
-        window.openSentenceBuilderActivity = function() {
-            showModal('🔨 문장 만들기 기능은 준비 중입니다! ✨');
+
+        function isLiteracyMastered(difficulty, type) {
+            const stat = getLiteracyStat(difficulty, type);
+            const threshold = type === 'multipleChoice' ? 0.2 : 0.3;
+            const minAttempts = type === 'multipleChoice' ? 10 : 1;
+            return stat.attempts >= minAttempts && getLiteracyWrongRate(difficulty, type) <= threshold;
         }
-        window.openComprehensionQuizActivity = function() {
-            showModal('💡 독해 퀴즈 기능은 준비 중입니다! ✨');
+
+        function isLiteracyUnlocked(difficulty, type) {
+            if (difficulty === 'easy' && type === 'multipleChoice') return true;
+
+            if (type === 'shortAnswer') {
+                return isLiteracyMastered(difficulty, 'multipleChoice');
+            }
+            if (type === 'essay') {
+                return isLiteracyMastered(difficulty, 'multipleChoice') && isLiteracyMastered(difficulty, 'shortAnswer');
+            }
+
+            const previousDifficulty = { normal: 'easy', hard: 'normal', expert: 'hard' }[difficulty];
+            if (type === 'multipleChoice' && previousDifficulty) {
+                return isLiteracyMastered(previousDifficulty, 'multipleChoice')
+                    && isLiteracyMastered(previousDifficulty, 'shortAnswer')
+                    && isLiteracyMastered(previousDifficulty, 'essay');
+            }
+            return false;
         }
+
+        function chooseRecommendedLiteracyMission() {
+            const difficulties = ['easy', 'normal', 'hard', 'expert'];
+            for (const difficulty of difficulties) {
+                const mcReady = isLiteracyMastered(difficulty, 'multipleChoice');
+                const shortReady = isLiteracyMastered(difficulty, 'shortAnswer');
+                const essayReady = isLiteracyMastered(difficulty, 'essay');
+                if (!mcReady) return { difficulty, type: 'multipleChoice' };
+                if (!shortReady) return { difficulty, type: Math.random() < 0.5 ? 'multipleChoice' : 'shortAnswer' };
+                if (!essayReady) {
+                    const pool = ['multipleChoice', 'shortAnswer', 'essay'];
+                    return { difficulty, type: pool[Math.floor(Math.random() * pool.length)] };
+                }
+            }
+            const pool = ['multipleChoice', 'shortAnswer', 'essay'];
+            return { difficulty: 'expert', type: pool[Math.floor(Math.random() * pool.length)] };
+        }
+
+        function updateLiteracyDashboardPreview() {
+            literacyPortfolio = normalizeLiteracyPortfolio(literacyPortfolio);
+            let totalCorrects = 0;
+            let totalWrongs = 0;
+            Object.values(literacyPortfolio.stats).forEach(s => {
+                totalCorrects += s.corrects || 0;
+                totalWrongs += s.wrongs || 0;
+            });
+
+            const summary = document.getElementById('literacy-record-summary');
+            if (summary) {
+                summary.innerText = `정답 ${totalCorrects}개 · 오답 ${totalWrongs}개`;
+            }
+
+            const words = dictationPortfolio?.koreanBank?.words?.length || 0;
+            const sentences = dictationPortfolio?.koreanBank?.sentences?.length || 0;
+            const bankSummary = document.getElementById('literacy-korean-bank-summary');
+            if (bankSummary) {
+                bankSummary.innerText = `단어 ${words}개 · 문장 ${sentences}개`;
+            }
+        }
+
+        function generateQuestionHash(passage, question) {
+            let hash = 0;
+            const str = (passage || '') + (question || '');
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash = hash & hash;
+            }
+            return 'q_' + Math.abs(hash);
+        }
+
+        function getLocalBank() {
+            try {
+                return JSON.parse(localStorage.getItem('sharedLiteracyWrongBank') || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function saveLocalBank(bank) {
+            localStorage.setItem('sharedLiteracyWrongBank', JSON.stringify(bank));
+        }
+
+        function addWrongToLocalBank(questionData) {
+            const bank = getLocalBank();
+            const id = generateQuestionHash(questionData.passage, questionData.question);
+            const idx = bank.findIndex(q => q.id === id);
+            if (idx >= 0) {
+                bank[idx].attempts = (bank[idx].attempts || 0) + 1;
+                bank[idx].wrongs = (bank[idx].wrongs || 0) + 1;
+            } else {
+                bank.push({
+                    ...questionData,
+                    id,
+                    attempts: 1,
+                    corrects: 0,
+                    wrongs: 1,
+                    createdAt: new Date().toISOString()
+                });
+            }
+            saveLocalBank(bank);
+        }
+
+        function updateLocalBankCorrect(questionData) {
+            const bank = getLocalBank();
+            const id = generateQuestionHash(questionData.passage, questionData.question);
+            const idx = bank.findIndex(q => q.id === id);
+            if (idx >= 0) {
+                const q = bank[idx];
+                q.attempts = (q.attempts || 0) + 1;
+                q.corrects = (q.corrects || 0) + 1;
+                const correctRate = q.corrects / q.attempts;
+                if (q.attempts >= 20 && correctRate >= 0.5) {
+                    bank.splice(idx, 1);
+                }
+                saveLocalBank(bank);
+            }
+        }
+
+        function updateLocalBankWrong(questionData) {
+            const bank = getLocalBank();
+            const id = generateQuestionHash(questionData.passage, questionData.question);
+            const idx = bank.findIndex(q => q.id === id);
+            if (idx >= 0) {
+                const q = bank[idx];
+                q.attempts = (q.attempts || 0) + 1;
+                q.wrongs = (q.wrongs || 0) + 1;
+                const correctRate = q.corrects / q.attempts;
+                if (q.attempts >= 20 && correctRate >= 0.5) {
+                    bank.splice(idx, 1);
+                }
+                saveLocalBank(bank);
+            }
+        }
+
+        async function addWrongToSharedBank(questionData) {
+            const id = generateQuestionHash(questionData.passage, questionData.question);
+            const docRef = doc(db, 'sharedLiteracyWrongBank', id);
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    await updateDoc(docRef, {
+                        attempts: (data.attempts || 0) + 1,
+                        wrongs: (data.wrongs || 0) + 1
+                    });
+                } else {
+                    await setDoc(docRef, {
+                        ...questionData,
+                        attempts: 1,
+                        corrects: 0,
+                        wrongs: 1,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            } catch (e) {
+                console.error("Firestore shared bank write failed, fallback to local storage", e);
+                addWrongToLocalBank(questionData);
+            }
+        }
+
+        async function updateSharedBankCorrect(questionData) {
+            const id = generateQuestionHash(questionData.passage, questionData.question);
+            const docRef = doc(db, 'sharedLiteracyWrongBank', id);
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const attempts = (data.attempts || 0) + 1;
+                    const corrects = (data.corrects || 0) + 1;
+                    const wrongs = data.wrongs || 0;
+                    const correctRate = corrects / attempts;
+
+                    if (attempts >= 20 && correctRate >= 0.5) {
+                        await deleteDoc(docRef);
+                        console.log("Shared bank problem removed due to high correctness");
+                    } else {
+                        await updateDoc(docRef, {
+                            attempts: attempts,
+                            corrects: corrects
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Firestore shared bank update correct failed, fallback to local", e);
+                updateLocalBankCorrect(questionData);
+            }
+        }
+
+        async function updateSharedBankWrong(questionData) {
+            const id = generateQuestionHash(questionData.passage, questionData.question);
+            const docRef = doc(db, 'sharedLiteracyWrongBank', id);
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const attempts = (data.attempts || 0) + 1;
+                    const wrongs = (data.wrongs || 0) + 1;
+                    const corrects = data.corrects || 0;
+                    const correctRate = corrects / attempts;
+
+                    if (attempts >= 20 && correctRate >= 0.5) {
+                        await deleteDoc(docRef);
+                    } else {
+                        await updateDoc(docRef, {
+                            attempts: attempts,
+                            wrongs: wrongs
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Firestore shared bank update wrong failed, fallback to local", e);
+                updateLocalBankWrong(questionData);
+            }
+        }
+
+        async function getSharedBankProblems(difficulty) {
+            try {
+                const q = query(collection(db, 'sharedLiteracyWrongBank'), where('difficulty', '==', difficulty));
+                const querySnapshot = await getDocs(q);
+                const list = [];
+                querySnapshot.forEach((doc) => {
+                    list.push({ id: doc.id, ...doc.data() });
+                });
+                return list;
+            } catch (e) {
+                console.error("Firestore get shared bank problems failed, use local fallback", e);
+                const local = getLocalBank();
+                return local.filter(q => q.difficulty === difficulty);
+            }
+        }
+
+        window.openLiteracyLimitBreak = async function() {
+            showActivityLoading();
+            let currentDifficulty = 'easy';
+
+            async function renderLimitBreakModalContent(diff) {
+                currentDifficulty = diff;
+                const problems = await getSharedBankProblems(diff);
+                const counts = { multipleChoice: 0, shortAnswer: 0, essay: 0 };
+                problems.forEach(p => {
+                    if (counts[p.type] !== undefined) {
+                        counts[p.type]++;
+                    }
+                });
+
+                const modalHtml = `
+                    <div class="text-left p-2 font-sans">
+                        <h3 class="text-3xl font-black text-[#2c3e50] mb-4 flex items-center gap-2">🔥 [도전! 한계 돌파]</h3>
+                        <p class="text-gray-500 font-bold mb-6">다른 사용자들이 틀린 공용 오답 은행 문제에 도전합니다. 정답률 50% 이상이 되면 은행에서 졸업하여 제거됩니다.</p>
+
+                        <div class="mb-6">
+                            <label class="block font-black text-gray-700 mb-2">1. 난이도 선택</label>
+                            <div class="flex gap-2">
+                                ${['easy', 'normal', 'hard', 'expert'].map(d => `
+                                    <button class="px-4 py-2 rounded-xl font-black text-lg border-2 ${d === diff ? 'bg-purple-600 border-purple-600 text-white' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-50'} transition-all" onclick="window.changeLimitBreakDifficulty('${d}')">
+                                        ${d.toUpperCase()}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="mb-6 bg-purple-50 p-6 rounded-2xl border-4 border-purple-100">
+                            <label class="block font-black text-purple-700 mb-3">2. 유형별 누적 오답 개수</label>
+                            <div class="grid grid-cols-3 gap-4 text-center">
+                                <div class="bg-white p-3 rounded-xl shadow-sm">
+                                    <div class="text-xs text-gray-400 font-bold">객관식 (4지선다)</div>
+                                    <div class="text-2xl font-black text-purple-700 mt-1">${counts.multipleChoice}개</div>
+                                </div>
+                                <div class="bg-white p-3 rounded-xl shadow-sm">
+                                    <div class="text-xs text-gray-400 font-bold">단답형</div>
+                                    <div class="text-2xl font-black text-purple-700 mt-1">${counts.shortAnswer}개</div>
+                                </div>
+                                <div class="bg-white p-3 rounded-xl shadow-sm">
+                                    <div class="text-xs text-gray-400 font-bold">서술형</div>
+                                    <div class="text-2xl font-black text-purple-700 mt-1">${counts.essay}개</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all"
+                            ${problems.length === 0 ? 'disabled style="opacity: 0.5;"' : ''}
+                            onclick="window.startLimitBreakChallenge('${diff}')">
+                            ${problems.length === 0 ? '선택한 난이도에 도전할 오답이 없습니다.' : '한계 돌파 도전 시작!'}
+                        </button>
+                    </div>
+                `;
+                return modalHtml;
+            }
+
+            window.changeLimitBreakDifficulty = async function(diff) {
+                showActivityLoading();
+                const content = await renderLimitBreakModalContent(diff);
+                hideActivityLoading();
+                showModal(content);
+            };
+
+            window.startLimitBreakChallenge = async function(diff) {
+                window.handleModalConfirm();
+                showActivityLoading();
+                const problems = await getSharedBankProblems(diff);
+                if (problems.length === 0) {
+                    hideActivityLoading();
+                    showModal('도전할 문제가 없습니다.');
+                    return;
+                }
+                const randomQuestion = problems[Math.floor(Math.random() * problems.length)];
+                hideActivityLoading();
+                setupLiteracyWorkspace(randomQuestion, true);
+            };
+
+            const initialContent = await renderLimitBreakModalContent('easy');
+            hideActivityLoading();
+            showModal(initialContent);
+        };
+
+        window.openTodayLiteracyMission = function() {
+            function renderMissionSelectContent(selectedDiff, selectedType) {
+                const diffs = ['easy', 'normal', 'hard', 'expert'];
+                const types = [
+                    { id: 'multipleChoice', label: '객관식 (4지선다)' },
+                    { id: 'shortAnswer', label: '단답형' },
+                    { id: 'essay', label: '서술형' }
+                ];
+
+                let activeType = selectedType;
+                const isTypeUnlocked = (d, t) => isLiteracyUnlocked(d, t);
+
+                if (!isTypeUnlocked(selectedDiff, activeType)) {
+                    const firstUnlocked = types.find(t => isTypeUnlocked(selectedDiff, t.id));
+                    activeType = firstUnlocked ? firstUnlocked.id : 'multipleChoice';
+                }
+
+                const html = `
+                    <div class="text-left p-2 font-sans">
+                        <h3 class="text-3xl font-black text-[#2c3e50] mb-4 flex items-center gap-2">📘 [오늘의 문해력 미션]</h3>
+                        <p class="text-gray-500 font-bold mb-6">다양한 난이도와 유형의 문제를 풀어 생각을 넓혀보세요.</p>
+
+                        <div class="mb-6">
+                            <label class="block font-black text-gray-700 mb-2">1. 난이도 선택</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                ${diffs.map(d => {
+                                    const unlocked = isLiteracyUnlocked(d, 'multipleChoice');
+                                    const selected = d === selectedDiff;
+                                    const prevMap = { normal: 'easy', hard: 'normal', expert: 'hard' };
+                                    const prev = prevMap[d];
+                                    const conditionText = d === 'easy' ? '기본 해금' : `${prev.toUpperCase()} 객관식·단답형·서술형 목표 달성`;
+                                    return `
+                                        <button class="flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${selected ? 'bg-blue-600 border-blue-600 text-white' : unlocked ? 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50' : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'}"
+                                            ${unlocked ? `onclick="window.changeMissionSelection('${d}', '${activeType}')"` : 'disabled'}>
+                                            <span class="text-xl font-black">${d.toUpperCase()}</span>
+                                            <span class="text-[9px] mt-1 font-bold ${selected ? 'text-blue-100' : unlocked ? 'text-blue-600' : 'text-gray-400'}">${conditionText}</span>
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block font-black text-gray-700 mb-2">2. 유형 선택</label>
+                            <div class="space-y-2">
+                                ${types.map(t => {
+                                    const unlocked = isTypeUnlocked(selectedDiff, t.id);
+                                    const selected = t.id === activeType;
+                                    let conditionText = '';
+                                    if (t.id === 'shortAnswer') conditionText = `(${selectedDiff.toUpperCase()} 객관식 10문제 이상 + 오답률 20%↓ 시 해금)`;
+                                    if (t.id === 'essay') conditionText = `(${selectedDiff.toUpperCase()} 객관식 20%↓ + 단답형 30%↓ 시 해금)`;
+                                    return `
+                                        <button class="w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${selected ? 'bg-blue-600 border-blue-600 text-white' : unlocked ? 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50' : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'}"
+                                            ${unlocked ? `onclick="window.changeMissionSelection('${selectedDiff}', '${t.id}')"` : 'disabled'}>
+                                            <span class="text-lg font-black">${t.label}</span>
+                                            ${unlocked ? `<span class="text-xs font-bold ${selected ? 'text-blue-200' : 'text-blue-600'}">선택 가능</span>` : `<span class="text-xs text-red-400 font-bold">${conditionText}</span>`}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <button class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all"
+                            onclick="window.startTodayLiteracyMission('${selectedDiff}', '${activeType}')">
+                            오늘의 미션 시작하기!
+                        </button>
+                    </div>
+                `;
+                return html;
+            }
+
+            window.changeMissionSelection = function(diff, type) {
+                const html = renderMissionSelectContent(diff, type);
+                showModal(html);
+            };
+
+            window.startTodayLiteracyMission = async function(diff, type) {
+                window.handleModalConfirm();
+                showActivityLoading();
+                try {
+                    const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 5);
+                    const prompt = generateLiteracyPrompt(diff, type, bankWords);
+
+                    const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
+                    const questionData = parseAiQuestionResponse(responseText);
+
+                    if (!questionData || !questionData.passage || !questionData.question) {
+                        throw new Error("AI가 문해력 문제를 올바르게 생성하지 못했습니다.");
+                    }
+
+                    questionData.difficulty = diff;
+                    questionData.type = type;
+
+                    hideActivityLoading();
+                    setupLiteracyWorkspace(questionData, false);
+                } catch (e) {
+                    hideActivityLoading();
+                    console.error(e);
+                    showModal(`문제 생성에 실패했습니다: ${e.message || e}. 다시 시도해 주세요.`);
+                }
+            };
+
+            const recommended = chooseRecommendedLiteracyMission();
+            const initialHtml = renderMissionSelectContent(recommended.difficulty, recommended.type);
+            showModal(initialHtml);
+        };
+
+        function generateLiteracyPrompt(difficulty, type, bankWords) {
+            const wordListStr = bankWords.length > 0 ? bankWords.join(', ') : '나무, 학교, 하늘';
+            let difficultyGuide = '';
+            if (difficulty === 'easy') {
+                difficultyGuide = '쉬움: 짧은 한 문단 지문으로, 초등학교 1~2학년이 읽기 쉬운 3문장 내외와 아주 친숙한 단어로 구성해 주세요.';
+            } else if (difficulty === 'normal') {
+                difficultyGuide = '보통: 한 문단 지문으로, 초등학교 3~4학년 수준의 4~6문장과 일상 및 학업 관련 단어로 구성해 주세요.';
+            } else if (difficulty === 'hard') {
+                difficultyGuide = '어려움: 2~3문단 지문으로, 초등학교 5~6학년 수준의 설명문/논설문 요소와 추론할 거리를 포함해 주세요.';
+            } else if (difficulty === 'expert') {
+                difficultyGuide = '매우 어려움: 5문단 이상 긴 지문으로, 중학교 1학년 기초 수준의 논리적 추론·비판적 독해를 요구하도록 구성해 주세요.';
+            }
+
+            let typeGuide = '';
+            if (type === 'multipleChoice') {
+                typeGuide = `지문을 바탕으로 풀 수 있는 객관식(4지선다형) 1문제를 출제해 주세요.
+포맷: {"passage": "지문 내용", "question": "문제 내용", "options": ["보기1", "보기2", "보기3", "보기4"], "answerIndex": 0, "explanation": "친절한 해설"}`;
+            } else if (type === 'shortAnswer') {
+                typeGuide = `지문을 바탕으로 풀 수 있는 단답형(정답이 한 단어 또는 5글자 이내의 짧은 어구인 문제) 1문제를 출제해 주세요.
+포맷: {"passage": "지문 내용", "question": "문제 내용", "answer": "단답형 정답", "explanation": "친절한 해설"}`;
+            } else if (type === 'essay') {
+                typeGuide = `지문을 바탕으로 자신의 생각이나 논리적 근거를 서술하는 서술형(생각해볼 만한 질문) 1문제를 출제해 주세요.
+포맷: {"passage": "지문 내용", "question": "문제 내용", "sampleAnswer": "이상적이고 구체적인 모범 답안", "explanation": "채점 기준 및 해설"}`;
+            }
+
+            return `당신은 초등/중등 국어 문해력 전문 교사입니다.
+다음 조건에 따라 흥미롭고 유익한 읽기 지문 1개와 관련 문제 1개를 JSON으로 출제해 주세요.
+
+[조건]
+1. 난이도: ${difficulty.toUpperCase()}
+   - 난이도 기준: ${difficultyGuide}
+2. 문제 유형: ${type === 'multipleChoice' ? '객관식' : type === 'shortAnswer' ? '단답형' : '서술형'}
+   - 문제 유형 기준: ${typeGuide}
+3. 반영 단어: 가능하면 아래 단어 은행의 단어를 자연스럽게 지문에 녹여내어 사용해 주세요:
+   단어 은행: ${wordListStr}
+
+반드시 백틱(\`\`\`)이나 JSON 이외의 잡다한 설명은 포함하지 말고, 순수한 JSON 텍스트만 출력하세요.`;
+        }
+
+        function parseAiQuestionResponse(rawText) {
+            try {
+                const cleaned = String(rawText || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+                const match = cleaned.match(/\{[\s\S]*\}/);
+                return JSON.parse(match ? match[0] : cleaned);
+            } catch (error) {
+                console.warn('AI literacy question parse failed', error, rawText);
+                return null;
+            }
+        }
+
+        function setupLiteracyWorkspace(questionData, isLimitBreak = false) {
+            activeLiteracyQuestion = questionData;
+            isLiteracyLimitBreakMode = isLimitBreak;
+            userLiteracyAnswerChecked = false;
+
+            showTopLevelSection('literacy-workspace-section');
+
+            const badge = document.getElementById('literacy-workspace-badge');
+            badge.innerText = isLimitBreak ? '한계 돌파' : '오늘의 미션';
+            badge.className = `aiedu-badge ${isLimitBreak ? 'bg-purple-600' : 'bg-blue-600'}`;
+
+            const title = document.getElementById('literacy-workspace-title');
+            title.innerText = isLimitBreak ? '도전! 한계 돌파' : '에이두 문해력 문제';
+
+            document.getElementById('literacy-passage-difficulty').innerText = questionData.difficulty.toUpperCase();
+            document.getElementById('literacy-passage-content').innerText = questionData.passage;
+            document.getElementById('literacy-question-content').innerText = questionData.question;
+
+            const typeLabel = document.getElementById('literacy-question-type');
+            const typeNames = { multipleChoice: '객관식 (4지선다)', shortAnswer: '단답형', essay: '서술형' };
+            typeLabel.innerText = typeNames[questionData.type] || '문제';
+
+            document.getElementById('literacy-options-container').classList.add('hidden');
+            document.getElementById('literacy-short-answer-container').classList.add('hidden');
+            document.getElementById('literacy-essay-container').classList.add('hidden');
+            document.getElementById('literacy-feedback-container').classList.add('hidden');
+
+            document.getElementById('literacy-short-input').value = '';
+            document.getElementById('literacy-essay-input').value = '';
+
+            if (questionData.type === 'multipleChoice') {
+                const optContainer = document.getElementById('literacy-options-container');
+                optContainer.classList.remove('hidden');
+                optContainer.innerHTML = (questionData.options || []).map((opt, idx) => `
+                    <button class="btn-choice w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 font-bold text-lg transition-all"
+                        onclick="window.selectLiteracyMultipleChoice(${idx})">
+                        ${idx + 1}. ${opt}
+                    </button>
+                `).join('');
+            } else if (questionData.type === 'shortAnswer') {
+                document.getElementById('literacy-short-answer-container').classList.remove('hidden');
+            } else if (questionData.type === 'essay') {
+                document.getElementById('literacy-essay-container').classList.remove('hidden');
+            }
+        }
+
+        window.selectLiteracyMultipleChoice = function(index) {
+            if (userLiteracyAnswerChecked) return;
+            userLiteracyAnswerChecked = true;
+            const isCorrect = index === activeLiteracyQuestion.answerIndex;
+            showLiteracyResult(isCorrect, {
+                correctAnswerText: activeLiteracyQuestion.options[activeLiteracyQuestion.answerIndex],
+                userAnswerText: activeLiteracyQuestion.options[index]
+            });
+        };
+
+        window.submitLiteracyShortAnswer = function() {
+            if (userLiteracyAnswerChecked) return;
+            const input = document.getElementById('literacy-short-input').value.trim();
+            if (!input) {
+                showModal('답안을 입력해 주세요!');
+                return;
+            }
+            userLiteracyAnswerChecked = true;
+            const cleanAnswer = String(activeLiteracyQuestion.answer).replace(/\s+/g, '').toLowerCase();
+            const cleanUser = input.replace(/\s+/g, '').toLowerCase();
+            const isCorrect = cleanAnswer === cleanUser || cleanUser.includes(cleanAnswer) || cleanAnswer.includes(cleanUser);
+            showLiteracyResult(isCorrect, {
+                correctAnswerText: activeLiteracyQuestion.answer,
+                userAnswerText: input
+            });
+        };
+
+        window.submitLiteracyEssayAnswer = async function() {
+            if (userLiteracyAnswerChecked) return;
+            const input = document.getElementById('literacy-essay-input').value.trim();
+            if (!input) {
+                showModal('생각을 적어주세요!');
+                return;
+            }
+            showActivityLoading();
+            try {
+                const prompt = `질문: ${activeLiteracyQuestion.question}
+예시답안: ${activeLiteracyQuestion.sampleAnswer}
+학생답안: ${input}
+
+위 학생답안을 예시답안을 기준으로 100점 만점으로 정밀하게 채점해 주세요.
+지문 내용과 부합하는지, 그리고 핵심 의도를 파악하고 작성했는지 평가하세요.
+반드시 백틱이나 다른 군더더기 없이 다음 JSON 형식만 반환하세요: {"score": 85, "feedback": "여기에 채점 총평 및 친절한 피드백을 적으세요."}`;
+
+                const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
+                const cleaned = String(responseText || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+                const match = cleaned.match(/\{[\s\S]*\}/);
+                const parsed = JSON.parse(match ? match[0] : cleaned);
+                const score = Number(parsed.score) || 0;
+                const feedback = parsed.feedback || '채점을 완료했습니다.';
+                userLiteracyAnswerChecked = true;
+                hideActivityLoading();
+                const isCorrect = score >= 80;
+                showLiteracyResult(isCorrect, {
+                    score: score,
+                    feedback: feedback,
+                    correctAnswerText: activeLiteracyQuestion.sampleAnswer,
+                    userAnswerText: input
+                });
+            } catch (e) {
+                hideActivityLoading();
+                console.error(e);
+                showModal(`AI 서술형 채점 중 오류가 발생했습니다: ${e.message || e}. 다시 시도해 주세요.`);
+            }
+        };
+
+        async function showLiteracyResult(isCorrect, details) {
+            const feedbackContainer = document.getElementById('literacy-feedback-container');
+            const title = document.getElementById('literacy-feedback-title');
+            const detail = document.getElementById('literacy-feedback-detail');
+            const explanation = document.getElementById('literacy-feedback-explanation');
+
+            feedbackContainer.classList.remove('hidden');
+            if (isCorrect) {
+                title.innerText = details.score ? `⭕ 정답 (AI 채점: ${details.score}점)` : '⭕ 정답입니다!';
+                title.className = 'text-2xl font-black text-green-600';
+                detail.innerText = details.feedback ? `${details.feedback}` : `답안: ${details.userAnswerText}`;
+            } else {
+                title.innerText = details.score ? `❌ 아쉬워요 (AI 채점: ${details.score}점)` : '❌ 아쉬워요';
+                title.className = 'text-2xl font-black text-red-500';
+                detail.innerText = details.feedback ? `${details.feedback}\n\n[모범 답안]: ${details.correctAnswerText}` : `작성 답안: ${details.userAnswerText}\n[올바른 정답]: ${details.correctAnswerText}`;
+            }
+
+            feedbackContainer.style.borderColor = isCorrect ? '#bbf7d0' : '#fecaca';
+            feedbackContainer.style.backgroundColor = isCorrect ? '#f0fdf4' : '#fef2f2';
+            explanation.innerText = `💡 해설:\n${activeLiteracyQuestion.explanation || '지문을 다시 읽고 이해해 보세요.'}`;
+
+            if (isCorrect) {
+                currentUserCoins += 5;
+            }
+
+            const diff = activeLiteracyQuestion.difficulty;
+            const type = activeLiteracyQuestion.type;
+            const statKey = `${diff}-${type}`;
+
+            if (!literacyPortfolio.stats[statKey]) {
+                literacyPortfolio.stats[statKey] = { attempts: 0, corrects: 0, wrongs: 0 };
+            }
+
+            literacyPortfolio.stats[statKey].attempts++;
+            if (isCorrect) {
+                literacyPortfolio.stats[statKey].corrects++;
+            } else {
+                literacyPortfolio.stats[statKey].wrongs++;
+            }
+
+            literacyPortfolio.history = [
+                {
+                    passage: activeLiteracyQuestion.passage,
+                    question: activeLiteracyQuestion.question,
+                    difficulty: diff,
+                    type: type,
+                    isCorrect,
+                    userAnswer: details.userAnswerText,
+                    score: details.score || null,
+                    solvedAt: new Date().toISOString()
+                },
+                ...literacyPortfolio.history
+            ].slice(0, 50);
+
+            if (isLiteracyLimitBreakMode) {
+                if (isCorrect) {
+                    await updateSharedBankCorrect(activeLiteracyQuestion);
+                } else {
+                    await updateSharedBankWrong(activeLiteracyQuestion);
+                }
+            } else {
+                if (!isCorrect) {
+                    await addWrongToSharedBank(activeLiteracyQuestion);
+                }
+            }
+
+            await persistLiteracyData({ coins: currentUserCoins });
+        }
+
+        window.openMyLiteracyRecord = function() {
+            const history = literacyPortfolio.history || [];
+            const stats = literacyPortfolio.stats || {};
+
+            const statsHtml = Object.keys(stats).map(k => {
+                const s = stats[k];
+                if (s.attempts === 0) return '';
+                const rate = Math.round((s.corrects / s.attempts) * 100);
+                const [diff, type] = k.split('-');
+                const typeNames = { multipleChoice: '객관식', shortAnswer: '단답형', essay: '서술형' };
+                return `
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-sm">
+                        <div class="font-black text-gray-700">${diff.toUpperCase()} - ${typeNames[type] || type}</div>
+                        <div class="mt-1 font-bold text-gray-500">도전: ${s.attempts}회 | 정답: ${s.corrects}회 (${rate}%)</div>
+                    </div>
+                `;
+            }).filter(Boolean).join('');
+
+            const historyHtml = history.map((h, i) => {
+                const date = new Date(h.solvedAt).toLocaleDateString();
+                const typeNames = { multipleChoice: '객관식', shortAnswer: '단답형', essay: '서술형' };
+                return `
+                    <div class="p-4 rounded-xl border-2 ${h.isCorrect ? 'border-green-100 bg-green-50/50' : 'border-red-100 bg-red-50/50'} text-left">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-black text-[#2c3e50]">${h.isCorrect ? '⭕ 정답' : '❌ 오답'} (${h.difficulty.toUpperCase()} - ${typeNames[h.type] || h.type})</span>
+                            <span class="text-xs text-gray-400 font-bold">${date}</span>
+                        </div>
+                        <p class="text-sm font-bold text-gray-600 line-clamp-1 mb-1">지문: ${h.passage}</p>
+                        <p class="text-base font-black text-gray-800">질문: ${h.question}</p>
+                        <p class="text-sm text-gray-500 font-bold mt-1">입력한 답안: ${h.userAnswer || '(없음)'} ${h.score ? `| AI점수: ${h.score}점` : ''}</p>
+                    </div>
+                `;
+            }).join('') || '<div class="text-gray-400 text-center py-8">아직 푼 문해력 문제가 없어요.</div>';
+
+            const msg = `
+                <div class="text-left p-2 max-h-[70vh] overflow-y-auto custom-scrollbar font-sans">
+                    <h3 class="text-3xl font-black text-[#2c3e50] mb-4">📚 나의 문해력 기록</h3>
+
+                    <div class="mb-6">
+                        <h4 class="font-black text-gray-700 mb-2">유형/난이도별 통계</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            ${statsHtml || '<div class="text-gray-400 text-sm font-bold">통계 데이터가 아직 없습니다.</div>'}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-black text-gray-700 mb-2">최근 학습 이력 (최대 50개)</h4>
+                        <div class="space-y-3 font-sans">
+                            ${historyHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            showModal(msg);
+        };
+
+        window.goLiteracyDashboard = function() {
+            showTopLevelSection('literacy-activities-section');
+            updateLiteracyDashboardPreview();
+        };
+
+        window.nextLiteracyQuestion = function() {
+            goLiteracyDashboard();
+        };
 
         window.closeEmbeddedActivity = function closeEmbeddedActivity() {
             showDashboardOnly();
