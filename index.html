@@ -6503,9 +6503,29 @@ ${text}
             return student.koreanProgressSummary || window.buildKoreanStudentReport(studentId);
         }
 
+        const KOREAN_ERROR_TYPE_LABELS = {
+            [KOREAN_ERROR_TYPES.VOWEL]: '모음',
+            [KOREAN_ERROR_TYPES.CONSONANT]: '자음',
+            [KOREAN_ERROR_TYPES.COMPLEX_VOWEL]: '복잡한 모음',
+            [KOREAN_ERROR_TYPES.BATCHIM]: '받침',
+            [KOREAN_ERROR_TYPES.BATCHIM_FAMILY]: '받침 가족',
+            [KOREAN_ERROR_TYPES.SYLLABLE]: '글자 완성',
+            [KOREAN_ERROR_TYPES.MEANING_MATCH]: '그림-낱말 연결',
+            [KOREAN_ERROR_TYPES.NONSENSE_READ]: '무의미 낱말 읽기',
+            [KOREAN_ERROR_TYPES.NO_RESPONSE]: '응답 없음'
+        };
+
+        function formatKoreanErrorType(type) {
+            return KOREAN_ERROR_TYPE_LABELS[type] || type || '기록 없음';
+        }
+
         function formatKoreanReportList(items = [], fallback = '없음') {
             if (!items || !items.length) return fallback;
-            return items.map((item) => typeof item === 'string' ? item : (item.title || item.type || item.word || item.lessonId)).filter(Boolean).join(', ');
+            return items.map((item) => {
+                if (typeof item === 'string') return formatKoreanErrorType(item);
+                if (item.type) return formatKoreanErrorType(item.type);
+                return item.title || item.word || item.lessonId;
+            }).filter(Boolean).join(', ');
         }
 
         function renderLessonMap() {
@@ -8193,7 +8213,7 @@ ${text}
 
         window.openKoreanStudentReport = function openKoreanStudentReport(sid) {
             const report = window.teacherKoreanReports?.[sid] || window.buildKoreanStudentReport(sid);
-            const errorRows = (report.topErrorTypes || []).map((item) => `<tr><td class="py-2 px-3">${item.type}</td><td class="py-2 px-3 font-black">${item.count}</td></tr>`).join('') || '<tr><td class="py-2 px-3 text-gray-400" colspan="2">아직 기록이 없어요.</td></tr>';
+            const errorRows = (report.topErrorTypes || []).map((item) => `<tr><td class="py-2 px-3">${formatKoreanErrorType(item.type)}</td><td class="py-2 px-3 font-black">${item.count}</td></tr>`).join('') || '<tr><td class="py-2 px-3 text-gray-400" colspan="2">아직 기록이 없어요.</td></tr>';
             const lessonRows = (report.difficultLessons || []).map((item) => `<tr><td class="py-2 px-3">${item.title}</td><td class="py-2 px-3 font-black">${item.count}</td></tr>`).join('') || '<tr><td class="py-2 px-3 text-gray-400" colspan="2">아직 기록이 없어요.</td></tr>';
             showModal(`
                 <div class="text-left">
