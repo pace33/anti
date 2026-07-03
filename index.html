@@ -7764,6 +7764,65 @@ ${text}
             }
         };
 
+        function isTeacherTestAccount() {
+            return auth.currentUser?.email === TEST_LOGIN_ACCOUNTS.teacher.email || currentUserName === TEST_LOGIN_ACCOUNTS.teacher.name;
+        }
+
+        function getTeacherTestKoreanReport() {
+            return {
+                studentId: 'teacher_test_korean_student',
+                studentName: '김토도',
+                completedLessonCount: 8,
+                completedActivityCount: 23,
+                totalAttempts: 32,
+                correctAttempts: 24,
+                accuracyRate: 75,
+                totalRetryCount: 6,
+                topErrorTypes: [
+                    { type: KOREAN_ERROR_TYPES.VOWEL, count: 3 },
+                    { type: KOREAN_ERROR_TYPES.BATCHIM, count: 2 },
+                    { type: KOREAN_ERROR_TYPES.MEANING_MATCH, count: 1 }
+                ],
+                recentWrongWords: ['나무', '곰', '돼지'],
+                difficultLessons: [
+                    { lessonId: 13, title: 'ㅏ, ㅣ 단어 공부하기', count: 3 },
+                    { lessonId: 21, title: 'ㅁ, ㅂ 받침', count: 2 }
+                ],
+                recommendedLessons: [
+                    { lessonId: 13, title: '배움 13: ㅏ, ㅣ 단어 공부하기', reason: '최근 오답 단어 복습' },
+                    { lessonId: 21, title: '배움 21: ㅁ, ㅂ 받침', reason: '받침 다시 연습' }
+                ],
+                lastStudiedAt: new Date().toISOString()
+            };
+        }
+
+        function renderTeacherTestKoreanReportRow(tbody) {
+            const sid = 'teacher_test_korean_student';
+            const report = getTeacherTestKoreanReport();
+            window.teacherKoreanReports = window.teacherKoreanReports || {};
+            window.teacherKoreanReports[sid] = report;
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-50 hover:bg-gray-50 transition-colors';
+            tr.innerHTML = `
+                <td class="py-4 px-4 font-bold text-gray-700">${report.studentName}<span class="ml-2 text-xs text-teal-500">샘플</span></td>
+                <td class="py-4 px-4 text-teal-600 font-bold">9001</td>
+                <td class="py-4 px-4">
+                    <div class="flex gap-2">
+                        <button class="toggle-btn active">1단계</button>
+                        <button class="toggle-btn active">2단계</button>
+                        <button class="toggle-btn active">3단계</button>
+                        <button class="toggle-btn active">4단계</button>
+                    </div>
+                </td>
+                <td class="py-4 px-4">
+                    <div class="text-sm font-bold text-[#2c3e50]">완료 ${report.completedLessonCount}개 · 정답률 ${report.accuracyRate}%</div>
+                    <div class="text-xs text-gray-500 mt-1">어려운 유형: ${formatKoreanReportList(report.topErrorTypes, '아직 없음')}</div>
+                    <button class="btn-outline px-3 py-1 text-xs mt-2" onclick="openKoreanStudentReport('${sid}')">상세 보기</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
         function buildTestUserProfile(user, account) {
             return {
                 uid: user.uid,
@@ -8036,6 +8095,11 @@ ${text}
                 const classSnap = await getDoc(classRef);
 
                 if (!classSnap.exists() || !classSnap.data().students || classSnap.data().students.length === 0) {
+                    if (isTeacherTestAccount()) {
+                        tbody.innerHTML = '';
+                        renderTeacherTestKoreanReportRow(tbody);
+                        return;
+                    }
                     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-gray-400">학급에 등록된 학생이 없어요.</td></tr>';
                     return;
                 }
@@ -8078,6 +8142,11 @@ ${text}
                 });
             } catch (err) {
                 console.error('Load students error:', err);
+                if (isTeacherTestAccount()) {
+                    tbody.innerHTML = '';
+                    renderTeacherTestKoreanReportRow(tbody);
+                    return;
+                }
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-red-500">목록을 불러오지 못했습니다.</td></tr>';
             }
         }
