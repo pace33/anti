@@ -1776,7 +1776,7 @@
             <div class="flex items-center justify-between mb-8">
                 <div>
                     <div class="text-3xl font-black text-[#2c3e50]">글자 쓰기 연습</div>
-                    <p class="text-lg text-gray-500 mt-1">자음, 모음, 낱말을 자유롭게 써봐요.</p>
+                    <p class="text-lg text-gray-500 mt-1">배움 단원처럼 주황색 번호와 화살표를 따라 써요.</p>
                 </div>
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
@@ -1804,15 +1804,17 @@
                         </div>
                     </div>
 
-                    <div class="korean-embed-card h-[320px] relative p-2 overflow-hidden shadow-inner">
-                        <canvas id="letter-writing-canvas" class="korean-embed-canvas"></canvas>
-                        <div id="letter-feedback" class="absolute inset-0 hidden items-center justify-center text-6xl font-black"></div>
+                    <div class="trace-canvas-wrap">
+                        <div class="trace-canvas-title">✍️ 획순 따라쓰기</div>
+                        <canvas id="letter-writing-canvas" class="trace-writing-canvas" data-guide="ㄱ"></canvas>
+                        <div class="trace-canvas-help">주황색 번호와 화살표 순서대로 천천히 따라 써요.</div>
+                        <div id="letter-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-4 mt-8">
                         <button id="letter-play-sound" class="btn-primary bg-[#46b3a5] text-white">🔊 소리 듣기</button>
-                        <button id="letter-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">채점하기</button>
-                        <button id="letter-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">지우기</button>
+                        <button id="letter-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
+                        <button id="letter-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
                     </div>
                 </div>
 
@@ -1846,7 +1848,10 @@
         <div id="word-writing-quiz-section" class="view-section fade-in hidden bg-white">
             <span class="page-number">12</span>
             <div class="flex items-center justify-between mb-8">
-                <div class="text-3xl font-black text-[#2c3e50]">낱말 쓰기 퀴즈</div>
+                <div>
+                    <div class="text-3xl font-black text-[#2c3e50]">낱말 쓰기 연습</div>
+                    <p class="text-lg text-gray-500 mt-1">배움 단원 쓰기와 같은 획순 안내로 낱말을 따라 써요.</p>
+                </div>
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
 
@@ -1869,13 +1874,15 @@
                     <button id="word-write-tts" class="btn-outline p-4 text-2xl">🔊</button>
                 </div>
 
-                <div class="korean-embed-card h-[300px] shadow-inner p-2 overflow-hidden">
-                    <canvas id="word-write-canvas" class="korean-embed-canvas"></canvas>
+                <div class="trace-canvas-wrap">
+                    <div class="trace-canvas-title">✍️ 획순 따라쓰기</div>
+                    <canvas id="word-write-canvas" class="trace-writing-canvas" data-guide="가"></canvas>
+                    <div class="trace-canvas-help">주황색 번호와 화살표 순서대로 한 획씩 따라 써요.</div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-4 mt-8">
                     <button id="word-write-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
-                    <button id="word-write-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">채점하기</button>
+                    <button id="word-write-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
                     <button id="word-write-next" class="btn-primary">다음 문제</button>
                 </div>
                 <div id="word-write-feedback" class="text-center text-3xl font-bold mt-6 h-10"></div>
@@ -5865,31 +5872,17 @@ ${text}
             const vowels = chars.slice(14, 20);
             const words = chars.slice(20);
             const canvas = document.getElementById('letter-writing-canvas');
-            const ctx = canvas.getContext('2d');
-            let drawing = false;
-            let lastX = 0;
-            let lastY = 0;
             let currentChar = 'ㄱ';
-            let viewWidth = 0;
-            let viewHeight = 0;
 
-            const drawGuide = () => {
-                const size = resizeCanvasForDisplay(canvas, ctx);
-                viewWidth = size.width;
-                viewHeight = size.height;
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(0, 0, viewWidth, viewHeight);
-                const guideSize = Math.min(viewWidth, viewHeight) * 0.86; // 0.66 * 1.30 = 0.858 (약 130%)
-                ctx.fillStyle = '#dbe3ee';
-                ctx.font = `700 ${guideSize}px 'Noto Sans KR'`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.setLineDash([10, 10]);
-                ctx.lineWidth = Math.max(2, guideSize * 0.03);
-                ctx.strokeStyle = '#b3c3d9';
-                ctx.strokeText(currentChar, viewWidth / 2, viewHeight / 2);
-                ctx.setLineDash([]);
-                ctx.fillText(currentChar, viewWidth / 2, viewHeight / 2);
+            const setTraceGuide = (value) => {
+                currentChar = value;
+                canvas.dataset.guide = value;
+                canvas._traceCompleted = {};
+                canvas._tracePaths = [];
+                initializeTraceWritingCanvas(canvas);
+                drawTraceWritingGuide(canvas);
+                const feedback = document.getElementById('letter-feedback');
+                if (feedback) feedback.textContent = '';
             };
 
             const drawButtons = (target, list) => {
@@ -5897,10 +5890,10 @@ ${text}
                 root.innerHTML = list.map((c, i) => `<button class="btn-outline px-3 py-1 text-base ${i===0 && target==='letter-consonants' ? 'active':''}" data-char="${c}">${c}</button>`).join('');
                 root.querySelectorAll('button').forEach((btn) => {
                     btn.addEventListener('click', () => {
+                        document.querySelectorAll('#letter-consonants button, #letter-vowels button, #letter-words button').forEach(b => b.classList.remove('active'));
                         root.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
-                        currentChar = btn.dataset.char;
-                        drawGuide();
+                        setTraceGuide(btn.dataset.char);
                     });
                 });
             };
@@ -5908,59 +5901,27 @@ ${text}
             drawButtons('letter-consonants', consonants);
             drawButtons('letter-vowels', vowels);
             drawButtons('letter-words', words);
-            drawGuide();
-            window.refreshLetterWritingCanvas = drawGuide;
-            window.addEventListener('resize', drawGuide);
+            setTraceGuide(currentChar);
+            window.refreshLetterWritingCanvas = () => setTraceGuide(currentChar);
+            window.addEventListener('resize', () => drawTraceWritingGuide(canvas));
 
-            function point(ev) {
-                const r = canvas.getBoundingClientRect();
-                if (ev.touches?.length) return { x: ev.touches[0].clientX - r.left, y: ev.touches[0].clientY - r.top };
-                return { x: ev.clientX - r.left, y: ev.clientY - r.top };
-            }
-            function start(ev) { drawing = true; const p = point(ev); lastX = p.x; lastY = p.y; }
-            function move(ev) {
-                if (!drawing) return;
-                ev.preventDefault();
-                const p = point(ev);
-                ctx.strokeStyle = '#2c3e50';
-                ctx.lineWidth = Math.max(viewWidth / 30, 10);
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(p.x, p.y);
-                ctx.stroke();
-                lastX = p.x; lastY = p.y;
-            }
-            function stop() { drawing = false; }
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mousemove', move);
-            canvas.addEventListener('mouseup', stop);
-            canvas.addEventListener('touchstart', start);
-            canvas.addEventListener('touchmove', move);
-            canvas.addEventListener('touchend', stop);
-
-            document.getElementById('letter-clear').addEventListener('click', drawGuide);
+            document.getElementById('letter-clear').addEventListener('click', () => resetTraceWritingCanvas(canvas));
             document.getElementById('letter-play-sound').addEventListener('click', () => {
                 speakTextKo(currentChar);
             });
-            document.getElementById('letter-grade').addEventListener('click', () => {
-                const tmp = document.createElement('canvas');
-                const dpr = window.devicePixelRatio || 1;
-                tmp.width = canvas.width; tmp.height = canvas.height;
-                const tctx = tmp.getContext('2d');
-                tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                tctx.fillStyle = '#000'; tctx.font = `700 ${Math.min(viewWidth, viewHeight) * 0.86}px 'Noto Sans KR'`; tctx.textAlign = 'center'; tctx.textBaseline = 'middle';
-                tctx.fillText(currentChar, viewWidth / 2, viewHeight / 2);
-                const g = tctx.getImageData(0,0,canvas.width,canvas.height).data;
-                const u = ctx.getImageData(0,0,canvas.width,canvas.height).data;
-                let gp=0, cp=0;
-                for (let i=0;i<g.length;i+=4) { if (g[i+3]>128){ gp++; if (u[i+3]>128 && u[i] < 80) cp++; } }
-                const ok = gp ? (cp/gp)>0.4 : false;
+            document.getElementById('letter-grade').addEventListener('click', async () => {
+                await recordKoreanAttempt({
+                    lessonId: currentLearningActivityStep || 'letter-writing',
+                    lessonTitle: '글자 쓰기 연습',
+                    unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
+                    activityType: 'writeOnCanvas',
+                    word: currentChar,
+                    isCorrect: true,
+                    errorType: null
+                });
                 const fb = document.getElementById('letter-feedback');
-                fb.className = `absolute inset-0 flex items-center justify-center text-4xl font-bold ${ok?'text-green-500':'text-red-500'}`;
-                fb.textContent = ok ? '정답!' : '다시!';
-                setTimeout(() => { fb.classList.add('hidden'); if (!ok) drawGuide(); }, 900);
+                fb.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
+                fb.textContent = '쓰기 완료로 기록했어요.';
             });
 
             document.querySelectorAll('.letter-top-btn').forEach((btn) => btn.addEventListener('click', () => {
@@ -5988,6 +5949,7 @@ ${text}
 
             function setPracticeText(targetId, text) {
                 document.getElementById(targetId).textContent = text;
+                setTraceGuide(text);
                 speakKorean(text);
             }
 
@@ -6027,36 +5989,17 @@ ${text}
 
         function initializeWordWritingQuizActivity() {
             const canvas = document.getElementById('word-write-canvas');
-            const ctx = canvas.getContext('2d');
             const currentEl = document.getElementById('word-write-current');
             const feedback = document.getElementById('word-write-feedback');
             const wordData = { syllable: { no_jongsung: ['가','너','보','소'], with_jongsung:['각','산','밥','몸'] }, word: { two_letters:['나무','학교'], three_letters:['바나나','호랑이'] }, name:[] };
-            let mode = 'syllable', sub='no_jongsung', currentWord='가', isDrawing=false, lx=0, ly=0;
-            let viewWidth = 0, viewHeight = 0, guideFont = '';
+            let mode = 'syllable', sub='no_jongsung', currentWord='가';
 
-            function resize() {
-                const size = resizeCanvasForDisplay(canvas, ctx);
-                viewWidth = size.width;
-                viewHeight = size.height;
-                drawGuide();
-            }
             function drawGuide() {
-                if (!viewWidth || !viewHeight) {
-                    const size = resizeCanvasForDisplay(canvas, ctx);
-                    viewWidth = size.width;
-                    viewHeight = size.height;
-                }
-                ctx.fillStyle = '#f8fafc'; ctx.fillRect(0,0,viewWidth,viewHeight);
-                ctx.fillStyle = '#dbe3ee'; ctx.textAlign='center'; ctx.textBaseline='middle';
-                const size = viewWidth * ((mode === 'word' && currentWord.length > 2) ? 0.16 : 0.24); // 0.2 -> 0.16, 0.3 -> 0.24 (80% 축소)
-                guideFont = `700 ${size}px 'Noto Sans KR'`;
-                ctx.font = guideFont;
-                ctx.setLineDash([10, 10]);
-                ctx.lineWidth = Math.max(2, size * 0.08);
-                ctx.strokeStyle = '#b3c3d9';
-                ctx.strokeText(currentWord || '', viewWidth/2, viewHeight/2);
-                ctx.setLineDash([]);
-                ctx.fillText(currentWord || '', viewWidth/2, viewHeight/2);
+                canvas.dataset.guide = currentWord || '';
+                canvas._traceCompleted = {};
+                canvas._tracePaths = [];
+                initializeTraceWritingCanvas(canvas);
+                drawTraceWritingGuide(canvas);
             }
             function setSubButtons() {
                 const root = document.getElementById('word-write-submodes');
@@ -6078,25 +6021,19 @@ ${text}
                 drawGuide();
                 speakTextKo(currentWord);
             }
-            function score() {
-                const dpr = window.devicePixelRatio || 1;
-                const t = document.createElement('canvas'); t.width = canvas.width; t.height = canvas.height;
-                const tc = t.getContext('2d');
-                tc.setTransform(dpr, 0, 0, dpr, 0, 0);
-                tc.fillStyle = '#000'; tc.textAlign='center'; tc.textBaseline='middle'; tc.font = guideFont || ctx.font; tc.fillText(currentWord, viewWidth/2, viewHeight/2);
-                const g=tc.getImageData(0,0,t.width,t.height).data, u=ctx.getImageData(0,0,t.width,t.height).data; let gp=0,cp=0;
-                for(let i=0;i<g.length;i+=4){ if(g[i+3]>128){gp++; if(u[i+3]>128 && u[i]<90)cp++; } }
-                const ok = gp && cp/gp > 0.45;
-                feedback.textContent = ok ? '정답!' : '다시!';
-                feedback.className = `text-center text-2xl font-bold mt-3 h-8 ${ok ? 'text-green-600' : 'text-red-500'}`;
-                if (!ok) setTimeout(drawGuide, 900);
+            async function score() {
+                await recordKoreanAttempt({
+                    lessonId: currentLearningActivityStep || 'word-writing',
+                    lessonTitle: '낱말 쓰기 연습',
+                    unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
+                    activityType: 'writeOnCanvas',
+                    word: currentWord,
+                    isCorrect: true,
+                    errorType: null
+                });
+                feedback.textContent = '쓰기 완료로 기록했어요.';
+                feedback.className = 'text-center text-2xl font-bold mt-3 h-8 text-green-600';
             }
-            function p(ev){ const r=canvas.getBoundingClientRect(); if(ev.touches?.length) return {x:ev.touches[0].clientX-r.left,y:ev.touches[0].clientY-r.top}; return {x:ev.clientX-r.left,y:ev.clientY-r.top}; }
-            canvas.addEventListener('mousedown', (e)=>{isDrawing=true; const d=p(e); lx=d.x; ly=d.y;});
-            canvas.addEventListener('mousemove', (e)=>{ if(!isDrawing)return; e.preventDefault(); const d=p(e); ctx.beginPath(); ctx.strokeStyle='#111'; ctx.lineWidth=Math.max(viewWidth/28,10); ctx.lineCap='round'; ctx.moveTo(lx,ly); ctx.lineTo(d.x,d.y); ctx.stroke(); lx=d.x; ly=d.y; });
-            ['mouseup','mouseout','touchend'].forEach((ev)=>canvas.addEventListener(ev, ()=>{isDrawing=false;}));
-            canvas.addEventListener('touchstart', (e)=>{isDrawing=true; const d=p(e); lx=d.x; ly=d.y;});
-            canvas.addEventListener('touchmove', (e)=>{ if(!isDrawing)return; e.preventDefault(); const d=p(e); ctx.beginPath(); ctx.strokeStyle='#111'; ctx.lineWidth=Math.max(viewWidth/28,10); ctx.lineCap='round'; ctx.moveTo(lx,ly); ctx.lineTo(d.x,d.y); ctx.stroke(); lx=d.x; ly=d.y; });
 
             document.querySelectorAll('.word-mode-tab').forEach((btn) => btn.addEventListener('click', async () => {
                 document.querySelectorAll('.word-mode-tab').forEach((b) => b.classList.remove('active'));
@@ -6108,7 +6045,7 @@ ${text}
                 setSubButtons();
                 if (mode !== 'name') await nextWord();
             }));
-            document.getElementById('word-write-clear').addEventListener('click', drawGuide);
+            document.getElementById('word-write-clear').addEventListener('click', () => resetTraceWritingCanvas(canvas));
             document.getElementById('word-write-grade').addEventListener('click', score);
             document.getElementById('word-write-next').addEventListener('click', nextWord);
             document.getElementById('word-write-tts').addEventListener('click', ()=>{ speakTextKo(currentWord); });
@@ -6120,10 +6057,9 @@ ${text}
                 drawGuide();
             });
             setSubButtons();
-            resize();
             nextWord();
-            window.refreshWordWritingCanvas = resize;
-            window.addEventListener('resize', resize);
+            window.refreshWordWritingCanvas = drawGuide;
+            window.addEventListener('resize', () => drawTraceWritingGuide(canvas));
         }
 
         function initializeListeningQuizActivity() {
@@ -7367,8 +7303,16 @@ ${text}
             return strokes;
         }
 
-        function drawTraceWritingGuide() {
-            const canvas = document.getElementById('trace-writing-canvas');
+        function getTraceWritingCanvas(target) {
+            if (target instanceof HTMLCanvasElement) return target;
+            if (typeof target === 'string') return document.getElementById(target);
+            const active = Array.from(document.querySelectorAll('.view-section:not(.hidden) .trace-writing-canvas'))
+                .find((canvas) => canvas.offsetParent !== null);
+            return active || document.getElementById('trace-writing-canvas') || document.querySelector('.trace-writing-canvas');
+        }
+
+        function drawTraceWritingGuide(target) {
+            const canvas = getTraceWritingCanvas(target);
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const size = resizeCanvasForDisplay(canvas, ctx);
@@ -7499,8 +7443,8 @@ ${text}
             return tracePathLength(path) >= scale * 0.18 && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= Math.max(30, scale * 0.26);
         }
 
-        function initializeTraceWritingCanvas() {
-            const canvas = document.getElementById('trace-writing-canvas');
+        function initializeTraceWritingCanvas(target) {
+            const canvas = getTraceWritingCanvas(target);
             if (!canvas || canvas.dataset.ready === 'true') return;
             const ctx = canvas.getContext('2d');
             let drawing = false;
@@ -7514,7 +7458,7 @@ ${text}
                 viewWidth = size.width;
                 canvas._traceCompleted = canvas._traceCompleted || {};
                 canvas._tracePaths = canvas._tracePaths || [];
-                drawTraceWritingGuide();
+                drawTraceWritingGuide(canvas);
                 drawSavedTracePaths(ctx, canvas._tracePaths);
             };
             const point = (ev) => {
@@ -7619,13 +7563,13 @@ ${text}
             });
         }
 
-        window.resetTraceWritingCanvas = function resetTraceWritingCanvas() {
-            const canvas = document.getElementById('trace-writing-canvas');
+        window.resetTraceWritingCanvas = function resetTraceWritingCanvas(target) {
+            const canvas = getTraceWritingCanvas(target);
             if (canvas) {
                 canvas._traceCompleted = {};
                 canvas._tracePaths = [];
             }
-            drawTraceWritingGuide();
+            drawTraceWritingGuide(canvas);
         }
 
 
