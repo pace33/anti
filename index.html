@@ -470,16 +470,21 @@
             height: 440px;
         }
         .trace-writing-canvas.fill-trace-canvas {
-            width: min(220px, 100%);
-            height: 150px;
+            width: 100%;
+            height: 168px;
             border-width: 2px;
             border-radius: 16px;
             background: #fffaf2;
         }
+        .fill-writing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
         .fill-writing-row {
             display: grid;
-            grid-template-columns: auto minmax(220px, 280px) auto 1fr;
-            gap: 12px;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 10px;
             align-items: center;
         }
         .fill-writing-prompt {
@@ -631,6 +636,7 @@
         }
         @media (max-width: 600px) {
             .learning-activity-layout { grid-template-columns: 1fr; }
+            .fill-writing-grid { grid-template-columns: 1fr; }
             .fill-writing-row { grid-template-columns: 1fr; }
             .vowel-origin-scene {
                 grid-template-columns: 1fr;
@@ -6738,12 +6744,13 @@ ${text}
             if (!items.length) return '';
             return `<div class="practice-step-box">
                 <div class="practice-step-title"><span class="practice-step-number">완성</span> 빈칸 완성</div>
-                <div class="grid gap-3">
+                <div class="fill-writing-grid">
                     ${items.map((item, index) => `<div class="fill-writing-row border-2 border-orange-100 rounded-2xl p-3 bg-white">
                         <button class="btn-outline py-2 px-4" onclick="speakChar('${item.word}')">🔊 ${item.word}</button>
-                        <canvas id="fill-trace-${lesson.id}-${index}" class="trace-writing-canvas fill-trace-canvas" data-guide="${item.answer}" data-fill-word="${item.word}"></canvas>
-                        <button class="btn-primary py-2 px-5" onclick="submitFillOneJamo('${lesson.id}',${index})">다 썼어요</button>
-                        <span id="fill-feedback-${lesson.id}-${index}" class="text-sm font-black text-gray-500">${item.hint || ''}</span>
+                        <div>
+                            <canvas id="fill-trace-${lesson.id}-${index}" class="trace-writing-canvas fill-trace-canvas" data-guide="${item.answer}" data-fill-word="${item.word}" data-fill-prefix="${item.prompt.replace('□', '')}" data-fill-lesson="${lesson.id}" data-fill-index="${index}"></canvas>
+                            <span id="fill-feedback-${lesson.id}-${index}" class="block text-sm font-black text-gray-500 mt-2">${item.hint || ''}</span>
+                        </div>
                     </div>`).join('')}
                 </div>
             </div>`;
@@ -7765,6 +7772,7 @@ ${text}
             const chars = raw.split('/').map(c => c.trim()).filter(c => c.length > 0);
             if (chars.length === 0) return;
             const fillWord = canvas.dataset.fillWord || '';
+            const fillPrefix = canvas.dataset.fillPrefix || '';
 
             if (fillWord) {
                 ctx.fillStyle = '#fef9f0';
@@ -7787,17 +7795,17 @@ ${text}
 
                 ctx.save();
                 ctx.fillStyle = '#c2410c';
-                ctx.font = `900 ${Math.max(28, Math.min(W, H) * 0.24)}px 'Noto Sans KR', sans-serif`;
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                ctx.fillText(fillWord, 14, 10);
+                ctx.font = `900 ${Math.max(36, Math.min(W, H) * 0.34)}px 'Noto Sans KR', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(fillPrefix || fillWord, W / 2, H * 0.34);
                 ctx.restore();
 
                 const completedMap = canvas._traceCompleted || {};
-                const answerBoxW = W * 0.58;
-                const answerBoxH = H * 0.68;
-                const bx = W * 0.27;
-                const by = H * 0.22;
+                const answerBoxW = W * 0.44;
+                const answerBoxH = H * 0.34;
+                const bx = W * 0.28;
+                const by = H * 0.52;
                 const strokes = collectTraceStrokeOrder(raw, bx, by, answerBoxW, answerBoxH);
                 strokes.forEach((item, idx) => {
                     if (idx < (completedMap[0] || 0)) {
@@ -8025,6 +8033,14 @@ ${text}
                     canvas._traceCompleted = canvas._traceCompleted || {};
                     canvas._tracePaths.push(activePath);
                     canvas._traceCompleted[activeTrace.cellIndex] = activeTrace.strokeIndex + 1;
+                    if (canvas.dataset.fillLesson && !canvas.dataset.fillRecorded) {
+                        const cell = (canvas._traceCells || []).find((item) => item.index === activeTrace.cellIndex);
+                        const completedCount = canvas._traceCompleted[activeTrace.cellIndex] || 0;
+                        if (cell?.strokes?.length && completedCount >= cell.strokes.length) {
+                            canvas.dataset.fillRecorded = 'true';
+                            window.submitFillOneJamo(canvas.dataset.fillLesson, Number(canvas.dataset.fillIndex || 0));
+                        }
+                    }
                 }
                 activeTrace = null;
                 activePath = [];
@@ -8056,6 +8072,7 @@ ${text}
             if (canvas) {
                 canvas._traceCompleted = {};
                 canvas._tracePaths = [];
+                delete canvas.dataset.fillRecorded;
             }
             drawTraceWritingGuide(canvas);
         }
