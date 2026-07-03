@@ -1970,6 +1970,7 @@
                             <th class="py-3 px-4 font-bold text-gray-500">학생 이름</th>
                             <th class="py-3 px-4 font-bold text-gray-500">로그인 번호</th>
                             <th class="py-3 px-4 font-bold text-gray-500">단계 활성화</th>
+                            <th class="py-3 px-4 font-bold text-gray-500">한글 리포트</th>
                         </tr>
                     </thead>
                     <tbody id="student-list-tbody">
@@ -2154,6 +2155,192 @@
         let activeDictationPhotoFile = null;
         let activeDictationImageAnalysis = '';
         let activeSpellingQuestion = null;
+
+        const KOREAN_ERROR_TYPES = {
+            VOWEL: "vowel",
+            CONSONANT: "consonant",
+            COMPLEX_VOWEL: "complexVowel",
+            BATCHIM: "batchim",
+            BATCHIM_FAMILY: "batchimFamily",
+            SYLLABLE: "syllable",
+            MEANING_MATCH: "meaningMatch",
+            NONSENSE_READ: "nonsenseRead",
+            NO_RESPONSE: "noResponse"
+        };
+
+        const CHANCHAN_LESSONS = [
+            {
+                id: "start",
+                unit: 1,
+                title: "배움 시작: 모음과 자음",
+                focus: ["모음", "자음"],
+                activities: ["jamoSort", "listenAndFind", "writeOnCanvas"],
+                letters: ["가", "머", "바", "나", "라"],
+                description: "글자에서 모음과 자음을 찾아요."
+            },
+            {
+                id: 1,
+                unit: 1,
+                title: "모음의 시작",
+                focus: ["ㅡ", "ㅣ", "●"],
+                activities: ["listenAndFind", "writeOnCanvas"],
+                letters: ["ㅡ", "ㅣ"],
+                description: "하늘, 땅, 사람에서 모음이 시작됨을 배워요."
+            },
+            {
+                id: 2,
+                unit: 1,
+                title: "ㅏ, ㅓ 공부하기",
+                focus: ["ㅏ", "ㅓ"],
+                activities: ["listenAndFind", "writeOnCanvas"],
+                letters: ["ㅏ", "ㅓ"],
+                hints: {
+                    "ㅏ": "해가 바깥쪽에 있어 밝은 느낌이에요.",
+                    "ㅓ": "해가 안쪽에 있어 안으로 들어가는 느낌이에요."
+                }
+            },
+            {
+                id: 3,
+                unit: 1,
+                title: "ㅗ, ㅜ 공부하기",
+                focus: ["ㅗ", "ㅜ"],
+                activities: ["listenAndFind", "writeOnCanvas"],
+                letters: ["ㅗ", "ㅜ"],
+                hints: {
+                    "ㅗ": "해가 위에 있어 올라가는 느낌이에요.",
+                    "ㅜ": "해가 아래에 있어 내려가는 느낌이에요."
+                }
+            },
+            {
+                id: 13,
+                unit: 3,
+                title: "ㅏ, ㅣ 단어 공부하기",
+                focus: ["ㅏ", "ㅣ"],
+                activities: ["readThreeTimes", "fillOneJamo", "wordPictureMatch", "nonsenseWordRead", "writeOnCanvas"],
+                words: ["아이", "나무", "다리", "가지", "파리", "나비", "가수", "허리", "기차", "바구니", "코끼리", "아버지"],
+                nonsenseWords: ["아으", "나모", "다미", "가리"],
+                fillItems: [
+                    { word: "아이", prompt: "□이", answer: "아", hint: "처음 소리를 들어 봐요." },
+                    { word: "나무", prompt: "나□", answer: "무", hint: "마지막 글자를 들어 봐요." },
+                    { word: "다리", prompt: "다□", answer: "리", hint: "두 번째 글자를 들어 봐요." }
+                ],
+                pictureItems: [
+                    { word: "나무", icon: "🌳" },
+                    { word: "나비", icon: "🦋" },
+                    { word: "기차", icon: "🚂" },
+                    { word: "코끼리", icon: "🐘" }
+                ]
+            },
+            {
+                id: 14,
+                unit: 3,
+                title: "ㅡ, ㅗ, ㅓ 단어 공부하기",
+                focus: ["ㅡ", "ㅗ", "ㅓ"],
+                activities: ["readThreeTimes", "fillOneJamo", "wordPictureMatch", "nonsenseWordRead", "writeOnCanvas"],
+                words: ["버스", "치즈", "모기", "주스", "스키", "피아노", "포도", "소파", "꼬마", "소나무", "거미", "저고리"],
+                nonsenseWords: ["버치", "키주", "카루", "두보"],
+                fillItems: [
+                    { word: "버스", prompt: "버□", answer: "스", hint: "마지막 글자를 들어 봐요." },
+                    { word: "포도", prompt: "포□", answer: "도", hint: "두 번째 글자를 들어 봐요." },
+                    { word: "거미", prompt: "거□", answer: "미", hint: "마지막 글자를 들어 봐요." }
+                ],
+                pictureItems: [
+                    { word: "버스", icon: "🚌" },
+                    { word: "포도", icon: "🍇" },
+                    { word: "거미", icon: "🕷️" },
+                    { word: "피아노", icon: "🎹" }
+                ]
+            },
+            {
+                id: 20,
+                unit: 5,
+                title: "복잡한 모음 단어 공부하기",
+                focus: ["ㅑ", "ㅕ", "ㅘ", "ㅝ", "ㅟ", "ㅢ", "ㅙ", "ㅚ"],
+                activities: ["readThreeTimes", "fillOneJamo", "wordPictureMatch", "nonsenseWordRead", "writeOnCanvas"],
+                words: ["야구", "여우", "우유", "의사", "의자", "과자", "사과", "돼지", "거위", "더위", "추위", "우표", "튜브", "바위", "소녀"],
+                nonsenseWords: ["야우", "여구", "버위", "뇨드"],
+                fillItems: [
+                    { word: "과자", prompt: "□자", answer: "과", hint: "첫 글자를 들어 봐요." },
+                    { word: "돼지", prompt: "□지", answer: "돼", hint: "복잡한 모음 소리를 들어 봐요." },
+                    { word: "의자", prompt: "□자", answer: "의", hint: "처음 소리를 들어 봐요." }
+                ],
+                pictureItems: [
+                    { word: "야구", icon: "⚾" },
+                    { word: "여우", icon: "🦊" },
+                    { word: "돼지", icon: "🐷" },
+                    { word: "우표", icon: "✉️" }
+                ]
+            },
+            {
+                id: 21,
+                unit: 6,
+                title: "ㅁ, ㅂ 받침",
+                focus: ["ㅁ", "ㅂ"],
+                activities: ["listenAndFind", "fillOneJamo", "writeOnCanvas"],
+                words: ["곰", "감", "밤", "뱀", "솜", "힘", "밥", "입", "컵", "집", "답"],
+                fillItems: [
+                    { word: "곰", prompt: "고□", answer: "ㅁ", hint: "입을 다물며 끝나는 소리예요." },
+                    { word: "밥", prompt: "바□", answer: "ㅂ", hint: "입술을 닫으며 끝나는 소리예요." }
+                ]
+            },
+            {
+                id: 26,
+                unit: 7,
+                title: "7가지 대표받침 단어 공부하기",
+                focus: ["ㅁ", "ㅂ", "ㅇ", "ㄱ", "ㄴ", "ㄹ", "ㄷ"],
+                activities: ["readThreeTimes", "fillOneJamo", "wordPictureMatch"],
+                words: ["염소", "감자", "구름", "수첩", "집게", "서랍", "늑대", "국자", "책상", "기린", "분수", "걷다"],
+                pictureItems: [
+                    { word: "염소", icon: "🐐" },
+                    { word: "구름", icon: "☁️" },
+                    { word: "책상", icon: "🪑" },
+                    { word: "기린", icon: "🦒" }
+                ]
+            },
+            {
+                id: 27,
+                unit: 8,
+                title: "ㅂ 받침가족",
+                focus: ["ㅂ", "ㅍ"],
+                activities: ["batchimFamily", "readThreeTimes"],
+                words: ["입", "앞", "옆", "숲", "잎", "톱"],
+                rule: "소리는 비슷하지만 글자는 달라요. 쓰기보다 읽기 중심으로 학습해요."
+            },
+            {
+                id: 28,
+                unit: 8,
+                title: "ㄱ 받침가족",
+                focus: ["ㄱ", "ㅋ", "ㄲ"],
+                activities: ["batchimFamily", "readThreeTimes"],
+                words: ["약", "떡", "밖", "부엌", "깎다", "볶다"],
+                rule: "대표소리 /ㄱ/으로 읽어요."
+            },
+            {
+                id: 29,
+                unit: 8,
+                title: "ㄷ 받침가족",
+                focus: ["ㄷ", "ㅌ", "ㅅ", "ㅆ", "ㅈ", "ㅊ", "ㅎ"],
+                activities: ["batchimFamily", "readThreeTimes"],
+                words: ["옷", "낮", "팥", "빛", "꽃", "좋다"],
+                rule: "대표소리 /ㄷ/으로 읽어요."
+            },
+            {
+                id: 34,
+                unit: 10,
+                title: "최종 평가하기",
+                focus: ["최종 평가"],
+                activities: ["finalAssessment"],
+                assessmentAreas: ["모음 듣고 고르기", "자음+모음 읽기", "받침 없는 단어 읽기", "복잡한 모음 단어 읽기", "대표받침 단어 읽기", "복잡한 받침 단어 읽기"]
+            }
+        ];
+
+        window.KOREAN_ERROR_TYPES = KOREAN_ERROR_TYPES;
+        window.CHANCHAN_LESSONS = CHANCHAN_LESSONS;
+
+        const chanchanLessonById = Object.fromEntries(CHANCHAN_LESSONS.map((lesson) => [String(lesson.id), lesson]));
+        let koreanActivityStartedAt = Date.now();
+        window.koreanAudioReplayCounts = {};
+        window.koreanRetryCounts = {};
 
         const learningDetailData = {
             1: {
@@ -6122,9 +6309,461 @@ ${text}
             showDashboardOnly();
         }
 
+        function safeJsonParse(value, fallback) {
+            try {
+                return value ? JSON.parse(value) : fallback;
+            } catch {
+                return fallback;
+            }
+        }
+
+        function getStoredKoreanAttempts() {
+            return safeJsonParse(localStorage.getItem('korean_attempts'), []);
+        }
+
+        function setStoredKoreanAttempts(attempts) {
+            localStorage.setItem('korean_attempts', JSON.stringify(attempts));
+        }
+
+        function getStoredKoreanSummary() {
+            return safeJsonParse(localStorage.getItem('korean_progress_summary'), {});
+        }
+
+        function setStoredKoreanSummary(summary) {
+            localStorage.setItem('korean_progress_summary', JSON.stringify(summary));
+        }
+
+        function getChanchanLesson(lessonId) {
+            return chanchanLessonById[String(lessonId)] || null;
+        }
+
+        function getLessonTitleForReport(lessonId) {
+            const lesson = getChanchanLesson(lessonId);
+            if (lesson) return lesson.title;
+            return learningDetailData[lessonId]?.title?.replace(/^배움\s*\d+:\s*/, '') || `배움 ${lessonId}`;
+        }
+
+        function getUnitIdForLesson(lessonId) {
+            const lesson = getChanchanLesson(lessonId);
+            if (lesson) return lesson.unit;
+            if (lessonId >= 1 && lessonId <= 7) return 1;
+            if (lessonId >= 8 && lessonId <= 12) return 2;
+            if (lessonId >= 13 && lessonId <= 14) return 3;
+            if (lessonId >= 15 && lessonId <= 19) return 4;
+            if (lessonId === 20) return 5;
+            if (lessonId >= 21 && lessonId <= 25) return 6;
+            if (lessonId === 26) return 7;
+            if (lessonId >= 27 && lessonId <= 30) return 8;
+            if (lessonId >= 31 && lessonId <= 33) return 9;
+            if (lessonId === 34) return 10;
+            return null;
+        }
+
+        function inferKoreanErrorType({ lessonId, activityType, answer, word } = {}) {
+            if (activityType === 'wordPictureMatch') return KOREAN_ERROR_TYPES.MEANING_MATCH;
+            if (activityType === 'nonsenseWordRead') return KOREAN_ERROR_TYPES.NONSENSE_READ;
+            if (activityType === 'batchimFamily') return KOREAN_ERROR_TYPES.BATCHIM_FAMILY;
+            const lesson = getChanchanLesson(lessonId);
+            const focus = lesson?.focus || [];
+            const target = `${answer || ''}${word || ''}`;
+            const complex = ['ㅑ','ㅕ','ㅘ','ㅝ','ㅟ','ㅢ','ㅙ','ㅚ','ㅞ','ㅖ','ㅒ','ㅐ','ㅔ'];
+            const batchim = ['ㅁ','ㅂ','ㅇ','ㄱ','ㄴ','ㄹ','ㄷ'];
+            const consonants = ['ㄱ','ㅋ','ㄲ','ㄴ','ㄷ','ㅌ','ㄸ','ㅁ','ㅂ','ㅍ','ㅃ','ㅅ','ㅈ','ㅊ','ㅉ','ㅆ','ㅇ','ㅎ','ㄹ'];
+            if (focus.some((item) => complex.includes(item)) || complex.some((item) => target.includes(item))) return KOREAN_ERROR_TYPES.COMPLEX_VOWEL;
+            if (focus.some((item) => batchim.includes(item)) && Number(lessonId) >= 21) return KOREAN_ERROR_TYPES.BATCHIM;
+            if (focus.some((item) => consonants.includes(item)) && Number(lessonId) >= 8 && Number(lessonId) <= 12) return KOREAN_ERROR_TYPES.CONSONANT;
+            if (Number(lessonId) >= 13 && Number(lessonId) <= 20) return KOREAN_ERROR_TYPES.SYLLABLE;
+            return KOREAN_ERROR_TYPES.VOWEL;
+        }
+
+        function getKoreanAttemptKey({ lessonId, activityType, word, answer } = {}) {
+            return [currentUserId || 'local', lessonId || 'unknown', activityType || 'activity', word || answer || 'target'].join('|');
+        }
+
+        function getKoreanAudioReplayCount({ lessonId, activityType, word, answer } = {}) {
+            const key = getKoreanAttemptKey({ lessonId, activityType, word, answer });
+            return window.koreanAudioReplayCounts[key] || 0;
+        }
+
+        function incrementKoreanAudioReplayCount({ lessonId, activityType, word, answer } = {}) {
+            const key = getKoreanAttemptKey({ lessonId, activityType, word, answer });
+            window.koreanAudioReplayCounts[key] = (window.koreanAudioReplayCounts[key] || 0) + 1;
+            return window.koreanAudioReplayCounts[key];
+        }
+
+        function nextKoreanRetryIndex({ lessonId, activityType, word, answer } = {}) {
+            const key = getKoreanAttemptKey({ lessonId, activityType, word, answer });
+            window.koreanRetryCounts[key] = (window.koreanRetryCounts[key] || 0) + 1;
+            return window.koreanRetryCounts[key];
+        }
+
+        function resetKoreanRetryIndex({ lessonId, activityType, word, answer } = {}) {
+            const key = getKoreanAttemptKey({ lessonId, activityType, word, answer });
+            window.koreanRetryCounts[key] = 0;
+        }
+
+        function summarizeKoreanAttempts(studentId, attempts) {
+            const studentAttempts = attempts.filter((attempt) => attempt.studentId === studentId);
+            const studentName = studentAttempts.at(-1)?.studentName || currentUserName || '이름 없음';
+            const correctAttempts = studentAttempts.filter((attempt) => attempt.isCorrect).length;
+            const completedActivityKeys = new Set();
+            const completedLessons = new Set();
+            const errorCounts = {};
+            const lessonErrors = {};
+            let totalRetryCount = 0;
+            let lastStudiedAt = null;
+
+            studentAttempts.forEach((attempt) => {
+                if (attempt.isCorrect) {
+                    completedActivityKeys.add(`${attempt.lessonId}:${attempt.activityType}:${attempt.word || attempt.prompt || attempt.answer || ''}`);
+                    completedLessons.add(String(attempt.lessonId));
+                }
+                if (!attempt.isCorrect && attempt.errorType) {
+                    errorCounts[attempt.errorType] = (errorCounts[attempt.errorType] || 0) + 1;
+                    lessonErrors[attempt.lessonId] = (lessonErrors[attempt.lessonId] || 0) + 1;
+                }
+                totalRetryCount += Math.max(0, Number(attempt.retryIndex || 1) - 1);
+                if (!lastStudiedAt || attempt.createdAt > lastStudiedAt) lastStudiedAt = attempt.createdAt;
+            });
+
+            const topErrorTypes = Object.entries(errorCounts).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([type, count]) => ({ type, count }));
+            const recentWrongWords = studentAttempts.filter((attempt) => !attempt.isCorrect).slice(-8).reverse().map((attempt) => attempt.word || attempt.prompt || attempt.answer || attempt.userAnswer).filter(Boolean);
+            const difficultLessons = Object.entries(lessonErrors).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([lessonId, count]) => ({
+                lessonId,
+                title: getLessonTitleForReport(lessonId),
+                count
+            }));
+            const recommendedLessons = recommendKoreanLessons(topErrorTypes, recentWrongWords);
+            return {
+                studentId,
+                studentName,
+                completedLessonCount: completedLessons.size,
+                completedActivityCount: completedActivityKeys.size,
+                totalAttempts: studentAttempts.length,
+                correctAttempts,
+                accuracyRate: studentAttempts.length ? Math.round((correctAttempts / studentAttempts.length) * 100) : 0,
+                totalRetryCount,
+                topErrorTypes,
+                recentWrongWords: Array.from(new Set(recentWrongWords)).slice(0, 6),
+                difficultLessons,
+                recommendedLessons,
+                lastStudiedAt
+            };
+        }
+
+        function recommendKoreanLessons(topErrorTypes = [], recentWrongWords = []) {
+            const recommendations = [];
+            const addRange = (from, to, reason) => {
+                for (let step = from; step <= to; step++) {
+                    recommendations.push({ lessonId: step, title: getLessonTitleForReport(step), reason });
+                }
+            };
+            topErrorTypes.forEach(({ type }) => {
+                if (type === KOREAN_ERROR_TYPES.VOWEL) addRange(2, 7, '모음 다시 연습');
+                if (type === KOREAN_ERROR_TYPES.CONSONANT) addRange(8, 12, '자음 다시 연습');
+                if (type === KOREAN_ERROR_TYPES.COMPLEX_VOWEL) addRange(15, 20, '복잡한 모음 다시 연습');
+                if (type === KOREAN_ERROR_TYPES.BATCHIM) addRange(21, 26, '대표받침 다시 연습');
+                if (type === KOREAN_ERROR_TYPES.BATCHIM_FAMILY) addRange(27, 31, '받침가족 다시 읽기');
+                if (type === KOREAN_ERROR_TYPES.MEANING_MATCH) {
+                    CHANCHAN_LESSONS.forEach((lesson) => {
+                        if ((lesson.words || []).some((word) => recentWrongWords.includes(word))) {
+                            recommendations.push({ lessonId: lesson.id, title: lesson.title, reason: '그림-단어 연결 복습' });
+                        }
+                    });
+                }
+            });
+            const seen = new Set();
+            return recommendations.filter((item) => {
+                const key = String(item.lessonId);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            }).slice(0, 5);
+        }
+
+        function updateKoreanProgressSummary(attempt) {
+            const attempts = getStoredKoreanAttempts();
+            const summary = getStoredKoreanSummary();
+            summary[attempt.studentId] = summarizeKoreanAttempts(attempt.studentId, attempts);
+            setStoredKoreanSummary(summary);
+            return summary[attempt.studentId];
+        }
+
+        async function recordKoreanAttempt({
+            studentId = currentUserId || 'local_student',
+            studentName = currentUserName || '이름 없음',
+            lessonId = currentLearningActivityStep || 'start',
+            lessonTitle,
+            unitId,
+            activityType,
+            word = '',
+            prompt = '',
+            answer = '',
+            userAnswer = '',
+            isCorrect = true,
+            errorType = null,
+            skillTags = [],
+            retryIndex = 1,
+            hintUsed = false,
+            audioReplayCount = 0,
+            durationMs = Date.now() - koreanActivityStartedAt,
+            readCount = null
+        } = {}) {
+            const lesson = getChanchanLesson(lessonId);
+            const normalizedLessonTitle = lessonTitle || lesson?.title || getLessonTitleForReport(lessonId);
+            const normalizedUnitId = unitId || lesson?.unit || getUnitIdForLesson(lessonId);
+            const normalizedErrorType = isCorrect ? null : (errorType || inferKoreanErrorType({ lessonId, activityType, answer, word }));
+            const attempt = {
+                attemptId: (crypto?.randomUUID?.() || `attempt_${Date.now()}_${Math.random().toString(16).slice(2)}`),
+                studentId,
+                studentName,
+                lessonId,
+                lessonTitle: normalizedLessonTitle,
+                unitId: normalizedUnitId,
+                activityType,
+                word,
+                prompt,
+                answer,
+                userAnswer,
+                isCorrect: Boolean(isCorrect),
+                errorType: normalizedErrorType,
+                skillTags,
+                retryIndex: Number(retryIndex || 1),
+                hintUsed: Boolean(hintUsed),
+                audioReplayCount: Number(audioReplayCount || 0),
+                durationMs: Number(durationMs || 0),
+                ...(readCount !== null ? { readCount: Number(readCount) } : {}),
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                const attempts = getStoredKoreanAttempts();
+                attempts.push(attempt);
+                setStoredKoreanAttempts(attempts.slice(-1200));
+                const report = updateKoreanProgressSummary(attempt);
+                if (studentId && studentId !== 'local_student') {
+                    await Promise.allSettled([
+                        setDoc(doc(db, 'korean_attempts', attempt.attemptId), attempt, { merge: true }),
+                        setDoc(doc(db, 'users', studentId), {
+                            koreanProgressSummary: report,
+                            koreanProgressUpdatedAt: attempt.createdAt
+                        }, { merge: true })
+                    ]);
+                }
+            } catch (error) {
+                console.warn('Korean attempt save fallback/local only:', error);
+            }
+            return attempt;
+        }
+
+        window.recordKoreanAttempt = recordKoreanAttempt;
+        window.buildKoreanStudentReport = function buildKoreanStudentReport(studentId) {
+            const summary = getStoredKoreanSummary();
+            if (summary[studentId]) return summary[studentId];
+            return summarizeKoreanAttempts(studentId, getStoredKoreanAttempts());
+        };
+
+        function getKoreanStudentReportFromData(studentId, student = {}) {
+            return student.koreanProgressSummary || window.buildKoreanStudentReport(studentId);
+        }
+
+        function formatKoreanReportList(items = [], fallback = '없음') {
+            if (!items || !items.length) return fallback;
+            return items.map((item) => typeof item === 'string' ? item : (item.title || item.type || item.word || item.lessonId)).filter(Boolean).join(', ');
+        }
+
+        function renderLessonMap() {
+            return CHANCHAN_LESSONS.map((lesson) => `
+                <button type="button" class="grid-item p-4 text-left" onclick="renderLessonDetail('${lesson.id}')">
+                    <div class="text-sm font-black text-teal-500">단원 ${lesson.unit}</div>
+                    <div class="text-xl font-black text-[#2c3e50]">${lesson.id === 'start' ? lesson.title : `배움 ${lesson.id}: ${lesson.title}`}</div>
+                    <div class="text-sm text-gray-500 mt-1">${lesson.description || (lesson.focus || []).join(', ')}</div>
+                </button>
+            `).join('');
+        }
+
+        function renderLessonDetail(lessonId) {
+            const lesson = getChanchanLesson(lessonId);
+            if (!lesson) return '';
+            return `
+                <div class="learning-practice-card">
+                    <div class="learning-card-label practice-label">찬찬한글 활동</div>
+                    <div class="grid gap-4">
+                        ${(lesson.activities || []).map((activity) => {
+                            if (activity === 'listenAndFind') return renderListenAndFindActivity(lesson);
+                            if (activity === 'readThreeTimes') return renderReadThreeTimesActivity(lesson);
+                            if (activity === 'fillOneJamo') return renderFillOneJamoActivity(lesson);
+                            if (activity === 'wordPictureMatch') return renderWordPictureMatchActivity(lesson);
+                            if (activity === 'nonsenseWordRead') return renderNonsenseWordReadActivity(lesson);
+                            if (activity === 'writeOnCanvas') return renderWriteOnCanvasActivity(lesson);
+                            if (activity === 'batchimFamily') return renderBatchimFamilyActivity(lesson);
+                            if (activity === 'finalAssessment') return renderFinalAssessmentActivity(lesson);
+                            return '';
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderListenAndFindActivity(lesson) {
+            const choices = lesson.letters || lesson.focus || lesson.words || [];
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">듣기</span> 듣고 고르기</div>
+                <div class="choice-grid ${choices.length > 4 ? 'choice-grid-wide' : ''}">
+                    ${choices.map((item) => `<button class="choice-chip-button" onclick="speakChar('${item}'); recordKoreanAttempt({ lessonId:'${lesson.id}', lessonTitle:'${lesson.title}', unitId:${lesson.unit}, activityType:'listenAndFind', word:'${item}', answer:'${item}', userAnswer:'${item}', isCorrect:true, audioReplayCount:1 })">${item}</button>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        function renderReadThreeTimesActivity(lesson) {
+            const words = (lesson.words || lesson.letters || lesson.focus || []).slice(0, 6);
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">읽기</span> 3번 읽기</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    ${words.map((word) => `<div class="border-2 border-green-100 rounded-2xl p-3 bg-white">
+                        <button class="word-chip !text-3xl !py-3 !px-5" onclick="speakChar('${word}')">${word}</button>
+                        <div class="grid grid-cols-3 gap-2 mt-3">
+                            ${[1,2,3].map((count) => `<button class="btn-outline py-2 text-sm" onclick="recordReadThreeTimes('${lesson.id}','${word}',${count},this)">${count}번 읽었어요</button>`).join('')}
+                        </div>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        function renderFillOneJamoActivity(lesson) {
+            const items = lesson.fillItems || [];
+            if (!items.length) return '';
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">완성</span> 빈칸 완성</div>
+                <div class="grid gap-3">
+                    ${items.map((item, index) => `<div class="flex flex-wrap items-center gap-3 border-2 border-orange-100 rounded-2xl p-3 bg-white">
+                        <button class="btn-outline py-2 px-4" onclick="speakChar('${item.word}')">🔊 ${item.word}</button>
+                        <span class="text-3xl font-black text-[#2c3e50]">${item.prompt}</span>
+                        <input id="fill-${lesson.id}-${index}" class="premium-input bg-white !w-28 !py-2 text-center" maxlength="2" placeholder="?">
+                        <button class="btn-primary py-2 px-5" onclick="submitFillOneJamo('${lesson.id}',${index})">확인</button>
+                        <span id="fill-feedback-${lesson.id}-${index}" class="text-sm font-black text-gray-500">${item.hint || ''}</span>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        function renderWordPictureMatchActivity(lesson) {
+            const items = lesson.pictureItems || [];
+            if (!items.length) return '';
+            const words = items.map((item) => item.word);
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">그림</span> 그림-단어 연결</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    ${items.map((item) => `<div class="border-2 border-teal-100 rounded-2xl p-4 bg-white text-center">
+                        <div class="text-5xl mb-3">${item.icon}</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${[item.word, ...words.filter((word) => word !== item.word).slice(0, 3)].sort(() => Math.random() - 0.5).map((word) => `<button class="btn-outline py-2" onclick="selectWordPicture('${lesson.id}','${item.word}','${word}',this)">${word}</button>`).join('')}
+                        </div>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        function renderNonsenseWordReadActivity(lesson) {
+            const words = lesson.nonsenseWords || [];
+            if (!words.length) return '';
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">읽기</span> 무의미 단어 읽기</div>
+                <div class="word-chip-wrap">
+                    ${words.map((word) => `<button class="word-chip !text-3xl" onclick="markNonsenseRead('${lesson.id}','${word}',this)">${word}<span class="block text-xs mt-2 text-orange-500">읽었어요</span></button>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        function renderWriteOnCanvasActivity(lesson) {
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">쓰기</span> 쓰기 완료 기록</div>
+                <button class="trace-clear-button" onclick="recordWriteOnCanvas('${lesson.id}', this)">다 썼어요</button>
+            </div>`;
+        }
+
+        function renderBatchimFamilyActivity(lesson) {
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">받침</span> 받침가족 읽기</div>
+                <div class="text-sm font-bold text-stone-600 mb-3">${lesson.rule || '소리는 비슷하지만 글자는 달라요. 다시 읽어 봐요.'}</div>
+                <div class="word-chip-wrap">
+                    ${(lesson.words || []).map((word) => `<button class="word-chip !text-3xl" onclick="recordBatchimFamilyRead('${lesson.id}','${word}',true,this)">${word}</button>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        function renderFinalAssessmentActivity(lesson) {
+            return `<div class="practice-step-box">
+                <div class="practice-step-title"><span class="practice-step-number">평가</span> 최종 평가 간단 기록</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    ${(lesson.assessmentAreas || []).map((area) => `<button class="btn-outline py-3" onclick="recordFinalAssessmentArea('${lesson.id}','${area}',this)">${area}</button>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        window.recordReadThreeTimes = async function(lessonId, word, readCount, btn) {
+            await recordKoreanAttempt({ lessonId, lessonTitle: getLessonTitleForReport(lessonId), unitId: getUnitIdForLesson(lessonId), activityType: 'readThreeTimes', word, isCorrect: true, readCount, retryIndex: 1 });
+            btn.classList.add('active');
+            if (readCount >= 3) btn.textContent = '읽기 별 1개 획득';
+        };
+
+        window.submitFillOneJamo = async function(lessonId, index) {
+            const lesson = getChanchanLesson(lessonId);
+            const item = lesson?.fillItems?.[index];
+            if (!item) return;
+            const input = document.getElementById(`fill-${lessonId}-${index}`);
+            const feedback = document.getElementById(`fill-feedback-${lessonId}-${index}`);
+            const userAnswer = input.value.trim();
+            const isCorrect = userAnswer === item.answer;
+            const retryIndex = nextKoreanRetryIndex({ lessonId, activityType: 'fillOneJamo', word: item.word, answer: item.answer });
+            await recordKoreanAttempt({ lessonId, lessonTitle: lesson.title, unitId: lesson.unit, activityType: 'fillOneJamo', word: item.word, prompt: item.prompt, answer: item.answer, userAnswer, isCorrect, retryIndex, hintUsed: !isCorrect, errorType: isCorrect ? null : inferKoreanErrorType({ lessonId, activityType: 'fillOneJamo', answer: item.answer, word: item.word }) });
+            if (feedback) {
+                feedback.className = `text-sm font-black ${isCorrect ? 'text-green-600' : 'text-red-500'}`;
+                feedback.textContent = isCorrect ? '좋아요!' : (item.hint || '다시 들어 봐요.');
+            }
+            if (isCorrect) resetKoreanRetryIndex({ lessonId, activityType: 'fillOneJamo', word: item.word, answer: item.answer });
+        };
+
+        window.selectWordPicture = async function(lessonId, answer, userAnswer, btn) {
+            const lesson = getChanchanLesson(lessonId);
+            const isCorrect = answer === userAnswer;
+            await recordKoreanAttempt({ lessonId, lessonTitle: lesson?.title, unitId: lesson?.unit, activityType: 'wordPictureMatch', word: answer, answer, userAnswer, isCorrect, errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH });
+            btn.classList.add(isCorrect ? 'active' : 'wrong');
+            speakTextKo(isCorrect ? `좋아요. ${answer}라고 읽어요.` : '그림을 다시 보고 단어를 읽어 봐요.');
+        };
+
+        window.markNonsenseRead = async function(lessonId, word, btn) {
+            const lesson = getChanchanLesson(lessonId);
+            await recordKoreanAttempt({ lessonId, lessonTitle: lesson?.title, unitId: lesson?.unit, activityType: 'nonsenseWordRead', word, isCorrect: true, errorType: null });
+            btn.classList.add('active');
+        };
+
+        window.recordWriteOnCanvas = async function(lessonId, btn) {
+            const lesson = getChanchanLesson(lessonId);
+            await recordKoreanAttempt({ lessonId, lessonTitle: lesson?.title || getLessonTitleForReport(lessonId), unitId: lesson?.unit || getUnitIdForLesson(lessonId), activityType: 'writeOnCanvas', isCorrect: true, errorType: null });
+            btn.textContent = '쓰기 완료';
+        };
+
+        window.recordBatchimFamilyRead = async function(lessonId, word, isCorrect, btn) {
+            const lesson = getChanchanLesson(lessonId);
+            await recordKoreanAttempt({ lessonId, lessonTitle: lesson?.title, unitId: lesson?.unit, activityType: 'batchimFamily', word, answer: word, userAnswer: word, isCorrect, errorType: isCorrect ? null : KOREAN_ERROR_TYPES.BATCHIM_FAMILY });
+            btn.classList.add('active');
+        };
+
+        window.recordFinalAssessmentArea = async function(lessonId, area, btn) {
+            const lesson = getChanchanLesson(lessonId);
+            await recordKoreanAttempt({ lessonId, lessonTitle: lesson?.title, unitId: lesson?.unit, activityType: 'finalAssessment', word: area, isCorrect: true });
+            btn.classList.add('active');
+        };
+
         // ② 듣고 알맞은 글자 선택 (소리 듣기 퀴즈 게임)
         window.playChoiceQuizSound = function() {
             if (window.currentChoiceQuizTarget) {
+                incrementKoreanAudioReplayCount({
+                    lessonId: currentLearningActivityStep,
+                    activityType: 'listenAndFind',
+                    answer: window.currentChoiceQuizTarget
+                });
                 speakTextKo(spokenLabelForChar(window.currentChoiceQuizTarget));
             }
         };
@@ -6145,9 +6784,42 @@ ${text}
             btn.classList.add('selected');
 
             const feedbackEl = document.getElementById('choice-feedback-area');
+            const answerWord = window.currentChoiceQuizTarget;
+            const attemptContext = {
+                lessonId: currentLearningActivityStep,
+                lessonTitle: getLessonTitleForReport(currentLearningActivityStep),
+                unitId: getUnitIdForLesson(currentLearningActivityStep),
+                activityType: 'listenAndFind',
+                word: answerWord,
+                prompt: '소리를 듣고 알맞은 글자 선택',
+                answer: answerWord,
+                userAnswer: word,
+                audioReplayCount: getKoreanAudioReplayCount({
+                    lessonId: currentLearningActivityStep,
+                    activityType: 'listenAndFind',
+                    answer: answerWord
+                }),
+                durationMs: Date.now() - koreanActivityStartedAt
+            };
 
-            if (word === window.currentChoiceQuizTarget) {
+            if (word === answerWord) {
                 // 정답!
+                const retryIndex = nextKoreanRetryIndex({
+                    lessonId: currentLearningActivityStep,
+                    activityType: 'listenAndFind',
+                    answer: answerWord
+                });
+                recordKoreanAttempt({
+                    ...attemptContext,
+                    isCorrect: true,
+                    errorType: null,
+                    retryIndex
+                });
+                resetKoreanRetryIndex({
+                    lessonId: currentLearningActivityStep,
+                    activityType: 'listenAndFind',
+                    answer: answerWord
+                });
                 btn.classList.remove('selected');
                 btn.classList.add('correct');
                 if (window.completedChoices) {
@@ -6163,7 +6835,7 @@ ${text}
                     // 전체 완료!
                     window.currentChoiceQuizTarget = null;
                     if (feedbackEl) {
-                        feedbackEl.className = "text-base font-black text-center my-1 h-5 text-green-600 animate-bounce";
+                        feedbackEl.className = "text-base font-black text-center mt-2 mb-4 min-h-[1.4rem] text-green-600 animate-bounce";
                         feedbackEl.textContent = "🏆 대단해요! 모든 글자를 전부 맞췄어요! 🏆";
                     }
                     setTimeout(() => { speakTextKo("대단해요! 모든 글자를 전부 맞췄어요!"); }, 300);
@@ -6172,16 +6844,27 @@ ${text}
                     // 새 정답 단어 설정
                     window.currentChoiceQuizTarget = window.uncompletedChoices[Math.floor(Math.random() * window.uncompletedChoices.length)];
                     if (feedbackEl) {
-                        feedbackEl.className = "text-base font-black text-center my-1 h-5 text-green-600";
+                        feedbackEl.className = "text-base font-black text-center mt-2 mb-4 min-h-[1.4rem] text-green-600";
                         feedbackEl.textContent = "🎉 정답! 다음 글자 소리를 들으려면 [소리 듣기]를 눌러주세요!";
                     }
                     setTimeout(() => { speakTextKo("정답! 다음 소리를 들으려면 소리 듣기 버튼을 눌러주세요."); }, 300);
                 }
             } else {
                 // 오답!
+                const retryIndex = nextKoreanRetryIndex({
+                    lessonId: currentLearningActivityStep,
+                    activityType: 'listenAndFind',
+                    answer: answerWord
+                });
+                recordKoreanAttempt({
+                    ...attemptContext,
+                    isCorrect: false,
+                    retryIndex,
+                    errorType: inferKoreanErrorType({ lessonId: currentLearningActivityStep, activityType: 'listenAndFind', answer: answerWord, word })
+                });
                 btn.classList.add('wrong');
                 if (feedbackEl) {
-                    feedbackEl.className = "text-base font-black text-center my-1 h-5 text-red-500";
+                    feedbackEl.className = "text-base font-black text-center mt-2 mb-4 min-h-[1.4rem] text-red-500";
                     feedbackEl.textContent = "😢 다시 들어 보아요.";
                 }
                 // "다시 들어 보아요." 음성 연동
@@ -6350,11 +7033,17 @@ ${text}
                     `;
                 }
 
+                const chanchanLesson = getChanchanLesson(step);
+                const chanchanActivityHtml = safeIndex === 0 && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
+                    ['readThreeTimes', 'fillOneJamo', 'wordPictureMatch', 'nonsenseWordRead', 'batchimFamily', 'finalAssessment'].includes(activity)
+                ) ? `<div class="mt-4">${renderLessonDetail(step)}</div>` : '';
+
                 document.getElementById('learning-detail-content').innerHTML = `
                     <div class="learning-pane p-5">
                         ${sectionHeadingHtml}
                         <div class="learning-activity-layout" style="grid-template-columns: 1fr;">
                             ${contentHtml}
+                            ${chanchanActivityHtml}
                         </div>
                     </div>
                 `;
@@ -6980,6 +7669,15 @@ ${text}
                     console.error('Learning progress save error:', error);
                 }
             }
+            await recordKoreanAttempt({
+                lessonId: 'start',
+                lessonTitle: '배움 시작: 모음과 자음',
+                unitId: 1,
+                activityType: 'jamoSort',
+                isCorrect: true,
+                errorType: null,
+                durationMs: Date.now() - koreanActivityStartedAt
+            });
             showModal('배움 시작 활동 완료! 이제 배움 1로 넘어갈 수 있어요.');
             showDashboardOnly();
         }
@@ -7003,6 +7701,15 @@ ${text}
                     console.error('Learning detail save error:', error);
                 }
             }
+            await recordKoreanAttempt({
+                lessonId: currentLearningActivityStep,
+                lessonTitle: getLessonTitleForReport(currentLearningActivityStep),
+                unitId: getUnitIdForLesson(currentLearningActivityStep),
+                activityType: 'writeOnCanvas',
+                isCorrect: true,
+                errorType: null,
+                durationMs: Date.now() - koreanActivityStartedAt
+            });
 
             showModal(`${currentLearningActivityStep}단계 배움을 습득했어요!`);
             showDashboardOnly();
@@ -7378,14 +8085,14 @@ ${text}
         window.loadStudents = async function() {
             const tbody = document.getElementById('student-list-tbody');
             if (!tbody) return;
-            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-10">목록을 불러오는 중...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10">목록을 불러오는 중...</td></tr>';
 
             try {
                 const classRef = doc(db, 'classes', currentUserId);
                 const classSnap = await getDoc(classRef);
 
                 if (!classSnap.exists() || !classSnap.data().students || classSnap.data().students.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-gray-400">학급에 등록된 학생이 없어요.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-gray-400">학급에 등록된 학생이 없어요.</td></tr>';
                     return;
                 }
 
@@ -7399,6 +8106,9 @@ ${text}
                     const student = docSnap.data();
                     const sid = docSnap.id;
                     const unlocked = student.unlockedLevels || [2];
+                    const report = getKoreanStudentReportFromData(sid, student);
+                    window.teacherKoreanReports = window.teacherKoreanReports || {};
+                    window.teacherKoreanReports[sid] = report;
 
                     let toggleHtml = '';
                     for (let i = 1; i <= 4; i++) {
@@ -7414,12 +8124,17 @@ ${text}
                         <td class="py-4 px-4">
                             <div class="flex gap-2">${toggleHtml}</div>
                         </td>
+                        <td class="py-4 px-4">
+                            <div class="text-sm font-bold text-[#2c3e50]">완료 ${report.completedLessonCount || 0}개 · 정답률 ${report.accuracyRate || 0}%</div>
+                            <div class="text-xs text-gray-500 mt-1">어려운 유형: ${formatKoreanReportList(report.topErrorTypes, '아직 없음')}</div>
+                            <button class="btn-outline px-3 py-1 text-xs mt-2" onclick="openKoreanStudentReport('${sid}')">상세 보기</button>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (err) {
                 console.error('Load students error:', err);
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-red-500">목록을 불러오지 못했습니다.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-red-500">목록을 불러오지 못했습니다.</td></tr>';
             }
         }
 
@@ -7461,6 +8176,41 @@ ${text}
             } catch (err) {
                 console.error('Toggle level lock error:', err);
             }
+        }
+
+        window.openKoreanStudentReport = function openKoreanStudentReport(sid) {
+            const report = window.teacherKoreanReports?.[sid] || window.buildKoreanStudentReport(sid);
+            const errorRows = (report.topErrorTypes || []).map((item) => `<tr><td class="py-2 px-3">${item.type}</td><td class="py-2 px-3 font-black">${item.count}</td></tr>`).join('') || '<tr><td class="py-2 px-3 text-gray-400" colspan="2">아직 기록이 없어요.</td></tr>';
+            const lessonRows = (report.difficultLessons || []).map((item) => `<tr><td class="py-2 px-3">${item.title}</td><td class="py-2 px-3 font-black">${item.count}</td></tr>`).join('') || '<tr><td class="py-2 px-3 text-gray-400" colspan="2">아직 기록이 없어요.</td></tr>';
+            showModal(`
+                <div class="text-left">
+                    <h3 class="text-2xl font-black text-[#2c3e50] mb-4">에이두 한글 리포트: ${report.studentName || '학생'}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                        <div class="p-4 bg-green-50 rounded-2xl"><div class="text-xs text-green-600 font-black">완료 배움</div><div class="text-2xl font-black">${report.completedLessonCount || 0}개</div></div>
+                        <div class="p-4 bg-blue-50 rounded-2xl"><div class="text-xs text-blue-600 font-black">정답률</div><div class="text-2xl font-black">${report.accuracyRate || 0}%</div></div>
+                        <div class="p-4 bg-orange-50 rounded-2xl"><div class="text-xs text-orange-600 font-black">재시도</div><div class="text-2xl font-black">${report.totalRetryCount || 0}회</div></div>
+                        <div class="p-4 bg-purple-50 rounded-2xl"><div class="text-xs text-purple-600 font-black">활동 기록</div><div class="text-2xl font-black">${report.totalAttempts || 0}개</div></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border rounded-2xl p-4">
+                            <div class="font-black mb-2">어려운 유형</div>
+                            <table class="w-full text-sm">${errorRows}</table>
+                        </div>
+                        <div class="border rounded-2xl p-4">
+                            <div class="font-black mb-2">어려운 배움</div>
+                            <table class="w-full text-sm">${lessonRows}</table>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 bg-gray-50 rounded-2xl">
+                        <div class="font-black">최근 오답 단어</div>
+                        <div class="text-gray-600 mt-1">${formatKoreanReportList(report.recentWrongWords, '아직 없음')}</div>
+                    </div>
+                    <div class="mt-4 p-4 bg-teal-50 rounded-2xl">
+                        <div class="font-black">추천 복습 배움</div>
+                        <div class="text-teal-700 mt-1">${formatKoreanReportList(report.recommendedLessons, '아직 없음')}</div>
+                    </div>
+                </div>
+            `);
         }
 
         initializeEmbeddedActivities();
