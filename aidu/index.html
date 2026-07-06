@@ -2276,6 +2276,7 @@
             query,
             where,
             getDocs,
+            limit as queryLimit,
             runTransaction,
             serverTimestamp,
             arrayUnion,
@@ -2368,6 +2369,11 @@
         let currentUserName = '이름 없음';
         let currentUserIcon = '🐻';
         let currentUserCoins = 0;
+        let currentUserBalance = 0;
+        let currentUserAeduTokens = 0;
+        let currentUserAeduExperience = 0;
+        let currentUserAeduLevel = 1;
+        let currentUserProfileSnapshot = {};
         let currentUnderstandingStep = 1;
         let currentLearningActivityStep = null;
         let currentLearningDetailSectionIndex = 0;
@@ -4306,6 +4312,80 @@
             }
         }
 
+        const FIREBASE_DRAWING_COLLECTION = 'aiedueKoreanDrawings';
+
+        function asNumber(value, fallback = 0) {
+            const num = Number(value);
+            return Number.isFinite(num) ? num : fallback;
+        }
+
+        function calculateAiedueLevel(experience) {
+            return Math.max(1, Math.floor(asNumber(experience, 0) / 100) + 1);
+        }
+
+        function buildAiedueSchoolProfileSnapshot(userData = {}) {
+            const coins = asNumber(userData?.coins ?? userData?.balance ?? userData?.aeduTokens ?? currentUserCoins, 0);
+            const balance = asNumber(userData?.balance ?? coins ?? currentUserBalance, 0);
+            const aeduTokens = asNumber(userData?.aeduTokens ?? userData?.aeduToken ?? balance ?? currentUserAeduTokens, 0);
+            const aeduExperience = asNumber(userData?.aeduExperience ?? currentUserAeduExperience, 0);
+            const aeduLevel = asNumber(userData?.aeduLevel ?? calculateAiedueLevel(aeduExperience), 1);
+            return {
+                userId: currentUserId || userData?.uid || null,
+                userCode: userData?.userCode ?? userData?.code ?? userData?.studentCode ?? null,
+                userName: userData?.name || currentUserName || '이름 없음',
+                userIcon: userData?.icon || currentUserIcon || '🐻',
+                role: (userData?.role || currentUserRole || 'student').toLowerCase(),
+                email: userData?.email || auth.currentUser?.email || null,
+                teacherId: userData?.teacherId || userData?.createdBy || null,
+                classId: userData?.classId || userData?.classCode || userData?.className || userData?.teacherId || null,
+                classCode: userData?.classCode || null,
+                className: userData?.className || null,
+                coins,
+                balance,
+                aeduTokens,
+                aeduExperience,
+                aeduLevel,
+                warningTokens: asNumber(userData?.warningTokens, 0),
+                currentLearningStep: asNumber(userData?.currentLearningStep ?? currentLearningStep, -1),
+                currentDrawingStep: asNumber(userData?.currentDrawingStep ?? currentUserDrawingStep, -1),
+                currentDictationStep: asNumber(userData?.currentDictationStep ?? currentUserDictationStep, -1)
+            };
+        }
+
+        function setCurrentAiedueSchoolWalletFromSnapshot(snapshot = {}) {
+            currentUserCoins = asNumber(snapshot.coins, currentUserCoins);
+            currentUserBalance = asNumber(snapshot.balance, currentUserCoins);
+            currentUserAeduTokens = asNumber(snapshot.aeduTokens, currentUserBalance);
+            currentUserAeduExperience = asNumber(snapshot.aeduExperience, currentUserAeduExperience);
+            currentUserAeduLevel = asNumber(snapshot.aeduLevel, calculateAiedueLevel(currentUserAeduExperience));
+        }
+
+        function applyAieduePointReward(points = 0) {
+            const reward = Math.max(0, asNumber(points, 0));
+            if (!reward) return {};
+            currentUserCoins = asNumber(currentUserCoins, 0) + reward;
+            currentUserBalance = asNumber(currentUserBalance, currentUserCoins - reward) + reward;
+            currentUserAeduTokens = asNumber(currentUserAeduTokens, currentUserBalance - reward) + reward;
+            currentUserAeduExperience = asNumber(currentUserAeduExperience, 0) + reward;
+            currentUserAeduLevel = Math.max(currentUserAeduLevel || 1, calculateAiedueLevel(currentUserAeduExperience));
+            currentUserProfileSnapshot = {
+                ...currentUserProfileSnapshot,
+                coins: currentUserCoins,
+                balance: currentUserBalance,
+                aeduTokens: currentUserAeduTokens,
+                aeduExperience: currentUserAeduExperience,
+                aeduLevel: currentUserAeduLevel
+            };
+            return {
+                coins: currentUserCoins,
+                balance: currentUserBalance,
+                aeduTokens: currentUserAeduTokens,
+                aeduExperience: currentUserAeduExperience,
+                aeduLevel: currentUserAeduLevel,
+                updatedAt: serverTimestamp()
+            };
+        }
+
         function updateSyncedActivityHeaders({ name, coins, icon } = {}) {
             document.querySelectorAll('.sync-account-name').forEach((el) => {
                 el.innerText = name || '이름 없음';
@@ -4361,7 +4441,9 @@
             // Profile UI Upgrade
             const name = userData?.name || '홍길동';
             const icon = userData?.icon || '🐻';
-            const coins = userData?.coins || 0;
+            currentUserProfileSnapshot = buildAiedueSchoolProfileSnapshot(userData);
+            setCurrentAiedueSchoolWalletFromSnapshot(currentUserProfileSnapshot);
+            const coins = currentUserCoins;
             currentUserDrawingStep = Number.isFinite(Number(userData?.currentDrawingStep)) ? Math.max(-1, Math.floor(Number(userData.currentDrawingStep))) : -1;
             if (currentUserRole === 'teacher') {
                 currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingMissions.length);
@@ -4369,6 +4451,10 @@
             currentUserName = name;
             currentUserIcon = icon;
             currentUserCoins = Number(coins) || 0;
+            currentUserBalance = asNumber(currentUserProfileSnapshot.balance, currentUserCoins);
+            currentUserAeduTokens = asNumber(currentUserProfileSnapshot.aeduTokens, currentUserBalance);
+            currentUserAeduExperience = asNumber(currentUserProfileSnapshot.aeduExperience, currentUserAeduExperience);
+            currentUserAeduLevel = asNumber(currentUserProfileSnapshot.aeduLevel, calculateAiedueLevel(currentUserAeduExperience));
             drawingPortfolio = {
                 missions: userData?.drawingPortfolio?.missions || {},
                 free: Array.isArray(userData?.drawingPortfolio?.free) ? userData.drawingPortfolio.free : [],
@@ -5237,7 +5323,14 @@
 
         async function persistDrawingData(extra = {}) {
             if (!currentUserId) return;
-            await setDoc(doc(db, 'users', currentUserId), { currentDrawingStep: currentUserDrawingStep, drawingPortfolio, ...extra }, { merge: true });
+            const walletExtra = {
+                coins: currentUserCoins,
+                balance: currentUserBalance,
+                aeduTokens: currentUserAeduTokens,
+                aeduExperience: currentUserAeduExperience,
+                aeduLevel: currentUserAeduLevel
+            };
+            await setDoc(doc(db, 'users', currentUserId), { currentDrawingStep: currentUserDrawingStep, drawingPortfolio, ...walletExtra, ...extra, updatedAt: serverTimestamp() }, { merge: true });
         }
 
         function captureDrawingImage() {
@@ -5245,25 +5338,86 @@
             return canvas.toDataURL('image/png');
         }
 
-        async function mirrorDrawingToAiedueDataServer(record) {
+        async function mirrorDrawingToLegacyAiedueDataServer(record) {
             try {
-                await fetch('/korean-db/db-api/collections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'aiedue_korean_drawings', description: '에이두 국어 스케치북 작품' }) }).catch(() => null);
+                await fetch('/korean-db/db-api/collections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'aiedue_korean_drawings', description: '에이두 국어 스케치북 작품(legacy mirror)' }) }).catch(() => null);
                 await fetch('/korean-db/db-api/items/aiedue_korean_drawings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: record }) });
-            } catch (error) { console.warn('Aiedue data server drawing mirror failed', error); }
+            } catch (error) { console.warn('Legacy Aiedue data server drawing mirror failed', error); }
         }
 
-        async function loadFriendsDrawingsFromAiedueDataServer() {
+        async function loadFriendsDrawingsFromLegacyAiedueDataServer() {
             try {
                 const res = await fetch('/korean-db/db-api/items/aiedue_korean_drawings?limit=60');
-                if (!res.ok) throw new Error(`drawings ${res.status}`);
+                if (!res.ok) throw new Error(`legacy drawings ${res.status}`);
                 const data = await res.json();
                 return Array.isArray(data.items) ? data.items.map((item) => item.data || item) : [];
-            } catch (error) { console.warn('Aiedue data server drawing list failed', error); return []; }
+            } catch (error) { console.warn('Legacy Aiedue data server drawing list failed', error); return []; }
         }
 
         function buildDrawingRecord({ image, kind, missionStep = null, savedAt, accuracy = null, rewardedPoints = 0, shapeAccuracy = null }) {
             const templateInfo = drawingActiveTargetTemplate || drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
-            return { image, kind, missionStep, template: drawingActiveTemplate, templateLabel: templateInfo.label, accuracy, rewardedPoints, shapeAccuracy, savedAt, userId: currentUserId || 'anonymous', userName: currentUserName || '이름 없음', userIcon: currentUserIcon || '🐻' };
+            const profile = buildAiedueSchoolProfileSnapshot({ ...currentUserProfileSnapshot, name: currentUserName, icon: currentUserIcon, role: currentUserRole });
+            return {
+                image,
+                kind,
+                mode: drawingWorkspaceMode,
+                missionStep,
+                template: drawingActiveTemplate,
+                templateLabel: templateInfo.label,
+                accuracy,
+                rewardedPoints,
+                shapeAccuracy,
+                savedAt,
+                ...profile,
+                userId: currentUserId || profile.userId || 'anonymous',
+                userName: currentUserName || profile.userName || '이름 없음',
+                userIcon: currentUserIcon || profile.userIcon || '🐻'
+            };
+        }
+
+        async function saveDrawingRecordToFirebase(record) {
+            if (!currentUserId) return false;
+            try {
+                const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
+                const recordRef = doc(collectionRef);
+                await setDoc(recordRef, {
+                    ...record,
+                    drawingId: recordRef.id,
+                    ownerRef: `users/${currentUserId}`,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+                return true;
+            } catch (error) {
+                console.warn('Firebase drawing save failed; trying legacy mirror', error);
+                return false;
+            }
+        }
+
+        function normalizeFirebaseDrawingDoc(docSnap) {
+            const data = docSnap.data ? docSnap.data() : docSnap;
+            return { drawingId: docSnap.id || data?.drawingId, ...data };
+        }
+
+        async function loadFriendsDrawingsFromFirebase() {
+            if (!currentUserId) return [];
+            const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
+            const profile = buildAiedueSchoolProfileSnapshot(currentUserProfileSnapshot);
+            const queryPlans = [];
+            if (profile.classId) queryPlans.push(query(collectionRef, where('classId', '==', profile.classId), queryLimit(80)));
+            if (profile.teacherId) queryPlans.push(query(collectionRef, where('teacherId', '==', profile.teacherId), queryLimit(80)));
+            queryPlans.push(query(collectionRef, queryLimit(80)));
+            const merged = new Map();
+            for (const q of queryPlans) {
+                try {
+                    const snap = await getDocs(q);
+                    snap.docs.map(normalizeFirebaseDrawingDoc).forEach((item) => merged.set(item.drawingId || `${item.userId}-${item.savedAt}`, item));
+                    if (merged.size >= 20) break;
+                } catch (error) {
+                    console.warn('Firebase drawing gallery query failed', error);
+                }
+            }
+            return Array.from(merged.values()).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))).slice(0, 60);
         }
 
         window.saveCurrentDrawing = async function() {
@@ -5275,7 +5429,9 @@
             // 그림 미션 단계 완료/해금/이어하기 변경은 완료하기 버튼에서만 처리한다.
             drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
             await persistDrawingData();
-            await mirrorDrawingToAiedueDataServer(record);
+            if (!(await saveDrawingRecordToFirebase(record))) {
+                await mirrorDrawingToLegacyAiedueDataServer(record);
+            }
             updateDrawingDashboardPreview();
             showModal(drawingWorkspaceMissionStep ? '현재 그림 미션 작품을 저장했어요. 계속 그릴 수 있어요!' : '그림을 저장했어요!');
         }
@@ -5298,11 +5454,11 @@
             if (drawingWorkspaceAiQuiz) {
                 rewardPoints = result.accuracy >= 50 ? 6 : 0;
                 message = result.accuracy >= 50 ? `AI 그림 정확도 ${result.accuracy}%! 도형 1점 + 도안 5점, 총 6점을 받았어요.` : `AI 그림 정확도 ${result.accuracy}%. 50% 미만이라 포인트는 없어요.`;
-                if (rewardPoints > 0) currentUserCoins += rewardPoints;
+                if (rewardPoints > 0) applyAieduePointReward(rewardPoints);
             } else if (drawingWorkspaceMode === 'shape-mission') {
                 rewardPoints = result.accuracy >= 50 ? 1 : 0;
                 if (rewardPoints > 0) {
-                    currentUserCoins += 1;
+                    applyAieduePointReward(1);
                     drawingPortfolio.unpaidCooldownUntil = 0;
                     message = `도형 정확도 ${result.accuracy}%! 에이두 포인트 1점을 받았어요.`;
                 } else {
@@ -5315,14 +5471,35 @@
                 drawingPortfolio.missions = { ...drawingPortfolio.missions, [drawingWorkspaceMissionStep]: record };
                 drawingPortfolio.unlockedTemplates = Array.from(new Set([...(drawingPortfolio.unlockedTemplates || []), mission?.template].filter(Boolean)));
                 currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingWorkspaceMissionStep);
-                if (!wasAlreadyDone && rewardPoints > 0) currentUserCoins += rewardPoints;
-                await mirrorDrawingToAiedueDataServer(record);
+                if (!wasAlreadyDone && rewardPoints > 0) applyAieduePointReward(rewardPoints);
+                if (!wasAlreadyDone) {
+                    const completedMissionCount = Object.keys(drawingPortfolio.missions || {}).length;
+                    const unlockedMilestoneCount = Math.floor(completedMissionCount / 5);
+                    let milestoneReward = 0;
+                    for (let milestone = 1; milestone <= unlockedMilestoneCount; milestone += 1) {
+                        const milestoneId = `drawing-5x-${milestone}`;
+                        if (!drawingPortfolio.rewardedMilestones.includes(milestoneId)) {
+                            drawingPortfolio.rewardedMilestones.push(milestoneId);
+                            milestoneReward += 10;
+                        }
+                    }
+                    if (milestoneReward > 0) {
+                        applyAieduePointReward(milestoneReward);
+                        rewardPoints += milestoneReward;
+                    }
+                }
+                record.rewardedPoints = rewardPoints;
+                if (!(await saveDrawingRecordToFirebase(record))) {
+                    await mirrorDrawingToLegacyAiedueDataServer(record);
+                }
                 message = `${drawingWorkspaceMissionStep}단계 정확도 ${result.accuracy}%. ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardPoints ? ` 에이두 포인트 ${rewardPoints}점을 받았어요.` : ' 50% 미만이라 포인트는 없어요.'}`;
             }
             if (!drawingWorkspaceMissionStep) {
                 const record = buildDrawingRecord({ image, kind: drawingWorkspaceAiQuiz ? 'ai-drawing' : 'shape-mission', savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
                 drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
-                await mirrorDrawingToAiedueDataServer(record);
+                if (!(await saveDrawingRecordToFirebase(record))) {
+                    await mirrorDrawingToLegacyAiedueDataServer(record);
+                }
             }
             await persistDrawingData({ coins: currentUserCoins });
             updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
@@ -5334,7 +5511,9 @@
         }
 
         window.openFriendsDrawingGallery = async function() {
-            const drawings = await loadFriendsDrawingsFromAiedueDataServer();
+            const firebaseDrawings = await loadFriendsDrawingsFromFirebase();
+            const legacyDrawings = firebaseDrawings.length ? [] : await loadFriendsDrawingsFromLegacyAiedueDataServer();
+            const drawings = [...firebaseDrawings, ...legacyDrawings];
             const localWorks = (drawingPortfolio.free || []).map((item) => ({ ...item, userName: currentUserName, userIcon: currentUserIcon, kind: item.kind || 'sketchbook' }));
             const merged = [...drawings, ...localWorks].filter((item) => item?.image).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))).slice(0, 60);
             const body = merged.length ? `
@@ -9415,6 +9594,7 @@ ${JSON.stringify(targets, null, 2)}
                     portfolio: {},
                     drawingPortfolio: { missions: {}, free: [] },
                     dictationPortfolio: { missions: {}, aiWords: [] },
+                    aeduTokens: 0,
                     aeduExperience: 0,
                     aeduLevel: 1,
                     currentLearningStep: -1,
