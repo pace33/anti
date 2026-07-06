@@ -1173,6 +1173,29 @@
                 font-size: 0.95rem;
             }
         }
+
+
+        /* Hermes drawing UX refinements */
+        .dashboard-stage-card.level-card::before,
+        .dashboard-stage-card.level-card::after { content: none !important; display: none !important; }
+        .dashboard-stage-card.level-card { background: rgba(255,255,255,0.94); overflow: hidden; }
+        .dashboard-stage-card .stage-emoji { position: relative; z-index: 2; background: transparent !important; }
+        .drawing-card-art { position:absolute; left:18px; top:16px; pointer-events:none; filter: drop-shadow(0 10px 14px rgba(124,58,237,.18)); }
+        .drawing-art-shape { display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:999px; margin-right:-10px; border:4px solid #fff; box-shadow:0 8px 18px rgba(0,0,0,.12); font-size:24px; }
+        .drawing-art-sample { width:112px; height:82px; border-radius:24px; background:#fff; border:4px solid #f5d0fe; display:grid; place-items:center; font-size:46px; }
+        .drawing-action-card { position: relative; overflow: hidden; min-height: 235px; border-width: 4px !important; }
+        .drawing-action-card h3, .drawing-action-card p, .drawing-action-card .aiedu-badge { position: relative; z-index: 2; }
+        .drawing-header-banner { pointer-events:auto; display:flex; align-items:center; gap:14px; background:rgba(255,255,255,.9); backdrop-filter:blur(12px); padding:10px 18px; border-radius:24px; border:4px solid #b7e4a1; box-shadow:0 14px 28px rgba(44,62,80,.12); cursor:pointer; }
+        .sync-coins.point-pop, #dashboard-coins-header.point-pop { animation: pointPulse .52s ease; display:inline-block; }
+        @keyframes pointPulse { 0%{transform:scale(1)} 38%{transform:scale(1.45); color:#f59e0b} 100%{transform:scale(1)} }
+        .drawing-workspace-top { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:18px; }
+        .drawing-title-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+        .drawing-mission-logo { font-size:1.15rem; padding:10px 18px; border-radius:999px; }
+        .drawing-progress-chip { font-weight:900; color:#6d28d9; background:#f3e8ff; border:3px solid #e9d5ff; padding:9px 16px; border-radius:999px; }
+        .drawing-template-picked { font-weight:900; color:#6d28d9; background:#faf5ff; border:3px dashed #d8b4fe; border-radius:18px; padding:10px; text-align:center; }
+        .drawing-template-modal-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; max-height:65vh; overflow-y:auto; padding-right:4px; }
+        @media (min-width:768px){ .drawing-template-modal-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+        @media (max-width:768px){ .drawing-workspace-top{ flex-direction:column; align-items:stretch; } .drawing-header-banner{ justify-content:flex-end; } }
     </style>
 </head>
 <body>
@@ -1415,24 +1438,31 @@
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
                 <!-- 상단 주요 활동: 그림 미션 / 도형 미션 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff]" onclick="openCurrentDrawingMission()">
+                    <div class="grid-item drawing-action-card p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff] border-purple-100" onclick="openCurrentDrawingMission()">
+                        <div class="drawing-card-art drawing-art-sample">🦋</div>
                         <div id="drawing-mission-badge" class="aiedu-badge bg-purple-500 mb-6">오늘의 미션[1단계]</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">그림 미션</h3>
-                        <p class="text-2xl text-purple-500 font-bold">도형을 사용해서 그림을 그려요!</p>
+                        <p class="text-2xl text-purple-500 font-bold">오늘의 그림 도안을 따라 그려요!</p>
                     </div>
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-purple-50" onclick="openTodayDrawingActivity()">
+                    <div class="grid-item drawing-action-card p-10 flex flex-col items-center justify-center bg-gradient-to-br from-[#f5f3ff] to-[#e0f2fe] border-purple-100" onclick="openTodayDrawingActivity()">
+                        <div class="drawing-card-art" aria-hidden="true"><span class="drawing-art-shape bg-pink-300">○</span><span class="drawing-art-shape bg-yellow-300">△</span><span class="drawing-art-shape bg-sky-300">□</span></div>
                         <div class="aiedu-badge bg-purple-500 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도형 미션</h3>
-                        <p class="text-2xl text-purple-500 font-bold">동그라미·세모·꾸불선을 정확히 따라 그려요!</p>
+                        <p class="text-2xl text-purple-500 font-bold">동그라미·세모·네모를 따라 그려요!</p>
                     </div>
                 </div>
 
-                <!-- 하단 활동: 나의 그림 / 스케치북 / AI 그림 -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                <!-- 하단 활동: 나의 그림 / 친구들 그림 / 스케치북 / AI 그림 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 w-full mb-4">
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openMyDrawingFromDashboard()">
                         <div class="text-5xl mb-3">🖼️</div>
                         <div class="text-xl font-bold">나의 그림</div>
                         <p id="drawing-mission-next-label" class="text-sm text-purple-500 font-black mt-2">1단계 할 차례예요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openFriendsDrawingGallery()">
+                        <div class="text-5xl mb-3">👭</div>
+                        <div class="text-xl font-bold">친구들 그림</div>
+                        <p class="text-sm text-gray-500 mt-2">친구들이 저장한 작품을 구경해요</p>
                     </div>
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openSketchbookActivity()">
                         <div class="text-5xl mb-3">📒</div>
@@ -1685,20 +1715,20 @@
 
         <!-- [그리기 시리즈: 그림 미션] -->
         <div id="my-drawing-section" class="fade-in hidden">
-            <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between">
+            <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
                 <button class="flex flex-col gap-1 items-start text-left" onclick="goDrawingDashboard()">
-                    <span class="aiedu-badge bg-purple-500">에이두 그리기 시리즈</span>
-                    <h1 class="text-4xl font-bold text-[#7c3aed] tracking-tight">그림 미션</h1>
+                    <span class="aiedu-badge bg-purple-500">뒤로 가기</span>
+                    <h1 class="text-4xl font-bold text-[#7c3aed] tracking-tight">나의 그림</h1>
                 </button>
-                <div class="text-right">
-                    <div class="text-2xl font-bold text-gray-800 sync-account-name">이름</div>
-                    <div id="my-drawing-progress-label" class="text-lg text-purple-600 font-semibold">그림 미션 1단계 할 차례</div>
+                <div class="drawing-header-banner" onclick="toggleInfoDrawer()">
+                    <div class="text-right leading-tight"><div class="sync-account-name text-lg font-black text-[#2c3e50]">학생 이름</div><div class="text-sm font-black text-yellow-500">⭐ <span class="sync-coins">0</span></div></div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                 <div class="korean-embed-card p-6 bg-purple-50 border-purple-100">
-                    <div class="text-sm font-black text-purple-500 mb-2">도형 미션</div>
+                    <div class="text-sm font-black text-purple-500 mb-2">그림 미션</div>
                     <div id="my-drawing-next-title" class="text-2xl font-black text-[#2c3e50]">1단계 미션</div>
                     <button class="btn-primary mt-5 bg-purple-500 shadow-purple-200" onclick="openTodayDrawingActivity()">이어하기</button>
                 </div>
@@ -1715,7 +1745,7 @@
             <div class="stitched p-6 bg-white">
                 <div class="flex items-center justify-between mb-5">
                     <h3 class="text-2xl font-black text-[#2c3e50]">단계별 그림 미션 기록</h3>
-                    <button class="btn-outline px-5 py-2 text-sm" onclick="goDrawingDashboard()">그리기 대시보드로</button>
+                    <button class="btn-outline px-5 py-2 text-sm" onclick="goDrawingDashboard()">뒤로 가기</button>
                 </div>
                 <div id="my-drawing-mission-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[430px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
@@ -1723,16 +1753,21 @@
 
         <!-- [그리기 시리즈: 공용 작업실] -->
         <div id="drawing-workspace-section" class="fade-in hidden">
-            <div class="flex flex-col gap-4 mb-5 md:flex-row md:items-start md:justify-between">
-                <div>
-                    <div id="drawing-workspace-badge" class="aiedu-badge bg-purple-500 mb-3">자유 그리기</div>
-                    <div id="drawing-workspace-title" class="text-3xl font-black text-[#2c3e50]">그림판</div>
-                    <p id="drawing-workspace-desc" class="text-lg text-gray-500 mt-1">마음껏 그리고 저장해요.</p>
-                    <p id="drawing-workspace-progress" class="text-sm font-black text-purple-500 mt-2"></p>
+            <div class="drawing-workspace-top">
+                <div class="flex items-center gap-4">
+                    <button class="btn-outline py-2 px-5" onclick="goDrawingDashboard()">뒤로 가기</button>
+                    <div>
+                        <div class="drawing-title-row">
+                            <div id="drawing-workspace-badge" class="aiedu-badge bg-purple-500 drawing-mission-logo">자유 그리기</div>
+                            <div id="drawing-workspace-progress" class="drawing-progress-chip hidden"></div>
+                        </div>
+                        <div id="drawing-workspace-title" class="text-3xl font-black text-[#2c3e50] mt-2">그림판</div>
+                        <p id="drawing-workspace-desc" class="text-lg text-gray-500 mt-1">마음껏 그리고 저장해요.</p>
+                    </div>
                 </div>
-                <div class="flex gap-2">
-                    <button class="btn-outline py-2 px-5" onclick="openMyShapeStats()">나의 도형</button>
-                    <button class="btn-outline py-2 px-6" onclick="goDrawingDashboard()">그리기 대시보드로</button>
+                <div class="drawing-header-banner" onclick="toggleInfoDrawer()">
+                    <div class="text-right leading-tight"><div class="sync-account-name text-lg font-black text-[#2c3e50]">학생 이름</div><div class="text-sm font-black text-yellow-500">⭐ <span id="drawing-workspace-coins" class="sync-coins">0</span></div></div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
                 </div>
             </div>
 
@@ -1753,10 +1788,13 @@
                             </div>
                             <div id="drawing-brush-size-label" class="text-sm text-gray-500 font-bold mt-2">2단계</div>
                             <button id="drawing-eraser-btn" class="btn-outline w-full mt-3 py-2 text-sm" onclick="toggleDrawingEraser()">🧽 지우개</button>
+                            <button class="btn-outline w-full mt-3 py-2 text-sm" onclick="openMyShapeStats()">📈 나의 도형</button>
                         </div>
                         <div id="drawing-template-panel" class="korean-embed-card p-4 hidden">
                             <div class="font-black text-[#2c3e50] mb-3">도안 선택</div>
-                            <div id="drawing-template-buttons" class="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto custom-scrollbar pr-1"></div>
+                            <button class="btn-primary bg-purple-500 shadow-purple-200 w-full py-3" onclick="openSketchbookTemplatePicker()">도안 선택</button>
+                            <div id="drawing-template-picked" class="drawing-template-picked mt-3">현재 도안: 자유</div>
+                            <div id="drawing-template-buttons" class="hidden"></div>
                         </div>
                         <div class="grid grid-cols-1 gap-3">
                             <button id="drawing-save-btn" class="btn-primary bg-purple-500 shadow-purple-200" onclick="saveCurrentDrawing()">저장하기</button>
@@ -1765,10 +1803,6 @@
                     </div>
 
                     <div class="korean-embed-card p-3 h-[520px] relative overflow-hidden shadow-inner bg-white">
-                        <div class="absolute top-3 left-3 z-10 pointer-events-auto flex items-center gap-3 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl border-2 border-[#b7e4a1] shadow" onclick="toggleInfoDrawer()">
-                            <div class="sync-user-icon w-10 h-10 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-xl">👤</div>
-                            <div class="text-left leading-tight"><div class="sync-account-name text-sm font-black text-[#2c3e50]">학생 이름</div><div class="text-xs font-black text-yellow-500">⭐ <span class="sync-coins">0</span></div></div>
-                        </div>
                         <button id="drawing-clear-btn" class="canvas-action-btn btn-outline py-2 px-4" onclick="clearDrawingCanvas()">지우기</button>
                         <button id="drawing-complete-mission-btn" class="canvas-action-btn btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden py-3 px-5" onclick="completeTodayDrawingMission()">완료하기</button>
                         <canvas id="drawing-canvas" class="korean-embed-canvas"></canvas>
@@ -5352,11 +5386,15 @@
             drawingActiveTemplate = template;
             drawingActiveTargetTemplate = shapeMissionTemplates.find((item) => item.key === template) || drawingTemplateLibrary.find((item) => item.key === template) || drawingTemplateLibrary[0];
             drawingUserTracePoints = [];
-            document.getElementById('drawing-workspace-badge').innerText = aiQuiz ? 'AI 그림' : (missionStep ? `그림 미션 ${missionStep}단계` : (mode === 'shape-mission' ? '도형 미션' : title));
+            document.getElementById('drawing-workspace-badge').innerText = aiQuiz ? 'AI 그림' : (missionStep ? '그림 미션' : (mode === 'shape-mission' ? '🔷 도형 미션' : title));
             document.getElementById('drawing-workspace-title').innerText = title;
             document.getElementById('drawing-workspace-desc').innerText = desc;
             const progress = document.getElementById('drawing-workspace-progress');
-            if (progress) progress.innerText = mode === 'shape-mission' ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : '');
+            if (progress) {
+                const text = mode === 'shape-mission' ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : '');
+                progress.innerText = text;
+                progress.classList.toggle('hidden', !text);
+            }
             document.getElementById('drawing-template-panel').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
             document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !(missionStep || aiQuiz || mode === 'shape-mission'));
             document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
@@ -5378,9 +5416,7 @@
         window.openCurrentDrawingMission = function() {
             const nextMission = getNextDrawingMission();
             if (!nextMission) {
-                renderMyDrawingSection();
-                showModal('모든 그림 미션을 완료했어요! 나의 그림에서 기록을 볼 수 있어요.');
-                showTopLevelSection('my-drawing-section');
+                showModal('<div class="text-left relative"><button class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-3">모든 그림 미션을 완료했어요!</h3><p class="text-lg font-bold text-gray-600">나의 그림에서 기록을 볼 수 있어요.</p></div>', { hideConfirm: true, hideIcon: true, plainClose: true });
                 return;
             }
             openDrawingMission(nextMission.step);
@@ -5390,8 +5426,8 @@
             const template = getNextShapeMissionTemplate();
             configureDrawingWorkspace({
                 mode: 'shape-mission',
-                title: `도형 미션: ${template.label}`,
-                desc: '도형의 점을 50% 이상 지나가면 에이두 포인트 1점을 받아요. 꾸불선과 직선도 나와요.',
+                title: '도형 미션',
+                desc: '',
                 template: template.key
             });
         }
@@ -5440,21 +5476,30 @@
 
         function renderDrawingTemplateButtons(mode) {
             const root = document.getElementById('drawing-template-buttons');
+            const picked = document.getElementById('drawing-template-picked');
             if (!root) return;
             if (drawingWorkspaceMissionStep || drawingWorkspaceAiQuiz || mode === 'shape-mission') {
                 root.innerHTML = '';
+                if (picked) picked.innerText = '';
+                return;
+            }
+            const current = drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
+            if (picked) picked.innerText = `현재 도안: ${current?.label || '자유'}`;
+            root.innerHTML = '';
+        }
+
+        window.openSketchbookTemplatePicker = function() {
+            if (drawingWorkspaceMissionStep || drawingWorkspaceAiQuiz || drawingWorkspaceMode === 'shape-mission') {
+                showModal('활동 중에는 연습 모양을 바꿀 수 없어요.');
                 return;
             }
             const unlocked = getUnlockedDrawingTemplates();
-            root.innerHTML = drawingTemplateLibrary.map((item) => {
+            const html = drawingTemplateLibrary.map((item) => {
                 const isOpen = unlocked.includes(item.key);
-                const cls = drawingActiveTemplate === item.key ? 'active bg-purple-50 border-purple-300' : '';
-                return `
-                    <button class="btn-outline px-3 py-2 text-sm ${cls} ${isOpen ? '' : 'opacity-40 cursor-not-allowed'}" ${isOpen ? `onclick="selectDrawingTemplate('${item.key}')"` : 'disabled'}>
-                        ${item.label}${isOpen ? '' : ' 🔒'}
-                    </button>
-                `;
+                const cls = drawingActiveTemplate === item.key ? 'bg-purple-50 border-purple-300' : '';
+                return `<button class="btn-outline px-3 py-3 text-sm ${cls} ${isOpen ? '' : 'opacity-40 cursor-not-allowed'}" ${isOpen ? `onclick="selectDrawingTemplate('${item.key}'); closeAiedueKoreanModal();"` : 'disabled'}>${item.label}${isOpen ? '' : ' 🔒'}</button>`;
             }).join('');
+            showModal(`<div class="text-left relative"><button class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">무엇을 그릴까요?</h3><div class="drawing-template-modal-grid custom-scrollbar">${html}</div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
         }
 
         window.selectDrawingTemplate = function(template) {
@@ -5507,7 +5552,10 @@
                 ctx.lineTo(p.x, p.y);
                 ctx.stroke();
                 ctx.restore();
-                if (!drawingEraserMode) rememberPoint(p);
+                if (drawingEraserMode) {
+                    const rect = canvas.getBoundingClientRect();
+                    drawDrawingTemplate(ctx, rect.width, rect.height);
+                } else rememberPoint(p);
                 lastX = p.x;
                 lastY = p.y;
             };
@@ -5560,6 +5608,11 @@
         window.toggleDrawingEraser = function() {
             drawingEraserMode = !drawingEraserMode;
             renderDrawingBrushSizeButtons();
+            const eraserBtn = document.getElementById('drawing-eraser-btn');
+            if (eraserBtn) {
+                eraserBtn.classList.toggle('bg-purple-50', drawingEraserMode);
+                eraserBtn.classList.toggle('active', drawingEraserMode);
+            }
         }
 
         function prepareDrawingCanvas() {
@@ -5873,7 +5926,7 @@
 
         function animateAieduePointStar(points = 1) {
             if (!points) return;
-            const target = document.getElementById('dashboard-coins-header') || document.querySelector('.sync-coins');
+            const target = document.querySelector('#drawing-workspace-section:not(.hidden) .sync-coins') || document.querySelector('#my-drawing-section:not(.hidden) .sync-coins') || document.getElementById('dashboard-coins-header') || document.querySelector('.sync-coins');
             const canvas = document.getElementById('drawing-canvas');
             if (!target || !canvas) return;
             const from = canvas.getBoundingClientRect();
@@ -5888,6 +5941,8 @@
                 star.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(.45) rotate(360deg)`;
                 star.style.opacity = '0';
             });
+            target.classList.add('point-pop');
+            setTimeout(() => target.classList.remove('point-pop'), 620);
             setTimeout(() => star.remove(), 900);
         }
 
@@ -5981,7 +6036,7 @@
                     ${merged.map((item) => `<div class="korean-embed-card p-3 bg-white"><img src="${item.image}" alt="친구 그림" class="w-full h-44 object-contain bg-gray-50 rounded-2xl border"><div class="mt-2 text-sm font-black text-[#2c3e50]">${item.userIcon || '👤'} ${item.userName || '친구'}</div><div class="text-xs text-gray-500 font-bold">${item.templateLabel || drawingTemplates[item.template] || '스케치북'} · 정확도 ${item.accuracy ?? '-'}% · ${(item.savedAt || '').slice(0, 10)}</div></div>`).join('')}
                 </div>
             ` : '<div class="text-center text-gray-500 font-bold py-10">아직 저장된 친구 그림이 없어요.</div>';
-            showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">친구들 그림 구경하기</h3>${body}</div>`);
+            showModal(`<div class="text-left relative"><button class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">친구들 그림 구경하기</h3>${body}</div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
         }
 
 
@@ -9991,7 +10046,9 @@ ${JSON.stringify(targets, null, 2)}
                 document.getElementById('modal-icon')?.classList.remove('hidden');
             }
             if (plainClose) return;
-            if (loginSuccess && !openPendingActivityRoute()) {
+            const startVisible = !document.getElementById('start-screen')?.classList.contains('hidden');
+            const loginVisible = !document.getElementById('login-section')?.classList.contains('hidden');
+            if ((startVisible || loginVisible) && loginSuccess && !openPendingActivityRoute()) {
                 openDashboard();
             }
         }
