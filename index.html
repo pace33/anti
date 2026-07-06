@@ -5295,6 +5295,8 @@
         let drawingUserTracePoints = [];
         let drawingWorkspaceAiQuiz = false;
         let shapeMissionIndex = 0;
+        let aiDrawingQuizIndex = 0;
+        let aiDrawingTargetShape = 'circle';
 
         function ensureDrawingPortfolioShapeFields() {
             drawingPortfolio.missions = drawingPortfolio.missions || {};
@@ -5318,9 +5320,22 @@
             return pick || shapeMissionTemplates[0];
         }
 
-        function getWeakShapeKey() {
+        function getWeakShapeRank(limit = 5) {
+            ensureDrawingPortfolioShapeFields();
             const stats = drawingPortfolio.shapeStats || {};
-            return [...drawingShapeLibrary].sort((a, b) => (stats[a.key]?.accuracy || 0) - (stats[b.key]?.accuracy || 0))[0]?.key || 'circle';
+            return [...drawingShapeLibrary]
+                .map((shape) => ({
+                    ...shape,
+                    accuracy: Number(stats[shape.key]?.accuracy || 0),
+                    attempts: Number(stats[shape.key]?.attempts || 0),
+                    lastAccuracy: Number(stats[shape.key]?.lastAccuracy || 0)
+                }))
+                .sort((a, b) => (a.accuracy - b.accuracy) || (a.attempts - b.attempts) || a.label.localeCompare(b.label, 'ko'))
+                .slice(0, limit);
+        }
+
+        function getWeakShapeKey() {
+            return getWeakShapeRank(1)[0]?.key || 'circle';
         }
 
         function getUnlockedDrawingTemplates() {
@@ -5334,12 +5349,23 @@
         }
 
         function getAiDrawingTemplate() {
-            const weak = getWeakShapeKey();
+            const rankedShapes = getWeakShapeRank(drawingShapeLibrary.length);
+            const zeroAccuracyShapes = rankedShapes.filter((shape) => Number(shape.accuracy || 0) <= 0);
+            const weakShapes = (zeroAccuracyShapes.length ? zeroAccuracyShapes : rankedShapes).slice(0, 5);
+            const weakKeys = new Set(weakShapes.map((shape) => shape.key));
             const unlocked = new Set(getUnlockedDrawingTemplates());
-            const candidates = drawingTemplateLibrary.filter((item) => item.key !== 'blank' && unlocked.has(item.key) && item.shapes?.some((shape) => shape.shape === weak));
-            const fallback = drawingTemplateLibrary.filter((item) => item.key !== 'blank' && unlocked.has(item.key));
-            const pool = candidates.length ? candidates : fallback;
-            return pool[Math.floor(Math.random() * pool.length)] || drawingTemplateLibrary.find((item) => item.key === 'line');
+
+            const drawingCandidates = drawingTemplateLibrary
+                .filter((item) => item.key !== 'blank' && unlocked.has(item.key) && item.shapes?.some((shape) => weakKeys.has(shape.shape)))
+                .map((item) => ({ ...item, aiTargetShape: item.shapes.find((shape) => weakKeys.has(shape.shape))?.shape || weakShapes[0]?.key || 'circle' }));
+            const shapeCandidates = weakShapes.map((shape) => ({
+                ...(shapeMissionTemplates.find((item) => item.key === `shape-${shape.key}`) || shapeMissionTemplates[0]),
+                aiTargetShape: shape.key
+            }));
+            const pool = [...drawingCandidates, ...shapeCandidates].filter(Boolean);
+            const pick = pool[Math.floor(Math.random() * pool.length)] || shapeCandidates[0] || drawingTemplateLibrary.find((item) => item.key === 'line');
+            aiDrawingTargetShape = pick?.aiTargetShape || pick?.shapes?.[0]?.shape || 'circle';
+            return pick;
         }
 
         function updateDrawingDashboardPreview() {
@@ -5399,23 +5425,24 @@
             drawingActiveTargetTemplate = shapeMissionTemplates.find((item) => item.key === template) || drawingTemplateLibrary.find((item) => item.key === template) || drawingTemplateLibrary[0];
             drawingUserTracePoints = [];
             const isShapeMission = mode === 'shape-mission';
+            const isCompactMission = isShapeMission || aiQuiz;
             const badge = document.getElementById('drawing-workspace-badge');
             const backButton = document.getElementById('drawing-workspace-back-btn');
             const workspaceTitle = document.getElementById('drawing-workspace-title');
             const workspaceDesc = document.getElementById('drawing-workspace-desc');
-            badge.innerText = aiQuiz ? 'AI 그림' : (missionStep ? '그림 미션' : (isShapeMission ? '🔷 도형 미션' : title));
-            badge.onclick = isShapeMission ? goDrawingDashboard : null;
-            badge.setAttribute('aria-label', isShapeMission ? '도형 미션 닫고 그리기 대시보드로 돌아가기' : '그리기 활동');
-            badge.classList.toggle('cursor-pointer', isShapeMission);
-            badge.classList.toggle('cursor-default', !isShapeMission);
-            if (backButton) backButton.classList.toggle('hidden', isShapeMission);
+            badge.innerText = aiQuiz ? '🤖 AI 그림' : (missionStep ? '그림 미션' : (isShapeMission ? '🔷 도형 미션' : title));
+            badge.onclick = isCompactMission ? goDrawingDashboard : null;
+            badge.setAttribute('aria-label', isCompactMission ? `${aiQuiz ? 'AI 그림' : '도형 미션'} 닫고 그리기 대시보드로 돌아가기` : '그리기 활동');
+            badge.classList.toggle('cursor-pointer', isCompactMission);
+            badge.classList.toggle('cursor-default', !isCompactMission);
+            if (backButton) backButton.classList.toggle('hidden', isCompactMission);
             workspaceTitle.innerText = title;
             workspaceDesc.innerText = desc;
-            workspaceTitle.classList.toggle('hidden', isShapeMission);
-            workspaceDesc.classList.toggle('hidden', isShapeMission || !desc);
+            workspaceTitle.classList.toggle('hidden', isCompactMission);
+            workspaceDesc.classList.toggle('hidden', isCompactMission || !desc);
             const progress = document.getElementById('drawing-workspace-progress');
             if (progress) {
-                const text = isShapeMission ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : '');
+                const text = isShapeMission ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (aiQuiz ? `AI 그림 ${aiDrawingQuizIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : ''));
                 progress.innerText = text;
                 progress.classList.toggle('hidden', !text);
             }
@@ -5489,10 +5516,11 @@
 
         window.openAiDrawingQuizActivity = function() {
             const template = getAiDrawingTemplate();
+            aiDrawingQuizIndex += 1;
             configureDrawingWorkspace({
                 mode: 'ai-drawing',
-                title: `AI 그림: ${template.label}`,
-                desc: '정확도가 낮은 도형이 들어간 해금 도안이 나와요. 도형 50% 이상은 1점, 도안 50% 이상은 5점을 받아요.',
+                title: 'AI 그림',
+                desc: '',
                 template: template.key,
                 aiQuiz: true
             });
@@ -5986,9 +6014,14 @@
             let rewardPoints = 0;
             let message = '';
             if (drawingWorkspaceAiQuiz) {
-                rewardPoints = result.accuracy >= 50 ? 6 : 0;
-                message = result.accuracy >= 50 ? `AI 그림 정확도 ${result.accuracy}%! 도형 1점 + 도안 5점, 총 6점을 받았어요.` : `AI 그림 정확도 ${result.accuracy}%. 50% 미만이라 포인트는 없어요.`;
+                const targetShapeKey = aiDrawingTargetShape || drawingActiveTargetTemplate?.shapes?.[0]?.shape || Object.keys(result.byShape || {})[0] || 'circle';
+                const targetShapeStat = result.byShape?.[targetShapeKey];
+                const targetShapeAccuracy = targetShapeStat?.instanceCount ? Math.round(Number(targetShapeStat.accuracySum || 0) / targetShapeStat.instanceCount) : 0;
+                const shapeReward = targetShapeAccuracy >= 50 ? 1 : 0;
+                const designReward = result.accuracy >= 50 ? 5 : 0;
+                rewardPoints = shapeReward + designReward;
                 if (rewardPoints > 0) applyAieduePointReward(rewardPoints);
+                message = `AI 그림 정확도 ${result.accuracy}%. ${rewardPoints ? `에이두 포인트 ${rewardPoints}점을 받았어요.` : '50% 미만이라 포인트는 없어요.'}`;
             } else if (drawingWorkspaceMode === 'shape-mission') {
                 rewardPoints = result.accuracy >= 50 ? 1 : 0;
                 if (rewardPoints > 0) {
