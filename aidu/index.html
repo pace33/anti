@@ -1344,7 +1344,7 @@
             </div>
 
             <!-- 하단 고정 버튼 -->
-            <button class="shop-btn" onclick="showModal('상점 기능은 차후 준비 중입니다! ✨')">
+            <button class="shop-btn" onclick="openAiedueKoreanShop()">
                 <span class="text-2xl">🛒</span>
                 <span class="font-bold text-lg">상점</span>
             </button>
@@ -2270,6 +2270,7 @@
             doc,
             getDoc,
             setDoc,
+            addDoc,
             updateDoc,
             deleteDoc,
             collection,
@@ -2277,6 +2278,7 @@
             where,
             getDocs,
             limit as queryLimit,
+            orderBy,
             runTransaction,
             serverTimestamp,
             arrayUnion,
@@ -2374,6 +2376,7 @@
         let currentUserAeduExperience = 0;
         let currentUserAeduLevel = 1;
         let currentUserProfileSnapshot = {};
+        const aiedueKoreanShopItemsCache = new Map();
         let currentUnderstandingStep = 1;
         let currentLearningActivityStep = null;
         let currentLearningDetailSectionIndex = 0;
@@ -4384,6 +4387,203 @@
                 aeduLevel: currentUserAeduLevel,
                 updatedAt: serverTimestamp()
             };
+        }
+
+        function escapeKoreanShopHtml(value = '') {
+            return String(value ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+        }
+
+        function formatAiedueShopCurrency(value = 0) {
+            return `${Math.max(0, Math.floor(asNumber(value, 0))).toLocaleString('ko-KR')}점`;
+        }
+
+        function calculateKoreanShopPrice(item = {}, profile = currentUserProfileSnapshot) {
+            const basePrice = Math.max(0, Math.floor(asNumber(item.price, 0)));
+            const warningTokenCount = Math.max(0, Math.floor(asNumber(profile?.warningTokens, 0)));
+            const multiplier = warningTokenCount > 0 ? Math.min(5, warningTokenCount + 1) : 1;
+            return { basePrice, warningTokenCount, multiplier, adjustedPrice: basePrice * multiplier };
+        }
+
+        async function loadAiedueKoreanAssignedShopItems() {
+            if (!currentUserId) return [];
+            const assignmentsRef = collection(db, `users/${currentUserId}/assignedShopItems`);
+            let assignmentSnapshot;
+            try {
+                assignmentSnapshot = await getDocs(query(assignmentsRef, orderBy('assignedAt', 'desc')));
+            } catch (error) {
+                console.warn('assignedShopItems orderBy query failed, retrying without order', error);
+                assignmentSnapshot = await getDocs(assignmentsRef);
+            }
+            const assignments = assignmentSnapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+            const displayItems = [];
+            for (const assignment of assignments) {
+                let item = null;
+                if (assignment.itemId) {
+                    try {
+                        const itemSnap = await getDoc(doc(db, 'shopItems', assignment.itemId));
+                        if (itemSnap.exists()) item = { id: itemSnap.id, ...itemSnap.data() };
+                    } catch (error) {
+                        console.warn('assigned shop item fetch failed', assignment.itemId, error);
+                    }
+                }
+                if (!item && (assignment.name || assignment.itemName)) {
+                    item = {
+                        id: assignment.itemId || assignment.id,
+                        name: assignment.name || assignment.itemName,
+                        description: assignment.description || '',
+                        price: assignment.price || assignment.basePrice || 0,
+                        imageUrl: assignment.imageUrl || '',
+                        teacherId: assignment.teacherId,
+                        teacherName: assignment.teacherName
+                    };
+                }
+                if (!item) continue;
+                item.teacherId = item.teacherId || assignment.teacherId || currentUserProfileSnapshot.teacherId || null;
+                item.teacherName = item.teacherName || assignment.teacherName || '';
+                displayItems.push({ assignment, item });
+                aiedueKoreanShopItemsCache.set(item.id, item);
+            }
+            return displayItems;
+        }
+
+        function renderAiedueKoreanShopItems(displayItems = []) {
+            if (!displayItems.length) {
+                return `<div class="text-center py-10 text-gray-500 font-bold">아직 선생님이 배부한 상점 물품이 없어요.</div>`;
+            }
+            return `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
+                ${displayItems.map(({ assignment, item }) => {
+                    const pricing = calculateKoreanShopPrice(item);
+                    const assignedAt = assignment.assignedAt && typeof assignment.assignedAt.toDate === 'function'
+                        ? assignment.assignedAt.toDate().toLocaleString('ko-KR')
+                        : '';
+                    const imageHtml = item.imageUrl
+                        ? `<img src="${escapeKoreanShopHtml(item.imageUrl)}" alt="${escapeKoreanShopHtml(item.name || '상점 물품')}" class="w-full h-32 object-cover rounded-2xl mb-3 bg-gray-100" onerror="this.style.display='none'">`
+                        : `<div class="w-full h-32 rounded-2xl mb-3 bg-amber-50 flex items-center justify-center text-5xl">🎁</div>`;
+                    const priceHtml = pricing.warningTokenCount > 0
+                        ? `<div class="text-sm"><div class="line-through text-gray-400">원래 ${formatAiedueShopCurrency(pricing.basePrice)}</div><div class="font-black text-red-500">현재 ${formatAiedueShopCurrency(pricing.adjustedPrice)}</div><div class="text-xs text-gray-500">주의 토큰 ${pricing.warningTokenCount}개로 ${pricing.multiplier}배</div></div>`
+                        : `<div class="font-black text-amber-600">${formatAiedueShopCurrency(pricing.basePrice)}</div>`;
+                    return `<div class="korean-embed-card p-4 bg-white border border-amber-100 rounded-3xl shadow-sm flex flex-col">
+                        ${imageHtml}
+                        <div class="flex-grow">
+                            <div class="text-xl font-black text-[#2c3e50]">${escapeKoreanShopHtml(item.name || '상점 물품')}</div>
+                            <div class="text-xs text-gray-400 mt-1">${escapeKoreanShopHtml(item.teacherName || '선생님')} ${assignedAt ? `· ${escapeKoreanShopHtml(assignedAt)} 배부` : ''}</div>
+                            <div class="text-sm text-gray-600 mt-2 min-h-[2.5rem]">${escapeKoreanShopHtml(item.description || '')}</div>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 mt-4">
+                            ${priceHtml}
+                            <button class="btn-primary px-4 py-2 text-sm" onclick="confirmAiedueKoreanShopPurchase('${escapeKoreanShopHtml(item.id)}')">구매</button>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>`;
+        }
+
+        window.openAiedueKoreanShop = async function() {
+            if (!loginSuccess || !currentUserId) {
+                showModal('먼저 로그인하면 선생님이 배부한 상점을 볼 수 있어요.');
+                return;
+            }
+            showModal('<div class="text-center py-8 font-black text-[#2c3e50]">상점 물품을 불러오는 중이에요...</div>');
+            try {
+                aiedueKoreanShopItemsCache.clear();
+                const displayItems = await loadAiedueKoreanAssignedShopItems();
+                const balance = currentUserBalance || currentUserCoins || 0;
+                const body = `
+                    <div class="text-left">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-2xl font-black text-[#2c3e50]">🛒 에이두 상점</h3>
+                                <p class="text-sm text-gray-500 font-bold">에이두 스쿨 Firebase에서 선생님이 배부한 물품만 보여요.</p>
+                            </div>
+                            <div class="px-4 py-2 rounded-2xl bg-amber-50 text-amber-700 font-black">내 포인트 ${formatAiedueShopCurrency(balance)}</div>
+                        </div>
+                        ${renderAiedueKoreanShopItems(displayItems)}
+                    </div>`;
+                showModal(body);
+            } catch (error) {
+                console.error('Aiedue Korean shop load failed', error);
+                showModal('상점 물품을 불러오지 못했어요. 잠시 후 다시 눌러주세요.');
+            }
+        }
+
+        window.confirmAiedueKoreanShopPurchase = function(itemId) {
+            const item = aiedueKoreanShopItemsCache.get(itemId);
+            if (!item) {
+                showModal('상점 물품 정보를 찾을 수 없어요.');
+                return;
+            }
+            const pricing = calculateKoreanShopPrice(item);
+            showModal(`
+                <div class="text-left">
+                    <h3 class="text-2xl font-black text-[#2c3e50] mb-3">구매할까요?</h3>
+                    <p class="text-gray-700"><strong>${escapeKoreanShopHtml(item.name || '상점 물품')}</strong>을(를) <strong class="text-amber-600">${formatAiedueShopCurrency(pricing.adjustedPrice)}</strong>에 구매합니다.</p>
+                    ${pricing.warningTokenCount > 0 ? `<p class="text-sm text-red-500 mt-2">주의 토큰 ${pricing.warningTokenCount}개 때문에 가격이 ${pricing.multiplier}배예요.</p>` : ''}
+                    <div class="flex justify-end gap-2 mt-6">
+                        <button class="btn-outline px-4 py-2" onclick="handleModalConfirm()">취소</button>
+                        <button class="btn-primary px-4 py-2" onclick="purchaseAiedueKoreanShopItem('${escapeKoreanShopHtml(itemId)}')">구매하기</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        window.purchaseAiedueKoreanShopItem = async function(itemId) {
+            const item = aiedueKoreanShopItemsCache.get(itemId);
+            if (!item || !currentUserId) {
+                showModal('구매 정보를 찾을 수 없어요.');
+                return;
+            }
+            const pricing = calculateKoreanShopPrice(item);
+            const userRef = doc(db, 'users', currentUserId);
+            try {
+                let updatedWallet = null;
+                await runTransaction(db, async (transaction) => {
+                    const userSnap = await transaction.get(userRef);
+                    if (!userSnap.exists()) throw new Error('사용자 정보를 찾을 수 없습니다.');
+                    const userData = userSnap.data() || {};
+                    const balance = asNumber(userData.balance ?? userData.coins ?? userData.aeduTokens, 0);
+                    if (balance < pricing.adjustedPrice) throw new Error('포인트가 부족합니다.');
+                    const coins = asNumber(userData.coins ?? balance, balance);
+                    const aeduTokens = asNumber(userData.aeduTokens ?? balance, balance);
+                    const aeduExperience = asNumber(userData.aeduExperience ?? currentUserAeduExperience, 0);
+                    updatedWallet = {
+                        balance: balance - pricing.adjustedPrice,
+                        coins: Math.max(0, coins - pricing.adjustedPrice),
+                        aeduTokens: Math.max(0, aeduTokens - pricing.adjustedPrice),
+                        aeduExperience,
+                        aeduLevel: asNumber(userData.aeduLevel ?? calculateAiedueLevel(aeduExperience), 1)
+                    };
+                    transaction.update(userRef, { ...updatedWallet, updatedAt: serverTimestamp() });
+                });
+                currentUserBalance = updatedWallet.balance;
+                currentUserCoins = updatedWallet.coins;
+                currentUserAeduTokens = updatedWallet.aeduTokens;
+                currentUserAeduExperience = updatedWallet.aeduExperience;
+                currentUserAeduLevel = updatedWallet.aeduLevel;
+                currentUserProfileSnapshot = { ...currentUserProfileSnapshot, ...updatedWallet };
+                updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
+                document.getElementById('dashboard-coins').innerText = currentUserCoins;
+                document.getElementById('dashboard-coins-header').innerText = currentUserCoins;
+                const teacherId = item.teacherId || currentUserProfileSnapshot.teacherId || null;
+                await addDoc(collection(db, 'purchaseLog'), {
+                    studentId: currentUserId,
+                    studentName: currentUserName,
+                    userCode: currentUserProfileSnapshot.userCode || null,
+                    itemId,
+                    itemName: item.name || '상점 물품',
+                    price: pricing.adjustedPrice,
+                    basePrice: pricing.basePrice,
+                    warningTokenCount: pricing.warningTokenCount,
+                    priceMultiplier: pricing.multiplier,
+                    teacherId,
+                    teacherName: item.teacherName || '',
+                    source: 'aiedue-korean',
+                    purchasedAt: serverTimestamp()
+                });
+                showModal(`${escapeKoreanShopHtml(item.name || '상점 물품')} 구매가 완료됐어요!`);
+            } catch (error) {
+                console.error('Aiedue Korean shop purchase failed', error);
+                showModal(`구매 실패: ${escapeKoreanShopHtml(error.message || '알 수 없는 오류')}`);
+            }
         }
 
         function updateSyncedActivityHeaders({ name, coins, icon } = {}) {
