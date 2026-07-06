@@ -74,6 +74,53 @@
         @keyframes activityLoadingSpin {
             to { transform: rotate(360deg); }
         }
+        .korean-shop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+        @media (max-width: 900px) { .korean-shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 640px) { .korean-shop-grid { grid-template-columns: 1fr; } }
+        .aiedue-toast {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 6000;
+            background: rgba(255,255,255,.96);
+            border: 4px solid #fde68a;
+            border-radius: 32px;
+            padding: 26px 36px;
+            box-shadow: 0 25px 80px rgba(44,62,80,.22);
+            text-align: center;
+            pointer-events: none;
+            animation: aiedueToastPop 1.25s ease forwards;
+        }
+        .aiedue-toast-title { font-size: 2.35rem; font-weight: 900; color: #2c3e50; }
+        .aiedue-toast-sub { margin-top: 6px; font-size: 1rem; font-weight: 900; color: #8b5cf6; }
+        @keyframes aiedueToastPop {
+            0% { opacity: 0; transform: translate(-50%, -45%) scale(.9); }
+            15%, 78% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -56%) scale(.96); }
+        }
+        .flying-aiedue-star {
+            position: fixed;
+            z-index: 6500;
+            font-size: 2.5rem;
+            pointer-events: none;
+            transition: transform .82s cubic-bezier(.2,.85,.2,1), opacity .82s ease;
+            filter: drop-shadow(0 10px 18px rgba(251,191,36,.45));
+        }
+        .canvas-action-btn {
+            position: absolute;
+            z-index: 8;
+            min-width: 96px;
+        }
+        #drawing-clear-btn { top: 14px; right: 14px; }
+        #drawing-complete-mission-btn { right: 14px; bottom: 14px; }
 
         /* Component-specific overrides or small tweaks */
         #password-display {
@@ -1206,7 +1253,10 @@
 
                         <div class="border-t pt-6 text-center">
                             <p class="text-gray-400 text-sm mb-3">새로 가입해야 하나요?</p>
-                            <button onclick="openStudentSignupModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-8 py-2 rounded-full font-bold transition-all shadow-sm">회원가입</button>
+                            <div class="flex justify-center gap-2 flex-wrap">
+                                <button onclick="openStudentSignupModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-8 py-2 rounded-full font-bold transition-all shadow-sm">회원가입</button>
+                                <button onclick="testLoginStudent()" class="bg-[#55b346] hover:bg-[#45963a] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">학생 테스트</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1220,7 +1270,7 @@
                             <input type="email" id="teacher-email" placeholder="이메일 주소" class="premium-input w-full">
                             <input type="password" id="teacher-pw" placeholder="비밀번호" class="premium-input w-full">
                             <button class="btn-primary w-full py-5 text-xl font-bold mt-4" onclick="checkTeacherLogin()">로그인 하기</button>
-                            <div class="divider my-8 text-gray-300 text-sm font-medium">또는</div>
+                            <div class="divider my-8 text-gray-300 text-sm font-medium text-center w-full">또는</div>
                             <button onclick="checkTeacherGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-100 py-4 rounded-3xl font-bold hover:bg-gray-50 transition-all shadow-sm">
                                 <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" width="24">
                                 구글로 로그인
@@ -1228,23 +1278,15 @@
                         </div>
                         <div class="border-t pt-8 mt-8 text-center">
                             <p class="text-gray-400 text-sm mb-3">새로 오셨나요?</p>
-                            <button onclick="openTeacherSignupModal()" class="bg-[#f4faf0] hover:bg-[#e6f2e0] text-[#45963a] px-8 py-2 rounded-full font-bold transition-all shadow-sm">선생님 회원가입</button>
+                            <div class="flex justify-center gap-2 flex-wrap">
+                                <button onclick="openTeacherSignupModal()" class="bg-[#f4faf0] hover:bg-[#e6f2e0] text-[#45963a] px-8 py-2 rounded-full font-bold transition-all shadow-sm">선생님 회원가입</button>
+                                <button onclick="testLoginTeacher()" class="bg-[#2c3e50] hover:bg-[#1a252f] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">교사 테스트</button>
+                            </div>
                         </div>
                     </div> <!-- teacher-login-view 끝 -->
                     </div> <!-- login-card 끝 -->
                 </div> <!-- relative 끝 -->
             </div> <!-- flex 컨테이너 끝 -->
-
-            <!-- 테스트 로그인 패널 (오른쪽 아래) -->
-            <div class="absolute bottom-6 right-6 flex gap-3 z-50 bg-white/80 backdrop-blur-md border-4 border-[#b7e4a1] p-4 rounded-3xl shadow-xl items-center">
-                <span class="text-sm font-black text-[#2c3e50] ml-1 mr-1">🛠️ 테스트 로그인:</span>
-                <button class="bg-[#55b346] hover:bg-[#45963a] text-white px-5 py-2.5 rounded-2xl font-black text-sm transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5 border-none cursor-pointer" onclick="testLoginStudent()">
-                    <span>👦 학생 테스트</span>
-                </button>
-                <button class="bg-[#2c3e50] hover:bg-[#1a252f] text-white px-5 py-2.5 rounded-2xl font-black text-sm transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5 border-none cursor-pointer" onclick="testLoginTeacher()">
-                    <span>👩‍🏫 교사 테스트</span>
-                </button>
-            </div>
         </div> <!-- login-section 끝 -->
 
         <!-- [3. 갤럭시 대시보드 섹션] -->
@@ -1686,6 +1728,7 @@
                     <div id="drawing-workspace-badge" class="aiedu-badge bg-purple-500 mb-3">자유 그리기</div>
                     <div id="drawing-workspace-title" class="text-3xl font-black text-[#2c3e50]">그림판</div>
                     <p id="drawing-workspace-desc" class="text-lg text-gray-500 mt-1">마음껏 그리고 저장해요.</p>
+                    <p id="drawing-workspace-progress" class="text-sm font-black text-purple-500 mt-2"></p>
                 </div>
                 <div class="flex gap-2">
                     <button class="btn-outline py-2 px-5" onclick="openMyShapeStats()">나의 도형</button>
@@ -1709,6 +1752,7 @@
                                 <button class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(4)">4</button>
                             </div>
                             <div id="drawing-brush-size-label" class="text-sm text-gray-500 font-bold mt-2">2단계</div>
+                            <button id="drawing-eraser-btn" class="btn-outline w-full mt-3 py-2 text-sm" onclick="toggleDrawingEraser()">🧽 지우개</button>
                         </div>
                         <div id="drawing-template-panel" class="korean-embed-card p-4 hidden">
                             <div class="font-black text-[#2c3e50] mb-3">도안 선택</div>
@@ -1717,12 +1761,16 @@
                         <div class="grid grid-cols-1 gap-3">
                             <button id="drawing-save-btn" class="btn-primary bg-purple-500 shadow-purple-200" onclick="saveCurrentDrawing()">저장하기</button>
                             <button id="drawing-friends-btn" class="btn-outline" onclick="openFriendsDrawingGallery()">친구들 그림 보기</button>
-                            <button id="drawing-complete-mission-btn" class="btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden" onclick="completeTodayDrawingMission()">미션 완료</button>
-                            <button class="btn-outline" onclick="clearDrawingCanvas()">지우기</button>
                         </div>
                     </div>
 
                     <div class="korean-embed-card p-3 h-[520px] relative overflow-hidden shadow-inner bg-white">
+                        <div class="absolute top-3 left-3 z-10 pointer-events-auto flex items-center gap-3 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl border-2 border-[#b7e4a1] shadow" onclick="toggleInfoDrawer()">
+                            <div class="sync-user-icon w-10 h-10 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-xl">👤</div>
+                            <div class="text-left leading-tight"><div class="sync-account-name text-sm font-black text-[#2c3e50]">학생 이름</div><div class="text-xs font-black text-yellow-500">⭐ <span class="sync-coins">0</span></div></div>
+                        </div>
+                        <button id="drawing-clear-btn" class="canvas-action-btn btn-outline py-2 px-4" onclick="clearDrawingCanvas()">지우기</button>
+                        <button id="drawing-complete-mission-btn" class="canvas-action-btn btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden py-3 px-5" onclick="completeTodayDrawingMission()">완료하기</button>
                         <canvas id="drawing-canvas" class="korean-embed-canvas"></canvas>
                     </div>
                 </div>
@@ -2172,7 +2220,7 @@
     <!-- 결과 모달 -->
     <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1000] p-4">
         <div class="modal-content text-center max-w-5xl w-full scale-in">
-            <div class="text-5xl mb-6">📢</div>
+            <div id="modal-icon" class="text-5xl mb-6">📢</div>
             <h2 id="modal-message" class="text-2xl font-bold text-[#2c3e50] mb-10 leading-relaxed">메시지</h2>
             <button id="modal-confirm-btn" class="btn-primary w-full text-xl py-4" onclick="handleModalConfirm()">확인했습니다</button>
         </div>
@@ -2264,7 +2312,7 @@
             GoogleAuthProvider,
             signInWithPopup
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { firebaseConfig } from "./firebase-config.js";
+        import { firebaseConfig } from "../firebase-config.js";
         import {
             getFirestore,
             doc,
@@ -2274,6 +2322,7 @@
             updateDoc,
             deleteDoc,
             collection,
+            collectionGroup,
             query,
             where,
             getDocs,
@@ -4446,28 +4495,43 @@
             return displayItems;
         }
 
+        function showKoreanShopModal(body) {
+            const modal = document.getElementById('result-modal');
+            modal.dataset.plainClose = 'true';
+            showModal(`<div class="text-left relative"><button class="absolute -top-2 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()">×</button>${body}</div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
+        }
+
+        window.closeAiedueKoreanModal = function() {
+            const modal = document.getElementById('result-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+                modal.dataset.plainClose = '';
+            }
+        }
+
         function renderAiedueKoreanShopItems(displayItems = []) {
             if (!displayItems.length) {
                 return `<div class="text-center py-10 text-gray-500 font-bold">아직 선생님이 배부한 상점 물품이 없어요.</div>`;
             }
-            return `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
+            return `<div class="korean-shop-grid custom-scrollbar">
                 ${displayItems.map(({ assignment, item }) => {
                     const pricing = calculateKoreanShopPrice(item);
                     const assignedAt = assignment.assignedAt && typeof assignment.assignedAt.toDate === 'function'
                         ? assignment.assignedAt.toDate().toLocaleString('ko-KR')
                         : '';
                     const imageHtml = item.imageUrl
-                        ? `<img src="${escapeKoreanShopHtml(item.imageUrl)}" alt="${escapeKoreanShopHtml(item.name || '상점 물품')}" class="w-full h-32 object-cover rounded-2xl mb-3 bg-gray-100" onerror="this.style.display='none'">`
-                        : `<div class="w-full h-32 rounded-2xl mb-3 bg-amber-50 flex items-center justify-center text-5xl">🎁</div>`;
+                        ? `<img src="${escapeKoreanShopHtml(item.imageUrl)}" alt="${escapeKoreanShopHtml(item.name || '상점 물품')}" class="w-full h-28 object-cover rounded-2xl mb-3 bg-gray-100" onerror="this.style.display='none'">`
+                        : `<div class="w-full h-28 rounded-2xl mb-3 bg-amber-50 flex items-center justify-center text-5xl">🎁</div>`;
                     const priceHtml = pricing.warningTokenCount > 0
                         ? `<div class="text-sm"><div class="line-through text-gray-400">원래 ${formatAiedueShopCurrency(pricing.basePrice)}</div><div class="font-black text-red-500">현재 ${formatAiedueShopCurrency(pricing.adjustedPrice)}</div><div class="text-xs text-gray-500">주의 토큰 ${pricing.warningTokenCount}개로 ${pricing.multiplier}배</div></div>`
                         : `<div class="font-black text-amber-600">${formatAiedueShopCurrency(pricing.basePrice)}</div>`;
                     return `<div class="korean-embed-card p-4 bg-white border border-amber-100 rounded-3xl shadow-sm flex flex-col">
                         ${imageHtml}
                         <div class="flex-grow">
-                            <div class="text-xl font-black text-[#2c3e50]">${escapeKoreanShopHtml(item.name || '상점 물품')}</div>
+                            <div class="text-lg font-black text-[#2c3e50]">${escapeKoreanShopHtml(item.name || '상점 물품')}</div>
                             <div class="text-xs text-gray-400 mt-1">${escapeKoreanShopHtml(item.teacherName || '선생님')} ${assignedAt ? `· ${escapeKoreanShopHtml(assignedAt)} 배부` : ''}</div>
-                            <div class="text-sm text-gray-600 mt-2 min-h-[2.5rem]">${escapeKoreanShopHtml(item.description || '')}</div>
+                            <div class="text-sm text-gray-600 mt-2 min-h-[2.25rem]">${escapeKoreanShopHtml(item.description || '')}</div>
                         </div>
                         <div class="flex items-center justify-between gap-3 mt-4">
                             ${priceHtml}
@@ -4478,32 +4542,177 @@
             </div>`;
         }
 
+        async function getAiedueKoreanClassStudents() {
+            const students = new Map();
+            try {
+                const classSnap = await getDoc(doc(db, 'classes', currentUserId));
+                const ids = classSnap.exists() && Array.isArray(classSnap.data().students) ? classSnap.data().students : [];
+                const snaps = await Promise.all(ids.map((sid) => getDoc(doc(db, 'users', sid)).catch(() => null)));
+                snaps.forEach((snap) => { if (snap?.exists()) students.set(snap.id, { id: snap.id, ...snap.data() }); });
+            } catch (error) { console.warn('class students fetch failed', error); }
+            try {
+                const teacherSnap = await getDocs(query(collection(db, 'users'), where('teacherId', '==', currentUserId)));
+                teacherSnap.docs.forEach((snap) => {
+                    const data = snap.data() || {};
+                    if ((data.role || 'student') === 'student') students.set(snap.id, { id: snap.id, ...data });
+                });
+            } catch (error) { console.warn('teacherId students fetch failed', error); }
+            return Array.from(students.values()).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
+        }
+
+        async function loadAiedueKoreanTeacherShopItems() {
+            let snap;
+            try {
+                snap = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', currentUserId), orderBy('createdAt', 'desc')));
+            } catch (error) {
+                snap = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', currentUserId)));
+            }
+            const items = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+            aiedueKoreanShopItemsCache.clear();
+            items.forEach((item) => aiedueKoreanShopItemsCache.set(item.id, item));
+            return items;
+        }
+
+        function renderAiedueKoreanTeacherShop(items = []) {
+            const rows = items.length ? items.map((item) => `
+                <div class="korean-embed-card p-4 bg-white rounded-3xl border flex flex-col md:flex-row md:items-center gap-3">
+                    <div class="flex-1"><div class="text-lg font-black text-[#2c3e50]">${escapeKoreanShopHtml(item.name || '상점 물품')}</div><div class="text-sm text-gray-500">${escapeKoreanShopHtml(item.description || '')}</div><div class="text-amber-600 font-black mt-1">${formatAiedueShopCurrency(item.price)}</div></div>
+                    <div class="flex gap-2 flex-wrap justify-end">
+                        <button class="btn-primary px-3 py-2 text-sm" onclick="openAiedueKoreanDistributeShopItem('${item.id}')">항목별 배부</button>
+                        <button class="btn-outline px-3 py-2 text-sm" onclick="editAiedueKoreanShopItem('${item.id}')">수정</button>
+                        <button class="btn-outline px-3 py-2 text-sm text-red-500" onclick="deleteAiedueKoreanShopItem('${item.id}')">삭제</button>
+                    </div>
+                </div>`).join('') : '<div class="text-center py-10 text-gray-500 font-bold">등록한 상점 물품이 없어요. 추가 버튼으로 만들어보세요.</div>';
+            return `<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 pr-10"><div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 교사 상점 관리</h3><p class="text-sm text-gray-500 font-bold">에이두 스쿨과 같은 shopItems / assignedShopItems를 관리해요.</p></div><div class="flex gap-2 flex-wrap"><button class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">추가</button><button class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">내 학급 전체 배부</button></div></div><div class="space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div>`;
+        }
+
+        async function openAiedueKoreanTeacherShop() {
+            showKoreanShopModal('<div class="text-center py-8 font-black text-[#2c3e50]">교사 상점을 불러오는 중이에요...</div>');
+            try {
+                const items = await loadAiedueKoreanTeacherShopItems();
+                showKoreanShopModal(renderAiedueKoreanTeacherShop(items));
+            } catch (error) {
+                console.error('teacher shop load failed', error);
+                showModal('교사 상점 정보를 불러오지 못했어요.');
+            }
+        }
+
         window.openAiedueKoreanShop = async function() {
             if (!loginSuccess || !currentUserId) {
-                showModal('먼저 로그인하면 선생님이 배부한 상점을 볼 수 있어요.');
+                showModal('먼저 로그인하면 상점을 볼 수 있어요.');
                 return;
             }
-            showModal('<div class="text-center py-8 font-black text-[#2c3e50]">상점 물품을 불러오는 중이에요...</div>');
+            if (currentUserRole === 'teacher') {
+                await openAiedueKoreanTeacherShop();
+                return;
+            }
+            showKoreanShopModal('<div class="text-center py-8 font-black text-[#2c3e50]">상점 물품을 불러오는 중이에요...</div>');
             try {
                 aiedueKoreanShopItemsCache.clear();
                 const displayItems = await loadAiedueKoreanAssignedShopItems();
                 const balance = currentUserBalance || currentUserCoins || 0;
-                const body = `
-                    <div class="text-left">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
-                            <div>
-                                <h3 class="text-2xl font-black text-[#2c3e50]">🛒 에이두 상점</h3>
-                                <p class="text-sm text-gray-500 font-bold">에이두 스쿨 Firebase에서 선생님이 배부한 물품만 보여요.</p>
-                            </div>
-                            <div class="px-4 py-2 rounded-2xl bg-amber-50 text-amber-700 font-black">내 포인트 ${formatAiedueShopCurrency(balance)}</div>
-                        </div>
-                        ${renderAiedueKoreanShopItems(displayItems)}
-                    </div>`;
-                showModal(body);
+                showKoreanShopModal(`
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 pr-10">
+                        <h3 class="text-2xl font-black text-[#2c3e50]">🛒 에이두 상점</h3>
+                        <div class="px-4 py-2 rounded-2xl bg-amber-50 text-amber-700 font-black">내 포인트 ${formatAiedueShopCurrency(balance)}</div>
+                    </div>
+                    ${renderAiedueKoreanShopItems(displayItems)}
+                `);
             } catch (error) {
                 console.error('Aiedue Korean shop load failed', error);
                 showModal('상점 물품을 불러오지 못했어요. 잠시 후 다시 눌러주세요.');
             }
+        }
+
+        window.openAiedueKoreanShopItemEditor = function(itemId = '') {
+            const item = itemId ? aiedueKoreanShopItemsCache.get(itemId) : {};
+            showKoreanShopModal(`
+                <div class="pr-10"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">${itemId ? '상점 물품 수정' : '상점 물품 추가'}</h3>
+                <div class="space-y-3">
+                    <input id="korean-shop-edit-name" class="premium-input bg-white" placeholder="물품 이름" value="${escapeKoreanShopHtml(item?.name || '')}">
+                    <input id="korean-shop-edit-price" type="number" min="0" class="premium-input bg-white" placeholder="가격" value="${Number(item?.price || 0)}">
+                    <input id="korean-shop-edit-image" class="premium-input bg-white" placeholder="이미지 URL" value="${escapeKoreanShopHtml(item?.imageUrl || '')}">
+                    <textarea id="korean-shop-edit-desc" class="premium-input bg-white min-h-[110px]" placeholder="설명">${escapeKoreanShopHtml(item?.description || '')}</textarea>
+                    <button class="btn-primary w-full py-3" onclick="saveAiedueKoreanShopItem('${itemId}')">저장</button>
+                </div></div>`);
+        }
+
+        window.editAiedueKoreanShopItem = function(itemId) { openAiedueKoreanShopItemEditor(itemId); }
+
+        window.saveAiedueKoreanShopItem = async function(itemId = '') {
+            const payload = {
+                name: document.getElementById('korean-shop-edit-name')?.value.trim() || '상점 물품',
+                price: Math.max(0, Math.floor(Number(document.getElementById('korean-shop-edit-price')?.value || 0))),
+                imageUrl: document.getElementById('korean-shop-edit-image')?.value.trim() || '',
+                description: document.getElementById('korean-shop-edit-desc')?.value.trim() || '',
+                teacherId: currentUserId,
+                teacherName: currentUserName || currentUserProfileSnapshot.userName || '선생님',
+                updatedAt: serverTimestamp()
+            };
+            try {
+                if (itemId) await setDoc(doc(db, 'shopItems', itemId), payload, { merge: true });
+                else await addDoc(collection(db, 'shopItems'), { ...payload, createdAt: serverTimestamp() });
+                await openAiedueKoreanTeacherShop();
+            } catch (error) { console.error('shop item save failed', error); showModal('상점 물품 저장에 실패했어요.'); }
+        }
+
+        window.deleteAiedueKoreanShopItem = async function(itemId) {
+            if (!confirm('이 상점 물품을 삭제할까요?')) return;
+            try {
+                await deleteDoc(doc(db, 'shopItems', itemId));
+                try {
+                    const assignmentsSnap = await getDocs(query(collectionGroup(db, 'assignedShopItems'), where('itemId', '==', itemId)));
+                    await Promise.allSettled(assignmentsSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
+                } catch (cleanupError) {
+                    console.warn('assigned shop item cleanup failed', cleanupError);
+                }
+                await openAiedueKoreanTeacherShop();
+            }
+            catch (error) { console.error('shop item delete failed', error); showModal('상점 물품 삭제에 실패했어요.'); }
+        }
+
+        async function assignAiedueKoreanShopItemToStudent(item, student) {
+            await setDoc(doc(db, `users/${student.id}/assignedShopItems`, item.id), {
+                itemId: item.id,
+                itemName: item.name || '상점 물품',
+                name: item.name || '상점 물품',
+                description: item.description || '',
+                price: Number(item.price || 0),
+                imageUrl: item.imageUrl || '',
+                teacherId: currentUserId,
+                teacherName: currentUserName || '선생님',
+                assignedAt: serverTimestamp()
+            }, { merge: true });
+        }
+
+        window.openAiedueKoreanDistributeShopItem = async function(itemId) {
+            const item = aiedueKoreanShopItemsCache.get(itemId);
+            if (!item) return;
+            const students = await getAiedueKoreanClassStudents();
+            const list = students.length ? students.map((st) => `<label class="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50"><span class="font-bold">${escapeKoreanShopHtml(st.name || '학생')} <span class="text-xs text-gray-400">${escapeKoreanShopHtml(st.userCode || '')}</span></span><input type="checkbox" class="korean-shop-student-check" value="${st.id}"></label>`).join('') : '<p class="text-center text-gray-500 py-6">학급 학생이 없어요.</p>';
+            showKoreanShopModal(`<div class="pr-10"><h3 class="text-2xl font-black text-[#2c3e50] mb-2">학생별 배부</h3><p class="font-bold text-amber-600 mb-4">${escapeKoreanShopHtml(item.name || '상점 물품')}</p><div class="max-h-[55vh] overflow-y-auto custom-scrollbar border rounded-3xl p-3">${list}</div><button class="btn-primary w-full mt-4 py-3" onclick="confirmAiedueKoreanDistributeShopItem('${itemId}')">선택 학생에게 배부</button></div>`);
+        }
+
+        window.confirmAiedueKoreanDistributeShopItem = async function(itemId) {
+            const item = aiedueKoreanShopItemsCache.get(itemId);
+            const ids = Array.from(document.querySelectorAll('.korean-shop-student-check:checked')).map((el) => el.value);
+            if (!item || !ids.length) { showModal('배부할 학생을 선택해주세요.'); return; }
+            const students = (await getAiedueKoreanClassStudents()).filter((st) => ids.includes(st.id));
+            try { await Promise.all(students.map((st) => assignAiedueKoreanShopItemToStudent(item, st))); showModal(`${students.length}명에게 배부했어요.`); }
+            catch (error) { console.error('distribute failed', error); showModal('배부에 실패했어요.'); }
+        }
+
+        window.distributeAllAiedueKoreanShopItems = async function() {
+            const items = Array.from(aiedueKoreanShopItemsCache.values());
+            const students = await getAiedueKoreanClassStudents();
+            if (!items.length || !students.length) { showModal('배부할 물품이나 학생이 없어요.'); return; }
+            if (!confirm(`내 학급 ${students.length}명에게 상점 물품 ${items.length}개를 모두 배부할까요?`)) return;
+            try {
+                const jobs = [];
+                items.forEach((item) => students.forEach((st) => jobs.push(assignAiedueKoreanShopItemToStudent(item, st))));
+                await Promise.all(jobs);
+                showModal(`내 학급 전체에 ${items.length}개 상점 물품을 배부했어요.`);
+            } catch (error) { console.error('bulk distribute failed', error); showModal('전체 배부에 실패했어요.'); }
         }
 
         window.confirmAiedueKoreanShopPurchase = function(itemId) {
@@ -5032,6 +5241,7 @@
         const drawingColors = ['#111827', '#ef4444', '#f97316', '#facc15', '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff'];
         const drawingBrushSizeMap = { 1: 4, 2: 9, 3: 16, 4: 26 };
         let drawingBrushColor = drawingColors[0];
+        let drawingEraserMode = false;
         let drawingBrushLevel = 2;
         let drawingBrushSize = drawingBrushSizeMap[drawingBrushLevel];
         let drawingActiveTemplate = 'blank';
@@ -5145,9 +5355,12 @@
             document.getElementById('drawing-workspace-badge').innerText = aiQuiz ? 'AI 그림' : (missionStep ? `그림 미션 ${missionStep}단계` : (mode === 'shape-mission' ? '도형 미션' : title));
             document.getElementById('drawing-workspace-title').innerText = title;
             document.getElementById('drawing-workspace-desc').innerText = desc;
+            const progress = document.getElementById('drawing-workspace-progress');
+            if (progress) progress.innerText = mode === 'shape-mission' ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : '');
             document.getElementById('drawing-template-panel').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
             document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !(missionStep || aiQuiz || mode === 'shape-mission'));
             document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
+            document.getElementById('drawing-save-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
             updateDrawingCompleteButtonCooldown();
             showTopLevelSection('drawing-workspace-section');
             requestAnimationFrame(() => {
@@ -5284,14 +5497,17 @@
                 ev.preventDefault();
                 const p = point(ev);
                 ctx.beginPath();
-                ctx.strokeStyle = drawingBrushColor;
-                ctx.lineWidth = drawingBrushSize;
+                ctx.save();
+                ctx.globalCompositeOperation = drawingEraserMode ? 'destination-out' : 'source-over';
+                ctx.strokeStyle = drawingEraserMode ? 'rgba(0,0,0,1)' : drawingBrushColor;
+                ctx.lineWidth = drawingEraserMode ? Math.max(14, drawingBrushSize * 1.15) : drawingBrushSize;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 ctx.moveTo(lastX, lastY);
                 ctx.lineTo(p.x, p.y);
                 ctx.stroke();
-                rememberPoint(p);
+                ctx.restore();
+                if (!drawingEraserMode) rememberPoint(p);
                 lastX = p.x;
                 lastY = p.y;
             };
@@ -5329,10 +5545,21 @@
         }
 
         window.selectDrawingColor = function(color) {
+            drawingEraserMode = false;
             drawingBrushColor = color;
             document.querySelectorAll('.drawing-color-swatch').forEach((btn) => {
                 btn.classList.toggle('active', btn.style.backgroundColor === color || btn.getAttribute('style')?.includes(color));
             });
+            const eraserBtn = document.getElementById('drawing-eraser-btn');
+            if (eraserBtn) {
+                eraserBtn.classList.toggle('bg-purple-50', drawingEraserMode);
+                eraserBtn.classList.toggle('active', drawingEraserMode);
+            }
+        }
+
+        window.toggleDrawingEraser = function() {
+            drawingEraserMode = !drawingEraserMode;
+            renderDrawingBrushSizeButtons();
         }
 
         function prepareDrawingCanvas() {
@@ -5636,6 +5863,34 @@
             showModal(drawingWorkspaceMissionStep ? '현재 그림 미션 작품을 저장했어요. 계속 그릴 수 있어요!' : '그림을 저장했어요!');
         }
 
+        function showAiedueAutoToast(title, sub = '', duration = 1250) {
+            const toast = document.createElement('div');
+            toast.className = 'aiedue-toast';
+            toast.innerHTML = `<div class="aiedue-toast-title">${escapeKoreanShopHtml(title)}</div>${sub ? `<div class="aiedue-toast-sub">${escapeKoreanShopHtml(sub)}</div>` : ''}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), duration + 120);
+        }
+
+        function animateAieduePointStar(points = 1) {
+            if (!points) return;
+            const target = document.getElementById('dashboard-coins-header') || document.querySelector('.sync-coins');
+            const canvas = document.getElementById('drawing-canvas');
+            if (!target || !canvas) return;
+            const from = canvas.getBoundingClientRect();
+            const to = target.getBoundingClientRect();
+            const star = document.createElement('div');
+            star.className = 'flying-aiedue-star';
+            star.textContent = '⭐';
+            star.style.left = `${from.left + from.width / 2}px`;
+            star.style.top = `${from.top + from.height / 2}px`;
+            document.body.appendChild(star);
+            requestAnimationFrame(() => {
+                star.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(.45) rotate(360deg)`;
+                star.style.opacity = '0';
+            });
+            setTimeout(() => star.remove(), 900);
+        }
+
         window.completeTodayDrawingMission = async function() {
             ensureDrawingPortfolioShapeFields();
             if (Date.now() < Number(drawingPortfolio.unpaidCooldownUntil || 0)) {
@@ -5705,9 +5960,14 @@
             updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
             updateDrawingDashboardPreview();
             updateDrawingCompleteButtonCooldown();
-            showModal(message);
-            if (drawingWorkspaceMode === 'shape-mission') setTimeout(openTodayDrawingActivity, 500);
-            if (drawingWorkspaceAiQuiz) setTimeout(openAiDrawingQuizActivity, 500);
+            animateAieduePointStar(rewardPoints);
+            showAiedueAutoToast('잘했어요!!', `정확도 ${result.accuracy}%${rewardPoints ? ` · +${rewardPoints}점` : ''}`);
+            if (drawingWorkspaceMode === 'shape-mission') setTimeout(openTodayDrawingActivity, 950);
+            else if (drawingWorkspaceAiQuiz) setTimeout(openAiDrawingQuizActivity, 950);
+            else if (drawingWorkspaceMissionStep) {
+                const nextMission = getNextDrawingMission();
+                if (nextMission) setTimeout(() => openDrawingMission(nextMission.step), 950);
+            }
         }
 
         window.openFriendsDrawingGallery = async function() {
@@ -9481,11 +9741,14 @@ ${JSON.stringify(targets, null, 2)}
         window.handleLogout = async function handleLogout() {
             try {
                 await signOut(auth);
+                document.getElementById('info-drawer')?.classList.remove('open');
+                document.getElementById('drawer-overlay')?.classList.remove('open', 'visible');
+                document.getElementById('teacher-manage-btn')?.classList.add('hidden');
                 showTopLevelSection('login-section');
                 document.getElementById('main-container').style.maxWidth = '1000px';
                 inputPassword = '';
                 document.getElementById('password-display').innerText = '';
-                showModal('로그아웃 되었어요. 다시 로그인해주세요.');
+                switchLoginView('student');
             } catch (error) {
                 console.error('Logout error:', error);
                 showModal('로그아웃 중 오류가 발생했어요.');
@@ -9704,19 +9967,30 @@ ${JSON.stringify(targets, null, 2)}
             }
         }
 
-        window.showModal = function showModal(msg) {
-            document.getElementById('modal-message').innerHTML = msg;
+        window.showModal = function showModal(msg, options = {}) {
+            const message = document.getElementById('modal-message');
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            const icon = document.getElementById('modal-icon');
+            message.innerHTML = msg;
             const modal = document.getElementById('result-modal');
+            modal.dataset.plainClose = options.plainClose ? 'true' : '';
+            confirmBtn.classList.toggle('hidden', Boolean(options.hideConfirm));
+            icon?.classList.toggle('hidden', Boolean(options.hideIcon));
             modal.classList.remove('hidden');
             modal.style.display = 'flex';
         }
 
         window.handleModalConfirm = function handleModalConfirm() {
             const modal = document.getElementById('result-modal');
+            const plainClose = modal?.dataset?.plainClose === 'true';
             if (modal) {
                 modal.classList.add('hidden');
                 modal.style.display = 'none';
+                modal.dataset.plainClose = '';
+                document.getElementById('modal-confirm-btn')?.classList.remove('hidden');
+                document.getElementById('modal-icon')?.classList.remove('hidden');
             }
+            if (plainClose) return;
             if (loginSuccess && !openPendingActivityRoute()) {
                 openDashboard();
             }
