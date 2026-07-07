@@ -2296,8 +2296,8 @@
                     <div class="trace-canvas-wrap mt-8">
                         <div class="trace-canvas-title">✍️ 문장 따라쓰기</div>
                         <p id="letter-sentence-output" class="embedded-practice-output sentence"></p>
-                        <canvas id="letter-sentence-writing-canvas" class="trace-writing-canvas embedded-writing-canvas sentence-writing-canvas" data-guide="나는/학교에/가요"></canvas>
-                        <div class="trace-canvas-help">문장은 띄어쓰기 묶음으로 나누어 천천히 따라 써요.</div>
+                        <canvas id="letter-sentence-writing-canvas" class="trace-writing-canvas embedded-writing-canvas sentence-writing-canvas" data-guide="나는학교에가요"></canvas>
+                        <div class="trace-canvas-help">문장 전체를 한 칸 안에 천천히 따라 써요.</div>
                         <div id="letter-sentence-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
                     </div>
                     <div class="grid grid-cols-3 gap-4 mt-8">
@@ -7944,13 +7944,12 @@ ${JSON.stringify(targets, null, 2)}
                 speakTextKo(text);
             }
 
-            function writingGuideForPractice(text) {
-                return String(text || '')
+            function writingGuideForPractice(text, keepTogether = false) {
+                const cleaned = String(text || '')
                     .replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●\s]/g, '')
-                    .trim()
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .join('/');
+                    .trim();
+                if (keepTogether) return cleaned.replace(/\s+/g, '');
+                return cleaned.split(/\s+/).filter(Boolean).join('/');
             }
 
             function setEmbeddedPractice(kind, text, options = {}) {
@@ -7962,7 +7961,7 @@ ${JSON.stringify(targets, null, 2)}
                 if (output) output.textContent = text;
                 if (feedback) feedback.textContent = '';
                 if (canvas) {
-                    canvas.dataset.guide = writingGuideForPractice(text);
+                    canvas.dataset.guide = writingGuideForPractice(text, kind === 'sentence');
                     canvas.dataset.spokenText = text;
                     canvas._traceCompleted = {};
                     canvas._tracePaths = [];
@@ -8166,11 +8165,8 @@ ${JSON.stringify(targets, null, 2)}
 
             function guideTextForWriting(text) {
                 return String(text || '')
-                    .replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●\s]/g, '')
-                    .trim()
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .join('/');
+                    .replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●]/g, '')
+                    .trim();
             }
 
             function drawGuide() {
