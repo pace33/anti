@@ -656,75 +656,6 @@
             word-break: keep-all;
             text-align: center;
         }
-        .batchim-interactive-list {
-            display: grid;
-            gap: 16px;
-        }
-        .batchim-activity-card {
-            border: 3px solid #fed7aa;
-            border-radius: 22px;
-            background: #fffaf2;
-            padding: 14px;
-            box-shadow: 0 10px 22px rgba(251, 146, 60, 0.14);
-        }
-        .batchim-activity-header {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .batchim-activity-badge {
-            display: inline-flex;
-            align-items: center;
-            min-height: 34px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: #ffedd5;
-            color: #c2410c;
-            font-weight: 1000;
-        }
-        .batchim-listen-button {
-            border: 2px solid #48b43c;
-            border-radius: 999px;
-            background: #ffffff;
-            color: #15803d;
-            font-weight: 1000;
-            padding: 8px 14px;
-            min-height: 40px;
-        }
-        .batchim-sentence-text {
-            border: 2px solid #fde6c9;
-            border-radius: 18px;
-            background: #ffffff;
-            color: #2c3e50;
-            font-size: 1.18rem;
-            font-weight: 850;
-            line-height: 1.65;
-            padding: 12px 14px;
-            word-break: keep-all;
-        }
-        .batchim-target-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-            gap: 8px;
-            margin: 12px 0;
-        }
-        .batchim-target-button {
-            border: 2px solid #bbf7d0;
-            border-radius: 16px;
-            background: #f0fdf4;
-            color: #166534;
-            font-size: 1.35rem;
-            font-weight: 1000;
-            padding: 10px;
-            min-height: 54px;
-        }
-        .trace-writing-canvas.batchim-trace-canvas {
-            height: 420px;
-            background: #fffaf2;
-        }
         .fill-writing-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -778,9 +709,6 @@
                 flex: 1;
                 min-width: 0;
                 padding: 8px 10px;
-            }
-            .trace-writing-canvas.batchim-trace-canvas {
-                height: 360px;
             }
         }
         .trace-clear-button {
@@ -9344,98 +9272,6 @@ ${JSON.stringify(targets, null, 2)}
             </div>`;
         }
 
-        function escapeHtml(value = '') {
-            return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            }[ch]));
-        }
-
-        function escapeJsString(value = '') {
-            return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
-        }
-
-        function getBatchimActivityLabel(card = '', fallback = '활동') {
-            const match = String(card).match(/^\s*([^:：]{1,14})[:：]/);
-            return match ? match[1].trim() : fallback;
-        }
-
-        function getBatchimActivityBody(card = '') {
-            return String(card).replace(/^\s*[^:：]{1,14}[:：]\s*/, '').trim();
-        }
-
-        function extractBatchimPracticeTargets(card = '', sectionTitle = '') {
-            const stopWords = new Set([
-                '한', '줄씩', '읽기', '소리', '내어', '도전하기', '활동', '단어', '카드', '그림', '보기',
-                '받침', '대표소리', '마지막', '먼저', '확인', '완성', '정확히', '천천히', '다시', '소리로',
-                '글자는', '소리는', '비슷하게', '달라요', '읽어요', '고르고', '찾아요', '써요', '해요'
-            ]);
-            const body = getBatchimActivityBody(card)
-                .replace(/\([^)]*\)/g, ' ')
-                .replace(/예[:：]/g, ' ')
-                .replace(/[“”"']/g, ' ');
-            const rawParts = body
-                .split(/[·,\/]/)
-                .flatMap((part) => part.split(/\s+/))
-                .map((part) => part
-                    .replace(/[^\uac00-\ud7a3\u3131-\u314e\u314f-\u3163□]/g, '')
-                    .replace(/(을|를|은|는|이|가|과|와|도|처럼|에서|으로|로|부터|까지|마다|에게|보다|만)$/g, '')
-                    .trim()
-                )
-                .filter((part) => part.length > 0 && !stopWords.has(part) && !/^[가-힣]{1}$/.test(part));
-            const unique = [];
-            rawParts.forEach((part) => {
-                if (part.length <= 8 && !unique.includes(part)) unique.push(part);
-            });
-            if (unique.length) return unique.slice(0, 8);
-            const fallbackParts = String(sectionTitle)
-                .split(/[,\s·\/]+/)
-                .map((part) => part.replace(/[^\uac00-\ud7a3\u3131-\u314e\u314f-\u3163]/g, '').trim())
-                .filter((part) => part.length > 1 && !stopWords.has(part));
-            return fallbackParts.slice(0, 4);
-        }
-
-        function renderBatchimCurriculumSection(step, section, sectionIndex) {
-            const cards = section.cards || [];
-            return `
-                <div class="learning-main-card">
-                    <div class="learning-card-label">${escapeHtml(section.label)}</div>
-                    <div class="batchim-interactive-list">
-                        ${cards.map((card, cardIndex) => {
-                            const label = getBatchimActivityLabel(card, section.label);
-                            const body = getBatchimActivityBody(card);
-                            const targets = extractBatchimPracticeTargets(card, section.title);
-                            const guide = (targets.length ? targets : [body.replace(/\s+/g, '')]).join('/');
-                            const canvasId = `batchim-trace-${step}-${sectionIndex}-${cardIndex}`;
-                            return `
-                                <div class="batchim-activity-card">
-                                    <div class="batchim-activity-header">
-                                        <span class="batchim-activity-badge">${escapeHtml(label)}</span>
-                                        <button type="button" class="batchim-listen-button" onclick="speakTextKo('${escapeJsString(body)}')">🔊 듣기</button>
-                                    </div>
-                                    <div class="batchim-sentence-text">${escapeHtml(body)}</div>
-                                    ${targets.length ? `
-                                        <div class="batchim-target-grid">
-                                            ${targets.map((target) => `<button type="button" class="batchim-target-button" onclick="speakChar('${escapeJsString(target)}')">${escapeHtml(target)}</button>`).join('')}
-                                        </div>
-                                    ` : ''}
-                                    <div class="trace-canvas-wrap">
-                                        <div class="trace-canvas-title">✍️ 듣고 바로 따라쓰기</div>
-                                        <canvas id="${canvasId}" class="trace-writing-canvas batchim-trace-canvas" data-guide="${escapeHtml(guide)}"></canvas>
-                                        <div class="trace-canvas-help">초록색 낱말을 눌러 소리를 듣고, 주황색 획순을 따라 써요.</div>
-                                    </div>
-                                    <button type="button" class="trace-clear-button mt-3" onclick="resetTraceWritingCanvas('${canvasId}')">다시 쓰기</button>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
         const LESSON_MOUTH_ACTIVITY_CONFIGS = {
             15: {
                 title: '입모양을 보고 소리의 차이를 알아봐요',
@@ -9948,7 +9784,14 @@ ${JSON.stringify(targets, null, 2)}
                 const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
                 let contentHtml = '';
                 if (isBatchimCurriculumFlow) {
-                    contentHtml = renderBatchimCurriculumSection(step, section, safeIndex);
+                    contentHtml = `
+                        <div class="learning-main-card">
+                            <div class="learning-card-label">${section.label}</div>
+                            <div class="grid gap-3">
+                                ${(section.cards || []).map((card) => renderCardContent(card)).join('')}
+                            </div>
+                        </div>
+                    `;
                 } else if ((step === 15 || step === 16) && safeIndex === 0) {
                     contentHtml = renderLessonMouthIntro(step);
                 } else if ((step === 15 || step === 16) && safeIndex === 1) {
@@ -10455,13 +10298,8 @@ ${JSON.stringify(targets, null, 2)}
             // 10글자 복습은 5칸씩 2줄, 4개 단어 쓰기는 2칸씩 2줄로 배치
             const isDoubleRow = chars.length === 10;
             const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
-            const isBatchimTrace = canvas.classList.contains('batchim-trace-canvas');
-            const cols = isBatchimTrace
-                ? Math.min(chars.length, chars.length >= 5 ? 3 : 2)
-                : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length));
-            const rows = isBatchimTrace
-                ? Math.ceil(chars.length / cols)
-                : (isDoubleRow || isWordDoubleRow ? 2 : 1);
+            const cols = isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length);
+            const rows = isDoubleRow || isWordDoubleRow ? 2 : 1;
             const boxW = W / cols;
             const boxH = H / rows;
             const completedMap = canvas._traceCompleted || {};
