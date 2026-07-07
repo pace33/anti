@@ -563,6 +563,49 @@
             height: clamp(420px, 58vw, 620px);
             max-height: 620px;
         }
+        .embedded-practice-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .practice-level-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .practice-example-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .practice-example-grid.word {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .practice-example-grid.sentence {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .embedded-practice-output {
+            text-align: center;
+            color: #2c3e50;
+            font-weight: 1000;
+            margin: 20px 0 14px;
+            word-break: keep-all;
+        }
+        .embedded-practice-output.word {
+            font-size: clamp(2.6rem, 7vw, 4.4rem);
+        }
+        .embedded-practice-output.sentence {
+            font-size: clamp(1.9rem, 4.4vw, 3rem);
+            line-height: 1.25;
+        }
+        .embedded-writing-canvas.trace-writing-canvas {
+            height: 360px;
+        }
+        .embedded-writing-canvas.sentence-writing-canvas {
+            height: 460px;
+        }
         .fill-writing-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -596,6 +639,14 @@
                 width: 100%;
                 height: calc(100vw - 76px);
                 min-height: 300px;
+            }
+            .practice-example-grid.word,
+            .practice-example-grid.sentence {
+                grid-template-columns: 1fr;
+            }
+            .embedded-writing-canvas.trace-writing-canvas,
+            .embedded-writing-canvas.sentence-writing-canvas {
+                height: 340px;
             }
         }
         .trace-clear-button {
@@ -2205,25 +2256,47 @@
 
                 <div id="letter-word-panel" class="hidden">
                     <div class="korean-embed-card p-6 mb-6">
-                        <div class="font-black text-[#2c3e50] mb-4">단어 예시</div>
-                        <div id="letter-word-examples" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                        <div class="embedded-practice-toolbar">
+                            <div class="font-black text-[#2c3e50]">단어 예시</div>
+                            <div id="letter-word-level-tabs" class="practice-level-tabs" aria-label="단어 난이도 선택"></div>
+                        </div>
+                        <div id="letter-word-examples" class="practice-example-grid word"></div>
                     </div>
                     <button id="letter-generate-word" class="btn-primary w-full py-4 text-xl">✨ 새 단어 만들기</button>
-                    <div class="korean-embed-card mt-8 p-8 text-center">
-                        <p id="letter-word-output" class="text-6xl font-black text-[#2c3e50]"></p>
-                        <p class="text-gray-400 font-bold mt-4">소리 내어 읽고 공책이나 화면에 따라 써요.</p>
+                    <div class="trace-canvas-wrap mt-8">
+                        <div class="trace-canvas-title">✍️ 단어 따라쓰기</div>
+                        <p id="letter-word-output" class="embedded-practice-output word"></p>
+                        <canvas id="letter-word-writing-canvas" class="trace-writing-canvas embedded-writing-canvas" data-guide="나무"></canvas>
+                        <div class="trace-canvas-help">예시를 고르면 난이도에 맞게 쓰기판이 바뀌어요.</div>
+                        <div id="letter-word-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-8">
+                        <button id="letter-word-play-sound" class="btn-primary bg-[#46b3a5] text-white">🔊 소리 듣기</button>
+                        <button id="letter-word-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
+                        <button id="letter-word-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
                     </div>
                 </div>
 
                 <div id="letter-sentence-panel" class="hidden">
                     <div class="korean-embed-card p-6 mb-6">
-                        <div class="font-black text-[#2c3e50] mb-4">문장 예시</div>
-                        <div id="letter-sentence-examples" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                        <div class="embedded-practice-toolbar">
+                            <div class="font-black text-[#2c3e50]">문장 예시</div>
+                            <div id="letter-sentence-level-tabs" class="practice-level-tabs" aria-label="문장 난이도 선택"></div>
+                        </div>
+                        <div id="letter-sentence-examples" class="practice-example-grid sentence"></div>
                     </div>
                     <button id="letter-generate-sentence" class="btn-primary w-full py-4 text-xl bg-[#9b59b6] shadow-[#9b59b633]">✨ 새 문장 만들기</button>
-                    <div class="korean-embed-card mt-8 p-8 text-center">
-                        <p id="letter-sentence-output" class="text-4xl font-bold text-[#2c3e50] leading-relaxed"></p>
-                        <p class="text-gray-400 font-bold mt-4">천천히 읽고 띄어쓰기까지 살펴보며 따라 써요.</p>
+                    <div class="trace-canvas-wrap mt-8">
+                        <div class="trace-canvas-title">✍️ 문장 따라쓰기</div>
+                        <p id="letter-sentence-output" class="embedded-practice-output sentence"></p>
+                        <canvas id="letter-sentence-writing-canvas" class="trace-writing-canvas embedded-writing-canvas sentence-writing-canvas" data-guide="나는/학교에/가요"></canvas>
+                        <div class="trace-canvas-help">문장은 띄어쓰기 묶음으로 나누어 천천히 따라 써요.</div>
+                        <div id="letter-sentence-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-8">
+                        <button id="letter-sentence-play-sound" class="btn-primary bg-[#46b3a5] text-white">🔊 소리 듣기</button>
+                        <button id="letter-sentence-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
+                        <button id="letter-sentence-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
                     </div>
                 </div>
             </div>
@@ -7830,43 +7903,91 @@ ${JSON.stringify(targets, null, 2)}
                 document.getElementById('letter-practice-panel').classList.toggle('hidden', c !== 'letter');
                 document.getElementById('letter-word-panel').classList.toggle('hidden', c !== 'word');
                 document.getElementById('letter-sentence-panel').classList.toggle('hidden', c !== 'sentence');
+                requestAnimationFrame(() => {
+                    if (c === 'letter') drawTraceWritingGuide(canvas);
+                    if (c === 'word') drawTraceWritingGuide(document.getElementById('letter-word-writing-canvas'));
+                    if (c === 'sentence') drawTraceWritingGuide(document.getElementById('letter-sentence-writing-canvas'));
+                });
             }));
 
-            const wordExamples = ['나무', '하늘', '바다', '사과', '학교', '구름', '마음', '친구'];
-            const sentenceExamples = [
-                '나는 학교에 가요.',
-                '하늘이 참 맑아요.',
-                '친구와 같이 놀아요.',
-                '사과를 맛있게 먹어요.',
-                '오늘은 기분이 좋아요.',
-                '나무 아래에서 쉬어요.'
-            ];
+            const levelLabels = { low: '하', mid: '중', high: '상' };
+            const wordExamplesByLevel = {
+                low: ['나무', '하늘', '바다', '사과'],
+                mid: ['학교', '구름', '마음', '친구'],
+                high: ['도서관', '운동장', '호랑이', '바나나']
+            };
+            const sentenceExamplesByLevel = {
+                low: ['나는 가요.', '나무가 커요.', '사과를 먹어요.', '물이 맑아요.'],
+                mid: ['나는 학교에 가요.', '하늘이 참 맑아요.', '친구와 같이 놀아요.', '나무 아래에서 쉬어요.'],
+                high: ['사과를 맛있게 먹어요.', '오늘은 기분이 좋아요.', '도서관에서 책을 읽어요.', '궁금한 것을 질문해요.']
+            };
+            const embeddedPracticeState = {
+                word: { level: 'low', text: wordExamplesByLevel.low[0] },
+                sentence: { level: 'low', text: sentenceExamplesByLevel.low[0] }
+            };
 
             function speakKorean(text) {
                 speakTextKo(text);
             }
 
-            function setPracticeText(targetId, text) {
-                document.getElementById(targetId).textContent = text;
-                setTraceGuide(text);
-                speakKorean(text);
+            function writingGuideForPractice(text) {
+                return String(text || '')
+                    .replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●\s]/g, '')
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .join('/');
             }
 
-            document.getElementById('letter-word-examples').innerHTML = wordExamples.map((word) => `
-                <button class="btn-outline py-3 text-xl" data-word="${word}">${word}</button>
-            `).join('');
-            document.getElementById('letter-word-examples').querySelectorAll('button').forEach((btn) => {
-                btn.addEventListener('click', () => setPracticeText('letter-word-output', btn.dataset.word));
-            });
+            function setEmbeddedPractice(kind, text, options = {}) {
+                const state = embeddedPracticeState[kind];
+                state.text = text;
+                const output = document.getElementById(`letter-${kind}-output`);
+                const feedback = document.getElementById(`letter-${kind}-feedback`);
+                const canvas = document.getElementById(`letter-${kind}-writing-canvas`);
+                if (output) output.textContent = text;
+                if (feedback) feedback.textContent = '';
+                if (canvas) {
+                    canvas.dataset.guide = writingGuideForPractice(text);
+                    canvas.dataset.spokenText = text;
+                    canvas._traceCompleted = {};
+                    canvas._tracePaths = [];
+                    initializeTraceWritingCanvas(canvas);
+                    drawTraceWritingGuide(canvas);
+                }
+                document.querySelectorAll(`#letter-${kind}-examples button`).forEach((btn) => {
+                    btn.classList.toggle('active', btn.dataset.text === text);
+                });
+                if (options.speak !== false) speakKorean(text);
+            }
 
-            document.getElementById('letter-sentence-examples').innerHTML = sentenceExamples.map((sentence) => `
-                <button class="btn-outline py-3 px-4 text-lg text-left" data-sentence="${sentence}">${sentence}</button>
-            `).join('');
-            document.getElementById('letter-sentence-examples').querySelectorAll('button').forEach((btn) => {
-                btn.addEventListener('click', () => setPracticeText('letter-sentence-output', btn.dataset.sentence));
-            });
-            document.getElementById('letter-word-output').textContent = wordExamples[0];
-            document.getElementById('letter-sentence-output').textContent = sentenceExamples[0];
+            function renderEmbeddedPracticeLevels(kind) {
+                const root = document.getElementById(`letter-${kind}-level-tabs`);
+                root.innerHTML = Object.entries(levelLabels).map(([level, label]) => `
+                    <button type="button" class="btn-outline px-4 py-1 text-sm ${embeddedPracticeState[kind].level === level ? 'active' : ''}" data-kind="${kind}" data-level="${level}">${label}</button>
+                `).join('');
+                root.querySelectorAll('button').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        embeddedPracticeState[kind].level = btn.dataset.level;
+                        renderEmbeddedPractice(kind);
+                    });
+                });
+            }
+
+            function renderEmbeddedPractice(kind) {
+                const examples = kind === 'word' ? wordExamplesByLevel : sentenceExamplesByLevel;
+                const root = document.getElementById(`letter-${kind}-examples`);
+                const level = embeddedPracticeState[kind].level;
+                const list = examples[level] || [];
+                renderEmbeddedPracticeLevels(kind);
+                root.innerHTML = list.map((text, index) => `
+                    <button type="button" class="btn-outline py-3 px-4 ${kind === 'word' ? 'text-xl' : 'text-lg text-left'} ${index === 0 ? 'active' : ''}" data-text="${text}">${text}</button>
+                `).join('');
+                root.querySelectorAll('button').forEach((btn) => {
+                    btn.addEventListener('click', () => setEmbeddedPractice(kind, btn.dataset.text));
+                });
+                setEmbeddedPractice(kind, list[0] || '', { speak: false });
+            }
 
             async function simpleGen(prompt, fallback) {
                 try {
@@ -7879,11 +8000,61 @@ ${JSON.stringify(targets, null, 2)}
                 } catch { return fallback; }
             }
             document.getElementById('letter-generate-word').addEventListener('click', async () => {
-                setPracticeText('letter-word-output', await simpleGen('초등학생용 한국어 2~3글자 단어 하나만 출력해줘.', wordExamples[Math.floor(Math.random() * wordExamples.length)]));
+                const level = embeddedPracticeState.word.level;
+                const examples = wordExamplesByLevel[level] || wordExamplesByLevel.low;
+                const prompt = level === 'high'
+                    ? '초등학생용 한국어 3~4글자 단어 하나만 출력해줘.'
+                    : level === 'mid'
+                        ? '초등학생용 한국어 2~3글자 단어 하나만 출력해줘.'
+                        : '초등학생용 한국어 쉬운 2글자 단어 하나만 출력해줘.';
+                setEmbeddedPractice('word', await simpleGen(prompt, examples[Math.floor(Math.random() * examples.length)]));
             });
             document.getElementById('letter-generate-sentence').addEventListener('click', async () => {
-                setPracticeText('letter-sentence-output', await simpleGen('초등학생용 짧은 한국어 문장 하나만 출력해줘.', sentenceExamples[Math.floor(Math.random() * sentenceExamples.length)]));
+                const level = embeddedPracticeState.sentence.level;
+                const examples = sentenceExamplesByLevel[level] || sentenceExamplesByLevel.low;
+                const prompt = level === 'high'
+                    ? '초등학생용 한국어 문장 하나만 출력해줘. 4~6어절 이내로 해줘.'
+                    : level === 'mid'
+                        ? '초등학생용 짧은 한국어 문장 하나만 출력해줘. 3~5어절 이내로 해줘.'
+                        : '초등학생용 아주 쉬운 한국어 문장 하나만 출력해줘. 2~3어절 이내로 해줘.';
+                setEmbeddedPractice('sentence', await simpleGen(prompt, examples[Math.floor(Math.random() * examples.length)]));
             });
+            document.getElementById('letter-word-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.word.text));
+            document.getElementById('letter-sentence-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.sentence.text));
+            document.getElementById('letter-word-clear').addEventListener('click', () => resetTraceWritingCanvas(document.getElementById('letter-word-writing-canvas')));
+            document.getElementById('letter-sentence-clear').addEventListener('click', () => resetTraceWritingCanvas(document.getElementById('letter-sentence-writing-canvas')));
+            document.getElementById('letter-word-grade').addEventListener('click', async () => {
+                await recordKoreanAttempt({
+                    lessonId: currentLearningActivityStep || 'word-practice-writing',
+                    lessonTitle: '단어 연습 쓰기',
+                    unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
+                    activityType: 'writeOnCanvas',
+                    word: embeddedPracticeState.word.text,
+                    isCorrect: true,
+                    errorType: null,
+                    skillTags: ['단어쓰기', embeddedPracticeState.word.level]
+                });
+                const fb = document.getElementById('letter-word-feedback');
+                fb.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
+                fb.textContent = '단어 쓰기 완료로 기록했어요.';
+            });
+            document.getElementById('letter-sentence-grade').addEventListener('click', async () => {
+                await recordKoreanAttempt({
+                    lessonId: currentLearningActivityStep || 'sentence-practice-writing',
+                    lessonTitle: '문장 연습 쓰기',
+                    unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
+                    activityType: 'writeOnCanvas',
+                    word: embeddedPracticeState.sentence.text,
+                    isCorrect: true,
+                    errorType: null,
+                    skillTags: ['문장쓰기', embeddedPracticeState.sentence.level]
+                });
+                const fb = document.getElementById('letter-sentence-feedback');
+                fb.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
+                fb.textContent = '문장 쓰기 완료로 기록했어요.';
+            });
+            renderEmbeddedPractice('word');
+            renderEmbeddedPractice('sentence');
         }
 
         function initializeWordWritingQuizActivity() {
