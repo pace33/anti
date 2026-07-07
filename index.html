@@ -8075,7 +8075,79 @@ ${JSON.stringify(targets, null, 2)}
             const canvas = document.getElementById('word-write-canvas');
             const currentEl = document.getElementById('word-write-current');
             const feedback = document.getElementById('word-write-feedback');
-            const wordData = { syllable: { no_jongsung: ['가','너','보','소'], with_jongsung:['각','산','밥','몸'] }, word: { two_letters:['나무','학교'], three_letters:['바나나','호랑이'] }, sentence: [] };
+            const chanchanExtraSyllables = [
+                '아','야','어','여','오','요','우','유','으','이',
+                '가','거','고','구','그','기','카','커','코','쿠','크','키','까','꺼','꼬','꾸','끄','끼',
+                '나','너','노','누','느','니','다','더','도','두','드','디','타','터','토','투','트','티','따','떠','또','뚜','뜨','띠',
+                '마','머','모','무','므','미','바','버','보','부','브','비','파','퍼','포','푸','프','피','빠','뻐','뽀','뿌','쁘','삐',
+                '사','서','소','수','스','시','자','저','조','주','즈','지','차','처','초','추','츠','치','짜','쩌','쪼','쭈','쯔','찌','싸','써','쏘','쑤','쓰','씨',
+                '하','허','호','후','흐','히','라','러','로','루','르','리'
+            ];
+            const chanchanExtraWords = [
+                '개','해','배','게','네모','세모','시계','예의','얘기','와','과자','화가','원숭이','귀','위','의자','의사','왜','돼지','외투','쇠','뇌',
+                '곰','감','밤','뱀','솜','힘','밥','입','컵','집','답','공','강','방','상','병','창','목','국','책','약','죽',
+                '산','손','문','눈','돈','물','달','별','길','팔','곧','낟','묻다','듣다','걷다',
+                '염소','감자','구름','수첩','집게','서랍','늑대','국자','책상','기린','분수','만두','솔방울','돋보기',
+                '앞','옆','숲','잎','톱','떡','밖','부엌','깎다','볶다','옷','낮','팥','빛','꽃','좋다',
+                '저녁','과녁','낚시','볶음밥','김밥','입술','팝콘','은행잎','무릎','짚신','숟가락','가마솥','젖소','첫째','돛단배','헝겊','낮잠',
+                '읽다','흙','닭','밝다','삶','여덟','많다','넓다','괜찮다','짧다','없다','늙다','앉다','싫다'
+            ];
+            const isHangulSyllable = (char) => {
+                const code = char?.charCodeAt?.(0);
+                return code >= 0xAC00 && code <= 0xD7A3;
+            };
+            const hasBatchim = (char) => isHangulSyllable(char) && ((char.charCodeAt(0) - 0xAC00) % 28) > 0;
+            const cleanWord = (value) => String(value || '').replace(/[^\uAC00-\uD7A3]/g, '');
+            const pushUnique = (array, value) => {
+                if (value && !array.includes(value)) array.push(value);
+            };
+            function buildChanchanWritingBank() {
+                const syllableNoFinal = [];
+                const syllableWithFinal = [];
+                const words = [];
+                const collectSyllables = (text) => {
+                    Array.from(cleanWord(text)).forEach((char) => {
+                        if (!isHangulSyllable(char)) return;
+                        pushUnique(hasBatchim(char) ? syllableWithFinal : syllableNoFinal, char);
+                    });
+                };
+                const collectWord = (text) => {
+                    const word = cleanWord(text);
+                    if (word.length < 1) return;
+                    collectSyllables(word);
+                    if (word.length >= 2) pushUnique(words, word);
+                };
+
+                chanchanExtraSyllables.forEach(collectSyllables);
+                chanchanExtraWords.forEach(collectWord);
+                (window.CHANCHAN_LESSONS || CHANCHAN_LESSONS || []).forEach((lesson) => {
+                    (lesson.letters || []).forEach((item) => {
+                        if (cleanWord(item).length === 1) collectSyllables(item);
+                    });
+                    (lesson.words || []).forEach(collectWord);
+                    (lesson.nonsenseWords || []).forEach(collectWord);
+                    (lesson.pictureItems || []).forEach((item) => collectWord(item.word));
+                    (lesson.fillItems || []).forEach((item) => {
+                        collectWord(item.word);
+                        collectWord(item.answer);
+                    });
+                });
+
+                return {
+                    syllable: {
+                        no_jongsung: syllableNoFinal.length ? syllableNoFinal : ['가','너','보','소'],
+                        with_jongsung: syllableWithFinal.length ? syllableWithFinal : ['각','산','밥','몸']
+                    },
+                    word: {
+                        two_letters: words.filter((word) => Array.from(word).length === 2),
+                        three_letters: words.filter((word) => Array.from(word).length >= 3)
+                    },
+                    sentence: []
+                };
+            }
+            const wordData = buildChanchanWritingBank();
+            if (!wordData.word.two_letters.length) wordData.word.two_letters = ['나무','학교'];
+            if (!wordData.word.three_letters.length) wordData.word.three_letters = ['바나나','호랑이'];
             const sentenceRecommendations = [
                 '나는 학교에 가요.',
                 '하늘이 참 맑아요.',
@@ -8111,7 +8183,7 @@ ${JSON.stringify(targets, null, 2)}
             function setSubButtons() {
                 const root = document.getElementById('word-write-submodes');
                 if (mode === 'syllable') root.innerHTML = `<button data-sub="no_jongsung" class="btn-outline px-4 py-1 text-base ${sub === 'no_jongsung' ? 'active' : ''}">받침 없음</button><button data-sub="with_jongsung" class="btn-outline px-4 py-1 text-base ${sub === 'with_jongsung' ? 'active' : ''}">받침 있음</button>`;
-                else if (mode === 'word') root.innerHTML = `<button data-sub="two_letters" class="btn-outline px-4 py-1 text-base ${sub === 'two_letters' ? 'active' : ''}">2글자</button><button data-sub="three_letters" class="btn-outline px-4 py-1 text-base ${sub === 'three_letters' ? 'active' : ''}">3글자</button>`;
+                else if (mode === 'word') root.innerHTML = `<button data-sub="two_letters" class="btn-outline px-4 py-1 text-base ${sub === 'two_letters' ? 'active' : ''}">2글자</button><button data-sub="three_letters" class="btn-outline px-4 py-1 text-base ${sub === 'three_letters' ? 'active' : ''}">3글자 이상</button>`;
                 else root.innerHTML = '';
                 root.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
                     root.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
