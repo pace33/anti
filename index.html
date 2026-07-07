@@ -534,6 +534,35 @@
             border-radius: 16px;
             background: #fffaf2;
         }
+        .letter-practice-selector-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .letter-practice-selector-card {
+            display: grid;
+            grid-template-columns: 78px minmax(0, 1fr);
+            align-items: center;
+            gap: 16px;
+            min-height: 86px;
+        }
+        .letter-practice-selector-title {
+            color: #2c3e50;
+            font-size: 1.05rem;
+            font-weight: 900;
+            margin: 0;
+        }
+        #letter-practice-panel .trace-canvas-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #letter-writing-canvas.trace-writing-canvas {
+            width: min(100%, 620px);
+            height: clamp(420px, 58vw, 620px);
+            max-height: 620px;
+        }
         .fill-writing-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -557,6 +586,17 @@
             color: #9a3412;
             margin-top: 8px;
             text-align: center;
+        }
+        @media (max-width: 640px) {
+            .letter-practice-selector-card {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            #letter-writing-canvas.trace-writing-canvas {
+                width: 100%;
+                height: calc(100vw - 76px);
+                min-height: 300px;
+            }
         }
         .trace-clear-button {
             width: 100%;
@@ -2133,17 +2173,17 @@
                 </div>
 
                 <div id="letter-practice-panel">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="korean-embed-card">
-                            <div class="font-bold text-[#2c3e50] mb-3">자음</div>
+                    <div class="letter-practice-selector-grid">
+                        <div class="korean-embed-card letter-practice-selector-card">
+                            <div class="letter-practice-selector-title">자음</div>
                             <div id="letter-consonants" class="flex flex-wrap gap-2"></div>
                         </div>
-                        <div class="korean-embed-card">
-                            <div class="font-bold text-[#2c3e50] mb-3">모음</div>
+                        <div class="korean-embed-card letter-practice-selector-card">
+                            <div class="letter-practice-selector-title">모음</div>
                             <div id="letter-vowels" class="flex flex-wrap gap-2"></div>
                         </div>
-                        <div class="korean-embed-card">
-                            <div class="font-bold text-[#2c3e50] mb-3">낱말</div>
+                        <div class="korean-embed-card letter-practice-selector-card">
+                            <div class="letter-practice-selector-title">낱말</div>
                             <div id="letter-words" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
