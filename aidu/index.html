@@ -1819,14 +1819,18 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLetterWritingActivity()">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLetterWritingActivity('letter')">
                         <div class="text-6xl mb-3">✍️</div>
                         <div class="text-xl font-bold">글자 쓰기</div>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openWordWritingQuizActivity()">
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLetterWritingActivity('word')">
                         <div class="text-6xl mb-3">📝</div>
-                        <div class="text-xl font-bold">낱말 쓰기</div>
+                        <div class="text-xl font-bold">단어 쓰기</div>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLetterWritingActivity('sentence')">
+                        <div class="text-6xl mb-3">📄</div>
+                        <div class="text-xl font-bold">문장 쓰기</div>
                     </div>
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openWordListeningQuizActivity()">
                         <div class="text-6xl mb-3">👂</div>
@@ -2218,8 +2222,8 @@
             <span class="page-number">11</span>
             <div class="flex items-center justify-between mb-8">
                 <div>
-                    <div class="text-3xl font-black text-[#2c3e50]">글자 쓰기 연습</div>
-                    <p class="text-lg text-gray-500 mt-1">배움 단원처럼 주황색 번호와 화살표를 따라 써요.</p>
+                    <div id="letter-writing-title" class="text-3xl font-black text-[#2c3e50]">글자 쓰기 연습</div>
+                    <p id="letter-writing-subtitle" class="text-lg text-gray-500 mt-1">배움 단원처럼 주황색 번호와 화살표를 따라 써요.</p>
                 </div>
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
@@ -5352,10 +5356,13 @@
             openMyKoreanSection();
         }
 
-        window.openLetterWritingActivity = function openLetterWritingActivity() {
+        window.openLetterWritingActivity = function openLetterWritingActivity(category = 'letter') {
             showTopLevelSection('letter-writing-section');
             requestAnimationFrame(() => {
-                if (typeof window.refreshLetterWritingCanvas === 'function') {
+                const tab = document.querySelector(`.letter-top-btn[data-category="${category}"]`);
+                if (tab) {
+                    tab.click();
+                } else if (typeof window.refreshLetterWritingCanvas === 'function') {
                     window.refreshLetterWritingCanvas();
                 }
             });
@@ -7914,6 +7921,15 @@ ${JSON.stringify(targets, null, 2)}
                 document.querySelectorAll('.letter-top-btn').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
                 const c = btn.dataset.category;
+                const titleMap = {
+                    letter: ['글자 쓰기 연습', '자음, 모음, 낱말 글자를 골라 바로 따라 써요.'],
+                    word: ['단어 쓰기 연습', '추천 단어를 고르고 화면에서 바로 따라 써요.'],
+                    sentence: ['문장 쓰기 연습', '추천 문장을 고르고 한 칸 안에 천천히 따라 써요.']
+                };
+                const title = document.getElementById('letter-writing-title');
+                const subtitle = document.getElementById('letter-writing-subtitle');
+                if (title && titleMap[c]) title.textContent = titleMap[c][0];
+                if (subtitle && titleMap[c]) subtitle.textContent = titleMap[c][1];
                 document.getElementById('letter-practice-panel').classList.toggle('hidden', c !== 'letter');
                 document.getElementById('letter-word-panel').classList.toggle('hidden', c !== 'word');
                 document.getElementById('letter-sentence-panel').classList.toggle('hidden', c !== 'sentence');
