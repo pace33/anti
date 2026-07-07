@@ -606,6 +606,13 @@
         .embedded-writing-canvas.sentence-writing-canvas {
             height: 460px;
         }
+        #word-write-display.sentence-mode #word-write-current {
+            max-width: 760px;
+            font-size: clamp(2.1rem, 4.4vw, 3.8rem) !important;
+            line-height: 1.25;
+            word-break: keep-all;
+            text-align: center;
+        }
         .fill-writing-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2317,14 +2324,21 @@
                 <div id="word-write-mode-tabs" class="flex gap-4 mb-8">
                     <button data-mode="syllable" class="word-mode-tab nav-tab active">낱말 연습</button>
                     <button data-mode="word" class="word-mode-tab nav-tab">단어 연습</button>
-                    <button data-mode="name" class="word-mode-tab nav-tab">이름 연습</button>
+                    <button data-mode="sentence" class="word-mode-tab nav-tab">문장 연습</button>
                 </div>
 
                 <div id="word-write-submodes" class="flex justify-center gap-4 mb-8"></div>
 
-                <div id="word-write-name-input-area" class="hidden mb-8 p-6 bg-gray-50 rounded-2xl flex gap-4">
-                    <input id="word-write-name-input" type="text" placeholder="연습할 이름을 입력하세요" class="premium-input bg-white">
-                    <button id="word-write-start-name" class="btn-primary whitespace-nowrap">연습 시작</button>
+                <div id="word-write-name-input-area" class="hidden mb-8 p-6 bg-gray-50 rounded-2xl">
+                    <div class="flex gap-4">
+                        <input id="word-write-name-input" type="text" placeholder="연습할 문장을 입력하세요" class="premium-input bg-white">
+                        <button id="word-write-start-name" class="btn-primary whitespace-nowrap">연습 시작</button>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 mt-5 mb-3">
+                        <div class="font-black text-[#2c3e50]">추천 문장</div>
+                        <button id="word-write-random-sentences" type="button" class="btn-outline px-4 py-2 text-sm">추천 다시 보기</button>
+                    </div>
+                    <div id="word-write-sentence-recommendations" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                 </div>
 
                 <div id="word-write-display" class="flex items-center justify-center gap-6 mb-8 py-6">
@@ -8061,11 +8075,34 @@ ${JSON.stringify(targets, null, 2)}
             const canvas = document.getElementById('word-write-canvas');
             const currentEl = document.getElementById('word-write-current');
             const feedback = document.getElementById('word-write-feedback');
-            const wordData = { syllable: { no_jongsung: ['가','너','보','소'], with_jongsung:['각','산','밥','몸'] }, word: { two_letters:['나무','학교'], three_letters:['바나나','호랑이'] }, name:[] };
+            const wordData = { syllable: { no_jongsung: ['가','너','보','소'], with_jongsung:['각','산','밥','몸'] }, word: { two_letters:['나무','학교'], three_letters:['바나나','호랑이'] }, sentence: [] };
+            const sentenceRecommendations = [
+                '나는 학교에 가요.',
+                '하늘이 참 맑아요.',
+                '친구와 같이 놀아요.',
+                '사과를 맛있게 먹어요.',
+                '오늘은 기분이 좋아요.',
+                '나무 아래에서 쉬어요.',
+                '도서관에서 책을 읽어요.',
+                '물을 마시고 쉬어요.',
+                '엄마와 시장에 가요.',
+                '아빠가 책을 읽어요.',
+                '강아지가 뛰어가요.',
+                '꽃이 예쁘게 피어요.'
+            ];
             let mode = 'syllable', sub='no_jongsung', currentWord='가';
 
+            function guideTextForWriting(text) {
+                return String(text || '')
+                    .replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●\s]/g, '')
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .join('/');
+            }
+
             function drawGuide() {
-                canvas.dataset.guide = currentWord || '';
+                canvas.dataset.guide = mode === 'sentence' ? guideTextForWriting(currentWord) : (currentWord || '');
                 canvas._traceCompleted = {};
                 canvas._tracePaths = [];
                 initializeTraceWritingCanvas(canvas);
@@ -8083,8 +8120,34 @@ ${JSON.stringify(targets, null, 2)}
                     nextWord();
                 }));
             }
+            function renderSentenceRecommendations() {
+                const root = document.getElementById('word-write-sentence-recommendations');
+                if (!root) return;
+                const picks = [...sentenceRecommendations].sort(() => Math.random() - 0.5).slice(0, 6);
+                root.innerHTML = picks.map((sentence) => `
+                    <button type="button" class="btn-outline px-4 py-3 text-base text-left" data-sentence="${sentence}">${sentence}</button>
+                `).join('');
+                root.querySelectorAll('button').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        root.querySelectorAll('button').forEach((item) => item.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentWord = btn.dataset.sentence;
+                        currentEl.textContent = currentWord;
+                        drawGuide();
+                        speakTextKo(currentWord);
+                    });
+                });
+            }
             async function nextWord() {
-                if (mode === 'name') return;
+                if (mode === 'sentence') {
+                    const list = [...sentenceRecommendations].sort(() => Math.random() - 0.5);
+                    currentWord = list[0] || '나는 학교에 가요.';
+                    currentEl.textContent = currentWord;
+                    drawGuide();
+                    speakTextKo(currentWord);
+                    renderSentenceRecommendations();
+                    return;
+                }
                 const list = wordData[mode]?.[sub] || ['가'];
                 currentWord = list[Math.floor(Math.random() * list.length)];
                 currentEl.textContent = currentWord;
@@ -8109,11 +8172,12 @@ ${JSON.stringify(targets, null, 2)}
                 document.querySelectorAll('.word-mode-tab').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
                 mode = btn.dataset.mode;
-                document.getElementById('word-write-name-input-area').classList.toggle('hidden', mode !== 'name');
+                document.getElementById('word-write-name-input-area').classList.toggle('hidden', mode !== 'sentence');
+                document.getElementById('word-write-display').classList.toggle('sentence-mode', mode === 'sentence');
                 if (mode === 'syllable') sub = 'no_jongsung';
                 if (mode === 'word') sub = 'two_letters';
                 setSubButtons();
-                if (mode !== 'name') await nextWord();
+                await nextWord();
             }));
             document.getElementById('word-write-clear').addEventListener('click', () => resetTraceWritingCanvas(canvas));
             document.getElementById('word-write-grade').addEventListener('click', score);
@@ -8125,7 +8189,9 @@ ${JSON.stringify(targets, null, 2)}
                 currentWord = val;
                 currentEl.textContent = currentWord;
                 drawGuide();
+                speakTextKo(currentWord);
             });
+            document.getElementById('word-write-random-sentences').addEventListener('click', renderSentenceRecommendations);
             setSubButtons();
             nextWord();
             window.refreshWordWritingCanvas = drawGuide;
