@@ -606,6 +606,49 @@
         .embedded-writing-canvas.sentence-writing-canvas {
             height: 460px;
         }
+        .writing-compact-toolbar {
+            width: min(100%, 1100px);
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+        }
+        .writing-mode-quick-card {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 2px solid #dbeed5;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 8px 18px rgba(85, 179, 70, 0.1);
+        }
+        .writing-mode-title {
+            font-size: 1.1rem;
+            font-weight: 1000;
+            color: #2c3e50;
+            line-height: 1;
+        }
+        .writing-mode-subtitle {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #64748b;
+        }
+        .writing-mode-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .writing-mode-buttons .nav-tab {
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            border-radius: 14px;
+        }
+        #letter-writing-section .learning-pane {
+            padding-top: 18px !important;
+        }
         #word-write-display.sentence-mode #word-write-current {
             max-width: 760px;
             font-size: clamp(2.1rem, 4.4vw, 3.8rem) !important;
@@ -654,6 +697,18 @@
             .embedded-writing-canvas.trace-writing-canvas,
             .embedded-writing-canvas.sentence-writing-canvas {
                 height: 340px;
+            }
+            .writing-compact-toolbar {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+            .writing-mode-quick-card {
+                width: 100%;
+            }
+            .writing-mode-buttons .nav-tab {
+                flex: 1;
+                min-width: 0;
+                padding: 8px 10px;
             }
         }
         .trace-clear-button {
@@ -2214,25 +2269,22 @@
         <!-- [글자 쓰기 연습 섹션] -->
         <div id="letter-writing-section" class="view-section fade-in hidden bg-white">
             <span class="page-number">11</span>
-            <div class="flex justify-end mb-6">
+            <div class="writing-compact-toolbar">
+                <div class="writing-mode-quick-card">
+                    <div>
+                        <div id="letter-writing-title" class="writing-mode-title">쓰기 연습</div>
+                        <div id="letter-writing-subtitle" class="writing-mode-subtitle">글자, 단어, 문장을 골라 바로 따라 써요.</div>
+                    </div>
+                    <div class="writing-mode-buttons" id="letter-top-categories">
+                        <button data-category="letter" class="letter-top-btn nav-tab active">글자 연습</button>
+                        <button data-category="word" class="letter-top-btn nav-tab">단어 연습</button>
+                        <button data-category="sentence" class="letter-top-btn nav-tab">문장 연습</button>
+                    </div>
+                </div>
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
 
             <div class="learning-pane p-8 min-h-[600px]">
-                <div class="korean-embed-card p-5 mb-8">
-                    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <div id="letter-writing-title" class="text-3xl font-black text-[#2c3e50]">쓰기 연습</div>
-                            <p id="letter-writing-subtitle" class="text-lg text-gray-500 mt-1">글자, 단어, 문장을 골라 바로 따라 써요.</p>
-                        </div>
-                        <div class="flex gap-3 flex-wrap" id="letter-top-categories">
-                            <button data-category="letter" class="letter-top-btn nav-tab active">글자 연습</button>
-                            <button data-category="word" class="letter-top-btn nav-tab">단어 연습</button>
-                            <button data-category="sentence" class="letter-top-btn nav-tab">문장 연습</button>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="letter-practice-panel">
                     <div class="letter-practice-selector-grid">
                         <div class="korean-embed-card letter-practice-selector-card">
@@ -7978,9 +8030,9 @@ ${JSON.stringify(targets, null, 2)}
                 btn.classList.add('active');
                 const c = btn.dataset.category;
                 const titleMap = {
-                    letter: ['글자 쓰기 연습', '자음, 모음, 낱말 글자를 골라 바로 따라 써요.'],
-                    word: ['단어 쓰기 연습', '추천 단어를 고르고 화면에서 바로 따라 써요.'],
-                    sentence: ['문장 쓰기 연습', '추천 문장을 고르고 한 칸 안에 천천히 따라 써요.']
+                    letter: ['글자 쓰기', '글자를 골라 따라 써요.'],
+                    word: ['단어 쓰기', '단어를 골라 따라 써요.'],
+                    sentence: ['문장 쓰기', '문장을 골라 따라 써요.']
                 };
                 const title = document.getElementById('letter-writing-title');
                 const subtitle = document.getElementById('letter-writing-subtitle');
