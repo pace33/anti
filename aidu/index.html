@@ -1819,26 +1819,20 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-6 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLetterWritingActivity('letter')">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-green-50">
                         <div class="text-6xl mb-3">✍️</div>
-                        <div class="text-xl font-bold">글자 쓰기</div>
+                        <div class="text-2xl font-black text-[#2c3e50] mb-4">쓰기 연습</div>
+                        <div class="grid grid-cols-3 gap-3 w-full">
+                            <button type="button" class="btn-outline py-3 text-base" onclick="openLetterWritingActivity('letter')">글자</button>
+                            <button type="button" class="btn-outline py-3 text-base" onclick="openLetterWritingActivity('word')">단어</button>
+                            <button type="button" class="btn-outline py-3 text-base" onclick="openLetterWritingActivity('sentence')">문장</button>
+                        </div>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLetterWritingActivity('word')">
-                        <div class="text-6xl mb-3">📝</div>
-                        <div class="text-xl font-bold">단어 쓰기</div>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openLetterWritingActivity('sentence')">
-                        <div class="text-6xl mb-3">📄</div>
-                        <div class="text-xl font-bold">문장 쓰기</div>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openWordListeningQuizActivity()">
-                        <div class="text-6xl mb-3">👂</div>
-                        <div class="text-xl font-bold">낱말 듣기</div>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col bg-gray-100 opacity-60">
+                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-indigo-50 to-purple-50" onclick="openHangulGameActivity()">
                         <div class="text-6xl mb-3">🎮</div>
-                        <div class="text-xl font-bold">한글 게임</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">한글 게임</div>
+                        <p class="text-sm text-purple-600 font-black mt-2">소리를 듣고 맞는 글자와 단어를 찾아요</p>
                     </div>
                 </div>
             </div>
@@ -2220,19 +2214,23 @@
         <!-- [글자 쓰기 연습 섹션] -->
         <div id="letter-writing-section" class="view-section fade-in hidden bg-white">
             <span class="page-number">11</span>
-            <div class="flex items-center justify-between mb-8">
-                <div>
-                    <div id="letter-writing-title" class="text-3xl font-black text-[#2c3e50]">글자 쓰기 연습</div>
-                    <p id="letter-writing-subtitle" class="text-lg text-gray-500 mt-1">배움 단원처럼 주황색 번호와 화살표를 따라 써요.</p>
-                </div>
+            <div class="flex justify-end mb-6">
                 <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
             </div>
 
             <div class="learning-pane p-8 min-h-[600px]">
-                <div class="flex gap-4 mb-8" id="letter-top-categories">
-                    <button data-category="letter" class="letter-top-btn nav-tab active">글자 연습</button>
-                    <button data-category="word" class="letter-top-btn nav-tab">단어 연습</button>
-                    <button data-category="sentence" class="letter-top-btn nav-tab">문장 연습</button>
+                <div class="korean-embed-card p-5 mb-8">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <div id="letter-writing-title" class="text-3xl font-black text-[#2c3e50]">쓰기 연습</div>
+                            <p id="letter-writing-subtitle" class="text-lg text-gray-500 mt-1">글자, 단어, 문장을 골라 바로 따라 써요.</p>
+                        </div>
+                        <div class="flex gap-3 flex-wrap" id="letter-top-categories">
+                            <button data-category="letter" class="letter-top-btn nav-tab active">글자 연습</button>
+                            <button data-category="word" class="letter-top-btn nav-tab">단어 연습</button>
+                            <button data-category="sentence" class="letter-top-btn nav-tab">문장 연습</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="letter-practice-panel">
@@ -2409,6 +2407,52 @@
                     <p class="text-2xl text-gray-500 mb-2">총 <span id="listening-total" class="font-bold"></span>문제 중 <span id="listening-score" class="text-[#ff9d76] font-bold"></span>개 정답</p>
                     <p id="listening-final-msg" class="text-2xl font-bold text-[#2c3e50] mt-6"></p>
                     <button id="listening-restart" class="btn-primary mt-12 px-10">다시 연습하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- [한글 게임 섹션] -->
+        <div id="hangul-game-section" class="view-section fade-in hidden bg-white">
+            <span class="page-number">14</span>
+            <div class="flex justify-end mb-6">
+                <button class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
+            </div>
+
+            <div class="learning-pane p-8 min-h-[620px]">
+                <div class="korean-embed-card p-6 mb-6 bg-gradient-to-br from-purple-50 to-indigo-50">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <div class="text-3xl font-black text-[#2c3e50]">🎮 한글 소리 찾기</div>
+                            <p class="text-lg text-gray-500 mt-1">소리를 듣고 맞는 글자나 단어를 골라요.</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button id="hangul-game-letter-mode" class="btn-outline active px-5 py-2">글자</button>
+                            <button id="hangul-game-word-mode" class="btn-outline px-5 py-2">단어</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                    <div class="korean-embed-card p-5 text-center">
+                        <div class="text-sm font-black text-gray-400">점수</div>
+                        <div id="hangul-game-score" class="text-4xl font-black text-[#46b3a5]">0</div>
+                    </div>
+                    <div class="korean-embed-card p-5 text-center">
+                        <div class="text-sm font-black text-gray-400">연속 정답</div>
+                        <div id="hangul-game-streak" class="text-4xl font-black text-[#f97316]">0</div>
+                    </div>
+                    <div class="korean-embed-card p-5 text-center">
+                        <div class="text-sm font-black text-gray-400">문제</div>
+                        <div id="hangul-game-round" class="text-4xl font-black text-[#2c3e50]">1/10</div>
+                    </div>
+                </div>
+
+                <div class="korean-embed-card p-8 text-center">
+                    <div id="hangul-game-target" class="text-7xl font-black text-[#2c3e50] mb-4">?</div>
+                    <button id="hangul-game-sound" class="btn-primary bg-[#46b3a5] shadow-[#46b3a533] px-10 py-4 text-xl">🔊 소리 듣기</button>
+                    <div id="hangul-game-feedback" class="min-h-[2rem] mt-5 text-2xl font-black text-gray-500">소리를 듣고 알맞은 카드를 골라요.</div>
+                    <div id="hangul-game-choices" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8"></div>
+                    <button id="hangul-game-restart" class="btn-primary mt-8 px-10 hidden">다시 하기</button>
                 </div>
             </div>
         </div>
@@ -5137,6 +5181,7 @@
             'letter-writing-section',
             'word-writing-quiz-section',
             'word-listening-quiz-section',
+            'hangul-game-section',
             'literacy-workspace-section'
         ];
 
@@ -5261,6 +5306,7 @@
                 'letter-writing-section',
                 'word-writing-quiz-section',
                 'word-listening-quiz-section',
+                'hangul-game-section',
                 'my-drawing-section',
                 'drawing-workspace-section',
                 'my-dictation-section',
@@ -5379,6 +5425,15 @@
 
         window.openWordListeningQuizActivity = function openWordListeningQuizActivity() {
             showTopLevelSection('word-listening-quiz-section');
+        }
+
+        window.openHangulGameActivity = function openHangulGameActivity() {
+            showTopLevelSection('hangul-game-section');
+            requestAnimationFrame(() => {
+                if (typeof window.startHangulSoundGame === 'function') {
+                    window.startHangulSoundGame();
+                }
+            });
         }
 
         const drawingShapeLibrary = [
@@ -7848,6 +7903,7 @@ ${JSON.stringify(targets, null, 2)}
             initializeLetterWritingActivity();
             initializeWordWritingQuizActivity();
             initializeListeningQuizActivity();
+            initializeHangulSoundGame();
         }
 
         function resizeCanvasForDisplay(canvas, ctx) {
@@ -8280,6 +8336,157 @@ ${JSON.stringify(targets, null, 2)}
             nextWord();
             window.refreshWordWritingCanvas = drawGuide;
             window.addEventListener('resize', () => drawTraceWritingGuide(canvas));
+        }
+
+        function initializeHangulSoundGame() {
+            const targetEl = document.getElementById('hangul-game-target');
+            const choicesEl = document.getElementById('hangul-game-choices');
+            const feedbackEl = document.getElementById('hangul-game-feedback');
+            const scoreEl = document.getElementById('hangul-game-score');
+            const streakEl = document.getElementById('hangul-game-streak');
+            const roundEl = document.getElementById('hangul-game-round');
+            const soundBtn = document.getElementById('hangul-game-sound');
+            const restartBtn = document.getElementById('hangul-game-restart');
+            const letterModeBtn = document.getElementById('hangul-game-letter-mode');
+            const wordModeBtn = document.getElementById('hangul-game-word-mode');
+            if (!targetEl || !choicesEl || !feedbackEl) return;
+
+            const fallbackLetters = ['가','나','다','라','마','바','사','아','야','여','오','우','고','구','무','미','산','강','밥','곰'];
+            const fallbackWords = ['아이','나무','다리','가지','파리','나비','기차','버스','포도','거미','야구','여우','우유','과자','사과','돼지','곰','밥','구름','책상'];
+            const cleanHangul = (value) => String(value || '').replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣ]/g, '');
+            const unique = (list) => [...new Set(list.filter(Boolean))];
+            const shuffle = (list) => [...list].sort(() => Math.random() - 0.5);
+            const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+            function buildGameBank() {
+                const letters = [...fallbackLetters];
+                const words = [...fallbackWords];
+                (window.CHANCHAN_LESSONS || CHANCHAN_LESSONS || []).forEach((lesson) => {
+                    (lesson.letters || []).forEach((item) => {
+                        const text = cleanHangul(item);
+                        if (Array.from(text).length === 1) letters.push(text);
+                    });
+                    (lesson.words || []).forEach((item) => {
+                        const text = cleanHangul(item);
+                        if (Array.from(text).length >= 2) words.push(text);
+                    });
+                    (lesson.pictureItems || []).forEach((item) => {
+                        const text = cleanHangul(item.word);
+                        if (Array.from(text).length >= 2) words.push(text);
+                    });
+                });
+                words.forEach((word) => Array.from(word).forEach((char) => letters.push(char)));
+                return { letters: unique(letters), words: unique(words) };
+            }
+
+            const bank = buildGameBank();
+            let mode = 'letter';
+            let score = 0;
+            let streak = 0;
+            let round = 1;
+            let answer = '';
+            const totalRounds = 10;
+
+            function updateHud() {
+                scoreEl.textContent = score;
+                streakEl.textContent = streak;
+                roundEl.textContent = `${Math.min(round, totalRounds)}/${totalRounds}`;
+            }
+
+            function speakAnswer() {
+                if (answer) speakTextKo(answer);
+            }
+
+            function renderModeButtons() {
+                letterModeBtn.classList.toggle('active', mode === 'letter');
+                wordModeBtn.classList.toggle('active', mode === 'word');
+            }
+
+            function finishGame() {
+                targetEl.textContent = '완료!';
+                choicesEl.innerHTML = '';
+                feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-[#46b3a5]';
+                feedbackEl.textContent = `잘했어요. 점수는 ${score}점이에요.`;
+                restartBtn.classList.remove('hidden');
+            }
+
+            function nextQuestion() {
+                if (round > totalRounds) {
+                    finishGame();
+                    return;
+                }
+                const source = mode === 'letter' ? bank.letters : bank.words;
+                answer = pick(source);
+                const wrongs = shuffle(source.filter((item) => item !== answer)).slice(0, 3);
+                const choices = shuffle([answer, ...wrongs]);
+                targetEl.textContent = mode === 'letter' ? '글자 소리' : '단어 소리';
+                feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-gray-500';
+                feedbackEl.textContent = '소리를 듣고 알맞은 카드를 골라요.';
+                restartBtn.classList.add('hidden');
+                choicesEl.innerHTML = choices.map((choice) => `
+                    <button type="button" class="btn-outline py-6 text-3xl font-black" data-choice="${choice}">${choice}</button>
+                `).join('');
+                choicesEl.querySelectorAll('button').forEach((btn) => {
+                    btn.addEventListener('click', () => chooseAnswer(btn.dataset.choice, btn));
+                });
+                updateHud();
+                window.setTimeout(speakAnswer, 220);
+            }
+
+            async function chooseAnswer(choice, btn) {
+                const isCorrect = choice === answer;
+                choicesEl.querySelectorAll('button').forEach((item) => {
+                    item.disabled = true;
+                    if (item.dataset.choice === answer) item.classList.add('active');
+                });
+                if (isCorrect) {
+                    streak += 1;
+                    score += 10 + Math.min(10, streak * 2);
+                    feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-[#46b3a5]';
+                    feedbackEl.textContent = streak >= 3 ? `좋아요! ${streak}번 연속 정답!` : '좋아요! 잘 들었어요.';
+                } else {
+                    streak = 0;
+                    btn.classList.add('bg-red-50');
+                    feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-orange-500';
+                    feedbackEl.textContent = `다시 들어 봐요. 정답은 ${answer}예요.`;
+                }
+                updateHud();
+                await recordKoreanAttempt({
+                    lessonId: 'hangul-sound-game',
+                    lessonTitle: '한글 소리 찾기 게임',
+                    unitId: null,
+                    activityType: 'listenAndFind',
+                    word: answer,
+                    answer,
+                    userAnswer: choice,
+                    isCorrect,
+                    errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH,
+                    skillTags: ['한글게임', mode === 'letter' ? '글자' : '단어']
+                });
+                round += 1;
+                window.setTimeout(nextQuestion, isCorrect ? 850 : 1350);
+            }
+
+            function restartGame(newMode = mode) {
+                mode = newMode;
+                score = 0;
+                streak = 0;
+                round = 1;
+                renderModeButtons();
+                nextQuestion();
+            }
+
+            soundBtn.addEventListener('click', speakAnswer);
+            restartBtn.addEventListener('click', () => restartGame());
+            letterModeBtn.addEventListener('click', () => restartGame('letter'));
+            wordModeBtn.addEventListener('click', () => restartGame('word'));
+            window.startHangulSoundGame = () => {
+                if (!answer || round > totalRounds) restartGame(mode);
+                else {
+                    updateHud();
+                    speakAnswer();
+                }
+            };
         }
 
         function initializeListeningQuizActivity() {
