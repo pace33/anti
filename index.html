@@ -16,6 +16,14 @@
         .hidden {
             display: none !important;
         }
+        html, body, button, [onclick], canvas {
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-button {
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
 
         .page-number {
             position: fixed;
@@ -508,6 +516,9 @@
             border-radius: 18px;
             background: #ffffff;
             touch-action: none;
+            -ms-touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
             cursor: crosshair;
         }
         .trace-writing-canvas.double-row {
@@ -8523,11 +8534,11 @@ ${JSON.stringify(targets, null, 2)}
             'ㅒ': ['audio/vowels/yae.mp3', 'sounds/vowels/yae.mp3', 'assets/audio/yae.mp3']
         };
         const LESSON_MOUTH_FALLBACK_TEXTS = {
-            'ㅣ': { normal: '이', slow: '이. 입을 조금 벌려요.' },
-            'ㅐ': { normal: '애. 개.', slow: '애. 개. 입을 더 벌려요.' },
-            'ㅔ': { normal: '에. 게.', slow: '에. 게. 입을 가장 크게 벌려요.' },
-            'ㅖ': { normal: '예. 시계.', slow: '예. 시계. 입을 더 벌려요.' },
-            'ㅒ': { normal: '얘. 얘기.', slow: '얘. 얘기. 입을 가장 크게 벌려요.' }
+            'ㅣ': { normal: '이', slow: '이' },
+            'ㅐ': { normal: '개', slow: '개' },
+            'ㅔ': { normal: '게', slow: '게' },
+            'ㅖ': { normal: '시계', slow: '시계' },
+            'ㅒ': { normal: '얘기', slow: '얘기' }
         };
         window.lessonMouthFollowChar = window.lessonMouthFollowChar || { 15: 'ㅐ', 16: 'ㅖ' };
         window.lessonMouthQuizTarget = window.lessonMouthQuizTarget || {};
@@ -8662,38 +8673,42 @@ ${JSON.stringify(targets, null, 2)}
 
         function playLessonMouthAudioFallback(char, slow = false) {
             const fallbackText = LESSON_MOUTH_FALLBACK_TEXTS[char]?.[slow ? 'slow' : 'normal'] || spokenLabelForChar(char);
+            playLessonMouthNativeFallback(fallbackText, slow);
+        }
+
+        function playLessonMouthOnlineFallback(text, slow = false) {
             try {
                 if (!globalTtsAudio) {
                     globalTtsAudio = new Audio();
                 }
                 globalTtsAudio.pause();
-                const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(fallbackText) + "&tl=ko&total=1&idx=0&textlen=" + fallbackText.length + "&client=tw-ob&prev=input";
+                const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(text) + "&tl=ko&total=1&idx=0&textlen=" + text.length + "&client=tw-ob&prev=input";
                 globalTtsAudio.src = ttsUrl;
-                globalTtsAudio.playbackRate = slow ? 0.72 : 0.9;
-                globalTtsAudio.play().catch(() => playLessonMouthNativeFallback(fallbackText, slow));
-                return;
+                globalTtsAudio.playbackRate = slow ? 0.82 : 1;
+                globalTtsAudio.play().catch(() => speakTextKo(text));
             } catch {
-                playLessonMouthNativeFallback(fallbackText, slow);
+                speakTextKo(text);
             }
         }
 
         function playLessonMouthNativeFallback(text, slow = false) {
             if (typeof speechSynthesis === 'undefined') {
-                speakTextKo(text);
+                playLessonMouthOnlineFallback(text, slow);
                 return;
             }
             try {
                 speechSynthesis.cancel();
                 const utt = new SpeechSynthesisUtterance(text);
                 utt.lang = 'ko-KR';
-                utt.rate = slow ? 0.54 : 0.82;
-                utt.pitch = 0.92;
+                utt.rate = slow ? 0.68 : 0.95;
+                utt.pitch = 1;
                 const voices = speechSynthesis.getVoices();
-                const koVoice = voices.find(v => v.lang?.toLowerCase().startsWith('ko'));
+                const koVoices = voices.filter(v => v.lang?.toLowerCase().startsWith('ko'));
+                const koVoice = koVoices.find(v => /yunjin|siri|google|heami|narae|female/i.test(v.name)) || koVoices[0];
                 if (koVoice) utt.voice = koVoice;
                 speechSynthesis.speak(utt);
             } catch {
-                speakTextKo(text);
+                playLessonMouthOnlineFallback(text, slow);
             }
         }
 
@@ -9598,7 +9613,7 @@ ${JSON.stringify(targets, null, 2)}
 
         function traceIsNearCurrentStrokeStart(point, strokeItem) {
             const scale = Math.min(strokeItem.box.w, strokeItem.box.h);
-            return traceDistance(point, traceStrokeStartPoint(strokeItem)) <= Math.max(24, scale * 0.22);
+            return traceDistance(point, traceStrokeStartPoint(strokeItem)) <= Math.max(36, scale * 0.34);
         }
 
         function traceDidCompleteStroke(path, strokeItem) {
@@ -9607,7 +9622,7 @@ ${JSON.stringify(targets, null, 2)}
             if (strokeItem.stroke.dot) return tracePathLength(path) >= Math.max(8, scale * 0.06);
             if (strokeItem.stroke.circle) return tracePathLength(path) >= scale * 0.6;
             const last = path[path.length - 1];
-            return tracePathLength(path) >= scale * 0.18 && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= Math.max(30, scale * 0.26);
+            return tracePathLength(path) >= scale * 0.14 && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= Math.max(40, scale * 0.38);
         }
 
         function initializeTraceWritingCanvas(target) {
@@ -9620,6 +9635,7 @@ ${JSON.stringify(targets, null, 2)}
             let viewWidth = 0;
             let activeTrace = null;
             let activePath = [];
+            let activePointerId = null;
             const refreshGuide = () => {
                 const size = resizeCanvasForDisplay(canvas, ctx);
                 viewWidth = size.width;
@@ -9630,11 +9646,15 @@ ${JSON.stringify(targets, null, 2)}
             };
             const point = (ev) => {
                 const rect = canvas.getBoundingClientRect();
-                if (ev.touches?.length) return { x: ev.touches[0].clientX - rect.left, y: ev.touches[0].clientY - rect.top };
-                return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+                const source = ev.touches?.[0] || ev.changedTouches?.[0] || ev;
+                return { x: source.clientX - rect.left, y: source.clientY - rect.top };
             };
             const start = (ev) => {
-                ev.preventDefault();
+                if (ev.pointerId !== undefined) {
+                    activePointerId = ev.pointerId;
+                    try { canvas.setPointerCapture(ev.pointerId); } catch {}
+                }
+                if (ev.cancelable) ev.preventDefault();
                 const p = point(ev);
                 lastX = p.x;
                 lastY = p.y;
@@ -9669,6 +9689,7 @@ ${JSON.stringify(targets, null, 2)}
                         const nextStrokeIndex = completed[charIndex] || 0;
                         const nextStroke = cell?.strokes?.[nextStrokeIndex];
                         if (!nextStroke || !traceIsNearCurrentStrokeStart(p, nextStroke)) {
+                            activePointerId = null;
                             return;
                         }
 
@@ -9687,8 +9708,9 @@ ${JSON.stringify(targets, null, 2)}
                 }
             };
             const move = (ev) => {
+                if (activePointerId !== null && ev.pointerId !== undefined && ev.pointerId !== activePointerId) return;
                 if (!drawing) return;
-                ev.preventDefault();
+                if (ev.cancelable) ev.preventDefault();
                 const p = point(ev);
                 ctx.strokeStyle = 'rgba(44, 62, 80, 0.72)';
                 ctx.lineWidth = 7;
@@ -9721,16 +9743,25 @@ ${JSON.stringify(targets, null, 2)}
                 }
                 activeTrace = null;
                 activePath = [];
+                activePointerId = null;
                 refreshGuide();
             };
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mousemove', move);
-            canvas.addEventListener('mouseup', stop);
-            canvas.addEventListener('mouseout', stop);
-            canvas.addEventListener('touchstart', start, { passive: false });
-            canvas.addEventListener('touchmove', move, { passive: false });
-            canvas.addEventListener('touchend', stop);
-            canvas.addEventListener('touchcancel', stop);
+            if (window.PointerEvent) {
+                canvas.addEventListener('pointerdown', start);
+                canvas.addEventListener('pointermove', move);
+                canvas.addEventListener('pointerup', stop);
+                canvas.addEventListener('pointercancel', stop);
+                canvas.addEventListener('pointerleave', stop);
+            } else {
+                canvas.addEventListener('mousedown', start);
+                canvas.addEventListener('mousemove', move);
+                canvas.addEventListener('mouseup', stop);
+                canvas.addEventListener('mouseout', stop);
+                canvas.addEventListener('touchstart', start, { passive: false });
+                canvas.addEventListener('touchmove', move, { passive: false });
+                canvas.addEventListener('touchend', stop);
+                canvas.addEventListener('touchcancel', stop);
+            }
             canvas.dataset.ready = 'true';
             refreshGuide();
             window.addEventListener('resize', () => {
