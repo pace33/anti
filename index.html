@@ -4642,10 +4642,13 @@
         const unitMeta = {
             vowel: { label: '모음 단원', color: '#f59e0b' },
             consonant: { label: '자음 단원', color: '#10b981' },
+            noBatchimWord: { label: '받침 없는 단어', color: '#f97316' },
             complexVowel: { label: '복잡한 모음 단원', color: '#8b5cf6' },
+            complexVowelWord: { label: '복잡한 모음 단어', color: '#a855f7' },
             batchim: { label: '받침 단원', color: '#ef4444' },
+            batchimWord: { label: '대표받침 단어', color: '#f97316' },
             complexBatchim: { label: '복잡한 받침 단원', color: '#0ea5e9' },
-            word: { label: '단어 단원', color: '#f97316' },
+            complexBatchimWord: { label: '받침가족 단어', color: '#0284c7' },
             evaluation: { label: '평가 단원', color: '#14b8a6' }
         };
 
@@ -4704,12 +4707,19 @@
                 { step: 11, title: '배움 11: ㅅ, ㅈ, ㅊ, ㅉ, ㅆ 공부하기', page: 52 },
                 { step: 12, title: '배움 12: ㅇ, ㅎ, ㄹ 공부하기', page: 60 }
             ],
+            noBatchimWord: [
+                { step: 13, title: '배움 13: ㅏ, ㅣ 단어 공부하기', page: 71 },
+                { step: 14, title: '배움 14: ㅡ, ㅗ, ㅓ 단어 공부하기', page: 79 }
+            ],
             complexVowel: [
                 { step: 15, title: '배움 15: ㅐ, ㅔ', page: 92 },
                 { step: 16, title: '배움 16: ㅖ, ㅒ', page: 96 },
                 { step: 17, title: '배움 17: ㅘ, ㅝ', page: 100 },
                 { step: 18, title: '배움 18: ㅟ, ㅢ', page: 103 },
                 { step: 19, title: '배움 19: ㅞ, ㅙ, ㅚ', page: 106 }
+            ],
+            complexVowelWord: [
+                { step: 20, title: '배움 20: 복잡한 모음 단어 공부하기', page: 113 }
             ],
             batchim: [
                 { step: 21, title: '배움 21: ㅁ, ㅂ 받침', page: 125 },
@@ -4718,17 +4728,16 @@
                 { step: 24, title: '배움 24: ㄷ 받침', page: 143 },
                 { step: 25, title: '배움 25: 도전, 받침왕! (1)', page: 146 }
             ],
+            batchimWord: [
+                { step: 26, title: '배움 26: ‘7가지’ 대표받침 단어 공부하기', page: 153 }
+            ],
             complexBatchim: [
                 { step: 27, title: '배움 27: ㅂ 받침가족', page: 165 },
                 { step: 28, title: '배움 28: ㄱ 받침가족', page: 168 },
                 { step: 29, title: '배움 29: ㄷ 받침가족', page: 171 },
                 { step: 30, title: '배움 30: 도전, 받침왕! (2)', page: 175 }
             ],
-            word: [
-                { step: 13, title: '배움 13: ㅏ, ㅣ 단어 공부하기', page: 71 },
-                { step: 14, title: '배움 14: ㅡ, ㅗ, ㅓ 단어 공부하기', page: 79 },
-                { step: 20, title: '배움 20: 복잡한 모음 단어 공부하기', page: 113 },
-                { step: 26, title: '배움 26: ‘7가지’ 대표받침 단어 공부하기', page: 153 },
+            complexBatchimWord: [
                 { step: 31, title: '배움 31: 받침가족 단어 공부하기', page: 183 },
                 { step: 32, title: '배움 32: 겹받침 있는 단어 읽기', page: 190 },
                 { step: 33, title: '배움 33: 겹받침 단어 공부하기', page: 191 }
@@ -9142,7 +9151,7 @@ ${JSON.stringify(targets, null, 2)}
             const tabsRoot = document.getElementById('my-korean-tabs');
             const tabEntries = Object.entries(unitMeta);
             tabsRoot.innerHTML = tabEntries.map(([key, meta]) => {
-                const isLongLabel = ['complexVowel', 'complexBatchim'].includes(key);
+                const isLongLabel = ['noBatchimWord', 'complexVowel', 'complexVowelWord', 'batchimWord', 'complexBatchim', 'complexBatchimWord'].includes(key);
                 const tabTextSizeClass = isLongLabel ? 'text-base md:text-lg' : 'text-lg md:text-xl';
                 return `
                 <button class="nav-tab ${tabTextSizeClass} whitespace-nowrap ${key === activeUnitKey ? 'active' : ''}"
