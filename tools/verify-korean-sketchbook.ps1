@@ -17,7 +17,7 @@ $requiredMarkers = @(
   'selectDrawingBrushSize(2)',
   'selectDrawingBrushSize(3)',
   'selectDrawingBrushSize(4)',
-  'Array.from({ length: 100 }',
+  'const drawingMissions = drawingMissionPool.map((template, index) =>',
   'drawingShapeLibrary',
   'shapeMissionTemplates',
   'shape-mission',
@@ -62,4 +62,4 @@ foreach ($file in $files) {
   }
 }
 
-Write-Host 'Verified Korean sketchbook/shape mission guard: brush buttons, 100 stages, real shape templates, accuracy stats, rewards/cooldown, gallery, and /korean-db are preserved.'
+Write-Host 'Verified Korean sketchbook/shape mission guard: brush buttons, unique drawing stages, real shape templates, accuracy stats, rewards/cooldown, gallery, and /korean-db are preserved.'

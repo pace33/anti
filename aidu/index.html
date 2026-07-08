@@ -5543,37 +5543,37 @@
         const drawingTemplateLibrary = [
             { key: 'blank', label: '빈 종이', type: 'free', shapes: [] },
             { key: 'line', label: '직선 연습', type: 'trace', shapes: [{ shape: 'line', x: 0.18, y: 0.3, w: 0.64, h: 0.01 }, { shape: 'line', x: 0.18, y: 0.5, w: 0.64, h: 0.01 }, { shape: 'line', x: 0.18, y: 0.7, w: 0.64, h: 0.01 }] },
-            { key: 'waves', label: '꾸불선 연습', type: 'trace', shapes: [{ shape: 'wave', x: 0.15, y: 0.35, w: 0.7, h: 0.16 }, { shape: 'wave', x: 0.15, y: 0.6, w: 0.7, h: 0.14 }] },
+            { key: 'waves', label: '꾸불선 연습', type: 'trace', shapes: [{ shape: 'wave', x: 0.5, y: 0.35, w: 0.7, h: 0.16 }, { shape: 'wave', x: 0.5, y: 0.6, w: 0.7, h: 0.14 }] },
             { key: 'circles', label: '동그라미 연습', type: 'trace', shapes: [{ shape: 'circle', x: 0.32, y: 0.48, w: 0.24, h: 0.24 }, { shape: 'circle', x: 0.66, y: 0.52, w: 0.3, h: 0.2 }] },
             { key: 'shapes', label: '도형 마을', type: 'trace', shapes: [{ shape: 'square', x: 0.22, y: 0.48, w: 0.22, h: 0.22 }, { shape: 'triangle', x: 0.62, y: 0.5, w: 0.28, h: 0.28 }, { shape: 'circle', x: 0.48, y: 0.28, w: 0.16, h: 0.16 }, { shape: 'diamond', x: 0.78, y: 0.3, w: 0.18, h: 0.18 }] },
             { key: 'flower', label: '꽃밭', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.42, w: 0.14, h: 0.14 }, { shape: 'circle', x: 0.38, y: 0.42, w: 0.13, h: 0.13 }, { shape: 'circle', x: 0.62, y: 0.42, w: 0.13, h: 0.13 }, { shape: 'circle', x: 0.5, y: 0.3, w: 0.13, h: 0.13 }, { shape: 'circle', x: 0.5, y: 0.55, w: 0.13, h: 0.13 }, { shape: 'line', x: 0.5, y: 0.62, w: 0, h: 0.24 }, { shape: 'wave', x: 0.36, y: 0.74, w: 0.28, h: 0.08 }] },
             { key: 'house', label: '우리 집', type: 'coloring', shapes: [{ shape: 'square', x: 0.5, y: 0.58, w: 0.36, h: 0.3 }, { shape: 'triangle', x: 0.5, y: 0.33, w: 0.46, h: 0.28 }, { shape: 'square', x: 0.43, y: 0.6, w: 0.09, h: 0.09 }, { shape: 'square', x: 0.6, y: 0.6, w: 0.09, h: 0.09 }] },
             { key: 'tree', label: '나무', type: 'coloring', shapes: [{ shape: 'line', x: 0.5, y: 0.52, w: 0, h: 0.32 }, { shape: 'circle', x: 0.5, y: 0.34, w: 0.28, h: 0.24 }, { shape: 'circle', x: 0.38, y: 0.42, w: 0.22, h: 0.18 }, { shape: 'circle', x: 0.62, y: 0.42, w: 0.22, h: 0.18 }] },
             { key: 'butterfly', label: '나비', type: 'coloring', shapes: [{ shape: 'line', x: 0.5, y: 0.35, w: 0, h: 0.34 }, { shape: 'heart', x: 0.38, y: 0.45, w: 0.22, h: 0.24 }, { shape: 'heart', x: 0.62, y: 0.45, w: 0.22, h: 0.24 }, { shape: 'wave', x: 0.43, y: 0.22, w: 0.14, h: 0.08 }, { shape: 'wave', x: 0.57, y: 0.22, w: 0.14, h: 0.08 }] },
-            { key: 'fish', label: '물고기', type: 'coloring', shapes: [{ shape: 'circle', x: 0.46, y: 0.5, w: 0.34, h: 0.2 }, { shape: 'triangle', x: 0.72, y: 0.5, w: 0.22, h: 0.2 }, { shape: 'circle', x: 0.35, y: 0.46, w: 0.04, h: 0.04 }, { shape: 'wave', x: 0.24, y: 0.68, w: 0.52, h: 0.08 }] },
+            { key: 'fish', label: '물고기', type: 'coloring', shapes: [{ shape: 'circle', x: 0.46, y: 0.5, w: 0.34, h: 0.2 }, { shape: 'triangle', x: 0.72, y: 0.5, w: 0.22, h: 0.2 }, { shape: 'circle', x: 0.35, y: 0.46, w: 0.04, h: 0.04 }, { shape: 'wave', x: 0.28, y: 0.68, w: 0.42, h: 0.08 }, { shape: 'wave', x: 0.70, y: 0.68, w: 0.42, h: 0.08 }] },
             { key: 'cat', label: '고양이', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.28, h: 0.24 }, { shape: 'triangle', x: 0.4, y: 0.32, w: 0.12, h: 0.14 }, { shape: 'triangle', x: 0.6, y: 0.32, w: 0.12, h: 0.14 }, { shape: 'wave', x: 0.32, y: 0.55, w: 0.15, h: 0.06 }, { shape: 'wave', x: 0.53, y: 0.55, w: 0.15, h: 0.06 }] },
             { key: 'rabbit', label: '토끼', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.54, w: 0.24, h: 0.22 }, { shape: 'circle', x: 0.43, y: 0.3, w: 0.09, h: 0.26 }, { shape: 'circle', x: 0.57, y: 0.3, w: 0.09, h: 0.26 }] },
             { key: 'car', label: '자동차', type: 'coloring', shapes: [{ shape: 'square', x: 0.5, y: 0.54, w: 0.48, h: 0.18 }, { shape: 'square', x: 0.5, y: 0.4, w: 0.28, h: 0.14 }, { shape: 'circle', x: 0.35, y: 0.68, w: 0.09, h: 0.09 }, { shape: 'circle', x: 0.65, y: 0.68, w: 0.09, h: 0.09 }] },
             { key: 'rocket', label: '로켓', type: 'coloring', shapes: [{ shape: 'triangle', x: 0.5, y: 0.22, w: 0.18, h: 0.2 }, { shape: 'square', x: 0.5, y: 0.48, w: 0.18, h: 0.32 }, { shape: 'circle', x: 0.5, y: 0.4, w: 0.08, h: 0.08 }, { shape: 'triangle', x: 0.38, y: 0.66, w: 0.12, h: 0.16 }, { shape: 'triangle', x: 0.62, y: 0.66, w: 0.12, h: 0.16 }] },
             { key: 'castle', label: '성', type: 'coloring', shapes: [{ shape: 'square', x: 0.34, y: 0.58, w: 0.18, h: 0.3 }, { shape: 'square', x: 0.66, y: 0.58, w: 0.18, h: 0.3 }, { shape: 'square', x: 0.5, y: 0.64, w: 0.26, h: 0.22 }, { shape: 'triangle', x: 0.34, y: 0.34, w: 0.2, h: 0.18 }, { shape: 'triangle', x: 0.66, y: 0.34, w: 0.2, h: 0.18 }] },
-            { key: 'rainbow', label: '무지개', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.74, w: 0.62, h: 0.62 }, { shape: 'circle', x: 0.5, y: 0.74, w: 0.48, h: 0.48 }, { shape: 'circle', x: 0.5, y: 0.74, w: 0.34, h: 0.34 }] },
+            { key: 'rainbow', label: '무지개', type: 'coloring', shapes: [{ shape: 'wave', variant: 'arc', x: 0.5, y: 0.74, w: 0.70, h: 0.48 }, { shape: 'wave', variant: 'arc', x: 0.5, y: 0.74, w: 0.58, h: 0.39 }, { shape: 'wave', variant: 'arc', x: 0.5, y: 0.74, w: 0.46, h: 0.30 }, { shape: 'circle', x: 0.22, y: 0.70, w: 0.10, h: 0.10 }, { shape: 'circle', x: 0.28, y: 0.67, w: 0.12, h: 0.12 }, { shape: 'circle', x: 0.34, y: 0.70, w: 0.10, h: 0.10 }, { shape: 'circle', x: 0.66, y: 0.70, w: 0.10, h: 0.10 }, { shape: 'circle', x: 0.72, y: 0.67, w: 0.12, h: 0.12 }, { shape: 'circle', x: 0.78, y: 0.70, w: 0.10, h: 0.10 }, { shape: 'line', x: 0.14, y: 0.76, w: 0.72, h: 0 }] },
             { key: 'star', label: '별', type: 'trace', shapes: [{ shape: 'star', x: 0.5, y: 0.5, w: 0.36, h: 0.36 }] },
             { key: 'heart', label: '하트', type: 'trace', shapes: [{ shape: 'heart', x: 0.5, y: 0.5, w: 0.36, h: 0.32 }] },
-            { key: 'face', label: '웃는 얼굴', type: 'trace', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.34, h: 0.34 }, { shape: 'circle', x: 0.43, y: 0.44, w: 0.04, h: 0.04 }, { shape: 'circle', x: 0.57, y: 0.44, w: 0.04, h: 0.04 }, { shape: 'wave', x: 0.4, y: 0.56, w: 0.2, h: 0.08 }] },
+            { key: 'face', label: '웃는 얼굴', type: 'trace', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.34, h: 0.34 }, { shape: 'circle', x: 0.43, y: 0.44, w: 0.04, h: 0.04 }, { shape: 'circle', x: 0.57, y: 0.44, w: 0.04, h: 0.04 }, { shape: 'triangle', x: 0.5, y: 0.57, w: 0.08, h: 0.06 }] },
             { key: 'mountain', label: '산', type: 'coloring', shapes: [{ shape: 'triangle', x: 0.4, y: 0.58, w: 0.34, h: 0.34 }, { shape: 'triangle', x: 0.62, y: 0.56, w: 0.34, h: 0.38 }, { shape: 'circle', x: 0.78, y: 0.24, w: 0.12, h: 0.12 }] },
-            { key: 'sea', label: '바다', type: 'coloring', shapes: [{ shape: 'wave', x: 0.15, y: 0.42, w: 0.7, h: 0.1 }, { shape: 'wave', x: 0.12, y: 0.58, w: 0.76, h: 0.1 }, { shape: 'circle', x: 0.72, y: 0.25, w: 0.12, h: 0.12 }] },
+            { key: 'sea', label: '바다', type: 'coloring', shapes: [{ shape: 'wave', x: 0.28, y: 0.42, w: 0.42, h: 0.08 }, { shape: 'wave', x: 0.70, y: 0.42, w: 0.42, h: 0.08 }, { shape: 'wave', x: 0.26, y: 0.58, w: 0.42, h: 0.08 }, { shape: 'wave', x: 0.68, y: 0.58, w: 0.42, h: 0.08 }, { shape: 'circle', x: 0.82, y: 0.18, w: 0.12, h: 0.12 }] },
             { key: 'school', label: '학교', type: 'coloring', shapes: [{ shape: 'square', x: 0.5, y: 0.58, w: 0.46, h: 0.32 }, { shape: 'triangle', x: 0.5, y: 0.34, w: 0.5, h: 0.18 }, { shape: 'square', x: 0.42, y: 0.56, w: 0.08, h: 0.08 }, { shape: 'square', x: 0.58, y: 0.56, w: 0.08, h: 0.08 }] },
             { key: 'book', label: '책', type: 'coloring', shapes: [{ shape: 'square', x: 0.4, y: 0.52, w: 0.24, h: 0.34 }, { shape: 'square', x: 0.6, y: 0.52, w: 0.24, h: 0.34 }, { shape: 'line', x: 0.5, y: 0.35, w: 0, h: 0.34 }] },
-            { key: 'pencil', label: '연필', type: 'trace', shapes: [{ shape: 'line', x: 0.3, y: 0.68, w: 0.38, h: -0.38 }, { shape: 'triangle', x: 0.7, y: 0.28, w: 0.12, h: 0.12 }, { shape: 'square', x: 0.34, y: 0.64, w: 0.12, h: 0.08 }] },
+            { key: 'pencil', label: '연필', type: 'trace', shapes: [{ shape: 'line', x: 0.46, y: 0.26, w: 0.08, h: 0 }, { shape: 'triangle', x: 0.5, y: 0.30, w: 0.14, h: 0.14 }, { shape: 'square', x: 0.5, y: 0.52, w: 0.14, h: 0.30 }, { shape: 'line', x: 0.46, y: 0.37, w: 0, h: 0.30 }, { shape: 'line', x: 0.54, y: 0.37, w: 0, h: 0.30 }, { shape: 'square', x: 0.5, y: 0.69, w: 0.14, h: 0.04 }, { shape: 'square', x: 0.5, y: 0.74, w: 0.14, h: 0.06 }] },
             { key: 'cloud', label: '구름', type: 'coloring', shapes: [{ shape: 'circle', x: 0.38, y: 0.5, w: 0.2, h: 0.16 }, { shape: 'circle', x: 0.5, y: 0.44, w: 0.24, h: 0.2 }, { shape: 'circle', x: 0.64, y: 0.5, w: 0.22, h: 0.16 }, { shape: 'line', x: 0.34, y: 0.58, w: 0.34, h: 0 }] },
             { key: 'sun', label: '해님', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.24, h: 0.24 }, { shape: 'line', x: 0.5, y: 0.16, w: 0, h: 0.12 }, { shape: 'line', x: 0.5, y: 0.72, w: 0, h: 0.12 }, { shape: 'line', x: 0.16, y: 0.5, w: 0.12, h: 0 }, { shape: 'line', x: 0.72, y: 0.5, w: 0.12, h: 0 }] },
-            { key: 'moon', label: '달님', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.48, w: 0.28, h: 0.34 }, { shape: 'circle', x: 0.58, y: 0.42, w: 0.22, h: 0.28 }] },
+            { key: 'moon', label: '달님', type: 'coloring', shapes: [{ shape: 'wave', variant: 'crescent', x: 0.48, y: 0.45, w: 0.26, h: 0.34 }, { shape: 'circle', x: 0.39, y: 0.41, w: 0.03, h: 0.03 }, { shape: 'circle', x: 0.48, y: 0.41, w: 0.03, h: 0.03 }, { shape: 'wave', x: 0.43, y: 0.50, w: 0.08, h: 0.04 }, { shape: 'star', x: 0.72, y: 0.30, w: 0.10, h: 0.10 }, { shape: 'star', x: 0.66, y: 0.58, w: 0.08, h: 0.08 }] },
             { key: 'train', label: '기차', type: 'coloring', shapes: [{ shape: 'square', x: 0.42, y: 0.52, w: 0.32, h: 0.22 }, { shape: 'square', x: 0.68, y: 0.52, w: 0.2, h: 0.22 }, { shape: 'circle', x: 0.34, y: 0.68, w: 0.08, h: 0.08 }, { shape: 'circle', x: 0.56, y: 0.68, w: 0.08, h: 0.08 }, { shape: 'circle', x: 0.72, y: 0.68, w: 0.08, h: 0.08 }] },
             { key: 'boat', label: '배', type: 'coloring', shapes: [{ shape: 'triangle', x: 0.5, y: 0.36, w: 0.28, h: 0.28 }, { shape: 'line', x: 0.5, y: 0.28, w: 0, h: 0.36 }, { shape: 'wave', x: 0.2, y: 0.68, w: 0.6, h: 0.08 }, { shape: 'pentagon', x: 0.5, y: 0.58, w: 0.42, h: 0.18 }] },
             { key: 'dinosaur', label: '공룡', type: 'coloring', shapes: [{ shape: 'circle', x: 0.46, y: 0.52, w: 0.34, h: 0.22 }, { shape: 'circle', x: 0.68, y: 0.38, w: 0.16, h: 0.16 }, { shape: 'triangle', x: 0.38, y: 0.34, w: 0.1, h: 0.12 }, { shape: 'triangle', x: 0.5, y: 0.32, w: 0.1, h: 0.12 }, { shape: 'line', x: 0.34, y: 0.66, w: 0, h: 0.14 }, { shape: 'line', x: 0.56, y: 0.66, w: 0, h: 0.14 }] },
             { key: 'kite', label: '연', type: 'trace', shapes: [{ shape: 'diamond', x: 0.48, y: 0.38, w: 0.34, h: 0.38 }, { shape: 'line', x: 0.48, y: 0.58, w: 0, h: 0.26 }, { shape: 'wave', x: 0.48, y: 0.76, w: 0.28, h: 0.1 }] },
             { key: 'jewel', label: '보석', type: 'coloring', shapes: [{ shape: 'diamond', x: 0.5, y: 0.52, w: 0.38, h: 0.34 }, { shape: 'triangle', x: 0.5, y: 0.3, w: 0.34, h: 0.18 }, { shape: 'line', x: 0.34, y: 0.42, w: 0.32, h: 0 }] },
-            { key: 'candy', label: '사탕', type: 'coloring', shapes: [{ shape: 'diamond', x: 0.5, y: 0.5, w: 0.26, h: 0.24 }, { shape: 'triangle', x: 0.32, y: 0.5, w: 0.16, h: 0.18 }, { shape: 'triangle', x: 0.68, y: 0.5, w: 0.16, h: 0.18 }, { shape: 'zigzag', x: 0.38, y: 0.67, w: 0.24, h: 0.08 }] }
+            { key: 'candy', label: '사탕', type: 'coloring', shapes: [{ shape: 'circle', x: 0.5, y: 0.5, w: 0.20, h: 0.20 }, { shape: 'circle', x: 0.5, y: 0.5, w: 0.10, h: 0.10 }, { shape: 'line', x: 0.40, y: 0.5, w: -0.08, h: -0.06 }, { shape: 'line', x: 0.40, y: 0.5, w: -0.08, h: 0.06 }, { shape: 'line', x: 0.32, y: 0.44, w: 0, h: 0.12 }, { shape: 'line', x: 0.60, y: 0.5, w: 0.08, h: -0.06 }, { shape: 'line', x: 0.60, y: 0.5, w: 0.08, h: 0.06 }, { shape: 'line', x: 0.68, y: 0.44, w: 0, h: 0.12 }] }
         ];
 
         const drawingTemplates = Object.fromEntries(drawingTemplateLibrary.map((item) => [item.key, item.label]));
@@ -5584,8 +5584,7 @@
             shapes: [{ shape: shape.key, x: 0.5, y: 0.5, w: shape.key === 'line' || shape.key === 'wave' || shape.key === 'zigzag' ? 0.62 : 0.34, h: shape.key === 'line' ? 0 : 0.28 }]
         }));
         const drawingMissionPool = drawingTemplateLibrary.filter((item) => item.key !== 'blank');
-        const drawingMissions = Array.from({ length: 100 }, (_, index) => {
-            const template = drawingMissionPool[index % drawingMissionPool.length];
+        const drawingMissions = drawingMissionPool.map((template, index) => {
             return {
                 step: index + 1,
                 title: `${template.label} 도형 도안`,
@@ -6030,6 +6029,25 @@
             const pushPolygon = (vertices) => vertices.forEach((p, i) => points.push(...sampleLine(p.x, p.y, vertices[(i + 1) % vertices.length].x, vertices[(i + 1) % vertices.length].y, 18)));
             if (item.shape === 'line') return sampleLine(item.x * width, item.y * height, (item.x + (item.w || 0)) * width, (item.y + (item.h || 0)) * height, 38);
             if (item.shape === 'wave') {
+                if (item.variant === 'arc') {
+                    for (let i = 0; i < 70; i++) {
+                        const t = i / 69;
+                        const a = Math.PI * (1 - t);
+                        points.push({ x: cx + Math.cos(a) * w / 2, y: cy - Math.sin(a) * h / 2 });
+                    }
+                    return points;
+                }
+                if (item.variant === 'crescent') {
+                    const outer = [];
+                    const inner = [];
+                    for (let i = 0; i < 48; i++) {
+                        const t = i / 47;
+                        const a = -Math.PI / 2 + Math.PI * t;
+                        outer.push({ x: cx + Math.cos(a) * w / 2, y: cy + Math.sin(a) * h / 2 });
+                        inner.push({ x: cx + w * 0.22 + Math.cos(a) * w * 0.34, y: cy + Math.sin(a) * h * 0.40 });
+                    }
+                    return [...outer, ...inner.reverse()];
+                }
                 for (let i = 0; i < 60; i++) {
                     const t = i / 59;
                     points.push({ x: left + w * t, y: cy + Math.sin(t * Math.PI * 4) * h * 0.45 });
