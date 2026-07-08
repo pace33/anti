@@ -82,6 +82,17 @@
         @keyframes activityLoadingSpin {
             to { transform: rotate(360deg); }
         }
+        .button-loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            animation: activityLoadingSpin 0.85s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
         .korean-shop-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1512,6 +1523,9 @@
                             <span class="text-lg font-black text-[#2c3e50]" id="dashboard-account-name-header">김토도</span>
                             <span class="text-sm text-yellow-500">⭐ <span id="dashboard-coins-header" class="font-black">0</span></span>
                         </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
+                        </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
@@ -1611,6 +1625,9 @@
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
                         </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
+                        </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
                     <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
@@ -1654,7 +1671,7 @@
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openAiDrawingQuizActivity()">
                         <div class="text-5xl mb-3">🤖</div>
                         <div class="text-xl font-bold">AI 그림</div>
-                        <p class="text-sm text-gray-500 mt-2">부족한 도형이 들어간 도안을 그려요</p>
+                        <p class="text-sm text-gray-500 mt-2">AI와 함께 도형과 그림을 모두 그려보아요!</p>
                     </div>
                 </div>
             </div>
@@ -1672,6 +1689,9 @@
                         <div class="flex items-center justify-end gap-2">
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
                         </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
@@ -1725,6 +1745,9 @@
                         <div class="flex items-center justify-end gap-2">
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
                         </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
@@ -1783,6 +1806,9 @@
                         <div class="flex items-center justify-end gap-2">
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
                         </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
@@ -1854,6 +1880,9 @@
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
                         </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
+                        </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
                     <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
@@ -1906,6 +1935,9 @@
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
                         </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
+                        </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
                     <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
@@ -1956,6 +1988,9 @@
                         <div class="flex items-center justify-end gap-2">
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span id="drawing-workspace-coins" class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
                         </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
@@ -2130,6 +2165,9 @@
                         <div class="flex items-center justify-end gap-2">
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
                             <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="text-[11px] font-black text-teal-600 sync-aedu-level-container" style="margin-top: -2px; margin-bottom: 2px;">
+                            Lv. <span class="sync-aedu-level">1</span>
                         </div>
                         <div class="text-[10px] font-bold text-teal-600">정보 보기 ❯</div>
                     </div>
@@ -5103,6 +5141,10 @@
             document.querySelectorAll('.sync-user-icon').forEach((el) => {
                 el.innerText = icon || '🐻';
             });
+            const level = typeof currentUserAeduLevel !== 'undefined' ? currentUserAeduLevel : 1;
+            document.querySelectorAll('.sync-aedu-level').forEach((el) => {
+                el.innerText = level;
+            });
         }
 
         function updateAccountName(name) {
@@ -5688,6 +5730,7 @@
         }
 
         function configureDrawingWorkspace({ mode, title, desc, template = 'blank', missionStep = null, aiQuiz = false }) {
+            isDrawingEvaluating = false;
             ensureDrawingPortfolioShapeFields();
             drawingWorkspaceMode = mode;
             drawingWorkspaceMissionStep = missionStep;
@@ -5696,6 +5739,7 @@
             drawingActiveTargetTemplate = shapeMissionTemplates.find((item) => item.key === template) || drawingTemplateLibrary.find((item) => item.key === template) || drawingTemplateLibrary[0];
             drawingUserTracePoints = [];
             const isShapeMission = mode === 'shape-mission';
+            const isInfiniteDrawing = mode === 'infinite-drawing';
             const isCompactMission = isShapeMission || aiQuiz;
             const badge = document.getElementById('drawing-workspace-badge');
             const backButton = document.getElementById('drawing-workspace-back-btn');
@@ -5713,14 +5757,14 @@
             workspaceDesc.classList.toggle('hidden', isCompactMission || !desc);
             const progress = document.getElementById('drawing-workspace-progress');
             if (progress) {
-                const text = isShapeMission ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (aiQuiz ? `AI 그림 ${aiDrawingQuizIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : ''));
+                const text = isShapeMission ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (aiQuiz ? `AI 그림 ${aiDrawingQuizIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : (isInfiniteDrawing ? `그림 미션 [연장] · ${drawingActiveTargetTemplate?.label || ''}` : '')));
                 progress.innerText = text;
                 progress.classList.toggle('hidden', !text);
             }
-            document.getElementById('drawing-template-panel').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
-            document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !(missionStep || aiQuiz || mode === 'shape-mission'));
-            document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
-            document.getElementById('drawing-save-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission');
+            document.getElementById('drawing-template-panel').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
+            document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !(missionStep || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing));
+            document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
+            document.getElementById('drawing-save-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
             updateDrawingCompleteButtonCooldown();
             showTopLevelSection('drawing-workspace-section');
             requestAnimationFrame(() => {
@@ -5735,12 +5779,30 @@
             showTopLevelSection('my-drawing-section');
         }
 
+        let drawingInfiniteMode = false;
+
+        window.openDrawingInfiniteMode = function() {
+            const pool = drawingMissionPool;
+            const randomTemplate = pool[Math.floor(Math.random() * pool.length)];
+            if (!randomTemplate) return;
+
+            drawingInfiniteMode = true;
+            configureDrawingWorkspace({
+                mode: 'infinite-drawing',
+                title: `그림 미션 [연장]`,
+                desc: '무한 랜덤 도안을 그려보아요!',
+                template: randomTemplate.key,
+                missionStep: null
+            });
+        }
+
         window.openCurrentDrawingMission = function() {
             const nextMission = getNextDrawingMission();
             if (!nextMission) {
-                showModal('<div class="text-left relative"><button class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-3">모든 그림 미션을 완료했어요!</h3><p class="text-lg font-bold text-gray-600">나의 그림에서 기록을 볼 수 있어요.</p></div>', { hideConfirm: true, hideIcon: true, plainClose: true });
+                openDrawingInfiniteMode();
                 return;
             }
+            drawingInfiniteMode = false;
             openDrawingMission(nextMission.step);
         }
 
@@ -6115,9 +6177,33 @@
             showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">나의 도형 정확도</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div></div>`);
         }
 
+        let isDrawingEvaluating = false;
+
+        function setDrawingEvaluationState(evaluating) {
+            isDrawingEvaluating = evaluating;
+            const btn = document.getElementById('drawing-complete-mission-btn');
+            if (!btn) return;
+            if (evaluating) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50');
+                btn.innerHTML = `<span class="button-loading-spinner"></span>채점중입니다...`;
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                btn.innerHTML = '완료하기';
+                updateDrawingCompleteButtonCooldown();
+            }
+        }
+
         function updateDrawingCompleteButtonCooldown() {
             const btn = document.getElementById('drawing-complete-mission-btn');
             if (!btn) return;
+            if (isDrawingEvaluating) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50');
+                btn.innerHTML = `<span class="button-loading-spinner"></span>채점중입니다...`;
+                return;
+            }
             const waitMs = Math.max(0, Number(drawingPortfolio.unpaidCooldownUntil || 0) - Date.now());
             btn.disabled = waitMs > 0;
             btn.classList.toggle('opacity-50', waitMs > 0);
@@ -6277,80 +6363,102 @@
                 showModal('조금만 기다렸다가 완료할 수 있어요.');
                 return;
             }
-            const result = evaluateDrawingAccuracy();
-            applyShapeAccuracyStats(result);
-            const image = captureDrawingImage();
-            const now = new Date().toISOString();
-            const mission = drawingMissions.find((item) => item.step === drawingWorkspaceMissionStep);
-            const wasAlreadyDone = Boolean(drawingWorkspaceMissionStep && drawingPortfolio.missions?.[drawingWorkspaceMissionStep]);
-            let rewardPoints = 0;
-            let message = '';
-            if (drawingWorkspaceAiQuiz) {
-                const targetShapeKey = aiDrawingTargetShape || drawingActiveTargetTemplate?.shapes?.[0]?.shape || Object.keys(result.byShape || {})[0] || 'circle';
-                const targetShapeStat = result.byShape?.[targetShapeKey];
-                const targetShapeAccuracy = targetShapeStat?.instanceCount ? Math.round(Number(targetShapeStat.accuracySum || 0) / targetShapeStat.instanceCount) : 0;
-                const shapeReward = targetShapeAccuracy >= 50 ? 1 : 0;
-                const designReward = result.accuracy >= 50 ? 5 : 0;
-                rewardPoints = shapeReward + designReward;
-                if (rewardPoints > 0) applyAieduePointReward(rewardPoints);
-                message = `AI 그림 정확도 ${result.accuracy}%. ${rewardPoints ? `에이두 포인트 ${rewardPoints}점을 받았어요.` : '50% 미만이라 포인트는 없어요.'}`;
-            } else if (drawingWorkspaceMode === 'shape-mission') {
-                rewardPoints = result.accuracy >= 50 ? 1 : 0;
-                if (rewardPoints > 0) {
-                    applyAieduePointReward(1);
-                    drawingPortfolio.unpaidCooldownUntil = 0;
-                    message = `도형 정확도 ${result.accuracy}%! 에이두 포인트 1점을 받았어요.`;
-                } else {
-                    drawingPortfolio.unpaidCooldownUntil = Date.now() + 60000;
-                    message = `도형 정확도 ${result.accuracy}%. 포인트 없이 다음 도형으로 넘어가요. 다음 완료는 1분 뒤에 누를 수 있어요.`;
-                }
-            } else if (drawingWorkspaceMissionStep) {
-                rewardPoints = result.accuracy >= 50 ? 5 : 0;
-                const record = buildDrawingRecord({ image, kind: 'mission', missionStep: drawingWorkspaceMissionStep, savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
-                drawingPortfolio.missions = { ...drawingPortfolio.missions, [drawingWorkspaceMissionStep]: record };
-                drawingPortfolio.unlockedTemplates = Array.from(new Set([...(drawingPortfolio.unlockedTemplates || []), mission?.template].filter(Boolean)));
-                currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingWorkspaceMissionStep);
-                if (!wasAlreadyDone && rewardPoints > 0) applyAieduePointReward(rewardPoints);
-                if (!wasAlreadyDone) {
-                    const completedMissionCount = Object.keys(drawingPortfolio.missions || {}).length;
-                    const unlockedMilestoneCount = Math.floor(completedMissionCount / 5);
-                    let milestoneReward = 0;
-                    for (let milestone = 1; milestone <= unlockedMilestoneCount; milestone += 1) {
-                        const milestoneId = `drawing-5x-${milestone}`;
-                        if (!drawingPortfolio.rewardedMilestones.includes(milestoneId)) {
-                            drawingPortfolio.rewardedMilestones.push(milestoneId);
-                            milestoneReward += 10;
+
+            setDrawingEvaluationState(true);
+
+            try {
+                const result = evaluateDrawingAccuracy();
+                applyShapeAccuracyStats(result);
+                const image = captureDrawingImage();
+                const now = new Date().toISOString();
+                const mission = drawingMissions.find((item) => item.step === drawingWorkspaceMissionStep);
+                const wasAlreadyDone = Boolean(drawingWorkspaceMissionStep && drawingPortfolio.missions?.[drawingWorkspaceMissionStep]);
+                let rewardPoints = 0;
+                let message = '';
+                if (drawingWorkspaceAiQuiz) {
+                    const targetShapeKey = aiDrawingTargetShape || drawingActiveTargetTemplate?.shapes?.[0]?.shape || Object.keys(result.byShape || {})[0] || 'circle';
+                    const targetShapeStat = result.byShape?.[targetShapeKey];
+                    const targetShapeAccuracy = targetShapeStat?.instanceCount ? Math.round(Number(targetShapeStat.accuracySum || 0) / targetShapeStat.instanceCount) : 0;
+                    const shapeReward = targetShapeAccuracy >= 50 ? 1 : 0;
+                    const designReward = result.accuracy >= 50 ? 5 : 0;
+                    rewardPoints = shapeReward + designReward;
+                    if (rewardPoints > 0) applyAieduePointReward(rewardPoints);
+                    message = `AI 그림 정확도 ${result.accuracy}%. ${rewardPoints ? `에이두 포인트 ${rewardPoints}점을 받았어요.` : '50% 미만이라 포인트는 없어요.'}`;
+                } else if (drawingWorkspaceMode === 'shape-mission') {
+                    rewardPoints = result.accuracy >= 50 ? 1 : 0;
+                    if (rewardPoints > 0) {
+                        applyAieduePointReward(1);
+                        drawingPortfolio.unpaidCooldownUntil = 0;
+                        message = `도형 정확도 ${result.accuracy}%! 에이두 포인트 1점을 받았어요.`;
+                    } else {
+                        drawingPortfolio.unpaidCooldownUntil = Date.now() + 60000;
+                        message = `도형 정확도 ${result.accuracy}%. 포인트 없이 다음 도형으로 넘어가요. 다음 완료는 1분 뒤에 누를 수 있어요.`;
+                    }
+                } else if (drawingWorkspaceMode === 'infinite-drawing') {
+                    rewardPoints = 0;
+                    message = `그림 미션 [연장] 정확도 ${result.accuracy}%.`;
+                } else if (drawingWorkspaceMissionStep) {
+                    rewardPoints = result.accuracy >= 50 ? 5 : 0;
+                    const record = buildDrawingRecord({ image, kind: 'mission', missionStep: drawingWorkspaceMissionStep, savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
+                    drawingPortfolio.missions = { ...drawingPortfolio.missions, [drawingWorkspaceMissionStep]: record };
+                    drawingPortfolio.unlockedTemplates = Array.from(new Set([...(drawingPortfolio.unlockedTemplates || []), mission?.template].filter(Boolean)));
+                    currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingWorkspaceMissionStep);
+                    if (!wasAlreadyDone && rewardPoints > 0) applyAieduePointReward(rewardPoints);
+                    if (!wasAlreadyDone) {
+                        const completedMissionCount = Object.keys(drawingPortfolio.missions || {}).length;
+                        const unlockedMilestoneCount = Math.floor(completedMissionCount / 5);
+                        let milestoneReward = 0;
+                        for (let milestone = 1; milestone <= unlockedMilestoneCount; milestone += 1) {
+                            const milestoneId = `drawing-5x-${milestone}`;
+                            if (!drawingPortfolio.rewardedMilestones.includes(milestoneId)) {
+                                drawingPortfolio.rewardedMilestones.push(milestoneId);
+                                milestoneReward += 10;
+                            }
+                        }
+                        if (milestoneReward > 0) {
+                            applyAieduePointReward(milestoneReward);
+                            rewardPoints += milestoneReward;
                         }
                     }
-                    if (milestoneReward > 0) {
-                        applyAieduePointReward(milestoneReward);
-                        rewardPoints += milestoneReward;
+                    record.rewardedPoints = rewardPoints;
+                    if (!(await saveDrawingRecordToFirebase(record))) {
+                        await mirrorDrawingToLegacyAiedueDataServer(record);
+                    }
+                    message = `${drawingWorkspaceMissionStep}단계 정확도 ${result.accuracy}%. ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardPoints ? ` 에이두 포인트 ${rewardPoints}점을 받았어요.` : ' 50% 미만이라 포인트는 없어요.'}`;
+                }
+
+                if (!drawingWorkspaceMissionStep) {
+                    let kind = 'shape-mission';
+                    if (drawingWorkspaceAiQuiz) kind = 'ai-drawing';
+                    else if (drawingWorkspaceMode === 'infinite-drawing') kind = 'infinite-drawing';
+
+                    const record = buildDrawingRecord({ image, kind, savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
+                    drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
+                    if (!(await saveDrawingRecordToFirebase(record))) {
+                        await mirrorDrawingToLegacyAiedueDataServer(record);
                     }
                 }
-                record.rewardedPoints = rewardPoints;
-                if (!(await saveDrawingRecordToFirebase(record))) {
-                    await mirrorDrawingToLegacyAiedueDataServer(record);
+
+                await persistDrawingData({ coins: currentUserCoins });
+                updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
+                updateDrawingDashboardPreview();
+                updateDrawingCompleteButtonCooldown();
+                animateAieduePointStar(rewardPoints);
+                showAiedueAutoToast('잘했어요!!', `정확도 ${result.accuracy}%${rewardPoints ? ` · +${rewardPoints}점` : ''}`);
+
+                if (drawingWorkspaceMode === 'shape-mission') setTimeout(openTodayDrawingActivity, 950);
+                else if (drawingWorkspaceAiQuiz) setTimeout(openAiDrawingQuizActivity, 950);
+                else if (drawingWorkspaceMode === 'infinite-drawing') {
+                    setTimeout(openDrawingInfiniteMode, 950);
+                } else if (drawingWorkspaceMissionStep) {
+                    const nextMission = getNextDrawingMission();
+                    if (nextMission) setTimeout(() => openDrawingMission(nextMission.step), 950);
                 }
-                message = `${drawingWorkspaceMissionStep}단계 정확도 ${result.accuracy}%. ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardPoints ? ` 에이두 포인트 ${rewardPoints}점을 받았어요.` : ' 50% 미만이라 포인트는 없어요.'}`;
-            }
-            if (!drawingWorkspaceMissionStep) {
-                const record = buildDrawingRecord({ image, kind: drawingWorkspaceAiQuiz ? 'ai-drawing' : 'shape-mission', savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
-                drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
-                if (!(await saveDrawingRecordToFirebase(record))) {
-                    await mirrorDrawingToLegacyAiedueDataServer(record);
-                }
-            }
-            await persistDrawingData({ coins: currentUserCoins });
-            updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
-            updateDrawingDashboardPreview();
-            updateDrawingCompleteButtonCooldown();
-            animateAieduePointStar(rewardPoints);
-            showAiedueAutoToast('잘했어요!!', `정확도 ${result.accuracy}%${rewardPoints ? ` · +${rewardPoints}점` : ''}`);
-            if (drawingWorkspaceMode === 'shape-mission') setTimeout(openTodayDrawingActivity, 950);
-            else if (drawingWorkspaceAiQuiz) setTimeout(openAiDrawingQuizActivity, 950);
-            else if (drawingWorkspaceMissionStep) {
-                const nextMission = getNextDrawingMission();
-                if (nextMission) setTimeout(() => openDrawingMission(nextMission.step), 950);
+            } catch (error) {
+                console.error('Failed to complete drawing mission', error);
+                showModal('저장 중 오류가 발생했습니다.');
+            } finally {
+                setDrawingEvaluationState(false);
             }
         }
 
