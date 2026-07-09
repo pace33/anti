@@ -577,6 +577,55 @@
             color: #166534;
             cursor: pointer;
         }
+        .make-letter-group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+        .make-letter-group {
+            overflow: hidden;
+            border: 2px solid #bfdbfe;
+            border-radius: 14px;
+            background: #ffffff;
+        }
+        .make-letter-group-title {
+            width: 100%;
+            min-height: 60px;
+            border: 0;
+            border-bottom: 2px solid #bfdbfe;
+            background: #dbeafe;
+            color: #1e3a8a;
+            font-size: 2rem;
+            font-weight: 1000;
+        }
+        .make-letter-pair {
+            display: grid;
+            grid-template-columns: 72px 1fr;
+            width: 100%;
+            min-height: 58px;
+            border: 0;
+            border-bottom: 1px solid #dbeafe;
+            background: #ffffff;
+            color: #2c3e50;
+            font-size: 1.55rem;
+            font-weight: 1000;
+        }
+        .make-letter-pair:last-child {
+            border-bottom: 0;
+        }
+        .make-letter-pair .consonant {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eff6ff;
+            color: #1e3a8a;
+        }
+        .make-letter-pair .result {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #047857;
+        }
         .trace-writing-canvas.fill-trace-canvas {
             width: 100%;
             height: 168px;
@@ -758,6 +807,9 @@
             .make-letter-cell {
                 min-height: 48px;
                 font-size: 1.25rem;
+            }
+            .make-letter-group-grid {
+                grid-template-columns: 1fr;
             }
             .writing-compact-toolbar {
                 flex-direction: column-reverse;
@@ -9673,36 +9725,132 @@ ${JSON.stringify(targets, null, 2)}
             </div>`;
         }
 
-        function renderLesson12MakeLettersActivity() {
-            const vowels = ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'];
-            const rows = [
-                { consonant: 'ㅇ', letters: ['어', '오', '우', '으', '이'] },
-                { consonant: 'ㅎ', letters: ['허', '호', '후', '흐', '히'] },
-                { consonant: 'ㄹ', letters: ['러', '로', '루', '르', '리'] }
-            ];
-            const guideLetters = rows.flatMap((row) => row.letters);
+        const MAKE_LETTER_ACTIVITY_CONFIGS = {
+            8: {
+                vowels: ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'],
+                rows: [
+                    { consonant: 'ㄱ', letters: ['거', '고', '구', '그', '기'] },
+                    { consonant: 'ㅋ', letters: ['커', '코', '쿠', '크', '키'] },
+                    { consonant: 'ㄲ', letters: ['꺼', '꼬', '꾸', '끄', '끼'] }
+                ]
+            },
+            9: {
+                vowels: ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'],
+                rows: [
+                    { consonant: 'ㄴ', letters: ['너', '노', '누', '느', '니'] },
+                    { consonant: 'ㄷ', letters: ['더', '도', '두', '드', '디'] },
+                    { consonant: 'ㅌ', letters: ['터', '토', '투', '트', '티'] },
+                    { consonant: 'ㄸ', letters: ['떠', '또', '뚜', '뜨', '띠'] }
+                ]
+            },
+            10: {
+                vowels: ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'],
+                rows: [
+                    { consonant: 'ㅁ', letters: ['머', '모', '무', '므', '미'] },
+                    { consonant: 'ㅂ', letters: ['버', '보', '부', '브', '비'] },
+                    { consonant: 'ㅍ', letters: ['퍼', '포', '푸', '프', '피'] },
+                    { consonant: 'ㅃ', letters: ['뻐', '뽀', '뿌', '쁘', '삐'] }
+                ]
+            },
+            11: {
+                vowels: ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'],
+                rows: [
+                    { consonant: 'ㅅ', letters: ['서', '소', '수', '스', '시'] },
+                    { consonant: 'ㅈ', letters: ['저', '조', '주', '즈', '지'] },
+                    { consonant: 'ㅊ', letters: ['처', '초', '추', '츠', '치'] },
+                    { consonant: 'ㅉ', letters: ['쩌', '쪼', '쭈', '쯔', '찌'] },
+                    { consonant: 'ㅆ', letters: ['써', '쏘', '쑤', '쓰', '씨'] }
+                ]
+            },
+            12: {
+                vowels: ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'],
+                rows: [
+                    { consonant: 'ㅇ', letters: ['어', '오', '우', '으', '이'] },
+                    { consonant: 'ㅎ', letters: ['허', '호', '후', '흐', '히'] },
+                    { consonant: 'ㄹ', letters: ['러', '로', '루', '르', '리'] }
+                ]
+            },
+            15: {
+                groups: [
+                    { vowel: 'ㅐ', consonants: ['ㄱ', 'ㄴ', 'ㄷ', 'ㅁ', 'ㅂ', 'ㅎ', 'ㅅ'], letters: ['개', '내', '대', '매', '배', '해', '새'] },
+                    { vowel: 'ㅔ', consonants: ['ㄱ', 'ㄴ', 'ㄷ', 'ㅁ', 'ㅂ', 'ㅎ', 'ㅅ'], letters: ['게', '네', '데', '메', '베', '헤', '세'] }
+                ]
+            },
+            16: {
+                groups: [
+                    { vowel: 'ㅖ', consonants: ['ㄱ', 'ㄴ', 'ㅅ', 'ㅇ', 'ㅍ', 'ㅎ'], letters: ['계', '녜', '셰', '예', '폐', '혜'] },
+                    { vowel: 'ㅒ', consonants: ['ㄱ', 'ㄴ', 'ㅅ', 'ㅇ'], letters: ['걔', '냬', '섀', '얘'] }
+                ]
+            },
+            17: {
+                groups: [
+                    { vowel: 'ㅘ', consonants: ['ㄱ', 'ㄴ', 'ㅇ', 'ㅂ', 'ㅎ'], letters: ['과', '놔', '와', '봐', '화'] },
+                    { vowel: 'ㅝ', consonants: ['ㄱ', 'ㄴ', 'ㅇ', 'ㅁ', 'ㅎ'], letters: ['궈', '눠', '워', '뭐', '훠'] }
+                ]
+            },
+            18: {
+                groups: [
+                    { vowel: 'ㅟ', consonants: ['ㄱ', 'ㄷ', 'ㅇ', 'ㅌ', 'ㅎ'], letters: ['귀', '뒤', '위', '튀', '휘'] },
+                    { vowel: 'ㅢ', consonants: ['ㄴ', 'ㅇ', 'ㅌ', 'ㅎ'], letters: ['늬', '의', '틔', '희'] }
+                ]
+            },
+            19: {
+                groups: [
+                    { vowel: 'ㅞ', consonants: ['ㄱ', 'ㄷ', 'ㅅ', 'ㅇ', 'ㅎ'], letters: ['궤', '뒈', '쉐', '웨', '훼'] },
+                    { vowel: 'ㅙ', consonants: ['ㄷ', 'ㅇ', 'ㅌ', 'ㅅ'], letters: ['돼', '왜', '퇘', '쇄'] },
+                    { vowel: 'ㅚ', consonants: ['ㄴ', 'ㅇ', 'ㅅ', 'ㅎ'], letters: ['뇌', '외', '쇠', '회'] }
+                ]
+            }
+        };
+
+        function renderMakeLettersActivity(step) {
+            const config = MAKE_LETTER_ACTIVITY_CONFIGS[Number(step)];
+            if (!config) return '';
+            const matrixLetters = (config.rows || []).flatMap((row) => row.letters);
+            const groupLetters = (config.groups || []).flatMap((group) => group.letters);
+            const guideLetters = matrixLetters.length ? matrixLetters : groupLetters;
+            const canvasId = `lesson${step}-make-letter-canvas`;
+            const canvasHeight = Math.max(520, Math.ceil(guideLetters.length / 5) * 150);
+            const matrixHtml = config.rows ? `
+                <div class="make-letter-guide-grid" aria-label="배움 ${step} 글자 만들기 표">
+                    <div class="make-letter-cell header"></div>
+                    ${config.vowels.map((vowel) => `<button type="button" class="make-letter-cell header" onclick="speakChar('${vowel}')">${vowel}</button>`).join('')}
+                    ${config.rows.map((row) => `
+                        <button type="button" class="make-letter-cell row-head" onclick="speakChar('${row.consonant}')">${row.consonant}</button>
+                        ${row.letters.map((letter) => `<button type="button" class="make-letter-cell result" onclick="speakChar('${letter}')">${letter}</button>`).join('')}
+                    `).join('')}
+                </div>
+            ` : '';
+            const groupsHtml = config.groups ? `
+                <div class="make-letter-group-grid" aria-label="배움 ${step} 글자 만들기 표">
+                    ${config.groups.map((group) => `
+                        <div class="make-letter-group">
+                            <button type="button" class="make-letter-group-title" onclick="speakChar('${group.vowel}')">${group.vowel}</button>
+                            ${group.letters.map((letter, index) => `
+                                <button type="button" class="make-letter-pair" onclick="speakChar('${letter}')">
+                                    <span class="consonant">${group.consonants[index]}</span>
+                                    <span class="result">${letter}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '';
             return `
                 <div class="learning-practice-card">
                     <div class="learning-card-label practice-label">글자 만들기</div>
                     <div class="make-letter-board">
                         <div class="border-2 border-green-100 rounded-2xl p-4 bg-white text-lg font-bold text-stone-700 leading-relaxed">
-                            자음 ㅇ, ㅎ, ㄹ에 모음 ㅓ, ㅗ, ㅜ, ㅡ, ㅣ를 붙여 글자를 만들어요.
-                            만든 글자를 눌러 소리를 듣고, 아래 칸에 직접 따라 써요.
+                            자음과 모음을 붙여 글자를 만들어요. 만든 글자를 눌러 소리를 듣고, 아래 칸에 직접 따라 써요.
                         </div>
-                        <div class="make-letter-guide-grid" aria-label="배움 12 글자 만들기 표">
-                            <div class="make-letter-cell header"></div>
-                            ${vowels.map((vowel) => `<button type="button" class="make-letter-cell header" onclick="speakChar('${vowel}')">${vowel}</button>`).join('')}
-                            ${rows.map((row) => `
-                                <button type="button" class="make-letter-cell row-head" onclick="speakChar('${row.consonant}')">${row.consonant}</button>
-                                ${row.letters.map((letter) => `<button type="button" class="make-letter-cell result" onclick="speakChar('${letter}')">${letter}</button>`).join('')}
-                            `).join('')}
-                        </div>
+                        ${matrixHtml}
+                        ${groupsHtml}
                         <div class="trace-canvas-wrap">
-                            <div class="trace-canvas-title">✍️ 어 오 우 으 이 / 허 호 후 흐 히 / 러 로 루 르 리</div>
-                            <canvas id="lesson12-make-letter-canvas" class="trace-writing-canvas make-letter-grid" data-guide="${guideLetters.join('/')}"></canvas>
+                            <div class="trace-canvas-title">✍️ ${guideLetters.join(' ')}</div>
+                            <canvas id="${canvasId}" class="trace-writing-canvas make-letter-grid" data-grid-cols="5" data-guide="${guideLetters.join('/')}" style="height:${canvasHeight}px"></canvas>
                             <div class="trace-canvas-help">표에서 글자를 눌러 소리를 듣고, 주황색 획순을 따라 직접 써요.</div>
                         </div>
-                        <button type="button" class="trace-clear-button" onclick="resetTraceWritingCanvas('lesson12-make-letter-canvas')">다시 쓰기</button>
+                        <button type="button" class="trace-clear-button" onclick="resetTraceWritingCanvas('${canvasId}')">다시 쓰기</button>
                     </div>
                 </div>
             `;
@@ -10170,12 +10318,12 @@ ${JSON.stringify(targets, null, 2)}
             const detail = learningDetailData[step];
             if (!detail) return;
             const numericStep = Number(step);
-            const isLesson12MakeLetters = numericStep === 12;
+            const hasMakeLettersActivity = Boolean(MAKE_LETTER_ACTIVITY_CONFIGS[numericStep]);
             const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
             const practiceFlow = learningPracticeFlows[step];
             const isActivityFlow = visibleActivitySteps.includes(step) && practiceFlow;
 
-            const totalSections = isLesson12MakeLetters ? 4 : (isActivityFlow ? 3 : detail.sections.length);
+            const totalSections = hasMakeLettersActivity ? 4 : (isActivityFlow ? 3 : detail.sections.length);
             const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
             currentLearningDetailSectionIndex = safeIndex;
             const section = detail.sections[Math.min(safeIndex, detail.sections.length - 1)];
@@ -10206,7 +10354,7 @@ ${JSON.stringify(targets, null, 2)}
                     sectionTitle = '기본 모음 전체 따라 쓰기';
                 } else if (step === 7 && safeIndex === 2) {
                     sectionTitle = detail.sections[1].title;
-                } else if (isLesson12MakeLetters && safeIndex === 3) {
+                } else if (hasMakeLettersActivity && safeIndex === 3) {
                     sectionTitle = '글자 만들기';
                 }
                 const sectionHeadingHtml = sectionTitle
@@ -10224,8 +10372,8 @@ ${JSON.stringify(targets, null, 2)}
                 const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
                 const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
                 let contentHtml = '';
-                if (isLesson12MakeLetters && safeIndex === 3) {
-                    contentHtml = renderLesson12MakeLettersActivity();
+                if (hasMakeLettersActivity && safeIndex === 3) {
+                    contentHtml = renderMakeLettersActivity(numericStep);
                 } else if ((step === 15 || step === 16) && safeIndex === 0) {
                     contentHtml = renderLessonMouthIntro(step);
                 } else if ((step === 15 || step === 16) && safeIndex === 1) {
@@ -10670,7 +10818,8 @@ ${JSON.stringify(targets, null, 2)}
             const isMakeLetterGrid = canvas?.classList?.contains('make-letter-grid');
             const isDoubleRow = chars.length === 10;
             const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
-            const cols = isMakeLetterGrid ? 5 : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length));
+            const configuredCols = Number(canvas?.dataset?.gridCols || 0);
+            const cols = isMakeLetterGrid ? (configuredCols || 5) : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length));
             const rows = isMakeLetterGrid ? Math.ceil(chars.length / cols) : (isDoubleRow || isWordDoubleRow ? 2 : 1);
             return { cols, rows };
         }
