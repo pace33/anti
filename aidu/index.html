@@ -2322,7 +2322,7 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-[#46b3a5] text-white rounded-2xl flex items-center justify-center text-2xl font-bold">📚</div>
-                        <h3 id="my-korean-unit-title" class="text-3xl font-black text-[#2c3e50]">모음 단원</h3>
+                        <h3 id="my-korean-unit-title" class="text-3xl font-black text-[#2c3e50]">모음</h3>
                     </div>
                     <button class="btn-outline px-6 py-2 text-sm" onclick="closeMyKoreanSection()">대시보드로 돌아가기</button>
                 </div>
@@ -4742,16 +4742,16 @@
         };
 
         const unitMeta = {
-            vowel: { label: '모음 단원', color: '#f59e0b' },
-            consonant: { label: '자음 단원', color: '#10b981' },
-            noBatchimWord: { label: '받침 없는 단어', color: '#f97316' },
-            complexVowel: { label: '복잡한 모음 단원', color: '#8b5cf6' },
-            complexVowelWord: { label: '복잡한 모음 단어', color: '#a855f7' },
-            batchim: { label: '받침 단원', color: '#ef4444' },
-            batchimWord: { label: '대표받침 단어', color: '#f97316' },
-            complexBatchim: { label: '복잡한 받침 단원', color: '#0ea5e9' },
-            complexBatchimWord: { label: '받침가족 단어', color: '#0284c7' },
-            evaluation: { label: '평가 단원', color: '#14b8a6' }
+            vowel: { unit: 1, label: '모음', color: '#f59e0b' },
+            consonant: { unit: 2, label: '자음', color: '#10b981' },
+            noBatchimWord: { unit: 3, label: '받침 없는 단어 읽기', color: '#f97316' },
+            complexVowel: { unit: 4, label: '복잡한 모음', color: '#8b5cf6' },
+            complexVowelWord: { unit: 5, label: '복잡한 모음 단어 읽기', color: '#a855f7' },
+            batchim: { unit: 6, label: '대표받침', color: '#ef4444' },
+            batchimWord: { unit: 7, label: '대표받침 단어 읽기', color: '#f97316' },
+            complexBatchim: { unit: 8, label: '복잡한 받침', color: '#0ea5e9' },
+            complexBatchimWord: { unit: 9, label: '복잡한 받침 단어 읽기', color: '#0284c7' },
+            evaluation: { unit: 10, label: '최종 평가', color: '#14b8a6' }
         };
 
         const learningPracticeFlows = {
@@ -9267,7 +9267,7 @@ ${JSON.stringify(targets, null, 2)}
 
         function renderMyKoreanList() {
             const unit = unitMeta[activeUnitKey];
-            document.getElementById('my-korean-unit-title').innerText = unit.label;
+            document.getElementById('my-korean-unit-title').innerText = `${unit.unit}단원 · ${unit.label}`;
             const list = learningUnits[activeUnitKey] || [];
             const listRoot = document.getElementById('my-korean-list');
             listRoot.innerHTML = list.map((item) => {
