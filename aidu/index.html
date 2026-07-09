@@ -538,6 +538,45 @@
         .trace-writing-canvas.word-grid {
             height: 440px;
         }
+        .trace-writing-canvas.make-letter-grid {
+            height: 640px;
+        }
+        .make-letter-board {
+            display: grid;
+            gap: 14px;
+        }
+        .make-letter-guide-grid {
+            display: grid;
+            grid-template-columns: 64px repeat(5, minmax(0, 1fr));
+            gap: 6px;
+            align-items: stretch;
+        }
+        .make-letter-cell {
+            min-height: 56px;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #2c3e50;
+            font-size: 1.7rem;
+            font-weight: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .make-letter-cell.header {
+            background: #dbeafe;
+            color: #1e3a8a;
+        }
+        .make-letter-cell.row-head {
+            background: #bfdbfe;
+            color: #1e3a8a;
+        }
+        .make-letter-cell.result {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+            color: #166534;
+            cursor: pointer;
+        }
         .trace-writing-canvas.fill-trace-canvas {
             width: 100%;
             height: 168px;
@@ -708,6 +747,17 @@
             .embedded-writing-canvas.trace-writing-canvas,
             .embedded-writing-canvas.sentence-writing-canvas {
                 height: 340px;
+            }
+            .trace-writing-canvas.make-letter-grid {
+                height: 760px;
+            }
+            .make-letter-guide-grid {
+                grid-template-columns: 46px repeat(5, minmax(0, 1fr));
+                gap: 4px;
+            }
+            .make-letter-cell {
+                min-height: 48px;
+                font-size: 1.25rem;
             }
             .writing-compact-toolbar {
                 flex-direction: column-reverse;
@@ -9623,6 +9673,41 @@ ${JSON.stringify(targets, null, 2)}
             </div>`;
         }
 
+        function renderLesson12MakeLettersActivity() {
+            const vowels = ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'];
+            const rows = [
+                { consonant: 'ㅇ', letters: ['어', '오', '우', '으', '이'] },
+                { consonant: 'ㅎ', letters: ['허', '호', '후', '흐', '히'] },
+                { consonant: 'ㄹ', letters: ['러', '로', '루', '르', '리'] }
+            ];
+            const guideLetters = rows.flatMap((row) => row.letters);
+            return `
+                <div class="learning-practice-card">
+                    <div class="learning-card-label practice-label">글자 만들기</div>
+                    <div class="make-letter-board">
+                        <div class="border-2 border-green-100 rounded-2xl p-4 bg-white text-lg font-bold text-stone-700 leading-relaxed">
+                            자음 ㅇ, ㅎ, ㄹ에 모음 ㅓ, ㅗ, ㅜ, ㅡ, ㅣ를 붙여 글자를 만들어요.
+                            만든 글자를 눌러 소리를 듣고, 아래 칸에 직접 따라 써요.
+                        </div>
+                        <div class="make-letter-guide-grid" aria-label="배움 12 글자 만들기 표">
+                            <div class="make-letter-cell header"></div>
+                            ${vowels.map((vowel) => `<button type="button" class="make-letter-cell header" onclick="speakChar('${vowel}')">${vowel}</button>`).join('')}
+                            ${rows.map((row) => `
+                                <button type="button" class="make-letter-cell row-head" onclick="speakChar('${row.consonant}')">${row.consonant}</button>
+                                ${row.letters.map((letter) => `<button type="button" class="make-letter-cell result" onclick="speakChar('${letter}')">${letter}</button>`).join('')}
+                            `).join('')}
+                        </div>
+                        <div class="trace-canvas-wrap">
+                            <div class="trace-canvas-title">✍️ 어 오 우 으 이 / 허 호 후 흐 히 / 러 로 루 르 리</div>
+                            <canvas id="lesson12-make-letter-canvas" class="trace-writing-canvas make-letter-grid" data-guide="${guideLetters.join('/')}"></canvas>
+                            <div class="trace-canvas-help">표에서 글자를 눌러 소리를 듣고, 주황색 획순을 따라 직접 써요.</div>
+                        </div>
+                        <button type="button" class="trace-clear-button" onclick="resetTraceWritingCanvas('lesson12-make-letter-canvas')">다시 쓰기</button>
+                    </div>
+                </div>
+            `;
+        }
+
         const LESSON_MOUTH_ACTIVITY_CONFIGS = {
             15: {
                 title: '입모양을 보고 소리의 차이를 알아봐요',
@@ -10084,11 +10169,13 @@ ${JSON.stringify(targets, null, 2)}
         function renderLearningDetail(step, sectionIndex = 0) {
             const detail = learningDetailData[step];
             if (!detail) return;
+            const numericStep = Number(step);
+            const isLesson12MakeLetters = numericStep === 12;
             const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
             const practiceFlow = learningPracticeFlows[step];
             const isActivityFlow = visibleActivitySteps.includes(step) && practiceFlow;
 
-            const totalSections = isActivityFlow ? 3 : detail.sections.length;
+            const totalSections = isLesson12MakeLetters ? 4 : (isActivityFlow ? 3 : detail.sections.length);
             const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
             currentLearningDetailSectionIndex = safeIndex;
             const section = detail.sections[Math.min(safeIndex, detail.sections.length - 1)];
@@ -10112,11 +10199,16 @@ ${JSON.stringify(targets, null, 2)}
                     window.completedChoices = [];
                 }
 
-                const sectionTitle = step === 7 && safeIndex === 0
-                    ? ''
-                    : step === 7 && safeIndex === 1
-                    ? '기본 모음 전체 따라 쓰기'
-                    : (step === 7 && safeIndex === 2 ? detail.sections[1].title : section.title);
+                let sectionTitle = section.title;
+                if (step === 7 && safeIndex === 0) {
+                    sectionTitle = '';
+                } else if (step === 7 && safeIndex === 1) {
+                    sectionTitle = '기본 모음 전체 따라 쓰기';
+                } else if (step === 7 && safeIndex === 2) {
+                    sectionTitle = detail.sections[1].title;
+                } else if (isLesson12MakeLetters && safeIndex === 3) {
+                    sectionTitle = '글자 만들기';
+                }
                 const sectionHeadingHtml = sectionTitle
                     ? `<div class="activity-section-title mb-4">
                             <span class="text-xl font-bold text-stone-700">${sectionTitle}</span>
@@ -10132,7 +10224,9 @@ ${JSON.stringify(targets, null, 2)}
                 const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
                 const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
                 let contentHtml = '';
-                if ((step === 15 || step === 16) && safeIndex === 0) {
+                if (isLesson12MakeLetters && safeIndex === 3) {
+                    contentHtml = renderLesson12MakeLettersActivity();
+                } else if ((step === 15 || step === 16) && safeIndex === 0) {
                     contentHtml = renderLessonMouthIntro(step);
                 } else if ((step === 15 || step === 16) && safeIndex === 1) {
                     contentHtml = renderLessonMouthSoundQuiz(step);
@@ -10572,6 +10666,15 @@ ${JSON.stringify(targets, null, 2)}
             return active || document.getElementById('trace-writing-canvas') || document.querySelector('.trace-writing-canvas');
         }
 
+        function getTraceGridLayout(canvas, chars) {
+            const isMakeLetterGrid = canvas?.classList?.contains('make-letter-grid');
+            const isDoubleRow = chars.length === 10;
+            const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
+            const cols = isMakeLetterGrid ? 5 : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length));
+            const rows = isMakeLetterGrid ? Math.ceil(chars.length / cols) : (isDoubleRow || isWordDoubleRow ? 2 : 1);
+            return { cols, rows };
+        }
+
         function drawTraceWritingGuide(target) {
             const canvas = getTraceWritingCanvas(target);
             if (!canvas) return;
@@ -10636,10 +10739,7 @@ ${JSON.stringify(targets, null, 2)}
             }
 
             // 10글자 복습은 5칸씩 2줄, 4개 단어 쓰기는 2칸씩 2줄로 배치
-            const isDoubleRow = chars.length === 10;
-            const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
-            const cols = isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length);
-            const rows = isDoubleRow || isWordDoubleRow ? 2 : 1;
+            const { cols, rows } = getTraceGridLayout(canvas, chars);
             const boxW = W / cols;
             const boxH = H / rows;
             const completedMap = canvas._traceCompleted || {};
@@ -10797,10 +10897,7 @@ ${JSON.stringify(targets, null, 2)}
                     const relativeX = clientX - rect.left;
                     const relativeY = clientY - rect.top;
 
-                    const isDoubleRow = chars.length === 10;
-                    const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
-                    const cols = isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length);
-                    const rows = isDoubleRow || isWordDoubleRow ? 2 : 1;
+                    const { cols, rows } = getTraceGridLayout(canvas, chars);
                     const colWidth = rect.width / cols;
                     const rowHeight = rect.height / rows;
 
