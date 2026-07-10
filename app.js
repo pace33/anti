@@ -5886,17 +5886,22 @@ function initializeLetterWritingActivity() {
     const consonants = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ','ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
     const vowels = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅐ','ㅔ','ㅒ','ㅖ','ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ'];
     const fallbackWords = [
-        '가','나','다','라','마','바','사','아','아이','아버지','가수','가지','나무','마차','기타','고기','다리','나비','파리','허리',
-        '버스','치즈','모기','주스','스키','피아노','포도','소파','꼬마','소나무','거미','저고리','야구','여우','우유','의사','의자',
-        '과자','사과','돼지','거위','더위','추위','우표','튜브','바위','소녀','곰','감','밤','뱀','솜','힘','밥','입','컵','집','답',
-        '염소','감자','구름','수첩','집게','서랍','늑대','국자','책상','기린','분수','걷다','앞','옆','숲','잎','톱','약','떡','밖',
-        '부엌','깎다','볶다','옷','낮','팥','빛','꽃','좋다'
+        '가','나','다','라','마','바','사','아','자','차','카','타','파','하',
+        '가가','가나','나다','다라','라마','마바','바사','사아','아자','자차','차카','카타','타파','파하',
+        '아이','가수','가지','나무','마차','기타','고기','다리','나비','파리','허리',
+        '치즈','모기','주스','스키','피아노','포도','소파','꼬마','소나무','거미','저고리','야구','여우','우유','의사','의자',
+        '과자','사과','돼지','거위','더위','추위','우표','튜브','바위','소녀'
     ];
     const cleanPracticeWord = (value) => String(value || '').replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣ]/g, '');
+    const hasNoBatchim = (value) => Array.from(String(value || '')).every((char) => {
+        const code = char.charCodeAt(0);
+        if (code < 0xAC00 || code > 0xD7A3) return true;
+        return (code - 0xAC00) % 28 === 0;
+    });
     const allPracticeWords = [...fallbackWords];
     const collectPracticeWord = (value) => {
         const word = cleanPracticeWord(value);
-        if (word && !allPracticeWords.includes(word)) allPracticeWords.push(word);
+        if (word && hasNoBatchim(word) && !allPracticeWords.includes(word)) allPracticeWords.push(word);
     };
     const lessonBank = window.CHANCHAN_LESSONS || (typeof CHANCHAN_LESSONS !== 'undefined' ? CHANCHAN_LESSONS : []);
     lessonBank.forEach((lesson) => {
@@ -6032,7 +6037,7 @@ function initializeLetterWritingActivity() {
         const c = btn.dataset.category;
         const titleMap = {
             letter: ['글자 쓰기', '글자를 골라 따라 써요.'],
-            word: ['단어 쓰기', '단어를 골라 따라 써요.'],
+            word: ['낱말 쓰기', '받침 없는 낱말을 골라 따라 써요.'],
             sentence: ['문장 쓰기', '문장을 골라 따라 써요.']
         };
         const title = document.getElementById('letter-writing-title');
@@ -6051,9 +6056,9 @@ function initializeLetterWritingActivity() {
 
     const levelLabels = { low: '하', mid: '중', high: '상' };
     const wordExamplesByLevel = {
-        low: ['나무', '하늘', '바다', '사과'],
-        mid: ['학교', '구름', '마음', '친구'],
-        high: ['도서관', '운동장', '호랑이', '바나나']
+        low: ['가나', '나비', '바다', '사과'],
+        mid: ['나무', '오리', '고기', '포도'],
+        high: ['바나나', '피아노', '라디오', '아버지']
     };
     const sentenceExamplesByLevel = {
         low: ['나는 가요.', '나무가 커요.', '사과를 먹어요.', '물이 맑아요.'],
@@ -6142,11 +6147,13 @@ function initializeLetterWritingActivity() {
         const level = embeddedPracticeState.word.level;
         const examples = wordExamplesByLevel[level] || wordExamplesByLevel.low;
         const prompt = level === 'high'
-            ? '초등학생용 한국어 3~4글자 단어 하나만 출력해줘.'
+            ? '초등학생용 받침 없는 한국어 3~4글자 낱말 하나만 출력해줘. 받침 있는 글자는 쓰지 말고 낱말 하나만 출력해줘.'
             : level === 'mid'
-                ? '초등학생용 한국어 2~3글자 단어 하나만 출력해줘.'
-                : '초등학생용 한국어 쉬운 2글자 단어 하나만 출력해줘.';
-        setEmbeddedPractice('word', await simpleGen(prompt, examples[Math.floor(Math.random() * examples.length)]));
+                ? '초등학생용 받침 없는 한국어 2~3글자 낱말 하나만 출력해줘. 낱말 하나만 출력해줘.'
+                : '초등학생용 받침 없는 한국어 쉬운 2글자 낱말 하나만 출력해줘. 낱말 하나만 출력해줘.';
+        const fallback = examples[Math.floor(Math.random() * examples.length)];
+        const generated = cleanPracticeWord(await simpleGen(prompt, fallback));
+        setEmbeddedPractice('word', generated && hasNoBatchim(generated) ? generated : fallback);
     });
     document.getElementById('letter-generate-sentence').addEventListener('click', async () => {
         const level = embeddedPracticeState.sentence.level;
@@ -6302,7 +6309,7 @@ function initializeWordWritingQuizActivity() {
     }
     function setSubButtons() {
         const root = document.getElementById('word-write-submodes');
-        if (mode === 'syllable') root.innerHTML = `<button type="button" data-sub="no_jongsung" class="btn-outline px-4 py-1 text-base ${sub === 'no_jongsung' ? 'active' : ''}">받침 없음</button><button type="button" data-sub="with_jongsung" class="btn-outline px-4 py-1 text-base ${sub === 'with_jongsung' ? 'active' : ''}">받침 있음</button>`;
+        if (mode === 'syllable') root.innerHTML = `<button type="button" data-sub="no_jongsung" class="btn-outline px-4 py-1 text-base active">받침 없음</button>`;
         else if (mode === 'word') root.innerHTML = `<button type="button" data-sub="two_letters" class="btn-outline px-4 py-1 text-base ${sub === 'two_letters' ? 'active' : ''}">2글자</button><button type="button" data-sub="three_letters" class="btn-outline px-4 py-1 text-base ${sub === 'three_letters' ? 'active' : ''}">3글자 이상</button>`;
         else root.innerHTML = '';
         root.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
@@ -6404,9 +6411,14 @@ function initializeHangulSoundGame() {
     const visualPill = document.getElementById('hangul-game-visual-pill');
     if (!targetEl || !choicesEl || !feedbackEl) return;
 
-    const fallbackLetters = ['가','나','다','라','마','바','사','아','야','여','오','우','고','구','무','미','산','강','밥','곰'];
-    const fallbackWords = ['아이','나무','다리','가지','파리','나비','기차','버스','포도','거미','야구','여우','우유','과자','사과','돼지','곰','밥','구름','책상'];
+    const fallbackLetters = ['가','나','다','라','마','바','사','아','자','차','카','타','파','하','야','여','오','우','고','구','무','미'];
+    const fallbackWords = ['아이','나무','다리','가지','파리','나비','기차','포도','거미','야구','여우','우유','과자','사과','돼지','바나나','피아노','라디오'];
     const cleanHangul = (value) => String(value || '').replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣ]/g, '');
+    const isNoBatchimHangul = (value) => Array.from(String(value || '')).every((char) => {
+        const code = char.charCodeAt(0);
+        if (code < 0xAC00 || code > 0xD7A3) return true;
+        return (code - 0xAC00) % 28 === 0;
+    });
     const unique = (list) => [...new Set(list.filter(Boolean))];
     const shuffle = (list) => [...list].sort(() => Math.random() - 0.5);
     const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -6421,11 +6433,11 @@ function initializeHangulSoundGame() {
             });
             (lesson.words || []).forEach((item) => {
                 const text = cleanHangul(item);
-                if (Array.from(text).length >= 2) words.push(text);
+                if (Array.from(text).length >= 2 && isNoBatchimHangul(text)) words.push(text);
             });
             (lesson.pictureItems || []).forEach((item) => {
                 const text = cleanHangul(item.word);
-                if (Array.from(text).length >= 2) words.push(text);
+                if (Array.from(text).length >= 2 && isNoBatchimHangul(text)) words.push(text);
             });
         });
         words.forEach((word) => Array.from(word).forEach((char) => letters.push(char)));
@@ -6456,7 +6468,7 @@ function initializeHangulSoundGame() {
     function renderModeButtons() {
         letterModeBtn.classList.toggle('active', mode === 'letter');
         wordModeBtn.classList.toggle('active', mode === 'word');
-        if (visualPill) visualPill.textContent = mode === 'letter' ? '글자' : '단어';
+        if (visualPill) visualPill.textContent = mode === 'letter' ? '글자' : '낱말';
     }
 
     async function finishGame() {
@@ -6488,7 +6500,7 @@ function initializeHangulSoundGame() {
         answer = pick(source);
         const wrongs = shuffle(source.filter((item) => item !== answer)).slice(0, 3);
         const choices = shuffle([answer, ...wrongs]);
-        targetEl.textContent = mode === 'letter' ? '글자 듣기 문제' : '단어 듣기 문제';
+        targetEl.textContent = mode === 'letter' ? '글자 듣기 문제' : '낱말 듣기 문제';
         feedbackEl.className = 'hangul-game-feedback text-2xl font-black text-gray-500';
         feedbackEl.textContent = '소리를 듣고 알맞은 카드를 골라요.';
         restartBtn.classList.add('hidden');
@@ -6532,7 +6544,7 @@ function initializeHangulSoundGame() {
             userAnswer: choice,
             isCorrect,
             errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH,
-            skillTags: ['한글게임', mode === 'letter' ? '글자' : '단어']
+            skillTags: ['한글게임', mode === 'letter' ? '글자' : '낱말']
         });
         if (sessionAtAnswer !== gameSession) return;
         round += 1;

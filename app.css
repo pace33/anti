@@ -3009,3 +3009,162 @@ body {
         font-size: 1.65rem;
     }
 }
+
+
+/* 20260710 한글 해득 UI polish */
+.page-number { display: none !important; }
+
+.login-mini-logo,
+.shop-btn,
+[onclick="toggleInfoDrawer()"].pointer-events-auto,
+.activity-profile-banner,
+.drawing-header-banner {
+    transition: transform .34s cubic-bezier(.16, 1, .3, 1), box-shadow .34s ease, background .34s ease !important;
+    will-change: transform;
+}
+
+.login-mini-logo:hover {
+    transform: scale(1.045) !important;
+}
+
+[onclick="toggleInfoDrawer()"].pointer-events-auto:hover,
+.activity-profile-banner:hover,
+.drawing-header-banner:hover {
+    transform: translateY(-2px) scale(1.025) !important;
+}
+
+.shop-btn:hover {
+    transform: translateY(-4px) scale(1.045) !important;
+}
+
+.dashboard-stage-card.level-card {
+    animation: none !important;
+    transition: transform .42s cubic-bezier(.16, 1, .3, 1), box-shadow .36s ease, background .36s ease !important;
+}
+
+#card-level-1,
+#card-level-2,
+#card-level-3,
+#card-level-4 {
+    animation-delay: 0s !important;
+}
+
+.dashboard-stage-card .stage-emoji {
+    animation: none !important;
+    transition: transform .46s cubic-bezier(.16, 1, .3, 1), box-shadow .36s ease !important;
+}
+
+.dashboard-stage-card.level-card:hover .stage-emoji {
+    transform: scale(1.12) rotate(1.5deg) !important;
+}
+
+.info-drawer {
+    right: 0 !important;
+    transform: translateX(105%);
+    transition: transform .42s cubic-bezier(.16, 1, .3, 1), box-shadow .36s ease !important;
+    will-change: transform;
+}
+
+.info-drawer.open {
+    transform: translateX(0);
+}
+
+.drawer-overlay {
+    display: block !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .28s ease, visibility .28s ease !important;
+}
+
+.drawer-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    animation: none !important;
+}
+
+#my-korean-section .section-dashboard-header {
+    justify-content: flex-start !important;
+}
+
+#letter-word-panel .letter-practice-selector-heading .font-black,
+#letter-word-panel .letter-word-count {
+    color: #28756a;
+}
+
+.hangul-game-mode-control .btn-outline {
+    border-width: 3px;
+    transition: transform .2s ease, background .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.hangul-game-mode-control .btn-outline.active {
+    background: linear-gradient(135deg, #6d5bd0, #46b3a5) !important;
+    border-color: #4338ca !important;
+    color: #fff !important;
+    box-shadow: 0 10px 22px rgba(79, 70, 229, .25) !important;
+    transform: translateY(-2px) scale(1.04);
+}
+
+.hangul-game-play-grid {
+    grid-template-columns: minmax(220px, .62fr) minmax(0, 1.55fr);
+    align-items: start;
+}
+
+.hangul-game-listen-panel {
+    min-height: 220px;
+    gap: 12px;
+    padding: 18px;
+}
+
+.hangul-game-sound-button {
+    min-height: 54px;
+    padding: 11px 22px;
+}
+
+.hangul-game-feedback {
+    min-height: 42px;
+    font-size: 1.2rem !important;
+}
+
+.hangul-game-choice-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: stretch;
+}
+
+.hangul-game-choice-panel #hangul-game-restart {
+    align-self: center;
+    min-width: 180px;
+}
+
+.hangul-game-choices .btn-choice {
+    min-height: 112px;
+    padding: 14px 12px;
+    border-width: 3px;
+    border-color: #d8d3ff;
+    background: #fbfaff;
+    box-shadow: 0 5px 0 #d8d3ff, 0 12px 22px rgba(79, 70, 229, .08);
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.hangul-game-choices .btn-choice:hover,
+.hangul-game-choices .btn-choice:focus-visible {
+    transform: translateY(-3px) scale(1.025);
+    border-color: #8b5cf6;
+    background: #f3f0ff;
+    box-shadow: 0 8px 0 #c4b5fd, 0 18px 28px rgba(79, 70, 229, .16);
+}
+
+.hangul-game-choices .btn-choice.active {
+    border-color: #0f766e !important;
+    background: linear-gradient(135deg, #dffcf2, #c7f9e8) !important;
+    color: #0f766e !important;
+    box-shadow: 0 8px 0 #5eead4, 0 0 0 5px rgba(20, 184, 166, .16) !important;
+    transform: translateY(-4px) scale(1.04);
+}
+
+@media (max-width: 860px) {
+    .hangul-game-listen-panel { min-height: 180px; }
+}
