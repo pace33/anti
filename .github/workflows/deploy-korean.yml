@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -11,11 +14,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  validate:
+    name: Validate Korean site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: node --check app.js
+
+      - name: Validate static site structure
+        run: node tools/validate-site.mjs
+
+      - name: Verify modular structure and repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in index.html app.js app.css style.css firebase-config.js; do
+            test -f "$file" || { echo "Missing required file: $file"; exit 1; }
+          done
+          grep -q 'src="app.js' index.html
+          grep -q 'href="app.css' index.html
+          grep -q 'aiedueKoreanDrawings' app.js
+          ! grep -q 'korean-db/db-api' app.js
+          ! grep -q 'localStorage' app.js
+          ! grep -q '<script type="module">' index.html
+          test ! -e school-firestore-adapter.js
+          test ! -d aidu
+          if find . -maxdepth 1 -type f \( -name '*평가문장*' -o -name 'pptx_output*' -o -name 'mattress_comparison.html' \) | grep -q .; then
+            echo 'Private or generated work files must not be committed to the deploy root.'
+            exit 1
+          fi
+
   deploy:
     name: Deploy /korean on local domain host
-    # This must run on the Windows PC that serves aiedue.ddns.net with Caddy.
-    # The runner needs file access to C:\Users\y5496\Desktop\Aiedue_Korean
-    # and C:\Users\y5496\aiedue-repo\Caddyfile.
+    needs: validate
+    if: github.event_name != 'pull_request'
     runs-on: [self-hosted, Windows]
 
     steps:
@@ -28,68 +63,68 @@ jobs:
           $ErrorActionPreference = 'Stop'
           .\tools\verify-korean-sketchbook.ps1
 
-      - name: Verify Korean site configuration
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $index = Get-Content -Raw -Encoding UTF8 .\index.html
-          if ($index -notmatch 'korean-db/db-api') {
-            throw 'index.html does not include the /korean-db data proxy marker.'
-          }
-          if ($index -match 'anti-db/db-api') {
-            throw 'index.html still references old /anti-db data proxy.'
-          }
-          if ($index -notmatch 'activity-loading-text') {
-            throw 'loading overlay marker was not found.'
-          }
-          if ($index -match 'window\.location\.href\s*=\s*route\.page') {
-            throw 'activity buttons still perform full page navigation.'
-          }
-          Write-Host 'Verified: /korean-db, clean loading UI, direct activity switching.'
-
-
-      - name: Deploy files to Caddy static root
+      - name: Prepare and deploy approved static files
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $source = (Get-Location).Path
+          $staging = Join-Path $env:RUNNER_TEMP 'aiedue-korean-deploy'
           $destination = 'C:\Users\y5496\Desktop\Aiedue_Korean'
-          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          $approvedFiles = @(
+            'index.html',
+            'app.js',
+            'app.css',
+            'style.css',
+            'firebase-config.js',
+            'drawing.html',
+            'hangul.html',
+            'dictation.html',
+            'literacy.html',
+            'aiedu_bgm.mp3',
+            'aiedu_click.mp3',
+            'aiedu_korean_logo.webp',
+            'aiedu_korean_nature_bg.webp',
+            'aiedu_korean_dashboard_nature_bg.webp',
+            'baby_giyeok.webp',
+            'mom_ah.webp'
+          )
 
-          robocopy $source $destination /MIR /XD .git .github node_modules .hermes-tmp /XF .gitignore serve-static.ps1
-          $code = $LASTEXITCODE
-          if ($code -ge 8) {
-            throw "robocopy failed with exit code $code"
+          Remove-Item -Recurse -Force $staging -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $staging | Out-Null
+          foreach ($relativePath in $approvedFiles) {
+            $from = Join-Path $source $relativePath
+            if (!(Test-Path $from)) { throw "Approved deploy file is missing: $relativePath" }
+            Copy-Item -Force $from (Join-Path $staging $relativePath)
           }
+
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          robocopy $staging $destination /MIR
+          $code = $LASTEXITCODE
+          if ($code -ge 8) { throw "robocopy failed with exit code $code" }
           $global:LASTEXITCODE = 0
-          Write-Host "Deployed repository files to $destination"
+          Write-Host "Deployed approved Korean site files to $destination"
 
       - name: Validate and reload Caddy
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $config = 'C:\Users\y5496\aiedue-repo\Caddyfile'
-          if (!(Test-Path $config)) {
-            throw "Caddyfile not found: $config"
-          }
+          if (!(Test-Path $config)) { throw "Caddyfile not found: $config" }
           caddy validate --config $config
           caddy reload --config $config
-          Write-Host 'Caddy config validated and reloaded.'
 
       - name: Smoke test public /korean site
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $url = 'https://aiedue.ddns.net/korean/?v=github-actions'
-          $html = (Invoke-WebRequest -UseBasicParsing -Uri $url -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          if ($html -notmatch 'activity-loading-text') {
-            throw 'Public /korean page did not include the loading marker.'
-          }
-          if ($html -notmatch 'korean-db/db-api') {
-            throw 'Public /korean page did not include the /korean-db data proxy marker.'
-          }
-          $health = Invoke-RestMethod -Uri 'https://aiedue.ddns.net/korean-db/db-api/health'
-          if (-not $health.ok) {
-            throw 'Data server health check failed.'
-          }
-          Write-Host 'Smoke test passed: /korean and /korean-db are reachable.'
+          $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+          $base = 'https://aiedue.ddns.net/korean'
+          $html = (Invoke-WebRequest -UseBasicParsing -Uri "$base/?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($html -notmatch 'activity-loading-overlay') { throw 'Public page did not include the loading UI.' }
+          if ($html -notmatch 'src="app.js') { throw 'Public page did not reference app.js.' }
+          if ($html -notmatch 'href="app.css') { throw 'Public page did not reference app.css.' }
+
+          $app = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($app -notmatch 'aiedueKoreanDrawings') { throw 'Public app.js did not include Firebase drawing storage.' }
+          if ($app -match 'korean-db/db-api') { throw 'Public app.js still references the retired Korean DB mirror.' }
+          Write-Host 'Smoke test passed: modular page and Firebase drawing storage are reachable.'
