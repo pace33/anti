@@ -158,6 +158,16 @@
             gap: 18px;
             align-items: stretch;
         }
+        #learning-detail-content {
+            position: relative;
+            z-index: 1;
+        }
+        #learning-detail-nav {
+            position: relative;
+            z-index: 30;
+            background: #ffffff;
+            padding-top: 12px;
+        }
         .learning-main-card,
         .learning-practice-card {
             border: 2px solid rgba(70, 179, 165, 0.22);
@@ -768,6 +778,351 @@
             background: #fff7ed;
             color: #c2410c;
         }
+        .lesson-final-stack {
+            display: grid;
+            gap: 16px;
+        }
+        .lesson-complete-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .lesson-complete-card {
+            display: grid;
+            grid-template-columns: 96px minmax(0, 1fr);
+            gap: 14px;
+            align-items: center;
+            width: 100%;
+            border: 2px solid #bae6fd;
+            border-radius: 20px;
+            background: #ffffff;
+            padding: 14px;
+            box-shadow: 0 10px 22px rgba(14, 165, 233, 0.12);
+        }
+        .lesson-complete-picture {
+            width: 84px;
+            height: 84px;
+            border-radius: 18px;
+            background: #f0f9ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.2rem;
+        }
+        .lesson-complete-word {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            min-width: 0;
+        }
+        .lesson-complete-word.three-syllable {
+            flex-wrap: nowrap;
+            gap: 6px;
+            justify-content: center;
+        }
+        .lesson-complete-tile {
+            position: relative;
+            width: 104px;
+            height: 116px;
+            flex: 0 0 104px;
+            border: 3px solid #bfdbfe;
+            border-radius: 16px;
+            background: #dbeafe;
+            color: #111827;
+            display: grid;
+            overflow: hidden;
+            line-height: 1;
+        }
+        .lesson-complete-tile.vertical {
+            grid-template-columns: 48% 52%;
+        }
+        .lesson-complete-tile.horizontal {
+            grid-template-rows: 48% 52%;
+        }
+        .lesson-complete-word.three-syllable .lesson-complete-tile {
+            width: 88px;
+            height: 102px;
+            flex-basis: 88px;
+        }
+        .lesson-complete-word.three-syllable .lesson-syllable-part {
+            font-size: 2.1rem;
+        }
+        .lesson-syllable-part {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            min-height: 0;
+            font-size: 2.35rem;
+            font-weight: 1000;
+        }
+        .lesson-syllable-part.given {
+            background: #fecaca;
+        }
+        .lesson-syllable-part.write {
+            background: #cfe8fb;
+        }
+        .lesson-syllable-part.write::before,
+        .lesson-syllable-part.write::after {
+            content: "";
+            position: absolute;
+            background: rgba(59, 130, 246, 0.22);
+            pointer-events: none;
+        }
+        .lesson-syllable-part.write::before {
+            left: 10%;
+            right: 10%;
+            top: 50%;
+            height: 1px;
+        }
+        .lesson-syllable-part.write::after {
+            top: 12%;
+            bottom: 12%;
+            left: 50%;
+            width: 1px;
+        }
+        .lesson-complete-writing-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+            cursor: crosshair;
+            z-index: 2;
+        }
+        .lesson-syllable-write-placeholder {
+            color: rgba(3, 105, 161, 0.35);
+            font-size: 0.74rem;
+            font-weight: 900;
+            letter-spacing: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .lesson-complete-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .lesson-complete-actions .trace-clear-button {
+            width: auto;
+            min-width: 120px;
+            flex: 1 1 120px;
+        }
+        .lesson-complete-actions .btn-outline {
+            flex: 1 1 96px;
+        }
+        .lesson-complete-feedback {
+            min-height: 1.5rem;
+            margin-top: 8px;
+            color: #16a34a;
+            font-weight: 900;
+        }
+        .lesson13-board-path {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .lesson13-game-panel {
+            display: grid;
+            gap: 14px;
+        }
+        .lesson13-game-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .lesson13-player-card {
+            border: 2px solid #bfdbfe;
+            border-radius: 18px;
+            background: #eff6ff;
+            padding: 12px;
+            text-align: center;
+        }
+        .lesson13-player-card.player-two {
+            border-color: #fed7aa;
+            background: #fff7ed;
+        }
+        .lesson13-player-name {
+            font-size: 1rem;
+            font-weight: 1000;
+            color: #1e3a8a;
+        }
+        .lesson13-player-card.player-two .lesson13-player-name {
+            color: #9a3412;
+        }
+        .lesson13-player-position {
+            min-height: 1.4rem;
+            margin-top: 4px;
+            font-size: 0.9rem;
+            font-weight: 900;
+            color: #475569;
+        }
+        .lesson13-move-button {
+            width: 100%;
+            margin-top: 8px;
+            border: 0;
+            border-radius: 999px;
+            background: #2563eb;
+            color: #ffffff;
+            padding: 10px 12px;
+            font-weight: 1000;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+        }
+        .lesson13-player-card.player-two .lesson13-move-button {
+            background: #f97316;
+            box-shadow: 0 8px 18px rgba(249, 115, 22, 0.24);
+        }
+        .lesson13-game-action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        .lesson13-game-word-bubble {
+            border: 3px solid #43b83f;
+            border-radius: 999px;
+            background: #ffffff;
+            color: #31922e;
+            padding: 10px 18px;
+            font-size: 1.15rem;
+            font-weight: 1000;
+            min-width: min(260px, 100%);
+            text-align: center;
+        }
+        .lesson13-board-cell {
+            position: relative;
+            min-height: 72px;
+            border: 2px solid #cbd5e1;
+            border-radius: 14px;
+            background: #f8fafc;
+            color: #1f2937;
+            font-size: 1.5rem;
+            font-weight: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+            overflow: visible;
+        }
+        .lesson13-board-cell:nth-child(2n) {
+            background: #f7fee7;
+            border-color: #d9f99d;
+        }
+        .lesson13-board-cell:nth-child(3n) {
+            background: #dbeafe;
+            border-color: #bfdbfe;
+        }
+        .lesson13-board-cell.start,
+        .lesson13-board-cell.finish {
+            background: #2f766d;
+            border-color: #2f766d;
+            color: #ffffff;
+            font-size: 1.25rem;
+        }
+        .lesson13-board-cell.read {
+            cursor: pointer;
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .lesson13-board-cell.read:hover,
+        .lesson13-board-cell.read:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+        }
+        .lesson13-board-cell.read.active {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #166534;
+        }
+        .lesson13-board-cell.current-one {
+            outline: 4px solid rgba(37, 99, 235, 0.26);
+        }
+        .lesson13-board-cell.current-two {
+            outline: 4px solid rgba(249, 115, 22, 0.28);
+        }
+        .lesson13-board-token-layer {
+            position: absolute;
+            left: 50%;
+            bottom: -18px;
+            display: flex;
+            gap: 3px;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 4;
+        }
+        .lesson13-board-token {
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 3px solid #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 1000;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.25);
+            animation: lesson13-token-hop 0.34s ease;
+        }
+        .lesson13-board-token.player-one {
+            background: #2563eb;
+        }
+        .lesson13-board-token.player-two {
+            background: #f97316;
+        }
+        .lesson13-board-cell.finish .lesson13-board-token {
+            animation: lesson13-token-win 0.7s ease infinite alternate;
+        }
+        @keyframes lesson13-token-hop {
+            0% { transform: translateY(10px) scale(0.86); opacity: 0.45; }
+            60% { transform: translateY(-8px) scale(1.08); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        @keyframes lesson13-token-win {
+            from { transform: translateY(0) rotate(-3deg); }
+            to { transform: translateY(-7px) rotate(3deg); }
+        }
+        .lesson12-confirm-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .lesson12-confirm-row {
+            border: 2px solid #bae6fd;
+            border-radius: 20px;
+            background: #ffffff;
+            padding: 14px;
+        }
+        .lesson12-confirm-choices {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .lesson12-confirm-choice {
+            border: 2px solid #bfdbfe;
+            border-radius: 18px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            padding: 14px 10px;
+            font-size: 2.1rem;
+            font-weight: 1000;
+        }
+        .lesson12-confirm-choice.correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #166534;
+        }
+        .lesson12-confirm-choice.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
         @keyframes lesson13-card-enter {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -978,6 +1333,72 @@
             }
             .lesson13-read-check-buttons {
                 grid-template-columns: 1fr;
+            }
+            .lesson-complete-grid {
+                grid-template-columns: 1fr;
+            }
+            .lesson-complete-card {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                gap: 10px;
+                padding: 12px;
+            }
+            .lesson-complete-picture {
+                width: 68px;
+                height: 68px;
+                font-size: 2.6rem;
+            }
+            .lesson-complete-word {
+                width: 100%;
+                justify-content: center;
+            }
+            .lesson-complete-word.three-syllable {
+                gap: 4px;
+            }
+            .lesson-complete-tile {
+                width: 96px;
+                height: 108px;
+                flex-basis: 96px;
+            }
+            .lesson-complete-word.three-syllable .lesson-complete-tile {
+                width: 60px;
+                height: 78px;
+                flex-basis: 60px;
+                border-radius: 12px;
+                border-width: 2px;
+            }
+            .lesson-complete-word.three-syllable .lesson-syllable-part {
+                font-size: 1.42rem;
+            }
+            .lesson-syllable-part {
+                font-size: 2.05rem;
+            }
+            .lesson-complete-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            .lesson13-board-path {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .lesson13-board-cell {
+                min-height: 62px;
+                font-size: 1.18rem;
+                padding: 6px;
+            }
+            .lesson13-game-controls {
+                grid-template-columns: 1fr;
+            }
+            .lesson13-board-token {
+                width: 28px;
+                height: 28px;
+                font-size: 0.72rem;
+                border-width: 2px;
+            }
+            .lesson13-board-token-layer {
+                bottom: -14px;
+            }
+            .lesson12-confirm-choices {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
             .writing-compact-toolbar {
                 flex-direction: column-reverse;
@@ -2591,7 +3012,7 @@
                 </div>
             </div>
             <div id="learning-detail-content" class="space-y-4 pr-1"></div>
-            <div class="flex justify-between items-center mt-10">
+            <div id="learning-detail-nav" class="flex justify-between items-center mt-10">
                 <button class="btn-outline" onclick="closeLearningDetailActivity()">나의 한글로 돌아가기</button>
                 <div class="flex items-center gap-4">
                     <button id="learning-detail-next-btn" class="btn-primary" onclick="goToNextLearningDetailSection()">다음으로</button>
@@ -9992,6 +10413,91 @@ ${JSON.stringify(targets, null, 2)}
             14: { groups: LESSON14_READING_GROUPS }
         };
 
+        const LESSON12_FINAL_CHECK_ITEMS = [
+            { target: '아', choices: ['아', '허', '우', '루'] },
+            { target: '러', choices: ['호', '러', '로', '후'] },
+            { target: '흐', choices: ['이', '흐', '호', '으'] },
+            { target: '리', choices: ['오', '리', '희', '어'] }
+        ];
+
+        const LESSON13_COMPLETION_WRITING_SETS = [
+            {
+                title: '쓰기 1 · 완성해 보기',
+                prompt: '그림을 보고 빠진 모음이나 자음을 떠올리며 단어를 완성해요.',
+                items: [
+                    { word: '아이', icon: '👧', tiles: [{ syllable: '아', initial: 'ㅇ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '이', initial: 'ㅇ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '나무', icon: '🌳', tiles: [{ syllable: '나', initial: 'ㄴ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '무', initial: 'ㅁ', vowel: 'ㅜ', givenSlot: 'initial' }] },
+                    { word: '다리', icon: '🦵', tiles: [{ syllable: '다', initial: 'ㄷ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'vowel' }] },
+                    { word: '가지', icon: '🍆', tiles: [{ syllable: '가', initial: 'ㄱ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '지', initial: 'ㅈ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '파리', icon: '🪰', tiles: [{ syllable: '파', initial: 'ㅍ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'vowel' }] },
+                    { word: '나비', icon: '🦋', tiles: [{ syllable: '나', initial: 'ㄴ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '비', initial: 'ㅂ', vowel: 'ㅣ', givenSlot: 'initial' }] }
+                ]
+            },
+            {
+                title: '쓰기 2 · 완성해 보기',
+                prompt: '그림 단어를 듣고 빈칸에 알맞은 글자를 완성해요.',
+                items: [
+                    { word: '가수', icon: '🎤', tiles: [{ syllable: '가', initial: 'ㄱ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '수', initial: 'ㅅ', vowel: 'ㅜ', givenSlot: 'initial' }] },
+                    { word: '허리', icon: '👕', tiles: [{ syllable: '허', initial: 'ㅎ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '기타', icon: '🎸', tiles: [{ syllable: '기', initial: 'ㄱ', vowel: 'ㅣ', givenSlot: 'vowel' }, { syllable: '타', initial: 'ㅌ', vowel: 'ㅏ', givenSlot: 'vowel' }] },
+                    { word: '바구니', icon: '🧺', tiles: [{ syllable: '바', initial: 'ㅂ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '구', initial: 'ㄱ', vowel: 'ㅜ', givenSlot: 'vowel' }, { syllable: '니', initial: 'ㄴ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '코끼리', icon: '🐘', tiles: [{ syllable: '코', initial: 'ㅋ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '끼', initial: 'ㄲ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '아버지', icon: '👨‍👧', tiles: [{ syllable: '아', initial: 'ㅇ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '버', initial: 'ㅂ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '지', initial: 'ㅈ', vowel: 'ㅣ', givenSlot: 'initial' }] }
+                ]
+            }
+        ];
+
+        const LESSON14_COMPLETION_WRITING_SETS = [
+            {
+                title: '쓰기 1 · 완성해 보기',
+                prompt: '그림을 보고 빠진 자음이나 모음을 떠올리며 ㅡ, ㅗ 단어를 완성해요.',
+                items: [
+                    { word: '버스', icon: '🚌', tiles: [{ syllable: '버', initial: 'ㅂ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '스', initial: 'ㅅ', vowel: 'ㅡ', givenSlot: 'vowel' }] },
+                    { word: '치즈', icon: '🧀', tiles: [{ syllable: '치', initial: 'ㅊ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '즈', initial: 'ㅈ', vowel: 'ㅡ', givenSlot: 'vowel' }] },
+                    { word: '모기', icon: '🦟', tiles: [{ syllable: '모', initial: 'ㅁ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '기', initial: 'ㄱ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '주스', icon: '🧃', tiles: [{ syllable: '주', initial: 'ㅈ', vowel: 'ㅜ', givenSlot: 'initial' }, { syllable: '스', initial: 'ㅅ', vowel: 'ㅡ', givenSlot: 'vowel' }] },
+                    { word: '스키', icon: '⛷️', tiles: [{ syllable: '스', initial: 'ㅅ', vowel: 'ㅡ', givenSlot: 'vowel' }, { syllable: '키', initial: 'ㅋ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '피아노', icon: '🎹', tiles: [{ syllable: '피', initial: 'ㅍ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '아', initial: 'ㅇ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '노', initial: 'ㄴ', vowel: 'ㅗ', givenSlot: 'initial' }] }
+                ]
+            },
+            {
+                title: '쓰기 2 · 완성해 보기',
+                prompt: '그림 단어를 듣고 빈칸에 알맞은 글자를 완성해요.',
+                items: [
+                    { word: '포도', icon: '🍇', tiles: [{ syllable: '포', initial: 'ㅍ', vowel: 'ㅗ', givenSlot: 'initial' }, { syllable: '도', initial: 'ㄷ', vowel: 'ㅗ', givenSlot: 'vowel' }] },
+                    { word: '소파', icon: '🛋️', tiles: [{ syllable: '소', initial: 'ㅅ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '파', initial: 'ㅍ', vowel: 'ㅏ', givenSlot: 'initial' }] },
+                    { word: '꼬마', icon: '🧒', tiles: [{ syllable: '꼬', initial: 'ㄲ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '마', initial: 'ㅁ', vowel: 'ㅏ', givenSlot: 'initial' }] },
+                    { word: '소나무', icon: '🌲', tiles: [{ syllable: '소', initial: 'ㅅ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '나', initial: 'ㄴ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '무', initial: 'ㅁ', vowel: 'ㅜ', givenSlot: 'initial' }] },
+                    { word: '거미', icon: '🕷️', tiles: [{ syllable: '거', initial: 'ㄱ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '미', initial: 'ㅁ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+                    { word: '저고리', icon: '👘', tiles: [{ syllable: '저', initial: 'ㅈ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '고', initial: 'ㄱ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] }
+                ]
+            }
+        ];
+
+        const LESSON_COMPLETION_WRITING_SETS_BY_ID = {
+            13: LESSON13_COMPLETION_WRITING_SETS,
+            14: LESSON14_COMPLETION_WRITING_SETS
+        };
+
+        const LESSON13_BOARD_WORDS = [
+            '출발', '다리', '가디', '아파트', '나비', '소리', '까치', '기타',
+            '가우', '니라', '가시', '마차', '부리', '파리', '가수', '라디오',
+            '니타', '아기', '아버지', '기차', '부리', '나무', '나버', '아이',
+            '어머니', '바구니', '우리', '자라', '허리', '뿌리', '더리', '가지', '도착'
+        ];
+
+        const LESSON14_BOARD_WORDS = [
+            '출발', '치즈', '호기', '버스', '주스', '스키', '거리', '포도', '오리',
+            '피아노', '고모', '사이즈', '부모', '카드', '거미', '소나무', '포크', '지도',
+            '소파', '꼬마', '퍼도', '저고리', '도자기', '수저', '소나기', '모자', '서포',
+            '모두', '토지', '스포', '이모', '도로', '고모', '보자기', '도착'
+        ];
+
+        const LESSON_BOARD_WORDS_BY_ID = {
+            13: LESSON13_BOARD_WORDS,
+            14: LESSON14_BOARD_WORDS
+        };
+
         window.lesson13ReadChecks = window.lesson13ReadChecks || {};
         window.pictureWordMatchBatch = window.pictureWordMatchBatch || {};
 
@@ -10117,6 +10623,147 @@ ${JSON.stringify(targets, null, 2)}
                         <div class="trace-canvas-help">천천히 획순을 따라 쓰고, 어려우면 단어를 다시 눌러 들어요.</div>
                     </div>
                     <button type="button" class="trace-clear-button" onclick="resetTraceWritingCanvas('${canvasId}')">다시 쓰기</button>
+                </div>
+            `;
+        }
+
+        function renderLesson12FinalCheck() {
+            return `
+                <div class="learning-practice-card lesson13-reading-shell">
+                    <div class="learning-card-label practice-label">확인하기 3 · 4</div>
+                    <div class="lesson13-instruction">소리를 듣고 알맞은 글자를 골라요. 고른 뒤에는 글자를 눌러 다시 읽어 봐요.</div>
+                    <div class="lesson12-confirm-grid">
+                        ${LESSON12_FINAL_CHECK_ITEMS.map((item, index) => `
+                            <div class="lesson12-confirm-row">
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <div class="text-lg font-black text-[#2c3e50]">문제 ${index + 1}</div>
+                                    <button type="button" class="listen-quiz-play-btn !text-base !px-5 !py-3"
+                                        onclick="playLesson12FinalCheckSound(${index})">🔊 소리 듣기</button>
+                                </div>
+                                <div id="lesson12-final-feedback-${index}" class="min-h-[1.5rem] mt-2 text-base font-black text-orange-500">소리를 듣고 골라요.</div>
+                                <div class="lesson12-confirm-choices">
+                                    ${item.choices.map((choice) => `
+                                        <button type="button" class="lesson12-confirm-choice"
+                                            onclick="selectLesson12FinalCheck(${index}, '${choice}', this)">${choice}</button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getLessonCompletionTileLayout(tile) {
+            return ['ㅗ', 'ㅜ', 'ㅡ', 'ㅛ', 'ㅠ'].includes(tile.vowel) ? 'horizontal' : 'vertical';
+        }
+
+        function renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, tile, slot }) {
+            const isGiven = tile.givenSlot === slot;
+            const value = slot === 'initial' ? tile.initial : tile.vowel;
+            if (isGiven) {
+                return `<div class="lesson-syllable-part given" aria-label="${tile.syllable} ${slot === 'initial' ? '초성' : '모음'} 힌트">${value}</div>`;
+            }
+            const canvasId = `lesson13-write-${lessonId}-${setIndex}-${itemIndex}-${tileIndex}-${slot}`;
+            return `
+                <div class="lesson-syllable-part write" aria-label="${tile.syllable} ${slot === 'initial' ? '초성' : '모음'} 쓰기">
+                    <span class="lesson-syllable-write-placeholder">쓰기</span>
+                    <canvas id="${canvasId}"
+                        class="lesson-complete-writing-canvas"
+                        data-word="${tile.syllable}"
+                        data-target="${value}"
+                        data-slot="${slot}"
+                        data-lesson-id="${lessonId}"></canvas>
+                </div>
+            `;
+        }
+
+        function renderLessonCompletionTile(lessonId, setIndex, itemIndex, tile, tileIndex) {
+            const layout = getLessonCompletionTileLayout(tile);
+            return `
+                <div class="lesson-complete-tile ${layout}" aria-label="${tile.syllable} 완성 칸">
+                    ${renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, tile, slot: 'initial' })}
+                    ${renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, tile, slot: 'vowel' })}
+                </div>
+            `;
+        }
+
+        function getLessonCompletionWritingSets(lessonId) {
+            return LESSON_COMPLETION_WRITING_SETS_BY_ID[Number(lessonId)] || [];
+        }
+
+        function renderLesson13CompletionWriting(lessonId, setIndex) {
+            const set = getLessonCompletionWritingSets(lessonId)[setIndex];
+            if (!set) return '';
+            return `
+                <div class="learning-practice-card lesson13-reading-shell">
+                    <div class="learning-card-label practice-label">${set.title}</div>
+                    <div class="lesson13-instruction">🔊 ${set.prompt}</div>
+                    <div class="lesson-complete-grid">
+                        ${set.items.map((item, itemIndex) => {
+                            const globalIndex = setIndex * 10 + itemIndex;
+                            const isThreeSyllable = item.tiles.length >= 3;
+                            return `
+                                <div class="lesson-complete-card ${isThreeSyllable ? 'three-syllable-card' : ''}">
+                                    <button type="button" class="lesson-complete-picture" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">${item.icon}</button>
+                                    <div>
+                                        <div class="lesson-complete-word ${isThreeSyllable ? 'three-syllable' : ''}" aria-label="${item.word} 완성 카드">
+                                            ${item.tiles.map((tile, tileIndex) => renderLessonCompletionTile(lessonId, setIndex, itemIndex, tile, tileIndex)).join('')}
+                                        </div>
+                                        <div class="lesson-complete-actions">
+                                            <button type="button" class="btn-outline py-2 px-4" onclick="speakChar('${item.word}')">🔊 ${item.word}</button>
+                                            <button type="button" class="btn-outline py-2 px-4" onclick="clearLesson13WordWriting(this)">다시 쓰기</button>
+                                            <button type="button" class="trace-clear-button !mt-0 !py-2 !px-4"
+                                                onclick="completeLesson13WordWriting(${lessonId}, ${setIndex}, ${itemIndex}, this)">완성했어요</button>
+                                        </div>
+                                        <div id="lesson13-complete-feedback-${globalIndex}" class="lesson-complete-feedback"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLesson13WordGame(lessonId) {
+            const boardWords = getLessonBoardWords(lessonId);
+            return `
+                <div class="learning-practice-card lesson13-reading-shell">
+                    <div class="learning-card-label practice-label">놀이 · 단어 놀이 해보기</div>
+                    <div class="lesson13-instruction">가위바위보에서 이긴 쪽의 말을 한 칸 움직여요. 도착한 칸의 단어를 큰 소리로 읽어요.</div>
+                    <div class="lesson-final-stack lesson13-game-panel" data-board-game="${lessonId}">
+                        <div class="border-2 border-orange-100 rounded-2xl p-4 bg-orange-50 text-base font-bold text-stone-700 leading-relaxed">
+                            이긴 친구가 1칸 움직여요. 도착한 칸의 단어를 읽고, 먼저 도착한 친구가 이겨요.
+                        </div>
+                        <div class="lesson13-game-controls">
+                            <div class="lesson13-player-card">
+                                <div class="lesson13-player-name">파랑 말</div>
+                                <div id="lesson13-player-pos-${lessonId}-0" class="lesson13-player-position">출발</div>
+                                <button type="button" class="lesson13-move-button" onclick="moveLesson13BoardToken(${lessonId}, 0)">이겼어요 · 1칸 이동</button>
+                            </div>
+                            <div class="lesson13-player-card player-two">
+                                <div class="lesson13-player-name">주황 말</div>
+                                <div id="lesson13-player-pos-${lessonId}-1" class="lesson13-player-position">출발</div>
+                                <button type="button" class="lesson13-move-button" onclick="moveLesson13BoardToken(${lessonId}, 1)">이겼어요 · 1칸 이동</button>
+                            </div>
+                        </div>
+                        <div class="lesson13-game-action-row">
+                            <div id="lesson13-current-word-${lessonId}" class="lesson13-game-word-bubble">출발에서 준비해요.</div>
+                            <button type="button" class="btn-outline py-2 px-4" onclick="readCurrentLesson13BoardWord(${lessonId})">도착 단어 듣기</button>
+                            <button type="button" class="btn-outline py-2 px-4" onclick="resetLesson13BoardGame(${lessonId})">처음으로</button>
+                        </div>
+                        <div class="lesson13-board-path" data-board-lesson="${lessonId}">
+                            ${boardWords.map((word, index) => {
+                                const isStart = index === 0;
+                                const isFinish = index === boardWords.length - 1;
+                                const className = isStart ? 'start' : (isFinish ? 'finish' : 'read');
+                                const handler = isStart || isFinish ? '' : `onclick="markLesson13BoardWordRead(${lessonId}, '${word}', this)"`;
+                                return `<button type="button" class="lesson13-board-cell ${className}" data-board-index="${index}" ${handler}>${word}<span class="lesson13-board-token-layer"></span></button>`;
+                            }).join('')}
+                        </div>
+                        <div id="lesson13-board-feedback" class="text-center text-lg font-black text-green-600 min-h-[1.6rem]"></div>
+                    </div>
                 </div>
             `;
         }
@@ -10401,6 +11048,318 @@ ${JSON.stringify(targets, null, 2)}
                 isCorrect: true,
                 readCount,
                 retryIndex: 1
+            });
+        };
+
+        window.playLesson12FinalCheckSound = function playLesson12FinalCheckSound(index) {
+            const item = LESSON12_FINAL_CHECK_ITEMS[index];
+            if (!item) return;
+            speakChar(item.target);
+        };
+
+        window.selectLesson12FinalCheck = async function selectLesson12FinalCheck(index, userAnswer, button) {
+            const item = LESSON12_FINAL_CHECK_ITEMS[index];
+            if (!item) return;
+            const isCorrect = item.target === userAnswer;
+            const row = button.closest('.lesson12-confirm-row');
+            if (row) {
+                row.querySelectorAll('.lesson12-confirm-choice').forEach((choiceButton) => {
+                    choiceButton.classList.remove('correct', 'wrong');
+                });
+            }
+            button.classList.add(isCorrect ? 'correct' : 'wrong');
+            const feedback = document.getElementById(`lesson12-final-feedback-${index}`);
+            if (feedback) {
+                feedback.className = `min-h-[1.5rem] mt-2 text-base font-black ${isCorrect ? 'text-green-600' : 'text-orange-500'}`;
+                feedback.textContent = isCorrect ? `${item.target} 맞았어요. 한 번 더 읽어 봐요.` : '다시 듣고 알맞은 글자를 골라요.';
+            }
+            speakTextKo(isCorrect ? `좋아요. ${item.target}.` : '다시 들어 보아요.');
+            await recordKoreanAttempt({
+                lessonId: 12,
+                lessonTitle: getLessonTitleForReport(12),
+                unitId: getUnitIdForLesson(12),
+                activityType: 'listenAndFind',
+                word: item.target,
+                answer: item.target,
+                userAnswer,
+                isCorrect,
+                errorType: isCorrect ? null : KOREAN_ERROR_TYPES.CONSONANT,
+                retryIndex: nextKoreanRetryIndex({
+                    lessonId: 12,
+                    activityType: 'listenAndFind',
+                    word: item.target,
+                    answer: item.target
+                })
+            });
+            if (isCorrect) {
+                resetKoreanRetryIndex({ lessonId: 12, activityType: 'listenAndFind', word: item.target, answer: item.target });
+            }
+        };
+
+        window.completeLesson13WordWriting = async function completeLesson13WordWriting(lessonId, setIndex, itemIndex, button) {
+            const item = getLessonCompletionWritingSets(lessonId)[setIndex]?.items?.[itemIndex];
+            if (!item) return;
+            const globalIndex = setIndex * 10 + itemIndex;
+            const feedback = document.getElementById(`lesson13-complete-feedback-${globalIndex}`);
+            button.textContent = '완성 완료';
+            button.classList.add('active');
+            if (feedback) feedback.textContent = `${item.word} 완성했어요. 소리 내어 한 번 더 읽어요.`;
+            speakTextKo(`${item.word}. 잘했어요.`);
+            await recordKoreanAttempt({
+                lessonId,
+                lessonTitle: getLessonTitleForReport(lessonId),
+                unitId: getUnitIdForLesson(lessonId),
+                activityType: 'fillOneJamo',
+                word: item.word,
+                prompt: '그림 보고 단어 완성',
+                answer: item.word,
+                userAnswer: '완성 쓰기 완료',
+                isCorrect: true,
+                errorType: null,
+                retryIndex: 1
+            });
+        };
+
+        window.markLesson13BoardWordRead = async function markLesson13BoardWordRead(lessonId, word, button) {
+            button.classList.add('active');
+            const feedback = document.getElementById('lesson13-board-feedback');
+            if (feedback) feedback.textContent = `${word} 읽기 완료!`;
+            speakChar(word);
+            await recordKoreanAttempt({
+                lessonId,
+                lessonTitle: getLessonTitleForReport(lessonId),
+                unitId: getUnitIdForLesson(lessonId),
+                activityType: 'readThreeTimes',
+                word,
+                isCorrect: true,
+                readCount: 1,
+                retryIndex: 1
+            });
+        };
+
+        window.lesson13BoardGameState = window.lesson13BoardGameState || {};
+
+        function getLesson13BoardGameState(lessonId) {
+            const key = String(lessonId);
+            if (!window.lesson13BoardGameState[key]) {
+                window.lesson13BoardGameState[key] = { positions: [0, 0], lastPlayer: 0 };
+            }
+            return window.lesson13BoardGameState[key];
+        }
+
+        function getLessonBoardWords(lessonId) {
+            return LESSON_BOARD_WORDS_BY_ID[Number(lessonId)] || LESSON13_BOARD_WORDS;
+        }
+
+        function getLesson13BoardWord(lessonId, index) {
+            const words = getLessonBoardWords(lessonId);
+            return words[Math.max(0, Math.min(index, words.length - 1))] || '출발';
+        }
+
+        function updateLesson13BoardGame(lessonId) {
+            const state = getLesson13BoardGameState(lessonId);
+            const board = document.querySelector(`[data-board-lesson="${lessonId}"]`);
+            if (!board) return;
+            board.querySelectorAll('.lesson13-board-cell').forEach((cell) => {
+                cell.classList.remove('current-one', 'current-two');
+                const layer = cell.querySelector('.lesson13-board-token-layer');
+                if (layer) layer.innerHTML = '';
+            });
+            state.positions.forEach((position, playerIndex) => {
+                const cell = board.querySelector(`[data-board-index="${position}"]`);
+                if (!cell) return;
+                cell.classList.add(playerIndex === 0 ? 'current-one' : 'current-two');
+                const layer = cell.querySelector('.lesson13-board-token-layer');
+                if (!layer) return;
+                const token = document.createElement('span');
+                token.className = `lesson13-board-token ${playerIndex === 0 ? 'player-one' : 'player-two'}`;
+                token.textContent = playerIndex === 0 ? '파' : '주';
+                layer.appendChild(token);
+            });
+            state.positions.forEach((position, playerIndex) => {
+                const label = document.getElementById(`lesson13-player-pos-${lessonId}-${playerIndex}`);
+                if (label) label.textContent = getLesson13BoardWord(lessonId, position);
+            });
+            const currentWord = getLesson13BoardWord(lessonId, state.positions[state.lastPlayer] || 0);
+            const bubble = document.getElementById(`lesson13-current-word-${lessonId}`);
+            if (bubble) {
+                bubble.textContent = currentWord === '출발'
+                    ? '출발에서 준비해요.'
+                    : currentWord === '도착'
+                        ? '도착! 놀이를 마쳤어요.'
+                        : `도착 단어: ${currentWord}`;
+            }
+        }
+
+        async function recordLesson13BoardMove(lessonId, playerIndex, word, isFinish) {
+            if (!word || word === '출발') return;
+            await recordKoreanAttempt({
+                lessonId,
+                lessonTitle: getLessonTitleForReport(lessonId),
+                unitId: getUnitIdForLesson(lessonId),
+                activityType: 'readThreeTimes',
+                word,
+                isCorrect: true,
+                readCount: isFinish ? null : 1,
+                retryIndex: 1
+            });
+        }
+
+        window.moveLesson13BoardToken = async function moveLesson13BoardToken(lessonId, playerIndex) {
+            const state = getLesson13BoardGameState(lessonId);
+            const lastIndex = getLessonBoardWords(lessonId).length - 1;
+            state.lastPlayer = playerIndex;
+            state.positions[playerIndex] = Math.min(lastIndex, Number(state.positions[playerIndex] || 0) + 1);
+            const word = getLesson13BoardWord(lessonId, state.positions[playerIndex]);
+            updateLesson13BoardGame(lessonId);
+            const feedback = document.getElementById('lesson13-board-feedback');
+            if (word === '도착') {
+                if (feedback) feedback.textContent = `${playerIndex === 0 ? '파랑' : '주황'} 말 도착! 놀이를 마쳤어요.`;
+                speakTextKo(`${playerIndex === 0 ? '파랑' : '주황'} 말 도착!`);
+            } else {
+                if (feedback) feedback.textContent = `${playerIndex === 0 ? '파랑' : '주황'} 말이 ${word} 칸에 도착했어요. 크게 읽어요!`;
+                speakChar(word);
+            }
+            await recordLesson13BoardMove(lessonId, playerIndex, word, word === '도착');
+        };
+
+        window.readCurrentLesson13BoardWord = function readCurrentLesson13BoardWord(lessonId) {
+            const state = getLesson13BoardGameState(lessonId);
+            const word = getLesson13BoardWord(lessonId, state.positions[state.lastPlayer] || 0);
+            if (word === '출발') {
+                speakTextKo('출발에서 준비해요.');
+                return;
+            }
+            if (word === '도착') {
+                speakTextKo('도착했어요.');
+                return;
+            }
+            speakChar(word);
+        };
+
+        window.resetLesson13BoardGame = function resetLesson13BoardGame(lessonId) {
+            window.lesson13BoardGameState[String(lessonId)] = { positions: [0, 0], lastPlayer: 0 };
+            updateLesson13BoardGame(lessonId);
+            const feedback = document.getElementById('lesson13-board-feedback');
+            if (feedback) feedback.textContent = '출발! 가위바위보를 하고 이긴 쪽 말을 움직여요.';
+        };
+
+        function initializeLesson13BoardGames() {
+            document.querySelectorAll('[data-board-game]').forEach((game) => {
+                const lessonId = Number(game.dataset.boardGame);
+                updateLesson13BoardGame(lessonId);
+            });
+        }
+
+        function resizeLessonCompletionCanvas(canvas, { preserve = true } = {}) {
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const nextWidth = Math.max(1, Math.floor(rect.width * dpr));
+            const nextHeight = Math.max(1, Math.floor(rect.height * dpr));
+            if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+                let snapshot = null;
+                if (preserve && canvas.width > 1 && canvas.height > 1) {
+                    snapshot = document.createElement('canvas');
+                    snapshot.width = canvas.width;
+                    snapshot.height = canvas.height;
+                    snapshot.getContext('2d').drawImage(canvas, 0, 0);
+                }
+                canvas.width = nextWidth;
+                canvas.height = nextHeight;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                if (snapshot) {
+                    ctx.drawImage(snapshot, 0, 0, snapshot.width / dpr, snapshot.height / dpr);
+                }
+            } else {
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            return ctx;
+        }
+
+        function initializeLessonCompletionCanvas(canvas) {
+            if (!canvas || canvas.dataset.ready === 'true') return;
+            let ctx = resizeLessonCompletionCanvas(canvas);
+            let drawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            let activePointerId = null;
+
+            const point = (ev) => {
+                const rect = canvas.getBoundingClientRect();
+                const source = ev.touches?.[0] || ev.changedTouches?.[0] || ev;
+                return { x: source.clientX - rect.left, y: source.clientY - rect.top };
+            };
+            const start = (ev) => {
+                if (ev.pointerId !== undefined) {
+                    activePointerId = ev.pointerId;
+                    try { canvas.setPointerCapture(ev.pointerId); } catch {}
+                }
+                if (ev.cancelable) ev.preventDefault();
+                ctx = resizeLessonCompletionCanvas(canvas, { preserve: true });
+                const p = point(ev);
+                drawing = true;
+                lastX = p.x;
+                lastY = p.y;
+                canvas.dataset.hasWriting = 'true';
+                const target = canvas.dataset.target || canvas.dataset.word || '';
+                if (target && (window.lastSpokenChar !== target || Date.now() - window.lastSpokenTime > 1200)) {
+                    window.speakChar(target);
+                    window.lastSpokenChar = target;
+                    window.lastSpokenTime = Date.now();
+                }
+            };
+            const move = (ev) => {
+                if (!drawing) return;
+                if (activePointerId !== null && ev.pointerId !== undefined && ev.pointerId !== activePointerId) return;
+                if (ev.cancelable) ev.preventDefault();
+                const p = point(ev);
+                ctx.strokeStyle = 'rgba(17, 24, 39, 0.82)';
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+                lastX = p.x;
+                lastY = p.y;
+            };
+            const stop = () => {
+                drawing = false;
+                activePointerId = null;
+            };
+            if (window.PointerEvent) {
+                canvas.addEventListener('pointerdown', start);
+                canvas.addEventListener('pointermove', move);
+                canvas.addEventListener('pointerup', stop);
+                canvas.addEventListener('pointercancel', stop);
+                canvas.addEventListener('pointerleave', stop);
+            } else {
+                canvas.addEventListener('mousedown', start);
+                canvas.addEventListener('mousemove', move);
+                canvas.addEventListener('mouseup', stop);
+                canvas.addEventListener('mouseout', stop);
+                canvas.addEventListener('touchstart', start, { passive: false });
+                canvas.addEventListener('touchmove', move, { passive: false });
+                canvas.addEventListener('touchend', stop);
+                canvas.addEventListener('touchcancel', stop);
+            }
+            canvas.dataset.ready = 'true';
+        }
+
+        function initializeLessonCompletionCanvases() {
+            document.querySelectorAll('.view-section:not(.hidden) .lesson-complete-writing-canvas').forEach((canvas) => {
+                initializeLessonCompletionCanvas(canvas);
+            });
+        }
+
+        window.clearLesson13WordWriting = function clearLesson13WordWriting(button) {
+            const card = button.closest('.lesson-complete-card');
+            card?.querySelectorAll('.lesson-complete-writing-canvas').forEach((canvas) => {
+                const ctx = resizeLessonCompletionCanvas(canvas, { preserve: false });
+                ctx.clearRect(0, 0, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+                delete canvas.dataset.hasWriting;
             });
         };
 
@@ -10770,9 +11729,19 @@ ${JSON.stringify(targets, null, 2)}
             const practiceFlow = learningPracticeFlows[step];
             const isActivityFlow = visibleActivitySteps.includes(step) && practiceFlow;
 
-            const totalSections = isPictureWordLesson ? 4 : (hasMakeLettersActivity ? 4 : (isActivityFlow ? 3 : detail.sections.length));
+            let totalSections = isPictureWordLesson ? 4 : (hasMakeLettersActivity ? 4 : (isActivityFlow ? 3 : detail.sections.length));
+            if (numericStep === 12) totalSections = 5;
+            if (numericStep === 13) totalSections = 7;
+            if (numericStep === 14) totalSections = 7;
             const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
             currentLearningDetailSectionIndex = safeIndex;
+            window.currentLearningActivityStep = numericStep;
+            window.currentLearningDetailSectionIndex = safeIndex;
+            const learningDetailSectionEl = document.getElementById('learning-detail-section');
+            if (learningDetailSectionEl) {
+                learningDetailSectionEl.dataset.currentStep = String(numericStep);
+                learningDetailSectionEl.dataset.currentSection = String(safeIndex);
+            }
             const section = detail.sections[Math.min(safeIndex, detail.sections.length - 1)];
 
             document.getElementById('learning-detail-title').innerText = detail.title;
@@ -10802,14 +11771,27 @@ ${JSON.stringify(targets, null, 2)}
                 } else if (step === 7 && safeIndex === 2) {
                     sectionTitle = detail.sections[1].title;
                 } else if (isPictureWordLesson) {
-                    sectionTitle = [
-                        PICTURE_WORD_LESSON_CONFIGS[numericStep].groups[0].title,
-                        PICTURE_WORD_LESSON_CONFIGS[numericStep].groups[1].title,
-                        '그림-단어 연결',
-                        '그림 단어 따라 쓰기'
-                    ][safeIndex];
+                    const pictureLessonTitles = getLessonCompletionWritingSets(numericStep).length
+                        ? [
+                            PICTURE_WORD_LESSON_CONFIGS[numericStep].groups[0].title,
+                            PICTURE_WORD_LESSON_CONFIGS[numericStep].groups[1].title,
+                            '그림-단어 연결',
+                            '그림 단어 따라 쓰기',
+                            '쓰기 1 · 완성해 보기',
+                            '쓰기 2 · 완성해 보기',
+                            '단어 놀이'
+                        ]
+                        : [
+                            PICTURE_WORD_LESSON_CONFIGS[numericStep].groups[0].title,
+                            PICTURE_WORD_LESSON_CONFIGS[numericStep].groups[1].title,
+                            '그림-단어 연결',
+                            '그림 단어 따라 쓰기'
+                        ];
+                    sectionTitle = pictureLessonTitles[safeIndex];
                 } else if (hasMakeLettersActivity && safeIndex === 3) {
                     sectionTitle = '글자 만들기';
+                } else if (numericStep === 12 && safeIndex === 4) {
+                    sectionTitle = '확인하기 3 · 4';
                 }
                 const sectionHeadingHtml = sectionTitle
                     ? `<div class="activity-section-title mb-4">
@@ -10834,8 +11816,16 @@ ${JSON.stringify(targets, null, 2)}
                     contentHtml = renderLesson13ReadingReview(numericStep);
                 } else if (isPictureWordLesson && safeIndex === 3) {
                     contentHtml = renderLesson13Writing(numericStep);
+                } else if (getLessonCompletionWritingSets(numericStep).length && safeIndex === 4) {
+                    contentHtml = renderLesson13CompletionWriting(numericStep, 0);
+                } else if (getLessonCompletionWritingSets(numericStep).length && safeIndex === 5) {
+                    contentHtml = renderLesson13CompletionWriting(numericStep, 1);
+                } else if (getLessonCompletionWritingSets(numericStep).length && safeIndex === 6) {
+                    contentHtml = renderLesson13WordGame(numericStep);
                 } else if (hasMakeLettersActivity && safeIndex === 3) {
                     contentHtml = renderMakeLettersActivity(numericStep);
+                } else if (numericStep === 12 && safeIndex === 4) {
+                    contentHtml = renderLesson12FinalCheck();
                 } else if ((step === 15 || step === 16) && safeIndex === 0) {
                     contentHtml = renderLessonMouthIntro(step);
                 } else if ((step === 15 || step === 16) && safeIndex === 1) {
@@ -10969,7 +11959,11 @@ ${JSON.stringify(targets, null, 2)}
             const isLast = safeIndex === totalSections - 1;
             nextBtn.classList.toggle('hidden', isLast);
             completeBtn.classList.toggle('hidden', !isLast);
-            requestAnimationFrame(initializeVisibleTraceWritingCanvases);
+            requestAnimationFrame(() => {
+                initializeVisibleTraceWritingCanvases();
+                initializeLessonCompletionCanvases();
+                initializeLesson13BoardGames();
+            });
         }
 
         window.openLearningDetailActivity = function openLearningDetailActivity(step) {
@@ -10980,18 +11974,34 @@ ${JSON.stringify(targets, null, 2)}
             // 모든 한글 배움 단계는 바로 진입 가능하게 둔다.
             currentLearningActivityStep = step;
             currentLearningDetailSectionIndex = 0;
+            window.currentLearningActivityStep = step;
+            window.currentLearningDetailSectionIndex = 0;
             showTopLevelSection('learning-detail-section');
             renderLearningDetail(step, 0);
         }
 
         window.goToNextLearningDetailSection = function goToNextLearningDetailSection() {
-            if (!currentLearningActivityStep || !learningDetailData[currentLearningActivityStep]) return;
-            renderLearningDetail(currentLearningActivityStep, currentLearningDetailSectionIndex + 1);
+            const learningDetailSectionEl = document.getElementById('learning-detail-section');
+            const domStep = Number(learningDetailSectionEl?.dataset.currentStep);
+            const domIndex = Number(learningDetailSectionEl?.dataset.currentSection);
+            const activeStep = Number.isFinite(domStep) && domStep > 0
+                ? domStep
+                : (currentLearningActivityStep || window.currentLearningActivityStep);
+            const windowIndex = Number(window.currentLearningDetailSectionIndex);
+            const activeIndex = Number.isFinite(domIndex)
+                ? domIndex
+                : Number.isFinite(windowIndex)
+                    ? windowIndex
+                    : currentLearningDetailSectionIndex;
+            if (!activeStep || !learningDetailData[activeStep]) return;
+            renderLearningDetail(activeStep, activeIndex + 1);
         }
 
         window.closeLearningDetailActivity = function closeLearningDetailActivity() {
             currentLearningActivityStep = null;
             currentLearningDetailSectionIndex = 0;
+            window.currentLearningActivityStep = null;
+            window.currentLearningDetailSectionIndex = 0;
             openMyKoreanSection();
         }
 
