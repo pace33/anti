@@ -2328,6 +2328,93 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
     };
 }
 
+function getVisibleActivityExperienceTarget() {
+    return Array.from(document.querySelectorAll('.view-section:not(.hidden) .activity-profile-banner'))
+        .find((banner) => banner.offsetParent !== null) || null;
+}
+
+function getExperienceAnimationStart(source) {
+    const canvas = source instanceof HTMLCanvasElement ? source : source?.closest?.('.trace-canvas-wrap')?.querySelector?.('canvas');
+    if (canvas) {
+        const paths = Array.isArray(canvas._tracePaths) ? canvas._tracePaths : [];
+        const lastPath = paths[paths.length - 1];
+        const lastPoint = Array.isArray(lastPath) ? lastPath[lastPath.length - 1] : null;
+        const rect = canvas.getBoundingClientRect();
+        if (lastPoint && Number.isFinite(lastPoint.x) && Number.isFinite(lastPoint.y)) {
+            return { x: rect.left + lastPoint.x, y: rect.top + lastPoint.y };
+        }
+        return { x: rect.right - 28, y: rect.top + rect.height * 0.45 };
+    }
+    const rect = source?.getBoundingClientRect?.();
+    return rect
+        ? { x: rect.left + rect.width * 0.7, y: rect.top + rect.height * 0.5 }
+        : { x: window.innerWidth * 0.5, y: window.innerHeight * 0.6 };
+}
+
+async function animateExperienceOrb(source, percent, onApproach) {
+    const target = getVisibleActivityExperienceTarget();
+    if (!target || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const track = target.querySelector('.activity-exp-track') || target;
+    const targetRect = track.getBoundingClientRect();
+    const start = getExperienceAnimationStart(source);
+    const end = { x: targetRect.left + targetRect.width * 0.5, y: targetRect.top + targetRect.height * 0.5 };
+    const orb = document.createElement('div');
+    orb.className = 'aiedue-exp-orb';
+    orb.setAttribute('aria-hidden', 'true');
+    orb.innerHTML = `<span>+${Math.floor(percent)}%</span>`;
+    orb.style.left = `${start.x}px`;
+    orb.style.top = `${start.y}px`;
+    document.body.appendChild(orb);
+
+    let approachTimer = null;
+    try {
+        if (typeof onApproach === 'function') approachTimer = window.setTimeout(onApproach, 590);
+        const animation = orb.animate([
+            { transform: 'translate(-50%, -50%) scale(.65)', opacity: 0 },
+            { transform: 'translate(-50%, -70%) scale(1.12)', opacity: 1, offset: 0.18 },
+            { transform: `translate(calc(-50% + ${(end.x - start.x) * 0.6}px), calc(-50% + ${(end.y - start.y) * 0.46 - 48}px)) scale(1)`, opacity: 1, offset: 0.65 },
+            { transform: `translate(calc(-50% + ${end.x - start.x}px), calc(-50% + ${end.y - start.y}px)) scale(.55)`, opacity: 0.2 }
+        ], { duration: 820, easing: 'cubic-bezier(.2,.82,.25,1)', fill: 'forwards' });
+        await animation.finished;
+    } catch {}
+    if (approachTimer) window.clearTimeout(approachTimer);
+    if (typeof onApproach === 'function') onApproach();
+    orb.remove();
+    target.classList.remove('experience-received');
+    requestAnimationFrame(() => target.classList.add('experience-received'));
+    window.setTimeout(() => target.classList.remove('experience-received'), 700);
+}
+
+async function awardKoreanPracticeExperience(percent, source, meta = {}) {
+    const reward = Math.max(0, asNumber(percent, 0));
+    if (!reward) return {};
+    let wallet = null;
+    const applyReward = () => {
+        if (wallet) return;
+        wallet = applyAiedueExperienceReward(reward, meta);
+    };
+    await animateExperienceOrb(source, reward, applyReward);
+    applyReward();
+    if (currentUserId) {
+        try {
+            await setDoc(doc(db, 'users', currentUserId), wallet, { merge: true });
+        } catch (error) {
+            console.warn('한글 연습 경험치 저장 실패', error);
+        }
+    }
+    return wallet;
+}
+
+function isTraceWritingComplete(canvas) {
+    if (!canvas) return false;
+    const cells = Array.isArray(canvas._traceCells) ? canvas._traceCells : [];
+    const completed = canvas._traceCompleted || {};
+    return cells.length > 0 && cells.every((cell) => {
+        const totalStrokes = Array.isArray(cell.strokes) ? cell.strokes.length : 0;
+        return totalStrokes > 0 && asNumber(completed[cell.index], 0) >= totalStrokes;
+    });
+}
+
 function escapeKoreanShopHtml(value = '') {
     return escapeHtml(value);
 }
@@ -3129,6 +3216,11 @@ window.backspace = function backspace() {
 
 window.goHomeDashboard = function goHomeDashboard() {
     showDashboardOnly();
+}
+
+window.goHangulDashboard = function goHangulDashboard() {
+    updateTodayKoreanPreview();
+    showTopLevelSection('hangul-activities-section');
 }
 
 window.goDrawingDashboard = function goDrawingDashboard() {
@@ -5767,7 +5859,7 @@ window.nextLiteracyQuestion = function() {
 };
 
 window.closeEmbeddedActivity = function closeEmbeddedActivity() {
-    showDashboardOnly();
+    goHangulDashboard();
 }
 
 let embeddedInitialized = false;
@@ -5791,61 +5883,147 @@ function resizeCanvasForDisplay(canvas, ctx) {
 }
 
 function initializeLetterWritingActivity() {
-    const chars = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ','ㅏ','ㅓ','ㅗ','ㅜ','ㅡ','ㅣ','가','나','다','라','마','바','사','아'];
-    const consonants = chars.slice(0, 14);
-    const vowels = chars.slice(14, 20);
-    const words = chars.slice(20);
+    const consonants = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ','ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
+    const vowels = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅐ','ㅔ','ㅒ','ㅖ','ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ'];
+    const fallbackWords = [
+        '가','나','다','라','마','바','사','아','아이','아버지','가수','가지','나무','마차','기타','고기','다리','나비','파리','허리',
+        '버스','치즈','모기','주스','스키','피아노','포도','소파','꼬마','소나무','거미','저고리','야구','여우','우유','의사','의자',
+        '과자','사과','돼지','거위','더위','추위','우표','튜브','바위','소녀','곰','감','밤','뱀','솜','힘','밥','입','컵','집','답',
+        '염소','감자','구름','수첩','집게','서랍','늑대','국자','책상','기린','분수','걷다','앞','옆','숲','잎','톱','약','떡','밖',
+        '부엌','깎다','볶다','옷','낮','팥','빛','꽃','좋다'
+    ];
+    const cleanPracticeWord = (value) => String(value || '').replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣ]/g, '');
+    const allPracticeWords = [...fallbackWords];
+    const collectPracticeWord = (value) => {
+        const word = cleanPracticeWord(value);
+        if (word && !allPracticeWords.includes(word)) allPracticeWords.push(word);
+    };
+    const lessonBank = window.CHANCHAN_LESSONS || (typeof CHANCHAN_LESSONS !== 'undefined' ? CHANCHAN_LESSONS : []);
+    lessonBank.forEach((lesson) => {
+        (lesson.words || []).forEach(collectPracticeWord);
+        (lesson.nonsenseWords || []).forEach(collectPracticeWord);
+        (lesson.pictureItems || []).forEach((item) => collectPracticeWord(item.word));
+        (lesson.fillItems || []).forEach((item) => {
+            collectPracticeWord(item.word);
+            collectPracticeWord(item.answer);
+        });
+    });
+    const words = allPracticeWords.sort((a, b) => a.localeCompare(b, 'ko'));
     const canvas = document.getElementById('letter-writing-canvas');
     let currentChar = 'ㄱ';
+    let currentLetterKind = 'consonant';
 
-    const setTraceGuide = (value) => {
+    const setTraceGuide = (value, kind = currentLetterKind) => {
         currentChar = value;
+        currentLetterKind = kind;
         canvas.dataset.guide = value;
         canvas._traceCompleted = {};
         canvas._tracePaths = [];
+        delete canvas.dataset.rewarded;
         initializeTraceWritingCanvas(canvas);
         drawTraceWritingGuide(canvas);
         const feedback = document.getElementById('letter-feedback');
         if (feedback) feedback.textContent = '';
     };
 
-    const drawButtons = (target, list) => {
+    const drawButtons = (target, list, kind) => {
         const root = document.getElementById(target);
-        root.innerHTML = list.map((c, i) => `<button type="button" class="btn-outline px-3 py-1 text-base ${i===0 && target==='letter-consonants' ? 'active':''}" data-char="${c}">${c}</button>`).join('');
+        root.innerHTML = list.map((c) => `<button type="button" class="btn-outline px-3 py-1 text-base ${c === currentChar ? 'active' : ''}" data-char="${escapeHtml(c)}" data-kind="${kind}">${escapeHtml(c)}</button>`).join('');
         root.querySelectorAll('button').forEach((btn) => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('#letter-consonants button, #letter-vowels button, #letter-words button').forEach(b => b.classList.remove('active'));
-                root.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                setTraceGuide(btn.dataset.char);
+                setTraceGuide(btn.dataset.char, btn.dataset.kind);
             });
         });
     };
 
-    drawButtons('letter-consonants', consonants);
-    drawButtons('letter-vowels', vowels);
-    drawButtons('letter-words', words);
-    setTraceGuide(currentChar);
-    window.refreshLetterWritingCanvas = () => setTraceGuide(currentChar);
+    drawButtons('letter-consonants', consonants, 'consonant');
+    drawButtons('letter-vowels', vowels, 'vowel');
+    const renderWordButtons = (query = '') => {
+        const normalized = cleanPracticeWord(query);
+        const filtered = normalized ? words.filter((word) => word.includes(normalized)) : words;
+        drawButtons('letter-words', filtered, 'practice-word');
+        const count = document.getElementById('letter-word-count');
+        if (count) count.textContent = normalized ? `${filtered.length}/${words.length}개` : `${words.length}개`;
+    };
+    renderWordButtons();
+    document.getElementById('letter-word-filter')?.addEventListener('input', (event) => renderWordButtons(event.target.value));
+    setTraceGuide(currentChar, currentLetterKind);
+    window.refreshLetterWritingCanvas = () => setTraceGuide(currentChar, currentLetterKind);
     window.addEventListener('resize', () => drawTraceWritingGuide(canvas));
 
     document.getElementById('letter-clear').addEventListener('click', () => resetTraceWritingCanvas(canvas));
     document.getElementById('letter-play-sound').addEventListener('click', () => {
         speakTextKo(currentChar);
     });
-    document.getElementById('letter-grade').addEventListener('click', async () => {
-        await recordKoreanAttempt({
-            lessonId: currentLearningActivityStep || 'letter-writing',
-            lessonTitle: '글자 쓰기 연습',
-            unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
-            activityType: 'writeOnCanvas',
-            word: currentChar,
-            isCorrect: true,
-            errorType: null
+
+    async function gradeCompletedWriting({ targetCanvas, button, feedback, reward, attempt }) {
+        if (!isTraceWritingComplete(targetCanvas)) {
+            feedback.className = 'text-center text-xl font-black mt-3 min-h-[2rem] text-orange-500';
+            feedback.textContent = '주황색 획을 순서대로 모두 따라 쓴 뒤 채점해 주세요.';
+            return false;
+        }
+        if (targetCanvas.dataset.rewarded === 'true' || targetCanvas.dataset.rewarded === 'pending') {
+            feedback.className = 'text-center text-xl font-black mt-3 min-h-[2rem] text-teal-600';
+            feedback.textContent = '이 쓰기는 이미 채점했어요. 새 글자를 골라 연습해 보세요.';
+            return false;
+        }
+
+        targetCanvas.dataset.rewarded = 'pending';
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        feedback.className = 'text-center text-xl font-black mt-3 min-h-[2rem] text-teal-600';
+        feedback.textContent = '참 잘 썼어요! 경험치를 옮기고 있어요.';
+        try {
+            await recordKoreanAttempt({
+                lessonId: currentLearningActivityStep || attempt.lessonId,
+                lessonTitle: attempt.lessonTitle,
+                unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
+                activityType: 'writeOnCanvas',
+                word: attempt.word,
+                isCorrect: true,
+                errorType: null,
+                skillTags: attempt.skillTags || []
+            });
+            await awardKoreanPracticeExperience(reward, targetCanvas, {
+                source: 'hangul-writing',
+                practiceType: attempt.practiceType,
+                word: attempt.word
+            });
+            targetCanvas.dataset.rewarded = 'true';
+            feedback.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
+            feedback.textContent = `참 잘했어요! 경험치 +${reward}%`;
+            return true;
+        } catch (error) {
+            console.warn('한글 쓰기 채점 실패', error);
+            delete targetCanvas.dataset.rewarded;
+            feedback.className = 'text-center text-xl font-black mt-3 min-h-[2rem] text-red-500';
+            feedback.textContent = '채점 기록을 저장하지 못했어요. 잠시 후 다시 눌러 주세요.';
+            return false;
+        } finally {
+            button.disabled = false;
+            button.removeAttribute('aria-busy');
+        }
+    }
+
+    const letterGradeButton = document.getElementById('letter-grade');
+    letterGradeButton.addEventListener('click', () => {
+        const reward = currentLetterKind === 'practice-word' ? 2 : 1;
+        const kindLabel = currentLetterKind === 'practice-word' ? '낱말' : (currentLetterKind === 'vowel' ? '모음' : '자음');
+        return gradeCompletedWriting({
+            targetCanvas: canvas,
+            button: letterGradeButton,
+            feedback: document.getElementById('letter-feedback'),
+            reward,
+            attempt: {
+                lessonId: 'letter-writing',
+                lessonTitle: `${kindLabel} 쓰기 연습`,
+                word: currentChar,
+                practiceType: currentLetterKind,
+                skillTags: ['글자쓰기', kindLabel]
+            }
         });
-        const fb = document.getElementById('letter-feedback');
-        fb.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
-        fb.textContent = '쓰기 완료로 기록했어요.';
     });
 
     document.querySelectorAll('.letter-top-btn').forEach((btn) => btn.addEventListener('click', () => {
@@ -5912,6 +6090,7 @@ function initializeLetterWritingActivity() {
             canvas.dataset.spokenText = text;
             canvas._traceCompleted = {};
             canvas._tracePaths = [];
+            delete canvas.dataset.rewarded;
             initializeTraceWritingCanvas(canvas);
             drawTraceWritingGuide(canvas);
         }
@@ -5983,36 +6162,34 @@ function initializeLetterWritingActivity() {
     document.getElementById('letter-sentence-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.sentence.text));
     document.getElementById('letter-word-clear').addEventListener('click', () => resetTraceWritingCanvas(document.getElementById('letter-word-writing-canvas')));
     document.getElementById('letter-sentence-clear').addEventListener('click', () => resetTraceWritingCanvas(document.getElementById('letter-sentence-writing-canvas')));
-    document.getElementById('letter-word-grade').addEventListener('click', async () => {
-        await recordKoreanAttempt({
-            lessonId: currentLearningActivityStep || 'word-practice-writing',
+    const wordGradeButton = document.getElementById('letter-word-grade');
+    const sentenceGradeButton = document.getElementById('letter-sentence-grade');
+    wordGradeButton.addEventListener('click', () => gradeCompletedWriting({
+        targetCanvas: document.getElementById('letter-word-writing-canvas'),
+        button: wordGradeButton,
+        feedback: document.getElementById('letter-word-feedback'),
+        reward: 5,
+        attempt: {
+            lessonId: 'word-practice-writing',
             lessonTitle: '단어 연습 쓰기',
-            unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
-            activityType: 'writeOnCanvas',
             word: embeddedPracticeState.word.text,
-            isCorrect: true,
-            errorType: null,
+            practiceType: 'word',
             skillTags: ['단어쓰기', embeddedPracticeState.word.level]
-        });
-        const fb = document.getElementById('letter-word-feedback');
-        fb.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
-        fb.textContent = '단어 쓰기 완료로 기록했어요.';
-    });
-    document.getElementById('letter-sentence-grade').addEventListener('click', async () => {
-        await recordKoreanAttempt({
-            lessonId: currentLearningActivityStep || 'sentence-practice-writing',
+        }
+    }));
+    sentenceGradeButton.addEventListener('click', () => gradeCompletedWriting({
+        targetCanvas: document.getElementById('letter-sentence-writing-canvas'),
+        button: sentenceGradeButton,
+        feedback: document.getElementById('letter-sentence-feedback'),
+        reward: 10,
+        attempt: {
+            lessonId: 'sentence-practice-writing',
             lessonTitle: '문장 연습 쓰기',
-            unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
-            activityType: 'writeOnCanvas',
             word: embeddedPracticeState.sentence.text,
-            isCorrect: true,
-            errorType: null,
+            practiceType: 'sentence',
             skillTags: ['문장쓰기', embeddedPracticeState.sentence.level]
-        });
-        const fb = document.getElementById('letter-sentence-feedback');
-        fb.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
-        fb.textContent = '문장 쓰기 완료로 기록했어요.';
-    });
+        }
+    }));
     renderEmbeddedPractice('word');
     renderEmbeddedPractice('sentence');
 }
@@ -6224,6 +6401,7 @@ function initializeHangulSoundGame() {
     const restartBtn = document.getElementById('hangul-game-restart');
     const letterModeBtn = document.getElementById('hangul-game-letter-mode');
     const wordModeBtn = document.getElementById('hangul-game-word-mode');
+    const visualPill = document.getElementById('hangul-game-visual-pill');
     if (!targetEl || !choicesEl || !feedbackEl) return;
 
     const fallbackLetters = ['가','나','다','라','마','바','사','아','야','여','오','우','고','구','무','미','산','강','밥','곰'];
@@ -6256,14 +6434,17 @@ function initializeHangulSoundGame() {
 
     const bank = buildGameBank();
     let mode = 'letter';
-    let score = 0;
+    let correctCount = 0;
     let streak = 0;
     let round = 1;
     let answer = '';
+    let rewardGranted = false;
+    let gameSession = 0;
+    let nextQuestionTimer = null;
     const totalRounds = 10;
 
     function updateHud() {
-        scoreEl.textContent = score;
+        scoreEl.textContent = correctCount;
         streakEl.textContent = streak;
         roundEl.textContent = `${Math.min(round, totalRounds)}/${totalRounds}`;
     }
@@ -6275,31 +6456,45 @@ function initializeHangulSoundGame() {
     function renderModeButtons() {
         letterModeBtn.classList.toggle('active', mode === 'letter');
         wordModeBtn.classList.toggle('active', mode === 'word');
+        if (visualPill) visualPill.textContent = mode === 'letter' ? '글자' : '단어';
     }
 
-    function finishGame() {
+    async function finishGame() {
         targetEl.textContent = '완료!';
         choicesEl.innerHTML = '';
-        feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-[#46b3a5]';
-        feedbackEl.textContent = `잘했어요. 점수는 ${score}점이에요.`;
+        roundEl.textContent = `${totalRounds}/${totalRounds}`;
+        const reward = correctCount * 5;
+        feedbackEl.className = 'hangul-game-feedback text-2xl font-black text-[#46b3a5]';
+        feedbackEl.textContent = `10문제 중 ${correctCount}문제를 맞혔어요. 경험치 +${reward}%`;
         restartBtn.classList.remove('hidden');
+        soundBtn.disabled = true;
+        if (!rewardGranted && reward > 0) {
+            rewardGranted = true;
+            await awardKoreanPracticeExperience(reward, feedbackEl, {
+                source: 'hangul-sound-game',
+                correctCount,
+                totalRounds,
+                mode
+            });
+        }
     }
 
     function nextQuestion() {
         if (round > totalRounds) {
-            finishGame();
+            void finishGame();
             return;
         }
         const source = mode === 'letter' ? bank.letters : bank.words;
         answer = pick(source);
         const wrongs = shuffle(source.filter((item) => item !== answer)).slice(0, 3);
         const choices = shuffle([answer, ...wrongs]);
-        targetEl.textContent = mode === 'letter' ? '글자 소리' : '단어 소리';
-        feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-gray-500';
+        targetEl.textContent = mode === 'letter' ? '글자 듣기 문제' : '단어 듣기 문제';
+        feedbackEl.className = 'hangul-game-feedback text-2xl font-black text-gray-500';
         feedbackEl.textContent = '소리를 듣고 알맞은 카드를 골라요.';
         restartBtn.classList.add('hidden');
+        soundBtn.disabled = false;
         choicesEl.innerHTML = choices.map((choice) => `
-            <button type="button" class="btn-outline py-6 text-3xl font-black" data-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>
+            <button type="button" class="btn-choice" data-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>
         `).join('');
         choicesEl.querySelectorAll('button').forEach((btn) => {
             btn.addEventListener('click', () => chooseAnswer(btn.dataset.choice, btn));
@@ -6309,6 +6504,7 @@ function initializeHangulSoundGame() {
     }
 
     async function chooseAnswer(choice, btn) {
+        const sessionAtAnswer = gameSession;
         const isCorrect = choice === answer;
         choicesEl.querySelectorAll('button').forEach((item) => {
             item.disabled = true;
@@ -6316,13 +6512,13 @@ function initializeHangulSoundGame() {
         });
         if (isCorrect) {
             streak += 1;
-            score += 10 + Math.min(10, streak * 2);
-            feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-[#46b3a5]';
+            correctCount += 1;
+            feedbackEl.className = 'hangul-game-feedback text-2xl font-black text-[#46b3a5]';
             feedbackEl.textContent = streak >= 3 ? `좋아요! ${streak}번 연속 정답!` : '좋아요! 잘 들었어요.';
         } else {
             streak = 0;
             btn.classList.add('bg-red-50');
-            feedbackEl.className = 'min-h-[2rem] mt-5 text-2xl font-black text-orange-500';
+            feedbackEl.className = 'hangul-game-feedback text-2xl font-black text-orange-500';
             feedbackEl.textContent = `다시 들어 봐요. 정답은 ${answer}예요.`;
         }
         updateHud();
@@ -6338,15 +6534,19 @@ function initializeHangulSoundGame() {
             errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH,
             skillTags: ['한글게임', mode === 'letter' ? '글자' : '단어']
         });
+        if (sessionAtAnswer !== gameSession) return;
         round += 1;
-        window.setTimeout(nextQuestion, isCorrect ? 850 : 1350);
+        nextQuestionTimer = window.setTimeout(nextQuestion, isCorrect ? 850 : 1350);
     }
 
     function restartGame(newMode = mode) {
+        gameSession += 1;
+        if (nextQuestionTimer) window.clearTimeout(nextQuestionTimer);
         mode = newMode;
-        score = 0;
+        correctCount = 0;
         streak = 0;
         round = 1;
+        rewardGranted = false;
         renderModeButtons();
         nextQuestion();
     }
@@ -6544,7 +6744,7 @@ window.openMyKoreanSection = function openMyKoreanSection() {
 }
 
 window.closeMyKoreanSection = function closeMyKoreanSection() {
-    showDashboardOnly();
+    goHangulDashboard();
 }
 
 let koreanAttemptCache = [];
@@ -9247,6 +9447,7 @@ window.resetTraceWritingCanvas = function resetTraceWritingCanvas(target) {
     if (canvas) {
         canvas._traceCompleted = {};
         canvas._tracePaths = [];
+        delete canvas.dataset.rewarded;
         delete canvas.dataset.fillRecorded;
     }
     drawTraceWritingGuide(canvas);

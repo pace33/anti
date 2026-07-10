@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260710-ui-motion-2">
+    <link rel="stylesheet" href="app.css?v=20260710-hangul-practice-exp">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -806,7 +806,7 @@
         <div id="my-korean-section" class="view-section fade-in hidden bg-white">
             <span class="page-number">08</span>
             <div class="section-dashboard-header absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
-                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                <div class="pointer-events-auto cursor-pointer" onclick="goHangulDashboard()">
                     <img src="aiedu_korean_logo.webp" width="1024" height="768" alt="에이두 국어" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
                 </div>
                 <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
@@ -828,7 +828,7 @@
             </div>
 
             <div class="flex flex-col gap-6 mb-8 mt-28 md:flex-row md:items-end md:justify-between">
-                <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goHomeDashboard()">
+                <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goHangulDashboard()">
                     <span class="aiedu-badge">에이두 국어 시리즈</span>
                     <span class="text-4xl font-bold text-[#46b3a5] tracking-tight">나의 한글</span>
                 </button>
@@ -847,7 +847,7 @@
                         <div class="w-12 h-12 bg-[#46b3a5] text-white rounded-2xl flex items-center justify-center text-2xl font-bold">📚</div>
                         <h3 id="my-korean-unit-title" class="text-3xl font-black text-[#2c3e50]">모음</h3>
                     </div>
-                    <button type="button" class="btn-outline px-6 py-2 text-sm" onclick="closeMyKoreanSection()">대시보드로 돌아가기</button>
+                    <button type="button" class="btn-outline px-6 py-2 text-sm" onclick="closeMyKoreanSection()">한글 해득으로</button>
                 </div>
                 <div class="max-h-[500px] overflow-y-auto pr-2 space-y-4" id="my-korean-list"></div>
             </div>
@@ -959,6 +959,28 @@
         <!-- [글자 쓰기 연습 섹션] -->
         <div id="letter-writing-section" class="view-section fade-in hidden bg-white">
             <span class="page-number">11</span>
+            <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
+                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 한글 해득 대시보드로 돌아가기">
+                    <span aria-hidden="true">←</span>
+                    <span>에이두 한글 해득</span>
+                </button>
+                <div class="activity-profile-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfoDrawer();}" role="button" tabindex="0" aria-label="내 정보 열기">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="activity-exp-track w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
             <div class="writing-compact-toolbar">
                 <div class="writing-mode-quick-card">
                     <div class="writing-mode-buttons" id="letter-top-categories">
@@ -967,7 +989,12 @@
                         <button type="button" data-category="sentence" class="letter-top-btn nav-tab">문장 연습</button>
                     </div>
                 </div>
-                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
+                <div class="writing-exp-guide" aria-label="쓰기 연습 경험치 안내">
+                    <span>자음·모음 +1%</span>
+                    <span>낱말 +2%</span>
+                    <span>단어 +5%</span>
+                    <span>문장 +10%</span>
+                </div>
             </div>
 
             <div class="learning-pane p-8 min-h-[600px]">
@@ -981,9 +1008,14 @@
                             <div class="letter-practice-selector-title">모음</div>
                             <div id="letter-vowels" class="flex flex-wrap gap-2"></div>
                         </div>
-                        <div class="korean-embed-card letter-practice-selector-card">
-                            <div class="letter-practice-selector-title">낱말</div>
-                            <div id="letter-words" class="flex flex-wrap gap-2"></div>
+                        <div class="korean-embed-card letter-practice-selector-card letter-practice-word-card">
+                            <div class="letter-practice-selector-heading">
+                                <div class="letter-practice-selector-title">낱말</div>
+                                <span id="letter-word-count" class="letter-word-count">0개</span>
+                            </div>
+                            <label class="sr-only" for="letter-word-filter">연습할 낱말 찾기</label>
+                            <input id="letter-word-filter" class="letter-word-filter" type="search" placeholder="낱말 찾기" autocomplete="off">
+                            <div id="letter-words" class="letter-word-button-list flex flex-wrap gap-2"></div>
                         </div>
                     </div>
 
@@ -1057,7 +1089,7 @@
                     <div class="text-3xl font-black text-[#2c3e50]">낱말 쓰기 연습</div>
                     <p class="text-lg text-gray-500 mt-1">배움 단원 쓰기와 같은 획순 안내로 낱말을 따라 써요.</p>
                 </div>
-                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
+                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">한글 해득으로</button>
             </div>
 
             <div class="learning-pane p-8 min-h-[600px]">
@@ -1106,7 +1138,7 @@
             <span class="page-number">13</span>
             <div class="flex items-center justify-between mb-8">
                 <div class="text-3xl font-black text-[#2c3e50]">낱말 듣기 퀴즈</div>
-                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
+                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">한글 해득으로</button>
             </div>
 
             <div class="learning-pane p-8 min-h-[600px]">
@@ -1152,45 +1184,73 @@
         <!-- [한글 게임 섹션] -->
         <div id="hangul-game-section" class="view-section fade-in hidden bg-white">
             <span class="page-number">14</span>
-            <div class="flex justify-end mb-6">
-                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">대시보드로 돌아가기</button>
+            <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
+                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 한글 해득 대시보드로 돌아가기">
+                    <span aria-hidden="true">←</span>
+                    <span>에이두 한글 해득</span>
+                </button>
+                <div class="activity-profile-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfoDrawer();}" role="button" tabindex="0" aria-label="내 정보 열기">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="activity-exp-track w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
             </div>
 
-            <div class="learning-pane p-8 min-h-[620px]">
-                <div class="korean-embed-card p-6 mb-6 bg-gradient-to-br from-purple-50 to-indigo-50">
+            <div class="learning-pane hangul-game-shell p-8">
+                <div class="korean-embed-card hangul-game-intro p-6 bg-gradient-to-br from-purple-50 to-indigo-50">
                     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
                             <div class="text-3xl font-black text-[#2c3e50]">🎮 한글 소리 찾기</div>
                             <p class="text-lg text-gray-500 mt-1">소리를 듣고 맞는 글자나 단어를 골라요.</p>
                         </div>
-                        <div class="flex gap-3">
-                            <button type="button" id="hangul-game-letter-mode" class="btn-outline active px-5 py-2">글자</button>
-                            <button type="button" id="hangul-game-word-mode" class="btn-outline px-5 py-2">단어</button>
+                        <div class="hangul-game-mode-control">
+                            <div class="flex gap-3">
+                                <button type="button" id="hangul-game-letter-mode" class="btn-outline active px-5 py-2">글자</button>
+                                <button type="button" id="hangul-game-word-mode" class="btn-outline px-5 py-2">단어</button>
+                            </div>
+                            <span>정답 1개당 경험치 +5%</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-                    <div class="korean-embed-card p-5 text-center">
-                        <div class="text-sm font-black text-gray-400">점수</div>
+                <div class="hangul-game-stats">
+                    <div class="korean-embed-card hangul-game-stat text-center">
+                        <div class="text-sm font-black text-gray-400">정답</div>
                         <div id="hangul-game-score" class="text-4xl font-black text-[#46b3a5]">0</div>
                     </div>
-                    <div class="korean-embed-card p-5 text-center">
+                    <div class="korean-embed-card hangul-game-stat text-center">
                         <div class="text-sm font-black text-gray-400">연속 정답</div>
                         <div id="hangul-game-streak" class="text-4xl font-black text-[#f97316]">0</div>
                     </div>
-                    <div class="korean-embed-card p-5 text-center">
+                    <div class="korean-embed-card hangul-game-stat text-center">
                         <div class="text-sm font-black text-gray-400">문제</div>
                         <div id="hangul-game-round" class="text-4xl font-black text-[#2c3e50]">1/10</div>
                     </div>
                 </div>
 
-                <div class="korean-embed-card p-8 text-center">
-                    <div id="hangul-game-target" class="text-7xl font-black text-[#2c3e50] mb-4">?</div>
-                    <button type="button" id="hangul-game-sound" class="btn-primary bg-[#46b3a5] shadow-[#46b3a533] px-10 py-4 text-xl">🔊 소리 듣기</button>
-                    <div id="hangul-game-feedback" class="min-h-[2rem] mt-5 text-2xl font-black text-gray-500">소리를 듣고 알맞은 카드를 골라요.</div>
-                    <div id="hangul-game-choices" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8"></div>
-                    <button type="button" id="hangul-game-restart" class="btn-primary mt-8 px-10 hidden">다시 하기</button>
+                <div class="hangul-game-play-grid">
+                    <div class="korean-embed-card hangul-game-listen-panel text-center">
+                        <div class="hangul-game-state-pills" aria-hidden="true">
+                            <span id="hangul-game-visual-pill" class="active">글자</span>
+                            <span class="sound">소리</span>
+                        </div>
+                        <div id="hangul-game-target" class="sr-only" aria-live="polite">?</div>
+                        <button type="button" id="hangul-game-sound" class="hangul-game-sound-button btn-primary bg-[#46b3a5] shadow-[#46b3a533]">🔊 <span>소리 듣기</span></button>
+                        <div id="hangul-game-feedback" class="hangul-game-feedback text-2xl font-black text-gray-500" aria-live="polite">소리를 듣고 알맞은 카드를 골라요.</div>
+                        <button type="button" id="hangul-game-restart" class="btn-primary px-10 hidden">다시 하기</button>
+                    </div>
+                    <div id="hangul-game-choices" class="hangul-game-choices" aria-label="정답 선택"></div>
                 </div>
             </div>
         </div>
@@ -1318,7 +1378,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260710-modular"></script>
+    <script type="module" src="app.js?v=20260710-hangul-practice-exp"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
