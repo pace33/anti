@@ -2310,22 +2310,22 @@ body {
         inset 0 7px 0 var(--stage-color),
         0 18px 42px rgba(44, 62, 80, 0.12),
         0 2px 8px rgba(44, 62, 80, 0.05);
-    transition: transform .28s cubic-bezier(.22, .8, .25, 1), box-shadow .28s ease, background .28s ease;
-    animation: stageCardReveal .55s cubic-bezier(.22, .82, .25, 1) backwards;
+    transition: transform .46s cubic-bezier(.16, 1, .3, 1), box-shadow .4s ease, background .4s ease;
+    animation: stageCardReveal .82s cubic-bezier(.16, 1, .3, 1) backwards;
 }
 
-#card-level-1 { --stage-color: #8b5cf6; --stage-soft: #f3e8ff; --stage-ink: #6d28d9; animation-delay: .04s; }
-#card-level-2 { --stage-color: #0ea5e9; --stage-soft: #e0f2fe; --stage-ink: #0369a1; animation-delay: .11s; }
-#card-level-3 { --stage-color: #f97316; --stage-soft: #ffedd5; --stage-ink: #c2410c; animation-delay: .18s; }
-#card-level-4 { --stage-color: #14b8a6; --stage-soft: #ccfbf1; --stage-ink: #0f766e; animation-delay: .25s; }
+#card-level-1 { --stage-color: #8b5cf6; --stage-soft: #f3e8ff; --stage-ink: #6d28d9; animation-delay: .06s; }
+#card-level-2 { --stage-color: #0ea5e9; --stage-soft: #e0f2fe; --stage-ink: #0369a1; animation-delay: .16s; }
+#card-level-3 { --stage-color: #f97316; --stage-soft: #ffedd5; --stage-ink: #c2410c; animation-delay: .26s; }
+#card-level-4 { --stage-color: #14b8a6; --stage-soft: #ccfbf1; --stage-ink: #0f766e; animation-delay: .36s; }
 
 @keyframes stageCardReveal {
-    from { opacity: 0; transform: translateY(24px) rotateX(4deg) scale(.96); }
-    to { opacity: 1; transform: translateY(0) rotateX(0) scale(1); }
+    from { opacity: 0; transform: translate3d(0, 34px, 0) scale(.955); filter: blur(5px); }
+    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
 }
 
 .dashboard-stage-card.level-card:hover {
-    transform: translateY(-10px) scale(1.018);
+    transform: translateY(-8px) scale(1.014);
     background: rgba(255, 255, 255, 0.98);
     box-shadow:
         inset 0 7px 0 var(--stage-color),
@@ -2357,8 +2357,27 @@ body {
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .78), 0 12px 24px rgba(44, 62, 80, .1);
 }
 
+.dashboard-stage-card .stage-emoji {
+    animation: stageIconDrift 4.8s cubic-bezier(.45, 0, .55, 1) infinite;
+    transition: transform .55s cubic-bezier(.16, 1, .3, 1), box-shadow .4s ease;
+}
+
+#card-level-1 .stage-emoji { animation-delay: -.4s; }
+#card-level-2 .stage-emoji { animation-delay: -1.6s; }
+#card-level-3 .stage-emoji { animation-delay: -2.8s; }
+#card-level-4 .stage-emoji { animation-delay: -4s; }
+
+@keyframes stageIconDrift {
+    0%, 100% { translate: 0 0; rotate: -.7deg; }
+    50% { translate: 0 -7px; rotate: .9deg; }
+}
+
 .dashboard-stage-card.level-card:hover .stage-emoji {
-    transform: scale(1.08) rotate(3deg) translateY(-5px);
+    transform: scale(1.065) rotate(2deg);
+}
+
+.dashboard-stage-card.level-card:hover .stage-emoji:not(.hangul-icon) {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .82), 0 18px 30px rgba(44, 62, 80, .14);
 }
 
 .dashboard-stage-card.level-card .level-title {
