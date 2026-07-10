@@ -1,65 +1,76 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$files = @(
-  (Join-Path $root 'index.html'),
-  (Join-Path $root 'aidu/index.html')
-)
+$indexPath = Join-Path $root 'index.html'
+$appPath = Join-Path $root 'app.js'
+$appCssPath = Join-Path $root 'app.css'
 
-$requiredMarkers = @(
+foreach ($file in @($indexPath, $appPath, $appCssPath)) {
+  if (!(Test-Path $file)) {
+    throw "Missing expected Korean app file: $file"
+  }
+}
+
+$index = Get-Content -Raw -Encoding UTF8 $indexPath
+$app = Get-Content -Raw -Encoding UTF8 $appPath
+$appCss = Get-Content -Raw -Encoding UTF8 $appCssPath
+
+if ($index -notmatch 'src=["'']app\.js') {
+  throw 'index.html must load app.js as an external module.'
+}
+if ($index -notmatch 'href=["'']app\.css') {
+  throw 'index.html must load app.css.'
+}
+if ($index -match '<script\s+type=["'']module["'']\s*>') {
+  throw 'Inline module JavaScript must remain split out of index.html.'
+}
+
+$requiredAppMarkers = @(
   'openSketchbookActivity',
   'openCurrentDrawingMission',
-  'drawing-mission-badge',
-  'drawing-mission-next-label',
-  'mission-draft',
   'drawingBrushSizeMap',
-  'selectDrawingBrushSize(1)',
-  'selectDrawingBrushSize(2)',
-  'selectDrawingBrushSize(3)',
-  'selectDrawingBrushSize(4)',
-  'const drawingMissions = drawingMissionPool.map((template, index) =>',
   'drawingShapeLibrary',
-  'shapeMissionTemplates',
-  'shape-mission',
-  'ai-drawing',
   'evaluateDrawingAccuracy',
-  'instances.push({ shape: key, index, hit: shapeHit, total: pts.length, accuracy: instanceAccuracy })',
-  'const accuracy = instanceCount ? Math.round(accuracySum / instanceCount) : 0',
-  'const threshold = Math.min(22, Math.max(10, drawingBrushSize * 0.9))',
-  'applyShapeAccuracyStats',
-  'openMyShapeStats',
-  'shapeStats',
-  'unpaidCooldownUntil',
-  'aiedue_korean_drawings',
   'openFriendsDrawingGallery',
   'completeTodayDrawingMission',
-  'rewardedMilestones',
-  'korean-db/db-api',
-  'activity-loading-text'
+  'aiedueKoreanDrawings',
+  'saveDrawingRecordToFirebase',
+  'sanitizeModalHtml',
+  'enhanceInteractiveSemantics'
 )
+
+foreach ($marker in $requiredAppMarkers) {
+  if (!$app.Contains($marker)) {
+    throw "Korean app guard failed: app.js is missing marker [$marker]"
+  }
+}
 
 $forbiddenMarkers = @(
   'anti-db/db-api',
+  'korean-db/db-api',
+  'school-firestore-adapter',
+  'localStorage',
+  'sessionStorage',
   'window.location.href = route.page',
   'fillText(info.emoji',
   'fillText(info.label'
 )
 
-foreach ($file in $files) {
-  if (!(Test-Path $file)) {
-    throw "Missing expected Korean app file: $file"
-  }
-  $html = Get-Content -Raw -Encoding UTF8 $file
-  foreach ($marker in $requiredMarkers) {
-    if (!$html.Contains($marker)) {
-      throw "Korean sketchbook patch guard failed: $file is missing marker [$marker]"
-    }
-  }
-  foreach ($marker in $forbiddenMarkers) {
-    if ($html.Contains($marker)) {
-      throw "Korean sketchbook patch guard failed: $file still contains forbidden marker [$marker]"
-    }
+foreach ($marker in $forbiddenMarkers) {
+  if ($app.Contains($marker)) {
+    throw "Korean app guard failed: app.js contains forbidden marker [$marker]"
   }
 }
 
-Write-Host 'Verified Korean sketchbook/shape mission guard: brush buttons, unique drawing stages, real shape templates, accuracy stats, rewards/cooldown, gallery, and /korean-db are preserved.'
+if (!$appCss.Contains('.skip-link') -or !$appCss.Contains(':focus-visible') -or !$appCss.Contains('prefers-reduced-motion')) {
+  throw 'Accessibility styles are missing from app.css.'
+}
+
+if (Test-Path (Join-Path $root 'school-firestore-adapter.js')) {
+  throw 'The retired Firestore adapter must not be deployed.'
+}
+if (Test-Path (Join-Path $root 'aidu')) {
+  throw 'The duplicate aidu directory must not be deployed.'
+}
+
+Write-Host 'Verified modular Korean app, drawing missions, Firebase-only drawing storage, XSS safeguards, and accessibility styles.'
