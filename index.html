@@ -816,22 +816,23 @@
                         </div>
                     </div>
                     <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+
+                    <!-- 필수 ID를 오른쪽 상단 배너 내부에서 숨겨진 형태로 유지 -->
+                    <span id="my-korean-profile-name" class="hidden" style="display: none;"></span>
+                    <span id="my-korean-profile-level" class="hidden" style="display: none;"></span>
+                    <span id="current-learning-step-label" class="hidden" style="display: none;"></span>
                 </div>
             </div>
 
-            <div class="flex flex-col gap-6 mb-8 mt-28 md:flex-row md:items-end md:justify-between">
-                <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goHangulDashboard()">
-                    <span class="aiedu-badge">에이두 국어 시리즈</span>
-                    <span class="text-4xl font-bold text-[#46b3a5] tracking-tight">나의 한글</span>
+            <!-- 좌상단 제목 블록과 프로필 텍스트는 보이지 않도록 숨김 처리 -->
+            <div class="hidden" style="display: none;">
+                <button type="button" onclick="goHangulDashboard()">
+                    <span>에이두 국어 시리즈</span>
+                    <span>나의 한글</span>
                 </button>
-                <div class="text-right">
-                    <div class="text-2xl font-bold text-gray-800" id="my-korean-profile-name">이름</div>
-                    <div class="text-lg text-[#46b3a5] font-semibold" id="my-korean-profile-level">배움 새싹</div>
-                    <div class="text-sm text-gray-400 font-bold mt-1" id="current-learning-step-label">배움 새싹</div>
-                </div>
             </div>
 
-            <div class="flex flex-wrap gap-3 mb-8" id="my-korean-tabs"></div>
+            <div class="flex flex-wrap gap-3 mb-8 mt-28" id="my-korean-tabs"></div>
 
             <div class="stitched p-8 bg-white">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">

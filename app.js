@@ -4016,18 +4016,107 @@ function buildDrawingRecord({ image, kind, missionStep = null, savedAt, accuracy
     };
 }
 
+// Firestore 저장용 대형 이미지를 최대 640px 크기의 jpeg 썸네일로 압축하는 헬퍼 함수
+function compressDrawingImage(dataUrl, maxDim = 640) {
+    return new Promise((resolve) => {
+        if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+            resolve(dataUrl);
+            return;
+        }
+        const img = new Image();
+        img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                } else {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(dataUrl);
+                    return;
+                }
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                let compressedUrl = canvas.toDataURL('image/jpeg', 0.78);
+                // Firestore 문서 1MiB 제한을 피하기 위한 2차 축소 fallback.
+                if (compressedUrl.length > 850000 && maxDim > 360) {
+                    compressDrawingImage(dataUrl, 360).then(resolve);
+                    return;
+                }
+                resolve(compressedUrl);
+            } catch (err) {
+                console.warn('Image compress canvas draw error', err);
+                resolve(dataUrl);
+            }
+        };
+        img.onerror = () => {
+            resolve(dataUrl);
+        };
+        img.src = dataUrl;
+    });
+}
+
+// savedAt / createdAt 정렬을 지원하기 위한 타임스탬프 파서 및 비교 헬퍼
+function getDrawingTimestampValue(item) {
+    if (!item) return 0;
+
+    // 1. savedAt 우선 (ISO String)
+    if (item.savedAt) {
+        const t = Date.parse(item.savedAt);
+        if (!isNaN(t)) return t;
+    }
+
+    // 2. createdAt (Firestore Timestamp 또는 String)
+    if (item.createdAt) {
+        if (typeof item.createdAt.toDate === 'function') {
+            return item.createdAt.toDate().getTime();
+        }
+        if (item.createdAt.seconds !== undefined) {
+            return item.createdAt.seconds * 1000 + Math.floor((item.createdAt.nanoseconds || 0) / 1000000);
+        }
+        const t = Date.parse(item.createdAt);
+        if (!isNaN(t)) return t;
+    }
+
+    return 0;
+}
+
 async function saveDrawingRecordToFirebase(record) {
     if (!currentUserId) return false;
     try {
         const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
         const recordRef = doc(collectionRef);
-        await setDoc(recordRef, {
+
+        let compressedImage = record.image;
+        if (record.image) {
+            compressedImage = await compressDrawingImage(record.image, 640);
+        }
+
+        // 원본 record 객체를 변형시키지 않고 복제하여 Firestore에 저장
+        const firebaseRecord = {
             ...record,
+            image: compressedImage,
             drawingId: recordRef.id,
             ownerRef: `users/${currentUserId}`,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
-        }, { merge: true });
+        };
+
+        await setDoc(recordRef, firebaseRecord, { merge: true });
         return true;
     } catch (error) {
         console.warn('Firebase drawing save failed', error);
@@ -4038,6 +4127,58 @@ async function saveDrawingRecordToFirebase(record) {
 function normalizeFirebaseDrawingDoc(docSnap) {
     const data = docSnap.data ? docSnap.data() : docSnap;
     return { drawingId: docSnap.id || data?.drawingId, ...data };
+}
+
+function addDrawingGalleryItem(merged, item, fallbackKeyPrefix = 'drawing') {
+    if (!item?.image) return;
+    const key = item.drawingId || item.id || `${fallbackKeyPrefix}-${item.userId || 'unknown'}-${item.savedAt || item.createdAt || Math.random()}`;
+    merged.set(key, item);
+}
+
+function extractDrawingPortfolioGalleryItems(userId, userData = {}) {
+    const portfolio = userData.drawingPortfolio || {};
+    const snapshot = buildAiedueSchoolProfileSnapshot({ ...userData, uid: userId });
+    const base = {
+        userId,
+        userCode: snapshot.userCode,
+        userName: snapshot.userName || userData.name || '친구',
+        userIcon: snapshot.userIcon || userData.icon || '👤',
+        teacherId: snapshot.teacherId,
+        classId: snapshot.classId,
+        classCode: snapshot.classCode,
+        className: snapshot.className
+    };
+    const items = [];
+    Object.entries(portfolio.missions || {}).forEach(([step, record]) => {
+        if (record?.image) items.push({ ...record, ...base, kind: record.kind || 'mission', missionStep: record.missionStep || Number(step) });
+    });
+    (portfolio.free || []).forEach((record) => {
+        if (record?.image) items.push({ ...record, ...base, kind: record.kind || 'sketchbook' });
+    });
+    return items;
+}
+
+async function loadFriendsDrawingsFromUserPortfolios() {
+    if (!currentUserId) return [];
+    const profile = buildAiedueSchoolProfileSnapshot(currentUserProfileSnapshot);
+    const userPlans = [];
+    if (profile.classId) userPlans.push(query(collection(db, 'users'), where('classId', '==', profile.classId), queryLimit(40)));
+    if (profile.classCode) userPlans.push(query(collection(db, 'users'), where('classCode', '==', profile.classCode), queryLimit(40)));
+    if (profile.teacherId) userPlans.push(query(collection(db, 'users'), where('teacherId', '==', profile.teacherId), queryLimit(40)));
+    const merged = new Map();
+    for (const q of userPlans) {
+        try {
+            const snap = await getDocs(q);
+            snap.docs.forEach((docSnap) => {
+                extractDrawingPortfolioGalleryItems(docSnap.id, docSnap.data() || {}).forEach((item) => addDrawingGalleryItem(merged, item, 'portfolio'));
+            });
+        } catch (error) {
+            console.warn('Drawing portfolio gallery fallback query failed', error);
+        }
+    }
+    return Array.from(merged.values())
+        .sort((a, b) => getDrawingTimestampValue(b) - getDrawingTimestampValue(a))
+        .slice(0, 60);
 }
 
 async function loadFriendsDrawingsFromFirebase() {
@@ -4052,13 +4193,19 @@ async function loadFriendsDrawingsFromFirebase() {
     for (const q of queryPlans) {
         try {
             const snap = await getDocs(q);
-            snap.docs.map(normalizeFirebaseDrawingDoc).forEach((item) => merged.set(item.drawingId || `${item.userId}-${item.savedAt}`, item));
-            if (merged.size >= 20) break;
+            if (snap && snap.docs) {
+                snap.docs.map(normalizeFirebaseDrawingDoc).forEach((item) => addDrawingGalleryItem(merged, item, 'shared'));
+            }
+            if (merged.size >= 60) break;
         } catch (error) {
             console.warn('Firebase drawing gallery query failed', error);
         }
     }
-    return Array.from(merged.values()).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))).slice(0, 60);
+    const portfolioFallbacks = await loadFriendsDrawingsFromUserPortfolios();
+    portfolioFallbacks.forEach((item) => addDrawingGalleryItem(merged, item, 'portfolio'));
+    return Array.from(merged.values())
+        .sort((a, b) => getDrawingTimestampValue(b) - getDrawingTimestampValue(a))
+        .slice(0, 60);
 }
 
 window.saveCurrentDrawing = async function() {
