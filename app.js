@@ -8006,6 +8006,7 @@ const LESSON_MOUTH_SHAPE_PRESETS = {
 };
 window.lessonMouthFollowChar = window.lessonMouthFollowChar || { 15: 'ㅣ', 16: 'ㅖ' };
 window.lessonMouthQuizTarget = window.lessonMouthQuizTarget || {};
+window.lessonMouthQuizPlayed = window.lessonMouthQuizPlayed || {};
 window.lessonMouthPlaybackState = window.lessonMouthPlaybackState || {
     sequenceTimers: [],
     activeTimer: null,
@@ -8035,10 +8036,6 @@ function getLessonMouthStyle(item) {
 function renderLessonMouthFace(item) {
     return `
         <div class="mouth-face">
-            <div class="mouth-hair" aria-hidden="true">
-                <span class="mouth-hair-side left"></span>
-                <span class="mouth-hair-side right"></span>
-            </div>
             <span class="mouth-eye left"></span>
             <span class="mouth-eye right"></span>
             <span class="mouth-nose"></span>
@@ -8086,6 +8083,7 @@ function renderLessonMouthSoundQuiz(step) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
     if (!config) return '';
     window.lessonMouthQuizTarget[step] = config.quizChoices[Math.floor(Math.random() * config.quizChoices.length)];
+    window.lessonMouthQuizPlayed[step] = false;
     const hintItems = config.items.filter((item) => config.quizChoices.includes(item.char));
     const hintGuide = step === 15
         ? 'ㅔ보다 입 안 공간과 아래턱이 더 크게 보이면 ㅐ예요.'
@@ -8674,16 +8672,19 @@ function stopLessonMouthPlayback(step, options = {}) {
     resetLessonMouthCards(step);
 }
 
-function activateLessonMouthCard(step, char, slow = false) {
+function activateLessonMouthCard(step, char, slow = false, options = {}) {
     const state = getLessonMouthPlaybackState();
     const reducedMotion = isReducedMouthMotion();
     const duration = getLessonMouthDuration(char, slow, reducedMotion);
+    const revealCard = options.revealCard !== false;
     const cards = Array.from(document.querySelectorAll(`.mouth-sound-card[data-mouth-step="${step}"], .mouth-quiz-hint-card[data-mouth-step="${step}"]`));
     cards.forEach((card) => {
         const isTarget = card.dataset.mouthChar === char;
-        card.classList.toggle('is-playing', isTarget);
-        card.classList.toggle('is-active', isTarget);
-        card.classList.toggle('is-reduced-motion', isTarget && reducedMotion);
+        const isQuizHint = card.classList.contains('mouth-quiz-hint-card');
+        const shouldPlay = revealCard ? isTarget : isQuizHint;
+        card.classList.toggle('is-playing', shouldPlay);
+        card.classList.toggle('is-active', revealCard && isTarget);
+        card.classList.toggle('is-reduced-motion', shouldPlay && reducedMotion);
         card.style.setProperty('--mouth-duration', `${duration}ms`);
     });
     state.activeTimer = window.setTimeout(() => {
@@ -8717,7 +8718,7 @@ window.playLessonMouthSound = async function(step, char, slow = false, options =
     if (!config) return;
     const fromSequence = Boolean(options.fromSequence);
     stopLessonMouthPlayback(step, { keepSequence: fromSequence });
-    activateLessonMouthCard(step, char, slow);
+    activateLessonMouthCard(step, char, slow, { revealCard: options.revealCard !== false });
     window.lessonMouthFollowChar = window.lessonMouthFollowChar || {};
     window.lessonMouthFollowChar[step] = char;
     if (!options.skipRecord) {
@@ -8792,14 +8793,24 @@ window.completeLessonMouthRepeat = async function(step, btn) {
 
 window.playLessonMouthQuizSound = function(step) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
-    const answer = window.lessonMouthQuizTarget?.[step] || config?.defaultFollow || 'ㅐ';
-    window.playLessonMouthSound(step, answer, false);
+    if (!config) return;
+    const currentAnswer = window.lessonMouthQuizTarget?.[step] || config.defaultFollow;
+    const hasPlayed = Boolean(window.lessonMouthQuizPlayed?.[step]);
+    const choices = hasPlayed
+        ? config.quizChoices.filter((char) => char !== currentAnswer)
+        : config.quizChoices;
+    const answer = choices[Math.floor(Math.random() * choices.length)] || currentAnswer;
+    window.lessonMouthQuizTarget[step] = answer;
+    window.lessonMouthQuizPlayed[step] = true;
+    window.playLessonMouthSound(step, answer, false, { revealCard: false });
 };
 
 window.nextLessonMouthSoundQuiz = function(step) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
     if (!config) return;
+    stopLessonMouthPlayback(step);
     window.lessonMouthQuizTarget[step] = config.quizChoices[Math.floor(Math.random() * config.quizChoices.length)];
+    window.lessonMouthQuizPlayed[step] = false;
     document.querySelectorAll('.lesson15-choice-btn').forEach(btn => btn.classList.remove('correct', 'wrong'));
     const feedback = document.getElementById(`lesson-mouth-quiz-feedback-${step}`);
     if (feedback) {
