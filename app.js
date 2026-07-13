@@ -7285,6 +7285,289 @@ function renderLessonDetail(lessonId) {
     `;
 }
 
+const LESSON21_BATCHIM_CONFIGS = {
+    'ㅁ': {
+        label: 'ㅁ 받침',
+        intro: [
+            { base: '가', result: '감' },
+            { base: '나', result: '남' },
+            { base: '다', result: '담' },
+            { base: '라', result: '람' },
+            { base: '마', result: '맘' },
+            { base: '버', result: '범' },
+            { base: '서', result: '섬' },
+            { base: '저', result: '점' },
+            { base: '터', result: '텀' },
+            { base: '퍼', result: '펌' }
+        ],
+        practiceRows: [
+            ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차'],
+            ['거', '너', '더', '러', '머', '버', '서', '어', '저', '처'],
+            ['고', '노', '도', '로', '모', '보', '소', '오', '조', '초'],
+            ['구', '누', '두', '루', '무', '부', '수', '우', '주', '추']
+        ],
+        writeItems: ['감', '남', '담', '람', '맘', '범', '섬', '점', '텀', '펌'],
+        wordFind: [
+            { word: '참외', icon: '🍈', choices: ['참외', '차외'] },
+            { word: '김치', icon: '🥬', choices: ['김치', '기치'] },
+            { word: '구름', icon: '☁️', choices: ['구름', '구룸'] },
+            { word: '그림', icon: '🖼️', choices: ['그림', '그리'] }
+        ],
+        challenge: [
+            { label: '1단계', words: ['곰', '검', '힘', '남', '뱀', '솜', '폼'], count: 7 },
+            { label: '2단계', words: ['감기', '오줌', '주스', '아픈', '시금'], count: 5 },
+            { label: '3단계', words: ['부모님', '몸무게', '심심해'], count: 3 }
+        ]
+    },
+    'ㅂ': {
+        label: 'ㅂ 받침',
+        intro: [
+            { base: '가', result: '갑' },
+            { base: '나', result: '납' },
+            { base: '다', result: '답' },
+            { base: '라', result: '랍' },
+            { base: '마', result: '맙' },
+            { base: '버', result: '법' },
+            { base: '서', result: '섭' },
+            { base: '저', result: '접' },
+            { base: '터', result: '텁' },
+            { base: '퍼', result: '펍' }
+        ],
+        practiceRows: [
+            ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차'],
+            ['거', '너', '더', '러', '머', '버', '서', '어', '저', '처'],
+            ['고', '노', '도', '로', '모', '보', '소', '오', '조', '초'],
+            ['구', '누', '두', '루', '무', '부', '수', '우', '주', '추']
+        ],
+        writeItems: ['갑', '납', '답', '랍', '맙', '법', '섭', '접', '텁', '펍'],
+        wordFind: [
+            { word: '밥', icon: '🍚', choices: ['밥', '밤'] },
+            { word: '입', icon: '👄', choices: ['입', '임'] },
+            { word: '집', icon: '🏠', choices: ['집', '짐'] },
+            { word: '컵', icon: '🥤', choices: ['컵', '컴'] }
+        ],
+        challenge: [
+            { label: '1단계', words: ['밥', '법', '빔', '밤', '뱁', '숩', '톱'], count: 7 },
+            { label: '2단계', words: ['밥그릇', '입술', '집게', '컵라면', '앞집'], count: 5 },
+            { label: '3단계', words: ['아빠', '앞집', '모래톱'], count: 3 }
+        ]
+    }
+};
+
+function getLesson21BatchimConfig(batchim) {
+    return LESSON21_BATCHIM_CONFIGS[batchim] || LESSON21_BATCHIM_CONFIGS['ㅁ'];
+}
+
+function renderLesson21SoundButton(text, className = 'lesson21-sound-button') {
+    return `<button type="button" class="${className}" onclick="speakLesson13Word('${text}', this)" aria-label="${text} 소리 듣기">🔊 ${text}</button>`;
+}
+
+function renderLesson21IntroPage(batchim) {
+    const config = getLesson21BatchimConfig(batchim);
+    const firstRows = [config.intro.slice(0, 5), config.intro.slice(5)];
+    return `
+        <div class="lesson21-page lesson21-intro-page">
+            <div class="lesson21-instruction"><strong>${config.label}</strong>을 넣으면 소리가 달라져요. 글자를 누르고 소리를 들어 보세요.</div>
+            <div class="lesson21-example-grid">
+                ${config.intro.slice(0, 2).map((item) => `
+                    <button type="button" class="lesson21-example-card" onclick="speakLesson13Word('${item.result}', this)">
+                        <span class="lesson21-example-part">${item.base} + ${batchim}</span>
+                        <span class="lesson21-example-arrow">→</span>
+                        <strong>${item.result}</strong>
+                        <span class="lesson21-example-listen">🔊 소리 듣기</span>
+                    </button>
+                `).join('')}
+            </div>
+            <div class="lesson21-family-table" role="table" aria-label="${config.label} 따라 읽기">
+                ${firstRows.map((row) => `
+                    <div class="lesson21-family-row" role="row">
+                        <span class="lesson21-family-batchim">${batchim}</span>
+                        ${row.map((item) => `<button type="button" class="lesson21-family-cell" onclick="speakLesson13Word('${item.result}', this)" aria-label="${item.result} 소리 듣기"><span>${item.base}</span><b>${item.result}</b></button>`).join('')}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="lesson21-tip">받침은 글자 아래에 놓이고, 마지막에 입을 닫거나 입술을 모으며 소리 내요.</div>
+        </div>
+    `;
+}
+
+function renderLesson21WritingCell(lessonId, batchim, word, index, mode) {
+    const base = Array.from(word)[0];
+    return `
+        <div class="lesson21-write-cell ${mode === 'practice' ? 'is-practice' : ''}">
+            <button type="button" class="lesson21-shadow-word" onclick="speakLesson13Word('${word}', this)" aria-label="${word} 소리 듣기">
+                <span>${base}</span><span class="lesson21-shadow-batchim">${batchim}</span>
+            </button>
+            <canvas id="lesson21-write-${batchim}-${mode}-${index}" class="trace-writing-canvas lesson21-mini-canvas" data-guide="${batchim}" aria-label="${word}의 ${batchim} 받침 쓰기"></canvas>
+            <button type="button" class="lesson21-write-done" onclick="recordLesson21BatchimWrite('${lessonId}', '${batchim}', '${word}', this)">썼어요</button>
+        </div>
+    `;
+}
+
+function renderLesson21FollowPage(lessonId, batchim) {
+    const config = getLesson21BatchimConfig(batchim);
+    return `
+        <div class="lesson21-page lesson21-follow-page">
+            <div class="lesson21-instruction"><strong>따라하기</strong> · 음영이 있는 글자를 보고 ${batchim} 받침을 써 보세요.</div>
+            <div class="lesson21-follow-table">
+                <div class="lesson21-follow-row">
+                    <span class="lesson21-follow-label">${batchim}</span>
+                    ${config.intro.slice(0, 5).map((item) => `<button type="button" class="lesson21-follow-result" onclick="speakLesson13Word('${item.result}', this)">${item.result}</button>`).join('')}
+                </div>
+                <div class="lesson21-follow-row">
+                    <span class="lesson21-follow-label">${batchim}</span>
+                    ${config.intro.slice(5).map((item) => `<button type="button" class="lesson21-follow-result" onclick="speakLesson13Word('${item.result}', this)">${item.result}</button>`).join('')}
+                </div>
+            </div>
+            <div class="lesson21-write-grid" aria-label="${batchim} 받침 10개 따라 쓰기">
+                ${config.writeItems.map((word, index) => renderLesson21WritingCell(lessonId, batchim, word, index, 'follow')).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderLesson21PracticePage(lessonId, batchim) {
+    const config = getLesson21BatchimConfig(batchim);
+    const targets = config.writeItems;
+    const targetPositions = [1, 4, 7, 10, 13, 16, 22, 25, 31, 34];
+    return `
+        <div class="lesson21-page lesson21-practice-page">
+            <div class="lesson21-instruction"><strong>연습하기</strong> · 음영이 있는 글자에 ${batchim} 받침을 넣고, 완성한 글자를 읽어 보세요.</div>
+            <div class="lesson21-practice-rows">
+                ${config.practiceRows.map((row, rowIndex) => `
+                    <div class="lesson21-practice-row" aria-label="받침 연습 ${rowIndex + 1}행">
+                        ${row.map((base, colIndex) => {
+                            const targetIndex = targetPositions.indexOf(rowIndex * row.length + colIndex);
+                            const isTarget = targetIndex >= 0;
+                            const word = isTarget ? targets[targetIndex] : base;
+                            return `<button type="button" class="lesson21-practice-syllable ${isTarget ? 'is-shaded' : ''}" onclick="speakLesson13Word('${isTarget ? word : base}', this)">${isTarget ? word : base}</button>`;
+                        }).join('')}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="lesson21-practice-note">색이 있는 글자를 찾아 아래 칸에 받침을 써요. 모두 <strong>10개</strong>를 연습해요.</div>
+            <div class="lesson21-write-grid lesson21-practice-write-grid" aria-label="${batchim} 받침 10개 연습 쓰기">
+                ${targets.map((word, index) => renderLesson21WritingCell(lessonId, batchim, word, index, 'practice')).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderLesson21WordFindPage(lessonId, batchim) {
+    const config = getLesson21BatchimConfig(batchim);
+    return `
+        <div class="lesson21-page lesson21-word-find-page">
+            <div class="lesson21-instruction"><strong>단어 찾기</strong> · 그림을 보고 알맞은 단어를 골라요. 그림을 누르면 두 단어를 모두 읽어 줘요.</div>
+            <div class="lesson21-word-find-grid">
+                ${config.wordFind.map((item, index) => `
+                    <div class="lesson21-word-find-card" data-lesson21-word-card="${batchim}-${index}">
+                        <button type="button" class="lesson21-word-picture" onclick="speakLesson21WordChoices('${item.word}', '${item.choices[1]}', this)" aria-label="${item.word}와 ${item.choices[1]} 소리 듣기">${item.icon}</button>
+                        <div class="lesson21-word-choice-grid">
+                            ${item.choices.map((choice) => `<button type="button" class="lesson21-word-choice" onclick="selectLesson21Word('${lessonId}', '${batchim}', '${item.word}', '${choice}', this)">${choice}</button>`).join('')}
+                        </div>
+                        <div class="lesson21-word-feedback" aria-live="polite"></div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderLesson21ChallengePage(lessonId, batchim) {
+    const config = getLesson21BatchimConfig(batchim);
+    return `
+        <div class="lesson21-page lesson21-challenge-page">
+            <div class="lesson21-instruction"><strong>도전하기</strong> · 스스로 정확하게 읽고, 읽은 낱말을 눌러 표시해요.</div>
+            <div class="lesson21-challenge-list">
+                ${config.challenge.map((level, levelIndex) => `
+                    <div class="lesson21-challenge-row">
+                        <span class="lesson21-challenge-level">${level.label}</span>
+                        <div class="lesson21-challenge-words">
+                            ${level.words.map((word, wordIndex) => `<button type="button" class="lesson21-challenge-word" onclick="speakLesson13Word('${word}', this)">${word}</button>`).join('')}
+                        </div>
+                        <button type="button" class="lesson21-challenge-done" onclick="recordLesson21ChallengeRead('${lessonId}', '${batchim}', '${level.label}', this)">${level.count}개 읽었어요</button>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="lesson21-challenge-tip">단계별 낱말을 천천히 읽고, 자신 있게 읽었을 때 확인해요.</div>
+        </div>
+    `;
+}
+
+function renderLesson21Page(lessonId, batchim, pageIndex) {
+    if (pageIndex === 0) return renderLesson21IntroPage(batchim);
+    if (pageIndex === 1) return renderLesson21FollowPage(lessonId, batchim);
+    if (pageIndex === 2) return renderLesson21PracticePage(lessonId, batchim);
+    if (pageIndex === 3) return renderLesson21WordFindPage(lessonId, batchim);
+    return renderLesson21ChallengePage(lessonId, batchim);
+}
+
+window.recordLesson21BatchimWrite = async function recordLesson21BatchimWrite(lessonId, batchim, word, btn) {
+    const lesson = getChanchanLesson(lessonId);
+    await recordKoreanAttempt({
+        lessonId,
+        lessonTitle: lesson?.title || 'ㅁ, ㅂ 받침',
+        unitId: lesson?.unit || getUnitIdForLesson(lessonId),
+        activityType: 'fillOneJamo',
+        word,
+        answer: batchim,
+        userAnswer: `${batchim} 직접 쓰기 완료`,
+        isCorrect: true,
+        errorType: null
+    });
+    btn.textContent = '쓰기 완료';
+    btn.classList.add('is-complete');
+};
+
+window.speakLesson21WordChoices = function speakLesson21WordChoices(answer, distractor, btn) {
+    const card = btn.closest('.lesson21-word-find-card');
+    card?.classList.add('is-speaking');
+    speakTextKo(`${answer}. ${distractor}.`);
+    window.setTimeout(() => card?.classList.remove('is-speaking'), 900);
+};
+
+window.selectLesson21Word = async function selectLesson21Word(lessonId, batchim, answer, userAnswer, btn) {
+    const lesson = getChanchanLesson(lessonId);
+    const isCorrect = answer === userAnswer;
+    const card = btn.closest('.lesson21-word-find-card');
+    const feedback = card?.querySelector('.lesson21-word-feedback');
+    await recordKoreanAttempt({
+        lessonId,
+        lessonTitle: lesson?.title || 'ㅁ, ㅂ 받침',
+        unitId: lesson?.unit || getUnitIdForLesson(lessonId),
+        activityType: 'wordPictureMatch',
+        word: answer,
+        answer,
+        userAnswer,
+        isCorrect,
+        errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH
+    });
+    card?.querySelectorAll('.lesson21-word-choice').forEach((choice) => choice.classList.remove('is-selected', 'is-wrong'));
+    btn.classList.add(isCorrect ? 'is-selected' : 'is-wrong');
+    if (feedback) {
+        feedback.textContent = isCorrect ? `맞아요! ${answer}예요.` : '다시 그림을 보고 골라요.';
+        feedback.className = `lesson21-word-feedback ${isCorrect ? 'is-correct' : 'is-wrong'}`;
+    }
+    speakTextKo(isCorrect ? answer : '다시 골라 보아요.');
+};
+
+window.recordLesson21ChallengeRead = async function recordLesson21ChallengeRead(lessonId, batchim, level, btn) {
+    const lesson = getChanchanLesson(lessonId);
+    await recordKoreanAttempt({
+        lessonId,
+        lessonTitle: lesson?.title || 'ㅁ, ㅂ 받침',
+        unitId: lesson?.unit || getUnitIdForLesson(lessonId),
+        activityType: 'finalAssessment',
+        word: `${batchim}-${level}`,
+        answer: level,
+        userAnswer: `${level} 정확히 읽기 완료`,
+        isCorrect: true,
+        errorType: null
+    });
+    btn.textContent = '잘 읽었어요';
+    btn.classList.add('is-complete');
+};
+
 function renderListenAndFindActivity(lesson) {
     const choices = lesson.letters || lesson.focus || lesson.words || [];
     return `<div class="practice-step-box">
@@ -9387,9 +9670,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isPictureWordLesson = Boolean(PICTURE_WORD_LESSON_CONFIGS[numericStep]);
     const isComplexLineLesson = numericStep >= 15 && numericStep <= 19;
     const isCustomLesson20 = numericStep === 20;
+    const isCustomLesson21 = numericStep === 21;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
     const practiceFlow = learningPracticeFlows[step];
-    const isActivityFlow = visibleActivitySteps.includes(step) && practiceFlow;
+    const isActivityFlow = visibleActivitySteps.includes(numericStep) && practiceFlow;
 
     let totalSections = isPictureWordLesson ? 4 : (hasMakeLettersActivity ? 4 : (isActivityFlow ? 3 : detail.sections.length));
     if (numericStep === 12) totalSections = 5;
@@ -9397,6 +9681,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (numericStep === 14) totalSections = 7;
     if (isComplexLineLesson) totalSections = 4;
     if (isCustomLesson20) totalSections = 5;
+    if (isCustomLesson21) totalSections = 10;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
     window.currentLearningActivityStep = numericStep;
@@ -9436,6 +9721,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
             sectionTitle = detail.sections[1].title;
         } else if (isCustomLesson20) {
             sectionTitle = ['읽기 1·2 · 그림과 단어', '읽기 3 · 무의미 단어', '확인하기 1·2 · 읽고 찾기', '쓰기 1·2 · 완성해 보기', '놀이 · 단어 놀이 해보기'][safeIndex];
+        } else if (isCustomLesson21) {
+            const batchim = safeIndex < 5 ? 'ㅁ' : 'ㅂ';
+            const localIndex = safeIndex % 5;
+            sectionTitle = [`${batchim} 받침 · 이해하기`, `${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 단어 찾기`, `${batchim} 받침 · 도전하기`][localIndex];
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -9476,7 +9765,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
         const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
         const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
         let contentHtml = '';
-        if (isCustomLesson20 && safeIndex === 0) {
+        if (isCustomLesson21) {
+            const batchim = safeIndex < 5 ? 'ㅁ' : 'ㅂ';
+            contentHtml = renderLesson21Page(numericStep, batchim, safeIndex % 5);
+        } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
             contentHtml = renderLesson20NonsensePage();
@@ -9605,7 +9897,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         }
 
         const chanchanLesson = getChanchanLesson(step);
-        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
+        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && !isCustomLesson21 && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
             ['readThreeTimes', 'fillOneJamo', 'wordPictureMatch', 'nonsenseWordRead', 'batchimFamily', 'finalAssessment'].includes(activity)
         ) ? `<div class="mt-4">${renderLessonDetail(step)}</div>` : '';
 

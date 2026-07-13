@@ -901,6 +901,349 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 }
 .lesson20-read-find-feedback.is-correct { color: #16a34a; }
 .lesson20-read-find-feedback.is-wrong { color: #ea580c; }
+.lesson21-page {
+    display: grid;
+    gap: 18px;
+    min-width: 0;
+}
+.lesson21-instruction {
+    border: 3px solid #bfdbfe;
+    border-radius: 16px;
+    padding: 14px 16px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 1.12rem;
+    font-weight: 900;
+    text-align: center;
+    word-break: keep-all;
+}
+.lesson21-instruction strong {
+    color: #c2410c;
+}
+.lesson21-example-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.lesson21-example-card {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 126px;
+    border: 3px solid #fed7aa;
+    border-radius: 18px;
+    background: #fffaf2;
+    color: #20364b;
+    font-size: 2rem;
+    font-weight: 1000;
+    transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+.lesson21-example-card:hover,
+.lesson21-example-card:focus-visible {
+    border-color: #fb923c;
+    background: #fff7ed;
+    transform: translateY(-2px);
+}
+.lesson21-example-part,
+.lesson21-example-listen {
+    grid-column: 1 / -1;
+}
+.lesson21-example-part {
+    color: #64748b;
+    font-size: 1.05rem;
+}
+.lesson21-example-arrow {
+    color: #f97316;
+}
+.lesson21-example-listen {
+    color: #0f766e;
+    font-size: .85rem;
+}
+.lesson21-family-table {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 3px solid #cbd5e1;
+    border-radius: 16px;
+    background: #ffffff;
+}
+.lesson21-family-row {
+    display: grid;
+    grid-template-columns: 56px repeat(5, minmax(0, 1fr));
+    gap: 4px;
+}
+.lesson21-family-batchim,
+.lesson21-family-cell {
+    min-height: 70px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #20364b;
+    font-size: 1.55rem;
+    font-weight: 1000;
+}
+.lesson21-family-batchim {
+    display: grid;
+    place-items: center;
+    background: #bfdbfe;
+    color: #1e3a8a;
+}
+.lesson21-family-cell {
+    display: grid;
+    place-items: center;
+    gap: 1px;
+    padding: 5px;
+}
+.lesson21-family-cell span {
+    color: #475569;
+    font-size: .82rem;
+}
+.lesson21-family-cell b {
+    color: #111827;
+}
+.lesson21-tip,
+.lesson21-practice-note,
+.lesson21-challenge-tip {
+    padding: 11px 14px;
+    border: 2px dashed #86efac;
+    border-radius: 14px;
+    background: #f0fdf4;
+    color: #166534;
+    font-size: .98rem;
+    font-weight: 900;
+    text-align: center;
+    word-break: keep-all;
+}
+.lesson21-follow-table {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 3px solid #cbd5e1;
+    border-radius: 16px;
+    background: #ffffff;
+}
+.lesson21-follow-row {
+    display: grid;
+    grid-template-columns: 64px repeat(5, minmax(0, 1fr));
+    gap: 4px;
+}
+.lesson21-follow-label,
+.lesson21-follow-result {
+    min-height: 64px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 1.55rem;
+    font-weight: 1000;
+}
+.lesson21-follow-label {
+    background: #bfdbfe;
+    color: #1e3a8a;
+}
+.lesson21-follow-result {
+    background: #f8fafc;
+    color: #20364b;
+}
+.lesson21-follow-result:hover,
+.lesson21-follow-result:focus-visible {
+    border-color: #fb923c;
+    background: #fff7ed;
+}
+.lesson21-write-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+.lesson21-write-cell {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    padding: 10px;
+    border: 3px solid #bae6fd;
+    border-radius: 16px;
+    background: #eff6ff;
+    text-align: center;
+}
+.lesson21-write-cell.is-practice {
+    border-color: #c7e8c4;
+    background: #f0fdf4;
+}
+.lesson21-shadow-word {
+    display: inline-flex;
+    justify-content: center;
+    align-items: baseline;
+    min-height: 50px;
+    border: 0;
+    background: transparent;
+    color: #20364b;
+    font-size: 2rem;
+    font-weight: 1000;
+}
+.lesson21-shadow-batchim {
+    color: #94a3b8;
+    text-shadow: 1px 1px 0 #cbd5e1;
+}
+.trace-writing-canvas.lesson21-mini-canvas {
+    width: 100%;
+    height: 104px;
+    border: 2px solid #93c5fd;
+    border-radius: 12px;
+    background: #ffffff;
+}
+.lesson21-write-done,
+.lesson21-challenge-done {
+    min-height: 38px;
+    border: 2px solid #43b83f;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #31922e;
+    font-size: .9rem;
+    font-weight: 1000;
+}
+.lesson21-write-done:hover,
+.lesson21-challenge-done:hover,
+.lesson21-word-choice:hover {
+    background: #dcfce7;
+}
+.lesson21-write-done.is-complete,
+.lesson21-challenge-done.is-complete {
+    border-color: #16a34a;
+    background: #22c55e;
+    color: #ffffff;
+}
+.lesson21-practice-rows {
+    display: grid;
+    gap: 7px;
+    padding: 12px;
+    border: 3px solid #cbd5e1;
+    border-radius: 16px;
+    background: #ffffff;
+}
+.lesson21-practice-row {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 3px;
+}
+.lesson21-practice-syllable {
+    min-width: 0;
+    min-height: 55px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 1.45rem;
+    font-weight: 1000;
+}
+.lesson21-practice-syllable.is-shaded {
+    background: #cbd5e1;
+    box-shadow: inset 0 -8px 0 rgba(148, 163, 184, .22);
+}
+.lesson21-practice-syllable:hover,
+.lesson21-practice-syllable:focus-visible {
+    border-color: #f97316;
+}
+.lesson21-word-find-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.lesson21-word-find-card {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border: 3px solid #99e8df;
+    border-radius: 18px;
+    background: #ffffff;
+    text-align: center;
+    transition: border-color .2s ease, background .2s ease;
+}
+.lesson21-word-find-card.is-speaking {
+    border-color: #fb923c;
+    background: #fff7ed;
+}
+.lesson21-word-picture {
+    min-height: 112px;
+    border: 2px solid #bfdbfe;
+    border-radius: 14px;
+    background: #eff6ff;
+    font-size: 4.2rem;
+    line-height: 1;
+}
+.lesson21-word-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.lesson21-word-choice {
+    min-height: 58px;
+    border: 3px solid #43b83f;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #31922e;
+    font-size: 1.25rem;
+    font-weight: 1000;
+}
+.lesson21-word-choice.is-selected {
+    border-color: #16a34a;
+    background: #22c55e;
+    color: #ffffff;
+}
+.lesson21-word-choice.is-wrong {
+    border-color: #fb923c;
+    background: #fff7ed;
+    color: #c2410c;
+}
+.lesson21-word-feedback {
+    min-height: 1.5rem;
+    color: #64748b;
+    font-size: .95rem;
+    font-weight: 1000;
+}
+.lesson21-word-feedback.is-correct { color: #16a34a; }
+.lesson21-word-feedback.is-wrong { color: #ea580c; }
+.lesson21-challenge-list {
+    display: grid;
+    gap: 12px;
+}
+.lesson21-challenge-row {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 3px solid #bae6fd;
+    border-radius: 16px;
+    background: #eff6ff;
+}
+.lesson21-challenge-level {
+    color: #1e3a8a;
+    font-size: 1rem;
+    font-weight: 1000;
+    text-align: center;
+}
+.lesson21-challenge-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+.lesson21-challenge-word {
+    min-height: 48px;
+    padding: 5px 12px;
+    border: 2px solid #93c5fd;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #20364b;
+    font-size: 1.35rem;
+    font-weight: 1000;
+}
+.lesson21-challenge-word:hover,
+.lesson21-challenge-word:focus-visible {
+    border-color: #f97316;
+    background: #fff7ed;
+}
 .lesson-line-match-shell { overflow: visible; }
 .lesson-line-match-status {
     min-height: 1.5rem;
@@ -1539,8 +1882,46 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     .lesson13-picture-grid,
     .lesson13-word-line-grid,
     .lesson13-match-grid,
-    .lesson20-read-find-grid {
+    .lesson20-read-find-grid,
+    .lesson21-example-grid,
+    .lesson21-word-find-grid {
         grid-template-columns: 1fr;
+    }
+    .lesson21-family-row,
+    .lesson21-follow-row {
+        grid-template-columns: 42px repeat(5, minmax(0, 1fr));
+        gap: 3px;
+    }
+    .lesson21-family-batchim,
+    .lesson21-family-cell,
+    .lesson21-follow-label,
+    .lesson21-follow-result {
+        min-height: 54px;
+        font-size: 1.05rem;
+    }
+    .lesson21-write-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .lesson21-practice-row {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .lesson21-practice-syllable {
+        min-height: 48px;
+        font-size: 1.15rem;
+    }
+    .lesson21-challenge-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .lesson21-challenge-level {
+        text-align: left;
+    }
+    .lesson21-challenge-done {
+        width: 100%;
+    }
+    .lesson21-example-card {
+        min-height: 112px;
+        font-size: 1.7rem;
     }
     .lesson20-nonsense-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
