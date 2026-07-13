@@ -796,13 +796,40 @@
 
         <!-- [나의 한글 섹션] -->
         <div id="my-korean-section" class="view-section fade-in hidden bg-white">
+            <span class="page-number">08</span>
             <div class="section-dashboard-header absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
                 <div class="pointer-events-auto cursor-pointer" onclick="goHangulDashboard()">
                     <img src="aiedu_korean_logo.webp" width="1024" height="768" alt="에이두 국어" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
                 </div>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
             </div>
 
-            <div class="mt-28 mb-8" aria-hidden="true"></div>
+            <div class="flex flex-col gap-6 mb-8 mt-28 md:flex-row md:items-end md:justify-between">
+                <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goHangulDashboard()">
+                    <span class="aiedu-badge">에이두 국어 시리즈</span>
+                    <span class="text-4xl font-bold text-[#46b3a5] tracking-tight">나의 한글</span>
+                </button>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-gray-800" id="my-korean-profile-name">이름</div>
+                    <div class="text-lg text-[#46b3a5] font-semibold" id="my-korean-profile-level">배움 새싹</div>
+                    <div class="text-sm text-gray-400 font-bold mt-1" id="current-learning-step-label">배움 새싹</div>
+                </div>
+            </div>
 
             <div class="flex flex-wrap gap-3 mb-8" id="my-korean-tabs"></div>
 
