@@ -1719,12 +1719,6 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     box-shadow: 0 10px 22px rgba(249, 115, 22, 0.2);
     transform: translateY(-2px);
 }
-.mouth-quiz-hint-letter {
-    color: #1e3a8a;
-    font-size: 1.8rem;
-    font-weight: 1000;
-    line-height: 1;
-}
 .mouth-quiz-hint-visual {
     width: 96px;
     height: 88px;

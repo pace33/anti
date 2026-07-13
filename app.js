@@ -8104,7 +8104,6 @@ function renderLessonMouthSoundQuiz(step) {
                     <div class="mouth-quiz-hint-grid">
                         ${hintItems.map((item) => `
                             <div class="mouth-quiz-hint-card" data-mouth-step="${step}" data-mouth-char="${item.char}" style="${getLessonMouthStyle(item)}">
-                                <div class="mouth-quiz-hint-letter">${item.char}</div>
                                 <div class="mouth-quiz-hint-visual mouth-visual" aria-hidden="true">${renderLessonMouthFace(item)}</div>
                                 <div class="mouth-quiz-hint-description">${item.label}</div>
                             </div>
