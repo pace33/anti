@@ -9312,31 +9312,37 @@ const traceStrokeMap = {
     'ㅣ': [{ points: [[0.5, 0.18], [0.5, 0.82]] }],
     'ㅡ': [{ points: [[0.2, 0.55], [0.8, 0.55]] }],
     'ㅏ': [{ points: [[0.45, 0.18], [0.45, 0.82]] }, { points: [[0.45, 0.5], [0.78, 0.5]] }],
-    'ㅓ': [{ points: [[0.62, 0.18], [0.62, 0.82]] }, { points: [[0.28, 0.5], [0.62, 0.5]] }],
+    'ㅓ': [{ points: [[0.62, 0.5], [0.28, 0.5]] }, { points: [[0.62, 0.18], [0.62, 0.82]] }],
     'ㅑ': [{ points: [[0.42, 0.16], [0.42, 0.84]] }, { points: [[0.42, 0.4], [0.78, 0.4]] }, { points: [[0.42, 0.62], [0.78, 0.62]] }],
-    'ㅕ': [{ points: [[0.66, 0.16], [0.66, 0.84]] }, { points: [[0.28, 0.4], [0.66, 0.4]] }, { points: [[0.28, 0.62], [0.66, 0.62]] }],
-    'ㅗ': [{ points: [[0.5, 0.24], [0.5, 0.54]] }, { points: [[0.22, 0.64], [0.78, 0.64]] }],
+    'ㅕ': [{ points: [[0.66, 0.4], [0.28, 0.4]] }, { points: [[0.66, 0.62], [0.28, 0.62]] }, { points: [[0.66, 0.16], [0.66, 0.84]] }],
+    'ㅗ': [{ points: [[0.5, 0.54], [0.5, 0.24]] }, { points: [[0.22, 0.64], [0.78, 0.64]] }],
     'ㅜ': [{ points: [[0.22, 0.36], [0.78, 0.36]] }, { points: [[0.5, 0.46], [0.5, 0.76]] }],
-    'ㅛ': [{ points: [[0.4, 0.22], [0.4, 0.5]] }, { points: [[0.6, 0.22], [0.6, 0.5]] }, { points: [[0.22, 0.64], [0.78, 0.64]] }],
+    'ㅛ': [{ points: [[0.4, 0.5], [0.4, 0.22]] }, { points: [[0.6, 0.5], [0.6, 0.22]] }, { points: [[0.22, 0.64], [0.78, 0.64]] }],
     'ㅠ': [{ points: [[0.22, 0.36], [0.78, 0.36]] }, { points: [[0.4, 0.48], [0.4, 0.78]] }, { points: [[0.6, 0.48], [0.6, 0.78]] }],
     'ㅐ': [{ points: [[0.36, 0.18], [0.36, 0.82]] }, { points: [[0.36, 0.5], [0.58, 0.5]] }, { points: [[0.7, 0.18], [0.7, 0.82]] }],
-    'ㅔ': [{ points: [[0.62, 0.18], [0.62, 0.82]] }, { points: [[0.32, 0.5], [0.62, 0.5]] }, { points: [[0.78, 0.18], [0.78, 0.82]] }],
+    'ㅔ': [{ points: [[0.62, 0.5], [0.32, 0.5]] }, { points: [[0.62, 0.18], [0.62, 0.82]] }, { points: [[0.78, 0.18], [0.78, 0.82]] }],
     'ㅒ': [{ points: [[0.34, 0.16], [0.34, 0.84]] }, { points: [[0.34, 0.4], [0.56, 0.4]] }, { points: [[0.34, 0.62], [0.56, 0.62]] }, { points: [[0.72, 0.16], [0.72, 0.84]] }],
-    'ㅖ': [{ points: [[0.58, 0.16], [0.58, 0.84]] }, { points: [[0.28, 0.4], [0.58, 0.4]] }, { points: [[0.28, 0.62], [0.58, 0.62]] }, { points: [[0.78, 0.16], [0.78, 0.84]] }],
-    'ㄱ': [{ points: [[0.22, 0.24], [0.78, 0.24], [0.78, 0.78]] }],
-    'ㄴ': [{ points: [[0.24, 0.2], [0.24, 0.76], [0.78, 0.76]] }],
-    'ㄷ': [{ points: [[0.74, 0.24], [0.28, 0.24]] }, { points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
-    'ㅌ': [{ points: [[0.74, 0.22], [0.28, 0.22]] }, { points: [[0.28, 0.22], [0.28, 0.78]] }, { points: [[0.28, 0.5], [0.68, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
-    'ㅁ': [{ points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.24], [0.74, 0.24], [0.74, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
+    'ㅖ': [{ points: [[0.58, 0.4], [0.28, 0.4]] }, { points: [[0.58, 0.62], [0.28, 0.62]] }, { points: [[0.58, 0.16], [0.58, 0.84]] }, { points: [[0.78, 0.16], [0.78, 0.84]] }],
+    'ㄱ': [{ points: [[0.22, 0.24], [0.78, 0.24]] }, { points: [[0.78, 0.24], [0.78, 0.78]] }],
+    'ㄴ': [{ points: [[0.24, 0.2], [0.24, 0.76]] }, { points: [[0.24, 0.76], [0.78, 0.76]] }],
+    'ㄷ': [{ points: [[0.28, 0.24], [0.74, 0.24]] }, { points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
+    'ㅌ': [{ points: [[0.28, 0.22], [0.74, 0.22]] }, { points: [[0.28, 0.22], [0.28, 0.78]] }, { points: [[0.28, 0.5], [0.68, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
+    'ㅁ': [{ points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.24], [0.74, 0.24]] }, { points: [[0.74, 0.24], [0.74, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
     'ㅂ': [{ points: [[0.3, 0.2], [0.3, 0.78]] }, { points: [[0.72, 0.2], [0.72, 0.78]] }, { points: [[0.3, 0.5], [0.72, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
-    'ㅍ': [{ points: [[0.26, 0.22], [0.76, 0.22]] }, { points: [[0.32, 0.32], [0.32, 0.72]] }, { points: [[0.7, 0.32], [0.7, 0.72]] }, { points: [[0.28, 0.5], [0.74, 0.5]] }, { points: [[0.26, 0.78], [0.76, 0.78]] }],
+    'ㅍ': [{ points: [[0.32, 0.22], [0.32, 0.78]] }, { points: [[0.26, 0.22], [0.76, 0.22]] }, { points: [[0.7, 0.22], [0.7, 0.78]] }, { points: [[0.26, 0.78], [0.76, 0.78]] }],
     'ㅅ': [{ points: [[0.5, 0.22], [0.28, 0.78]] }, { points: [[0.5, 0.22], [0.76, 0.78]] }],
     'ㅈ': [{ points: [[0.24, 0.24], [0.78, 0.24]] }, { points: [[0.5, 0.28], [0.28, 0.78]] }, { points: [[0.5, 0.28], [0.76, 0.78]] }],
     'ㅊ': [{ points: [[0.5, 0.16], [0.5, 0.3]] }, { points: [[0.24, 0.34], [0.78, 0.34]] }, { points: [[0.5, 0.38], [0.28, 0.8]] }, { points: [[0.5, 0.38], [0.76, 0.8]] }],
-    'ㅋ': [{ points: [[0.22, 0.22], [0.78, 0.22], [0.78, 0.78]] }, { points: [[0.44, 0.5], [0.78, 0.5]] }],
+    'ㅋ': [{ points: [[0.22, 0.22], [0.78, 0.22]] }, { points: [[0.78, 0.22], [0.78, 0.78]] }, { points: [[0.44, 0.5], [0.78, 0.5]] }],
     'ㅇ': [{ circle: [0.5, 0.52, 0.25, 0.3] }],
     'ㅎ': [{ points: [[0.5, 0.14], [0.5, 0.28]] }, { points: [[0.28, 0.34], [0.72, 0.34]] }, { circle: [0.5, 0.62, 0.24, 0.24] }],
-    'ㄹ': [{ points: [[0.26, 0.22], [0.72, 0.22], [0.72, 0.46], [0.34, 0.46], [0.34, 0.72], [0.76, 0.72]] }]
+    'ㄹ': [
+        { points: [[0.26, 0.22], [0.72, 0.22]] },
+        { points: [[0.72, 0.22], [0.72, 0.46]] },
+        { points: [[0.72, 0.46], [0.34, 0.46]] },
+        { points: [[0.34, 0.46], [0.34, 0.72]] },
+        { points: [[0.34, 0.72], [0.76, 0.72]] }
+    ]
 };
 
 function decomposeTraceSyllable(char) {
@@ -9417,12 +9423,24 @@ function drawTraceStroke(ctx, stroke, box, number, options = {}) {
         const y = box.y + cy * box.h;
         const radiusX = rx * box.w;
         const radiusY = ry * box.h;
-        if (!options.completed) drawTraceNumber(ctx, x - radiusX * 0.8, y - radiusY * 0.9, number, scale);
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle - Math.PI * 2;
         ctx.beginPath();
-        ctx.ellipse(x, y, radiusX, radiusY, 0, -Math.PI * 0.75, Math.PI * 1.35);
+        ctx.ellipse(x, y, radiusX, radiusY, 0, startAngle, endAngle, true);
         ctx.stroke();
-        if (!options.completed) drawTraceArrowHead(ctx, x + radiusX * 0.55, y + radiusY * 0.8, x + radiusX * 0.85, y + radiusY * 0.35, scale);
-        if (!options.completed) drawTraceNumber(ctx, x - radiusX * 0.8, y - radiusY * 0.9, number, scale);
+        if (!options.completed) {
+            const arrowAngle = startAngle - Math.PI * 0.18;
+            const fromAngle = arrowAngle + 0.22;
+            drawTraceArrowHead(
+                ctx,
+                x + Math.cos(fromAngle) * radiusX,
+                y + Math.sin(fromAngle) * radiusY,
+                x + Math.cos(arrowAngle) * radiusX,
+                y + Math.sin(arrowAngle) * radiusY,
+                scale
+            );
+            drawTraceNumber(ctx, x - radiusX * 0.8, y - radiusY * 0.9, number, scale);
+        }
         ctx.restore();
         return;
     }
@@ -9704,7 +9722,7 @@ function traceStrokeStartPoint(strokeItem) {
     if (stroke.dot) return tracePointForStroke(strokeItem, stroke.points[0]);
     if (stroke.circle) {
         const [cx, cy, rx, ry] = stroke.circle;
-        return { x: strokeItem.box.x + (cx - rx * 0.55) * strokeItem.box.w, y: strokeItem.box.y + (cy - ry * 0.75) * strokeItem.box.h };
+        return { x: strokeItem.box.x + cx * strokeItem.box.w, y: strokeItem.box.y + (cy - ry) * strokeItem.box.h };
     }
     return tracePointForStroke(strokeItem, stroke.points[0]);
 }
@@ -9714,7 +9732,7 @@ function traceStrokeEndPoint(strokeItem) {
     if (stroke.dot) return tracePointForStroke(strokeItem, stroke.points[0]);
     if (stroke.circle) {
         const [cx, cy, rx, ry] = stroke.circle;
-        return { x: strokeItem.box.x + (cx + rx * 0.85) * strokeItem.box.w, y: strokeItem.box.y + (cy + ry * 0.35) * strokeItem.box.h };
+        return { x: strokeItem.box.x + cx * strokeItem.box.w, y: strokeItem.box.y + (cy - ry) * strokeItem.box.h };
     }
     return tracePointForStroke(strokeItem, stroke.points[stroke.points.length - 1]);
 }
