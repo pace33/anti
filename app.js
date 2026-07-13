@@ -8074,16 +8074,6 @@ function renderLessonMouthIntro(step) {
             <div class="mouth-sequence-controls">
                 <button type="button" class="mouth-sequence-button" onclick="playLessonMouthSequence(${step}, false)">연속해서 보기</button>
             </div>
-            <div class="lesson15-follow-box mt-4">
-                <div class="practice-step-title"><span class="practice-step-number">2</span> 따라 말하기</div>
-                <div class="text-lg font-black text-[#2c3e50]">소리를 듣고 따라 말해 보세요.</div>
-                <div class="text-base font-bold text-stone-600 mt-1">거울을 보고 입모양도 따라 해 보세요.</div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                    <button type="button" class="listen-quiz-play-btn !text-lg" onclick="playLessonMouthSound(${step}, window.lessonMouthFollowChar?.[${step}] || '${config.defaultFollow}', true)">🔊 다시 듣기</button>
-                    <button type="button" class="btn-primary bg-[#46b3a5] shadow-[#46b3a533]" onclick="completeLessonMouthRepeat(${step}, this)">따라 했어요</button>
-                </div>
-                <div id="lesson-mouth-repeat-feedback-${step}" class="text-center text-green-600 font-black mt-3 min-h-[1.4rem]"></div>
-            </div>
         </div>
     `;
 }
