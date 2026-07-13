@@ -7990,6 +7990,13 @@ const LESSON_MOUTH_FALLBACK_TEXTS = {
     'ㅖ': { normal: '시계', slow: '시계' },
     'ㅒ': { normal: '얘기', slow: '얘기' }
 };
+const LESSON_MOUTH_AUDIO_PROFILES = {
+    'ㅣ': { normalText: '이', slowText: '이이', normalRate: 1, slowRate: 0.72, normalDuration: 700, slowDuration: 1000 },
+    'ㅔ': { normalText: '에에', slowText: '에에에', normalRate: 0.92, slowRate: 0.65, normalDuration: 850, slowDuration: 1200 },
+    'ㅐ': { normalText: '애애애', slowText: '애애애애', normalRate: 0.86, slowRate: 0.58, normalDuration: 1000, slowDuration: 1400 },
+    'ㅖ': { normalText: '시계', slowText: '시계', normalRate: 0.9, slowRate: 0.64, normalDuration: 850, slowDuration: 1200 },
+    'ㅒ': { normalText: '얘기', slowText: '얘기', normalRate: 0.9, slowRate: 0.64, normalDuration: 900, slowDuration: 1250 }
+};
 const LESSON_MOUTH_SHAPE_PRESETS = {
     'ㅣ': { width: 66, height: 11, jawDrop: 0, teethHeight: 4, tongueHeight: 4 },
     'ㅔ': { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 },
@@ -8535,12 +8542,28 @@ window.recordFinalAssessmentArea = async function(lessonId, area, btn) {
     btn.classList.add('active');
 };
 
-function playLessonMouthAudioFallback(char, slow = false) {
-    const fallbackText = LESSON_MOUTH_FALLBACK_TEXTS[char]?.[slow ? 'slow' : 'normal'] || spokenLabelForChar(char);
-    playLessonMouthNativeFallback(fallbackText, slow);
+function getLessonMouthAudioProfile(char) {
+    return LESSON_MOUTH_AUDIO_PROFILES[char] || null;
 }
 
-function playLessonMouthOnlineFallback(text, slow = false) {
+function getLessonMouthAudioText(char, slow = false) {
+    const profile = getLessonMouthAudioProfile(char);
+    return profile?.[slow ? 'slowText' : 'normalText']
+        || LESSON_MOUTH_FALLBACK_TEXTS[char]?.[slow ? 'slow' : 'normal']
+        || spokenLabelForChar(char);
+}
+
+function getLessonMouthDuration(char, slow = false, reducedMotion = false) {
+    const profile = getLessonMouthAudioProfile(char);
+    const baseDuration = profile?.[slow ? 'slowDuration' : 'normalDuration'] || (slow ? 1350 : 850);
+    return reducedMotion ? Math.round(baseDuration * 0.84) : baseDuration;
+}
+
+function playLessonMouthAudioFallback(char, slow = false) {
+    playLessonMouthNativeFallback(getLessonMouthAudioText(char, slow), slow, char);
+}
+
+function playLessonMouthOnlineFallback(text, slow = false, char = '') {
     try {
         if (!globalTtsAudio) {
             globalTtsAudio = new Audio();
@@ -8548,23 +8571,25 @@ function playLessonMouthOnlineFallback(text, slow = false) {
         globalTtsAudio.pause();
         const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(text) + "&tl=ko&total=1&idx=0&textlen=" + text.length + "&client=tw-ob&prev=input";
         globalTtsAudio.src = ttsUrl;
-        globalTtsAudio.playbackRate = slow ? 0.82 : 1;
-        globalTtsAudio.play().catch(() => speakTextKo(text));
+        const profile = getLessonMouthAudioProfile(char);
+        globalTtsAudio.playbackRate = profile?.[slow ? 'slowRate' : 'normalRate'] || (slow ? 0.82 : 1);
+        globalTtsAudio.play().catch(() => playLessonMouthNativeFallback(text, slow, char));
     } catch {
-        speakTextKo(text);
+        playLessonMouthNativeFallback(text, slow, char);
     }
 }
 
-function playLessonMouthNativeFallback(text, slow = false) {
+function playLessonMouthNativeFallback(text, slow = false, char = '') {
     if (typeof speechSynthesis === 'undefined') {
-        playLessonMouthOnlineFallback(text, slow);
+        playLessonMouthOnlineFallback(text, slow, char);
         return;
     }
     try {
         speechSynthesis.cancel();
         const utt = new SpeechSynthesisUtterance(text);
         utt.lang = 'ko-KR';
-        utt.rate = slow ? 0.68 : 0.95;
+        const profile = getLessonMouthAudioProfile(char);
+        utt.rate = profile?.[slow ? 'slowRate' : 'normalRate'] || (slow ? 0.68 : 0.95);
         utt.pitch = 1;
         const voices = speechSynthesis.getVoices();
         const koVoices = voices.filter(v => v.lang?.toLowerCase().startsWith('ko'));
@@ -8572,7 +8597,7 @@ function playLessonMouthNativeFallback(text, slow = false) {
         if (koVoice) utt.voice = koVoice;
         speechSynthesis.speak(utt);
     } catch {
-        playLessonMouthOnlineFallback(text, slow);
+        playLessonMouthOnlineFallback(text, slow, char);
     }
 }
 
@@ -8640,7 +8665,7 @@ function stopLessonMouthPlayback(step, options = {}) {
 function activateLessonMouthCard(step, char, slow = false) {
     const state = getLessonMouthPlaybackState();
     const reducedMotion = isReducedMouthMotion();
-    const duration = reducedMotion ? (slow ? 1100 : 720) : (slow ? 1350 : 850);
+    const duration = getLessonMouthDuration(char, slow, reducedMotion);
     const cards = Array.from(document.querySelectorAll(`.mouth-sound-card[data-mouth-step="${step}"]`));
     cards.forEach((card) => {
         const isTarget = card.dataset.mouthChar === char;
@@ -8660,7 +8685,8 @@ window.playLessonMouthSequence = function(step, slow = false, options = {}) {
     if (!config) return;
     stopLessonMouthPlayback(step);
     const state = getLessonMouthPlaybackState();
-    const interval = isReducedMouthMotion() ? (slow ? 1200 : 850) : (slow ? 1450 : 950);
+    const reducedMotion = isReducedMouthMotion();
+    let sequenceOffset = 0;
     config.items.forEach((item, index) => {
         const timer = window.setTimeout(() => {
             window.playLessonMouthSound(step, item.char, slow, {
@@ -8668,8 +8694,9 @@ window.playLessonMouthSequence = function(step, slow = false, options = {}) {
                 skipRecord: true,
                 auto: Boolean(options.auto)
             });
-        }, index * interval);
+        }, sequenceOffset);
         state.sequenceTimers.push(timer);
+        sequenceOffset += getLessonMouthDuration(item.char, slow, reducedMotion) + (reducedMotion ? 90 : 120);
     });
 };
 
