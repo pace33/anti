@@ -55,7 +55,11 @@ const activityRoutes = {
 function getActivityRouteFromLocation() {
     const params = new URLSearchParams(window.location.search);
     const route = params.get('activity');
-    return activityRoutes[route] ? route : null;
+    if (activityRoutes[route]) return route;
+
+    const pathName = (window.location.pathname || '').split('/').pop();
+    const pathRoute = Object.entries(activityRoutes).find(([, config]) => config.page === pathName);
+    return pathRoute ? pathRoute[0] : null;
 }
 
 let pendingActivityRoute = getActivityRouteFromLocation();
@@ -76,14 +80,36 @@ function hideActivityLoading() {
     overlay.setAttribute('aria-busy', 'false');
 }
 
+function getVisibleActivityRoute() {
+    return Object.entries(activityRoutes).find(([, route]) => {
+        const section = document.getElementById(route.sectionId);
+        return section && !section.classList.contains('hidden');
+    })?.[0] || null;
+}
+
+function hydrateActivityRouteSection(activityKey) {
+    if (activityKey === 'drawing') {
+        updateDrawingDashboardPreview();
+    } else if (activityKey === 'hangul') {
+        updateTodayKoreanPreview();
+    } else if (activityKey === 'dictation') {
+        updateDictationDashboardPreview();
+    } else if (activityKey === 'literacy') {
+        updateLiteracyDashboardPreview();
+    }
+
+    updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
+}
+
 window.openActivityPage = function openActivityPage(activityKey) {
     const route = activityRoutes[activityKey];
     if (!route) return;
+    pendingActivityRoute = activityKey;
     // 버튼 클릭은 중간 HTML로 이동하지 않고 현재 앱 안에서 바로 전환한다.
     // 그래야 에이두 국어 시작화면이 짧게 깜빡이지 않는다.
     showActivityLoading();
     window.setTimeout(() => {
-        const opened = openActivityRoute(activityKey, { pushUrl: true });
+        const opened = openActivityRoute(activityKey, { pushUrl: true, allowBeforeLogin: true });
         if (opened) {
             window.setTimeout(hideActivityLoading, 160);
         } else {
@@ -95,6 +121,7 @@ window.openActivityPage = function openActivityPage(activityKey) {
 function openActivityRoute(activityKey, options = {}) {
     const route = activityRoutes[activityKey];
     if (!route) return false;
+    if (!loginSuccess && !options.allowBeforeLogin) return false;
 
     // 모든 활동은 항상 열리게 둔다. 데이터 서버의 옛 잠금값 때문에 이동을 막지 않는다.
     if (!unlockedLevels.includes(route.level)) {
@@ -103,6 +130,7 @@ function openActivityRoute(activityKey, options = {}) {
 
     showTopLevelSection(route.sectionId);
     document.getElementById('main-container').style.maxWidth = '1100px';
+    hydrateActivityRouteSection(activityKey);
 
     if (options.replaceUrl && window.history?.replaceState) {
         window.history.replaceState(null, '', route.page);
@@ -119,6 +147,18 @@ function openPendingActivityRoute() {
     if (opened) pendingActivityRoute = null;
     return opened;
 }
+
+window.addEventListener('popstate', () => {
+    const routeFromUrl = getActivityRouteFromLocation();
+    if (routeFromUrl) {
+        if (loginSuccess) {
+            openActivityRoute(routeFromUrl);
+        } else {
+            pendingActivityRoute = routeFromUrl;
+        }
+    }
+});
+
 let activeUnitKey = 'vowel';
 let currentUserId = null;
 let currentUserName = '이름 없음';
@@ -10592,7 +10632,11 @@ onAuthStateChanged(auth, async (user) => {
         loginSuccess = true;
 
         // 이미 대시보드/활동 화면이라면 패스, 아니라면 요청된 활동 또는 대시보드 열기
-        if (document.getElementById('dashboard-section').classList.contains('hidden')) {
+        const visibleActivityRoute = getVisibleActivityRoute();
+        if (visibleActivityRoute) {
+            hydrateActivityRouteSection(visibleActivityRoute);
+            if (pendingActivityRoute === visibleActivityRoute) pendingActivityRoute = null;
+        } else if (document.getElementById('dashboard-section').classList.contains('hidden')) {
             if (document.getElementById('result-modal').classList.contains('hidden')) {
                 if (!openPendingActivityRoute()) openDashboard();
             } else {
