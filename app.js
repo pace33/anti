@@ -8092,6 +8092,10 @@ function renderLessonMouthSoundQuiz(step) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
     if (!config) return '';
     window.lessonMouthQuizTarget[step] = config.quizChoices[Math.floor(Math.random() * config.quizChoices.length)];
+    const hintItems = config.items.filter((item) => config.quizChoices.includes(item.char));
+    const hintGuide = step === 15
+        ? 'ㅔ보다 입 안 공간과 아래턱이 더 크게 보이면 ㅐ예요.'
+        : '두 입 모양을 비교하며 입 안 공간과 아래턱의 차이를 살펴보세요.';
     return `
         <div class="learning-practice-card">
             <div class="learning-card-label practice-label">듣고 구별하기</div>
@@ -8103,6 +8107,19 @@ function renderLessonMouthSoundQuiz(step) {
                 </div>
                 <div id="lesson-mouth-quiz-feedback-${step}" class="text-center text-orange-500 font-black mt-3 min-h-[1.6rem]">
                     소리를 듣고 알맞은 글자를 골라요.
+                </div>
+                <div class="mouth-quiz-hint" aria-label="입 모양 힌트">
+                    <div class="mouth-quiz-hint-title">👄 입 모양 힌트</div>
+                    <div class="mouth-quiz-hint-guide">${hintGuide}</div>
+                    <div class="mouth-quiz-hint-grid">
+                        ${hintItems.map((item) => `
+                            <div class="mouth-quiz-hint-card" data-mouth-step="${step}" data-mouth-char="${item.char}" style="${getLessonMouthStyle(item)}">
+                                <div class="mouth-quiz-hint-letter">${item.char}</div>
+                                <div class="mouth-quiz-hint-visual mouth-visual" aria-hidden="true">${renderLessonMouthFace(item)}</div>
+                                <div class="mouth-quiz-hint-description">${item.label}</div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
                 <div class="lesson15-choice-row">
                     ${config.quizChoices.map((char) => `<button type="button" class="lesson15-choice-btn" onclick="selectLessonMouthSoundAnswer(${step}, this, '${char}')">${char}</button>`).join('')}
@@ -8649,7 +8666,9 @@ function stopLessonMouthAudio() {
 }
 
 function resetLessonMouthCards(step) {
-    const selector = step ? `.mouth-sound-card[data-mouth-step="${step}"]` : '.mouth-sound-card';
+    const selector = step
+        ? `.mouth-sound-card[data-mouth-step="${step}"], .mouth-quiz-hint-card[data-mouth-step="${step}"]`
+        : '.mouth-sound-card, .mouth-quiz-hint-card';
     document.querySelectorAll(selector).forEach((card) => {
         card.classList.remove('is-playing', 'is-active', 'is-reduced-motion');
     });
@@ -8666,7 +8685,7 @@ function activateLessonMouthCard(step, char, slow = false) {
     const state = getLessonMouthPlaybackState();
     const reducedMotion = isReducedMouthMotion();
     const duration = getLessonMouthDuration(char, slow, reducedMotion);
-    const cards = Array.from(document.querySelectorAll(`.mouth-sound-card[data-mouth-step="${step}"]`));
+    const cards = Array.from(document.querySelectorAll(`.mouth-sound-card[data-mouth-step="${step}"], .mouth-quiz-hint-card[data-mouth-step="${step}"]`));
     cards.forEach((card) => {
         const isTarget = card.dataset.mouthChar === char;
         card.classList.toggle('is-playing', isTarget);

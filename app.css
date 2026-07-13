@@ -1677,17 +1677,86 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     border-color: #ef4444;
     color: #991b1b;
 }
-.mouth-sound-card.is-playing .mouth-face::before {
+.mouth-quiz-hint {
+    margin-top: 14px;
+    padding: 12px;
+    border: 2px solid #fed7aa;
+    border-radius: 18px;
+    background: #fffaf2;
+}
+.mouth-quiz-hint-title {
+    color: #9a3412;
+    font-size: 1.05rem;
+    font-weight: 1000;
+    text-align: center;
+}
+.mouth-quiz-hint-guide {
+    margin-top: 3px;
+    color: #78716c;
+    font-size: .88rem;
+    font-weight: 800;
+    text-align: center;
+}
+.mouth-quiz-hint-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+.mouth-quiz-hint-card {
+    min-width: 0;
+    border: 3px solid #bfdbfe;
+    border-radius: 16px;
+    background: #eff6ff;
+    padding: 7px 5px 9px;
+    text-align: center;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.mouth-quiz-hint-card.is-playing,
+.mouth-quiz-hint-card.is-active {
+    border-color: #fb923c;
+    background: linear-gradient(180deg, #ffedd5 0%, #ffffff 100%);
+    box-shadow: 0 10px 22px rgba(249, 115, 22, 0.2);
+    transform: translateY(-2px);
+}
+.mouth-quiz-hint-letter {
+    color: #1e3a8a;
+    font-size: 1.8rem;
+    font-weight: 1000;
+    line-height: 1;
+}
+.mouth-quiz-hint-visual {
+    width: 96px;
+    height: 88px;
+    margin: 4px auto 2px;
+}
+.mouth-quiz-hint-visual .mouth-face {
+    transform: scale(.68);
+    transform-origin: center;
+}
+.mouth-quiz-hint-description {
+    min-height: 2.5em;
+    color: #334155;
+    font-size: .8rem;
+    font-weight: 900;
+    line-height: 1.25;
+}
+.mouth-sound-card.is-playing .mouth-face::before,
+.mouth-quiz-hint-card.is-playing .mouth-face::before {
     animation: mouthChinDrop var(--mouth-duration, .85s) ease-in-out both;
 }
-.mouth-sound-card.is-playing .mouth-jaw {
+.mouth-sound-card.is-playing .mouth-jaw,
+.mouth-quiz-hint-card.is-playing .mouth-jaw {
     animation: mouthJawDrop var(--mouth-duration, .85s) ease-in-out both;
 }
-.mouth-sound-card.is-playing .mouth-lips {
+.mouth-sound-card.is-playing .mouth-lips,
+.mouth-quiz-hint-card.is-playing .mouth-lips {
     animation: mouthOpen var(--mouth-duration, .85s) ease-in-out both;
 }
 .mouth-sound-card.is-playing .mouth-teeth,
-.mouth-sound-card.is-playing .mouth-tongue {
+.mouth-sound-card.is-playing .mouth-tongue,
+.mouth-quiz-hint-card.is-playing .mouth-teeth,
+.mouth-quiz-hint-card.is-playing .mouth-tongue {
     animation: mouthInteriorReveal var(--mouth-duration, .85s) ease-in-out both;
 }
 @keyframes mouthChinDrop {
@@ -1716,6 +1785,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 }
 @media (prefers-reduced-motion: reduce) {
     .mouth-sound-card,
+    .mouth-quiz-hint-card,
     .mouth-face::before,
     .mouth-jaw,
     .mouth-lips {
@@ -1725,7 +1795,12 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     .mouth-sound-card.is-playing .mouth-jaw,
     .mouth-sound-card.is-playing .mouth-lips,
     .mouth-sound-card.is-playing .mouth-teeth,
-    .mouth-sound-card.is-playing .mouth-tongue {
+    .mouth-sound-card.is-playing .mouth-tongue,
+    .mouth-quiz-hint-card.is-playing .mouth-face::before,
+    .mouth-quiz-hint-card.is-playing .mouth-jaw,
+    .mouth-quiz-hint-card.is-playing .mouth-lips,
+    .mouth-quiz-hint-card.is-playing .mouth-teeth,
+    .mouth-quiz-hint-card.is-playing .mouth-tongue {
         animation-duration: var(--mouth-duration, .72s) !important;
         animation-timing-function: ease-in-out !important;
     }
@@ -1765,6 +1840,15 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     .mouth-sound-card .text-sm {
         font-size: .8rem;
         line-height: 1.18;
+    }
+    .mouth-quiz-hint-guide {
+        font-size: .8rem;
+    }
+    .mouth-quiz-hint-description {
+        font-size: .74rem;
+    }
+    .mouth-quiz-hint-visual .mouth-face {
+        transform: scale(.6);
     }
     .mouth-listen-button {
         padding: 7px 6px;
