@@ -3042,6 +3042,30 @@ function showTopLevelSection(sectionId) {
     topLevelSectionIds.forEach((id) => {
         setTopLevelSectionVisible(id, id === sectionId);
     });
+
+    // 일부 진입 경로(브라우저 뒤로가기/직접 섹션 표시/외부 라우트)에서는
+    // openMyKoreanSection() 또는 openMyDrawingFromDashboard()를 거치지 않아
+    // 동적으로 채우는 단계 목록이 빈 화면으로 남을 수 있다.
+    refreshDynamicSectionContent(sectionId);
+}
+
+function refreshDynamicSectionContent(sectionId) {
+    requestAnimationFrame(() => {
+        if (sectionId === 'my-korean-section') {
+            const profileLevel = document.getElementById('my-korean-profile-level');
+            const profileName = document.getElementById('my-korean-profile-name');
+            const stepLabel = document.getElementById('current-learning-step-label');
+            if (profileLevel) profileLevel.innerText = getLearningLevelLabel(currentLearningStep);
+            if (profileName) profileName.innerText = document.getElementById('dashboard-account-name')?.innerText || currentUserName || '이름';
+            if (stepLabel) stepLabel.innerText = getLearningStepBadge(currentLearningStep);
+            if (typeof renderMyKoreanTabs === 'function') renderMyKoreanTabs();
+            if (typeof renderMyKoreanList === 'function') renderMyKoreanList();
+        }
+
+        if (sectionId === 'my-drawing-section' && typeof renderMyDrawingSection === 'function') {
+            renderMyDrawingSection();
+        }
+    });
 }
 
 function syncInitialHiddenSections() {
