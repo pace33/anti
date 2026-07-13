@@ -310,18 +310,29 @@ const CHANCHAN_LESSONS = [
         title: "복잡한 모음 단어 공부하기",
         focus: ["ㅑ", "ㅕ", "ㅘ", "ㅝ", "ㅟ", "ㅢ", "ㅙ", "ㅚ"],
         activities: ["readThreeTimes", "fillOneJamo", "wordPictureMatch", "nonsenseWordRead", "writeOnCanvas"],
-        words: ["야구", "여우", "우유", "의사", "의자", "과자", "사과", "돼지", "거위", "더위", "추위", "우표", "튜브", "바위", "소녀"],
-        nonsenseWords: ["야우", "여구", "버위", "뇨드"],
+        words: ["해", "여우", "야구", "우표", "요리사", "우유", "새", "야채", "여자", "비녀", "소녀", "가야", "가요", "고요", "유도", "유리", "뉴스", "튜브", "의사", "의자", "바위", "거위", "과자", "교과서", "추위", "더위", "위치", "토의", "주의", "회의", "사과", "효과", "좌우", "화로", "왜가리", "돼지"],
+        nonsenseWords: ["그배", "여구", "디야", "스바냐", "요자", "요우", "버유", "무사", "와토", "화지", "두과", "버위", "위치", "테추", "소의", "보녀", "주려", "고라", "오휴", "지외", "소아", "버즈", "구의", "바애"],
         fillItems: [
-            { word: "과자", prompt: "□자", answer: "과", hint: "첫 글자를 들어 봐요." },
-            { word: "돼지", prompt: "□지", answer: "돼", hint: "복잡한 모음 소리를 들어 봐요." },
-            { word: "의자", prompt: "□자", answer: "의", hint: "처음 소리를 들어 봐요." }
+            { word: "야구", prompt: "ㅇ□", answer: "ㅑ", hint: "첫 글자의 모음을 완성해요." },
+            { word: "의사", prompt: "ㅇ□", answer: "ㅢ", hint: "처음 소리를 들어 봐요." },
+            { word: "여우", prompt: "ㅇ□", answer: "ㅕ", hint: "첫 글자의 모음을 완성해요." },
+            { word: "과자", prompt: "ㄱ□", answer: "ㅘ", hint: "복잡한 모음 소리를 들어 봐요." },
+            { word: "비녀", prompt: "ㅂ□", answer: "ㅣ", hint: "비녀의 첫 소리를 들어 봐요." },
+            { word: "야채", prompt: "ㅇ□", answer: "ㅑ", hint: "야채의 첫 소리를 들어 봐요." }
         ],
         pictureItems: [
-            { word: "야구", icon: "⚾" },
+            { word: "해", icon: "☀️" },
             { word: "여우", icon: "🦊" },
-            { word: "돼지", icon: "🐷" },
-            { word: "우표", icon: "✉️" }
+            { word: "야구", icon: "⚾" },
+            { word: "우표", icon: "📮" },
+            { word: "요리사", icon: "🧑‍🍳" },
+            { word: "우유", icon: "🥛" },
+            { word: "의사", icon: "🧑‍⚕️" },
+            { word: "의자", icon: "🪑" },
+            { word: "바위", icon: "🪨" },
+            { word: "거위", icon: "🪿" },
+            { word: "과자", icon: "🍪" },
+            { word: "교과서", icon: "📘" }
         ]
     },
     {
@@ -4678,19 +4689,12 @@ window.speakChar = function(char) {
 
 // 결합 카드 클릭 시 애니메이션 재시작 + 순차적 자모음 음성(므, 아, 마) 출력
 let activeTtsTimeouts = [];
-window.restartCombineAnim = function(card) {
-    const els = card.querySelectorAll('.combine-left,.combine-right,.combine-result,.combine-op,.combine-dot-up,.combine-dot-up-double,.combine-dot-down,.combine-dot-down-double,.combine-base,.combine-vowel-base,.combine-dot-right,.combine-dot-left');
-    card.style.visibility = 'hidden';
-    els.forEach(el => {
-        el.style.animation = 'none';
-    });
-    requestAnimationFrame(() => {
-        void card.offsetWidth;
-        els.forEach(el => {
-            el.style.animation = '';
-        });
-        card.style.visibility = '';
-    });
+window.restartCombineAnim = function(card, options = {}) {
+    if (!card) return;
+    card.classList.add('combine-reset');
+    void card.offsetWidth;
+    card.classList.remove('combine-reset');
+    void card.offsetWidth;
 
     // 기존 진행 중인 모든 합성 음성 대기열 취소
     activeTtsTimeouts.forEach(t => clearTimeout(t));
@@ -4698,7 +4702,7 @@ window.restartCombineAnim = function(card) {
     cancelSpeech();
 
     const combosAttr = card.getAttribute('data-combos');
-    if (combosAttr) {
+    if (combosAttr && options.speak !== false) {
         try {
             const combos = JSON.parse(combosAttr);
             combos.forEach((c, idx) => {
@@ -4828,7 +4832,7 @@ function renderCardContent(card) {
                 <div class="combine-box combine-result" style="${d}">${c.res}</div>
             </div>`;
         }).join('');
-        return `<div class="combine-card" onclick="restartCombineAnim(this)" data-combos="${combosData}" title="눌러서 다시 보기">${rows}<div class="combine-replay">🔄 눌러서 다시 보기</div></div>`;
+        return `<div class="combine-card" onclick="restartCombineAnim(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();restartCombineAnim(this)}" role="button" tabindex="0" data-combos="${combosData}" title="눌러서 다시 보기">${rows}<div class="combine-replay">🔄 눌러서 다시 보기</div></div>`;
     }
     // 3) 일반 텍스트 카드
     return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
@@ -7460,6 +7464,83 @@ const PICTURE_WORD_LESSON_CONFIGS = {
     14: { groups: LESSON14_READING_GROUPS }
 };
 
+const LESSON20_READING_GROUPS = [
+    {
+        id: 'complex-basic',
+        title: '복잡한 모음 단어',
+        prompt: '그림을 눌러 소리를 듣고, 그림 단어를 소리 내어 읽어요.',
+        pictureItems: [
+            { word: '해', icon: '☀️' },
+            { word: '여우', icon: '🦊' },
+            { word: '야구', icon: '⚾' },
+            { word: '우표', icon: '📮' },
+            { word: '요리사', icon: '🧑‍🍳' },
+            { word: '우유', icon: '🥛' }
+        ],
+        wordRows: [
+            ['새', '야채', '여자', '비녀'],
+            ['소녀', '가야', '가요', '고요'],
+            ['유도', '유리', '뉴스', '튜브']
+        ]
+    },
+    {
+        id: 'complex-expanded',
+        title: '복잡한 모음 단어 더 읽기',
+        prompt: '그림을 눌러 소리를 듣고, 복잡한 모음 단어를 읽어요.',
+        pictureItems: [
+            { word: '의사', icon: '🧑‍⚕️' },
+            { word: '의자', icon: '🪑' },
+            { word: '바위', icon: '🪨' },
+            { word: '거위', icon: '🪿' },
+            { word: '과자', icon: '🍪' },
+            { word: '교과서', icon: '📘' }
+        ],
+        wordRows: [
+            ['추위', '더위', '위치', '토의'],
+            ['주의', '회의', '사과', '효과'],
+            ['좌우', '화로', '왜가리', '돼지']
+        ]
+    }
+];
+
+const LESSON20_READ_FIND_ITEMS = [
+    { word: '여우', icon: '🦊', choices: ['야우', '여우'] },
+    { word: '해', icon: '☀️', choices: ['해', '애'] },
+    { word: '야구', icon: '⚾', choices: ['야구', '여구'] },
+    { word: '우유', icon: '🥛', choices: ['우구', '우유'] },
+    { word: '요리사', icon: '🧑‍🍳', choices: ['요리사', '여리사'] },
+    { word: '비녀', icon: '💇', choices: ['바녀', '비녀'] },
+    { word: '소녀', icon: '👧', choices: ['서녀', '소녀'] },
+    { word: '돼지', icon: '🐷', choices: ['돼지', '데지'] },
+    { word: '튜브', icon: '🛟', choices: ['튜브', '투브'] },
+    { word: '사과', icon: '🍎', choices: ['사과', '서과'] },
+    { word: '의사', icon: '🧑‍⚕️', choices: ['의사', '의서'] },
+    { word: '바위', icon: '🪨', choices: ['버위', '바위'] },
+    { word: '과자', icon: '🍪', choices: ['과자', '과지'] },
+    { word: '거위', icon: '🪿', choices: ['거우', '거위'] },
+    { word: '더위', icon: '🥵', choices: ['더우', '더위'] },
+    { word: '교과서', icon: '📘', choices: ['교과서', '교과스'] },
+    { word: '야채', icon: '🥕', choices: ['야처', '야채'] },
+    { word: '의자', icon: '🪑', choices: ['의자', '으자'] },
+    { word: '추위', icon: '🥶', choices: ['추위', '추이'] },
+    { word: '우표', icon: '📮', choices: ['오표', '우표'] }
+];
+
+const COMPLEX_VOWEL_MEDIALS = new Set(['ㅐ', 'ㅔ', 'ㅑ', 'ㅕ', 'ㅒ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']);
+const COMPLEX_VOWEL_MEDIAL_INDEXES = new Set([1, 3, 5, 7, 9, 10, 11, 14, 15, 16, 19]);
+function getSyllableMedial(char) {
+    const code = char?.charCodeAt?.(0) - 0xac00;
+    if (!Number.isInteger(code) || code < 0 || code > 11171) return '';
+    return ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'][Math.floor(code / 28) % 21];
+}
+function renderComplexVowelWord(word) {
+    return [...word].map((char) => {
+        const medial = getSyllableMedial(char);
+        const highlighted = COMPLEX_VOWEL_MEDIALS.has(medial) || COMPLEX_VOWEL_MEDIAL_INDEXES.has(Math.floor((char.charCodeAt(0) - 0xac00) / 28) % 21);
+        return `<span class="complex-word-syllable ${highlighted ? 'is-complex' : ''}">${char}</span>`;
+    }).join('');
+}
+
 const LESSON12_FINAL_CHECK_ITEMS = [
     { target: '아', choices: ['아', '허', '우', '루'] },
     { target: '러', choices: ['호', '러', '로', '후'] },
@@ -7521,9 +7602,37 @@ const LESSON14_COMPLETION_WRITING_SETS = [
     }
 ];
 
+const LESSON20_COMPLETION_WRITING_SETS = [
+    {
+        title: '쓰기 1 · 완성해 보기',
+        prompt: '그림을 보고 빠진 모음이나 자음을 떠올리며 단어를 완성해요.',
+        items: [
+            { word: '야구', icon: '⚾', tiles: [{ syllable: '야', initial: 'ㅇ', vowel: 'ㅑ', givenSlot: 'initial' }, { syllable: '구', initial: 'ㄱ', vowel: 'ㅜ', givenSlot: 'vowel' }] },
+            { word: '의사', icon: '🧑‍⚕️', tiles: [{ syllable: '의', initial: 'ㅇ', vowel: 'ㅢ', givenSlot: 'initial' }, { syllable: '사', initial: 'ㅅ', vowel: 'ㅏ', givenSlot: 'vowel' }] },
+            { word: '여우', icon: '🦊', tiles: [{ syllable: '여', initial: 'ㅇ', vowel: 'ㅕ', givenSlot: 'initial' }, { syllable: '우', initial: 'ㅇ', vowel: 'ㅜ', givenSlot: 'initial' }] },
+            { word: '과자', icon: '🍪', tiles: [{ syllable: '과', initial: 'ㄱ', vowel: 'ㅘ', givenSlot: 'initial' }, { syllable: '자', initial: 'ㅈ', vowel: 'ㅏ', givenSlot: 'initial' }] },
+            { word: '비녀', icon: '💇', tiles: [{ syllable: '비', initial: 'ㅂ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '녀', initial: 'ㄴ', vowel: 'ㅕ', givenSlot: 'initial' }] },
+            { word: '야채', icon: '🥕', tiles: [{ syllable: '야', initial: 'ㅇ', vowel: 'ㅑ', givenSlot: 'initial' }, { syllable: '채', initial: 'ㅊ', vowel: 'ㅐ', givenSlot: 'initial' }] }
+        ]
+    },
+    {
+        title: '쓰기 2 · 완성해 보기',
+        prompt: '그림 단어를 듣고 빈칸에 알맞은 글자를 완성해요.',
+        items: [
+            { word: '돼지', icon: '🐷', tiles: [{ syllable: '돼', initial: 'ㄷ', vowel: 'ㅙ', givenSlot: 'initial' }, { syllable: '지', initial: 'ㅈ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+            { word: '거위', icon: '🪿', tiles: [{ syllable: '거', initial: 'ㄱ', vowel: 'ㅓ', givenSlot: 'vowel' }, { syllable: '위', initial: 'ㅇ', vowel: 'ㅟ', givenSlot: 'initial' }] },
+            { word: '더위', icon: '🥵', tiles: [{ syllable: '더', initial: 'ㄷ', vowel: 'ㅓ', givenSlot: 'vowel' }, { syllable: '위', initial: 'ㅇ', vowel: 'ㅟ', givenSlot: 'initial' }] },
+            { word: '튜브', icon: '🛟', tiles: [{ syllable: '튜', initial: 'ㅌ', vowel: 'ㅠ', givenSlot: 'initial' }, { syllable: '브', initial: 'ㅂ', vowel: 'ㅡ', givenSlot: 'vowel' }] },
+            { word: '추위', icon: '🥶', tiles: [{ syllable: '추', initial: 'ㅊ', vowel: 'ㅠ', givenSlot: 'initial' }, { syllable: '위', initial: 'ㅇ', vowel: 'ㅟ', givenSlot: 'vowel' }] },
+            { word: '우표', icon: '📮', tiles: [{ syllable: '우', initial: 'ㅇ', vowel: 'ㅜ', givenSlot: 'initial' }, { syllable: '표', initial: 'ㅍ', vowel: 'ㅛ', givenSlot: 'initial' }] }
+        ]
+    }
+];
+
 const LESSON_COMPLETION_WRITING_SETS_BY_ID = {
     13: LESSON13_COMPLETION_WRITING_SETS,
-    14: LESSON14_COMPLETION_WRITING_SETS
+    14: LESSON14_COMPLETION_WRITING_SETS,
+    20: LESSON20_COMPLETION_WRITING_SETS
 };
 
 const LESSON13_BOARD_WORDS = [
@@ -7540,9 +7649,16 @@ const LESSON14_BOARD_WORDS = [
     '모두', '토지', '스포', '이모', '도로', '고모', '보자기', '도착'
 ];
 
+const LESSON20_BOARD_WORDS = [
+    '출발', '의자', '사과', '보녀', '가요', '바위', '가야', '추위', '더위', '주의',
+    '위치', '터치', '효과', '투표', '요리사', '돼지', '의사', '화로', '토의', '위로',
+    '왜가리', '과자', '거위', '바퀴', '야구', '소녀', '해', '여우', '야채', '오후', '새', '도착'
+];
+
 const LESSON_BOARD_WORDS_BY_ID = {
     13: LESSON13_BOARD_WORDS,
-    14: LESSON14_BOARD_WORDS
+    14: LESSON14_BOARD_WORDS,
+    20: LESSON20_BOARD_WORDS
 };
 
 window.lesson13ReadChecks = window.lesson13ReadChecks || {};
@@ -7815,6 +7931,281 @@ function renderLesson13WordGame(lessonId) {
     `;
 }
 
+const LESSON_LINE_MATCH_CONFIGS = {
+    15: {
+        title: 'ㅐ·ㅔ 단어 선긋기',
+        prompt: '단어를 누른 다음 알맞은 그림을 눌러 선으로 이어요.',
+        items: [
+            { key: '개', word: '개', icon: '🐶' },
+            { key: '게', word: '게', icon: '🦀' },
+            { key: '해', word: '해', icon: '☀️' },
+            { key: '배', word: '배', icon: '🍐' }
+        ]
+    },
+    16: {
+        title: 'ㅖ·ㅒ 단어 선긋기',
+        prompt: '단어를 누른 다음 알맞은 그림을 눌러 선으로 이어요.',
+        items: [
+            { key: '얘기', word: '얘기', icon: '💬' },
+            { key: '시계', word: '시계', icon: '🕒' },
+            { key: '예의', word: '예의', icon: '🙇' }
+        ]
+    },
+    17: {
+        title: 'ㅘ·ㅝ 단어 선긋기',
+        prompt: '단어를 누른 다음 알맞은 그림을 눌러 선으로 이어요.',
+        items: [
+            { key: '과자', word: '과자', icon: '🍪' },
+            { key: '화가', word: '화가', icon: '🎨' },
+            { key: '원', word: '원', icon: '⭕' }
+        ]
+    },
+    18: {
+        title: 'ㅟ·ㅢ 단어 선긋기',
+        prompt: '단어를 누른 다음 알맞은 그림을 눌러 선으로 이어요.',
+        items: [
+            { key: '귀', word: '귀', icon: '👂' },
+            { key: '의사', word: '의사', icon: '🧑‍⚕️' },
+            { key: '의자', word: '의자', icon: '🪑' }
+        ]
+    },
+    19: {
+        title: 'ㅞ·ㅙ·ㅚ 단어 선긋기',
+        prompt: '단어를 누른 다음 알맞은 그림을 눌러 선으로 이어요.',
+        items: [
+            { key: '왜', word: '왜', icon: '❓' },
+            { key: '뇌', word: '뇌', icon: '🧠' },
+            { key: '돼지', word: '돼지', icon: '🐷' },
+            { key: '쇠', word: '쇠', icon: '🔩' },
+            { key: '외투', word: '외투', icon: '🧥' }
+        ]
+    }
+};
+
+window.lessonLineMatchState = window.lessonLineMatchState || {};
+
+function renderLessonLineMatch(lessonId) {
+    const config = LESSON_LINE_MATCH_CONFIGS[Number(lessonId)];
+    if (!config) return '';
+    return `
+        <div class="learning-practice-card lesson-line-match-shell">
+            <div class="learning-card-label practice-label">선긋기 · ${config.title}</div>
+            <div class="lesson13-instruction">${config.prompt}</div>
+            <div class="lesson-line-match-status" id="lesson-line-match-status-${lessonId}">단어를 먼저 골라요.</div>
+            <div class="lesson-line-match-board" data-line-match-board="${lessonId}">
+                <svg class="lesson-line-match-svg" aria-hidden="true">
+                    ${config.items.map((item) => `<line class="lesson-line-match-line" data-line-key="${item.key}" x1="0" y1="0" x2="0" y2="0"></line>`).join('')}
+                </svg>
+                <div class="lesson-line-match-column words">
+                    <div class="lesson-line-match-heading">단어</div>
+                    ${config.items.map((item) => `
+                        <button type="button" class="lesson-line-match-word" data-line-word-key="${item.key}"
+                            onclick="selectLessonLineMatch(${lessonId}, 'word', '${item.key}', this)">${item.word}</button>
+                    `).join('')}
+                </div>
+                <div class="lesson-line-match-column pictures">
+                    <div class="lesson-line-match-heading">그림</div>
+                    ${config.items.map((item) => `
+                        <button type="button" class="lesson-line-match-picture" data-line-picture-key="${item.key}"
+                            onclick="selectLessonLineMatch(${lessonId}, 'picture', '${item.key}', this)"
+                            aria-label="${item.word} 그림">${item.icon}</button>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="lesson-line-match-help">연결한 단어를 다시 눌러 소리 내어 읽어 보세요.</div>
+        </div>
+    `;
+}
+
+function getLessonLineMatchBoard(lessonId) {
+    return document.querySelector(`[data-line-match-board="${lessonId}"]`);
+}
+
+function drawLessonLineMatchLine(lessonId, key) {
+    const board = getLessonLineMatchBoard(lessonId);
+    if (!board) return;
+    const wordButton = board.querySelector(`[data-line-word-key="${key}"]`);
+    const pictureButton = board.querySelector(`[data-line-picture-key="${key}"]`);
+    const line = board.querySelector(`[data-line-key="${key}"]`);
+    if (!wordButton || !pictureButton || !line) return;
+    const boardRect = board.getBoundingClientRect();
+    const wordRect = wordButton.getBoundingClientRect();
+    const pictureRect = pictureButton.getBoundingClientRect();
+    line.setAttribute('x1', String(wordRect.right - boardRect.left));
+    line.setAttribute('y1', String(wordRect.top + wordRect.height / 2 - boardRect.top));
+    line.setAttribute('x2', String(pictureRect.left - boardRect.left));
+    line.setAttribute('y2', String(pictureRect.top + pictureRect.height / 2 - boardRect.top));
+    line.style.visibility = 'visible';
+}
+
+window.selectLessonLineMatch = async function(lessonId, side, key, button) {
+    const config = LESSON_LINE_MATCH_CONFIGS[Number(lessonId)];
+    const item = config?.items.find((candidate) => candidate.key === key);
+    if (!item) return;
+    const stateKey = String(lessonId);
+    const state = window.lessonLineMatchState[stateKey] || { pendingKey: '', matches: {} };
+    window.lessonLineMatchState[stateKey] = state;
+    const board = getLessonLineMatchBoard(lessonId);
+    const status = document.getElementById(`lesson-line-match-status-${lessonId}`);
+    if (side === 'word') {
+        if (state.matches[key]) {
+            speakLesson13Word(item.word, button);
+            return;
+        }
+        state.pendingKey = key;
+        board?.querySelectorAll('.lesson-line-match-word').forEach((el) => el.classList.toggle('is-selected', el === button));
+        board?.querySelectorAll('.lesson-line-match-picture').forEach((el) => el.classList.remove('is-target'));
+        board?.querySelector(`[data-line-picture-key="${key}"]`)?.classList.add('is-target');
+        speakLesson13Word(item.word, button);
+        if (status) status.textContent = `${item.word}를 골랐어요. 알맞은 그림을 눌러요.`;
+        return;
+    }
+    if (!state.pendingKey) {
+        if (status) status.textContent = '먼저 왼쪽 단어를 골라요.';
+        return;
+    }
+    const isCorrect = state.pendingKey === key;
+    if (!isCorrect) {
+        button.classList.add('is-wrong');
+        window.setTimeout(() => button.classList.remove('is-wrong'), 450);
+        speakTextKo('다시 찾아보세요');
+        if (status) status.textContent = '아직 아니에요. 단어를 다시 보고 골라요.';
+        return;
+    }
+    state.matches[key] = true;
+    const wordButton = board?.querySelector(`[data-line-word-key="${key}"]`);
+    wordButton?.classList.remove('is-selected');
+    wordButton?.classList.add('is-matched');
+    button.classList.remove('is-target');
+    button.classList.add('is-matched');
+    drawLessonLineMatchLine(lessonId, key);
+    state.pendingKey = '';
+    const matchedCount = Object.keys(state.matches).length;
+    if (status) status.textContent = matchedCount === config.items.length ? '모두 잘 이었어요! 단어를 소리 내어 읽어 보세요.' : `${item.word}를 잘 이었어요. 다음 단어를 골라요.`;
+    speakLesson13Word(item.word, button);
+    await recordKoreanAttempt({ lessonId, lessonTitle: getLessonTitleForReport(lessonId), unitId: getUnitIdForLesson(lessonId), activityType: 'lineMatch', word: item.word, answer: item.word, userAnswer: item.word, isCorrect: true, errorType: null });
+};
+
+function redrawLessonLineMatchLines() {
+    Object.keys(window.lessonLineMatchState || {}).forEach((lessonId) => {
+        const state = window.lessonLineMatchState[lessonId];
+        Object.keys(state.matches || {}).forEach((key) => drawLessonLineMatchLine(lessonId, key));
+    });
+}
+if (!window.lessonLineMatchResizeBound) {
+    window.addEventListener('resize', redrawLessonLineMatchLines);
+    window.lessonLineMatchResizeBound = true;
+}
+
+function renderLesson20ReadingGroup(group, groupIndex) {
+    return `
+        <div class="learning-practice-card lesson13-reading-shell lesson20-reading-group">
+            <div class="learning-card-label practice-label">읽기 ${groupIndex + 1} · ${group.title}</div>
+            <div class="lesson13-instruction">🔊 ${group.prompt}</div>
+            <div class="lesson13-picture-grid">
+                ${group.pictureItems.map((item, index) => `
+                    <button type="button" class="lesson13-picture-card" style="--card-index:${index}"
+                        onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">
+                        <span class="picture" aria-hidden="true">${item.icon}</span>
+                        <span><span class="word">${item.word}</span><span class="listen-label">🔊 눌러서 듣기</span></span>
+                    </button>
+                `).join('')}
+            </div>
+            <div class="border-2 border-green-100 rounded-2xl p-4 bg-green-50">
+                <div class="text-xl font-black text-[#2c3e50] mb-3">한 줄씩 소리 내어 읽어요</div>
+                ${group.wordRows.map((row) => `
+                    <div class="lesson13-word-line-grid mb-2">
+                        ${row.map((word) => `<button type="button" class="lesson13-word-chip" onclick="speakLesson13Word('${word}', this)">🔊 ${word}</button>`).join('')}
+                    </div>
+                `).join('')}
+            </div>
+            ${renderLesson13ReadChecks(20, `lesson20-${group.id}`, group.title)}
+        </div>
+    `;
+}
+
+function renderLesson20ReadingPage() {
+    return `<div class="lesson20-reading-page">${LESSON20_READING_GROUPS.map(renderLesson20ReadingGroup).join('')}</div>`;
+}
+
+function renderLesson20NonsensePage() {
+    const words = getChanchanLesson(20)?.nonsenseWords || [];
+    return `
+        <div class="learning-practice-card lesson13-reading-shell lesson20-nonsense-shell">
+            <div class="learning-card-label practice-label">읽기 3 · 복잡한 모음 무의미 단어</div>
+            <div class="lesson13-instruction">단어를 눌러 소리를 듣고, 복잡한 모음 부분의 색을 살펴보며 읽어요.</div>
+            <div class="lesson20-nonsense-grid">
+                ${words.map((word, index) => `
+                    <button type="button" class="lesson20-nonsense-word" style="--card-index:${index}"
+                        onclick="speakLesson20Nonsense('${word}', this)" aria-label="${word} 소리 듣기">
+                        ${renderComplexVowelWord(word)}
+                        <span class="lesson20-nonsense-listen">🔊 눌러서 듣기</span>
+                    </button>
+                `).join('')}
+            </div>
+            <div class="lesson20-color-guide"><span class="complex-word-syllable is-complex">복잡한 모음</span> 부분을 눈여겨보며 세 번 읽어요.</div>
+        </div>
+    `;
+}
+
+window.speakLesson20Nonsense = function(word, button) {
+    speakLesson13Word(word, button);
+    markNonsenseRead(20, word, button).catch(() => {});
+};
+
+function renderLesson20ReadFind() {
+    return `
+        <div class="learning-practice-card lesson13-reading-shell lesson20-read-find-shell">
+            <div class="learning-card-label practice-label">확인하기 1·2 · 읽고 찾기</div>
+            <div class="lesson13-instruction">그림을 누르면 두 단어를 모두 읽어 줘요. 그림에 알맞은 단어를 골라요.</div>
+            <div class="lesson20-read-find-grid">
+                ${LESSON20_READ_FIND_ITEMS.map((item, index) => `
+                    <div class="lesson20-read-find-card" data-read-find-index="${index}">
+                        <button type="button" class="lesson20-read-find-picture" onclick="speakLesson20ReadFindChoices(${index}, this)" aria-label="${item.word} 그림과 두 단어 듣기">
+                            <span aria-hidden="true">${item.icon}</span><small>그림 누르면 두 단어 듣기</small>
+                        </button>
+                        <div class="lesson20-read-find-choices">
+                            ${item.choices.map((choice) => `<button type="button" class="lesson20-read-find-choice" onclick="selectLesson20ReadFind(${index}, '${choice}', this)">${choice}</button>`).join('')}
+                        </div>
+                        <div class="picture-match-feedback lesson20-read-find-feedback"></div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+window.speakLesson20ReadFindChoices = function(index, button) {
+    const item = LESSON20_READ_FIND_ITEMS[index];
+    if (!item) return;
+    button.classList.remove('is-speaking');
+    void button.offsetWidth;
+    button.classList.add('is-speaking');
+    window.setTimeout(() => button.classList.remove('is-speaking'), 900);
+    speakTextKo(`${item.choices[0]}, ${item.choices[1]}`);
+};
+
+window.selectLesson20ReadFind = async function(index, userAnswer, button) {
+    const item = LESSON20_READ_FIND_ITEMS[index];
+    if (!item) return;
+    const isCorrect = item.word === userAnswer;
+    const card = button.closest('.lesson20-read-find-card');
+    const feedback = card?.querySelector('.lesson20-read-find-feedback');
+    card?.querySelectorAll('.lesson20-read-find-choice').forEach((choice) => choice.classList.remove('is-correct', 'is-wrong'));
+    button.classList.add(isCorrect ? 'is-correct' : 'is-wrong');
+    if (feedback) {
+        feedback.textContent = isCorrect ? `맞았어요! ${item.word}예요.` : '다시 그림을 보고 한 번 더 골라요.';
+        feedback.className = `picture-match-feedback lesson20-read-find-feedback ${isCorrect ? 'is-correct' : 'is-wrong'}`;
+    }
+    speakTextKo(isCorrect ? `맞았어요. ${item.word}` : '다시 골라 보세요');
+    const lesson = getChanchanLesson(20);
+    await recordKoreanAttempt({ lessonId: 20, lessonTitle: lesson?.title, unitId: lesson?.unit, activityType: 'wordPictureMatch', word: item.word, answer: item.word, userAnswer, isCorrect, errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH });
+};
+
+function renderLesson20CompletionWriting() {
+    return `<div class="lesson20-completion-page">${LESSON20_COMPLETION_WRITING_SETS.map((_, index) => renderLesson13CompletionWriting(20, index)).join('')}</div>`;
+}
+
 const MAKE_LETTER_ACTIVITY_CONFIGS = {
     8: {
         vowels: ['ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'],
@@ -7964,10 +8355,12 @@ const LESSON_MOUTH_ACTIVITY_CONFIGS = {
     },
     16: {
         title: '입모양을 보고 ㅖ와 ㅒ 소리를 알아봐요',
+        guideText: '소리를 들으며 입이 벌어지는 모습을 살펴보세요.',
+        sequenceText: 'ㅣ → ㅖ → ㅒ 순서로 입이 점점 크게 벌어져요.',
         items: [
-            { char: 'ㅣ', label: '입을 조금 벌려요', description: 'ㅣ는 입을 조금 벌려요.' },
-            { char: 'ㅖ', label: '입을 더 벌려요', description: 'ㅖ는 ㅣ에서 시작해 입을 더 벌려요.' },
-            { char: 'ㅒ', label: '입을 가장 크게 벌려요', description: 'ㅒ는 ㅖ보다 입을 더 크게 벌려요.' }
+            { char: 'ㅣ', label: '입을 작게 벌려요', description: 'ㅣ는 입을 작게 벌려요.', mouthShape: { width: 66, height: 11, jawDrop: 0, teethHeight: 4, tongueHeight: 4 } },
+            { char: 'ㅖ', label: '입을 조금 더 벌려요', description: 'ㅖ는 ㅣ보다 입을 조금 더 벌려요.', mouthShape: { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 } },
+            { char: 'ㅒ', label: '입을 가장 크게 벌려요', description: 'ㅒ는 입을 가장 크게 벌려요.', mouthShape: { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 } }
         ],
         quizChoices: ['ㅖ', 'ㅒ'],
         quizTitle: 'ㅖ와 ㅒ 소리 구별',
@@ -8036,8 +8429,6 @@ function getLessonMouthStyle(item) {
 function renderLessonMouthFace(item) {
     return `
         <div class="mouth-face">
-            <span class="mouth-eye left"></span>
-            <span class="mouth-eye right"></span>
             <span class="mouth-nose"></span>
             <div class="mouth-jaw">
                 <div class="mouth-lips">
@@ -8994,6 +9385,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const numericStep = Number(step);
     const hasMakeLettersActivity = Boolean(MAKE_LETTER_ACTIVITY_CONFIGS[numericStep]);
     const isPictureWordLesson = Boolean(PICTURE_WORD_LESSON_CONFIGS[numericStep]);
+    const isComplexLineLesson = numericStep >= 15 && numericStep <= 19;
+    const isCustomLesson20 = numericStep === 20;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
     const practiceFlow = learningPracticeFlows[step];
     const isActivityFlow = visibleActivitySteps.includes(step) && practiceFlow;
@@ -9002,6 +9395,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (numericStep === 12) totalSections = 5;
     if (numericStep === 13) totalSections = 7;
     if (numericStep === 14) totalSections = 7;
+    if (isComplexLineLesson) totalSections = 4;
+    if (isCustomLesson20) totalSections = 5;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
     window.currentLearningActivityStep = numericStep;
@@ -9039,6 +9434,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
             sectionTitle = '기본 모음 전체 따라 쓰기';
         } else if (step === 7 && safeIndex === 2) {
             sectionTitle = detail.sections[1].title;
+        } else if (isCustomLesson20) {
+            sectionTitle = ['읽기 1·2 · 그림과 단어', '읽기 3 · 무의미 단어', '확인하기 1·2 · 읽고 찾기', '쓰기 1·2 · 완성해 보기', '놀이 · 단어 놀이 해보기'][safeIndex];
+        } else if (isComplexLineLesson && safeIndex === 3) {
+            sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
             const pictureLessonTitles = getLessonCompletionWritingSets(numericStep).length
                 ? [
@@ -9077,7 +9476,19 @@ function renderLearningDetail(step, sectionIndex = 0) {
         const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
         const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
         let contentHtml = '';
-        if (isPictureWordLesson && safeIndex === 0) {
+        if (isCustomLesson20 && safeIndex === 0) {
+            contentHtml = renderLesson20ReadingPage();
+        } else if (isCustomLesson20 && safeIndex === 1) {
+            contentHtml = renderLesson20NonsensePage();
+        } else if (isCustomLesson20 && safeIndex === 2) {
+            contentHtml = renderLesson20ReadFind();
+        } else if (isCustomLesson20 && safeIndex === 3) {
+            contentHtml = renderLesson20CompletionWriting();
+        } else if (isCustomLesson20 && safeIndex === 4) {
+            contentHtml = renderLesson13WordGame(numericStep);
+        } else if (isComplexLineLesson && safeIndex === 3) {
+            contentHtml = renderLessonLineMatch(numericStep);
+        } else if (isPictureWordLesson && safeIndex === 0) {
             contentHtml = renderLesson13PictureReading(numericStep, 0);
         } else if (isPictureWordLesson && safeIndex === 1) {
             contentHtml = renderLesson13PictureReading(numericStep, 1);
@@ -9194,7 +9605,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         }
 
         const chanchanLesson = getChanchanLesson(step);
-        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
+        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
             ['readThreeTimes', 'fillOneJamo', 'wordPictureMatch', 'nonsenseWordRead', 'batchimFamily', 'finalAssessment'].includes(activity)
         ) ? `<div class="mt-4">${renderLessonDetail(step)}</div>` : '';
 
@@ -9232,8 +9643,14 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeVisibleTraceWritingCanvases();
         initializeLessonCompletionCanvases();
         initializeLesson13BoardGames();
-        if (numericStep === 15 && safeIndex === 0) {
-            window.setTimeout(() => window.playLessonMouthSequence?.(15, false, { auto: true }), 250);
+        document.querySelectorAll('.combine-card').forEach((card) => {
+            if (!card.dataset.combineAutoplayed) {
+                card.dataset.combineAutoplayed = 'true';
+                window.restartCombineAnim(card, { speak: false });
+            }
+        });
+        if ((numericStep === 15 || numericStep === 16) && safeIndex === 0) {
+            window.setTimeout(() => window.playLessonMouthSequence?.(numericStep, false, { auto: true }), 250);
         }
     });
 }

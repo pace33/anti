@@ -785,6 +785,213 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     background: #fff7ed;
     color: #c2410c;
 }
+.lesson20-reading-page,
+.lesson20-completion-page {
+    display: grid;
+    gap: 22px;
+}
+.lesson20-nonsense-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+.lesson20-nonsense-word {
+    min-height: 106px;
+    border: 3px solid #c7e8c4;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #20364b;
+    font-size: 2.15rem;
+    font-weight: 1000;
+    box-shadow: 0 5px 0 rgba(70, 179, 165, 0.12);
+    transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+.lesson20-nonsense-word:hover,
+.lesson20-nonsense-word.is-speaking {
+    border-color: #fb923c;
+    background: #fff7ed;
+    transform: translateY(-2px);
+}
+.complex-word-syllable.is-complex {
+    color: #dc2626;
+    background: #fee2e2;
+    border-radius: 8px;
+    padding: 0 3px;
+}
+.lesson20-nonsense-listen {
+    display: block;
+    margin-top: 4px;
+    color: #0f766e;
+    font-size: .78rem;
+    font-weight: 900;
+}
+.lesson20-color-guide {
+    border: 2px dashed #86efac;
+    border-radius: 14px;
+    padding: 10px;
+    color: #166534;
+    text-align: center;
+    font-weight: 900;
+}
+.lesson20-read-find-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.lesson20-read-find-card {
+    border: 3px solid #99e8df;
+    border-radius: 18px;
+    padding: 14px;
+    background: #ffffff;
+    text-align: center;
+}
+.lesson20-read-find-picture {
+    width: 100%;
+    min-height: 112px;
+    border: 2px solid #bfdbfe;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #20364b;
+    display: grid;
+    place-items: center;
+    gap: 4px;
+    font-size: 4.4rem;
+    line-height: 1;
+}
+.lesson20-read-find-picture small {
+    color: #1d4ed8;
+    font-size: .82rem;
+    font-weight: 900;
+}
+.lesson20-read-find-picture.is-speaking {
+    border-color: #fb923c;
+    background: #fff7ed;
+    animation: lesson13-card-speak .65s ease;
+}
+.lesson20-read-find-choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+.lesson20-read-find-choice {
+    min-height: 58px;
+    border: 3px solid #43b83f;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #31922e;
+    font-size: 1.45rem;
+    font-weight: 1000;
+}
+.lesson20-read-find-choice.is-correct {
+    background: #22c55e;
+    border-color: #16a34a;
+    color: #ffffff;
+}
+.lesson20-read-find-choice.is-wrong {
+    background: #fff7ed;
+    border-color: #fb923c;
+    color: #c2410c;
+}
+.lesson20-read-find-feedback {
+    min-height: 1.5rem;
+    margin-top: 10px;
+    color: #0f766e;
+    font-weight: 1000;
+}
+.lesson20-read-find-feedback.is-correct { color: #16a34a; }
+.lesson20-read-find-feedback.is-wrong { color: #ea580c; }
+.lesson-line-match-shell { overflow: visible; }
+.lesson-line-match-status {
+    min-height: 1.5rem;
+    color: #0f766e;
+    font-size: 1.1rem;
+    font-weight: 1000;
+    text-align: center;
+}
+.lesson-line-match-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(42px, 12vw, 160px);
+    min-height: 360px;
+    padding: 12px 22px;
+    border: 3px solid #cbd5e1;
+    border-radius: 18px;
+    background: #ffffff;
+    overflow: hidden;
+}
+.lesson-line-match-svg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.lesson-line-match-line {
+    stroke: #f97316;
+    stroke-width: 5;
+    stroke-linecap: round;
+    visibility: hidden;
+    opacity: .82;
+}
+.lesson-line-match-column {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-auto-rows: minmax(58px, 1fr);
+    gap: 10px;
+    align-content: stretch;
+}
+.lesson-line-match-column.pictures { direction: rtl; }
+.lesson-line-match-heading {
+    display: grid;
+    place-items: center;
+    color: #1e3a8a;
+    font-size: 1.05rem;
+    font-weight: 1000;
+}
+.lesson-line-match-word,
+.lesson-line-match-picture {
+    min-width: 0;
+    min-height: 58px;
+    border: 3px solid #bfdbfe;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #20364b;
+    font-size: 1.55rem;
+    font-weight: 1000;
+}
+.lesson-line-match-picture { font-size: 2rem; }
+.lesson-line-match-word.is-selected,
+.lesson-line-match-picture.is-target {
+    border-color: #fb923c;
+    background: #fff7ed;
+    box-shadow: 0 0 0 3px rgba(251, 146, 60, .18);
+}
+.lesson-line-match-word.is-matched,
+.lesson-line-match-picture.is-matched {
+    border-color: #22c55e;
+    background: #dcfce7;
+    color: #166534;
+}
+.lesson-line-match-picture.is-wrong {
+    border-color: #ef4444;
+    background: #fee2e2;
+    animation: lesson-line-match-shake .35s ease;
+}
+.lesson-line-match-help {
+    color: #64748b;
+    font-size: .95rem;
+    font-weight: 800;
+    text-align: center;
+}
+@keyframes lesson-line-match-shake {
+    0%, 100% { transform: translateX(0); }
+    30% { transform: translateX(-5px); }
+    70% { transform: translateX(5px); }
+}
 .lesson-final-stack {
     display: grid;
     gap: 16px;
@@ -1331,8 +1538,32 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     }
     .lesson13-picture-grid,
     .lesson13-word-line-grid,
-    .lesson13-match-grid {
+    .lesson13-match-grid,
+    .lesson20-read-find-grid {
         grid-template-columns: 1fr;
+    }
+    .lesson20-nonsense-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .lesson20-nonsense-word {
+        min-height: 92px;
+        font-size: 1.7rem;
+    }
+    .lesson20-read-find-picture {
+        min-height: 98px;
+        font-size: 3.5rem;
+    }
+    .lesson-line-match-board {
+        gap: 20px;
+        min-height: 340px;
+        padding: 10px 8px;
+    }
+    .lesson-line-match-word,
+    .lesson-line-match-picture {
+        font-size: 1.18rem;
+    }
+    .lesson-line-match-picture {
+        font-size: 1.65rem;
     }
     .lesson13-picture-card {
         min-height: 150px;
@@ -1511,24 +1742,6 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     border-radius: 0 0 999px 999px;
     transform: translateY(var(--jaw-drop, 0px));
     transition: transform .3s ease;
-}
-.mouth-eye {
-    position: absolute;
-    top: 32px;
-    width: 16px;
-    height: 10px;
-    border-top: 4px solid #2c3e50;
-    border-radius: 50% 50% 0 0;
-    background: transparent;
-    z-index: 3;
-}
-.mouth-eye.left {
-    left: 27px;
-    transform: rotate(-8deg);
-}
-.mouth-eye.right {
-    right: 27px;
-    transform: rotate(8deg);
 }
 .mouth-nose {
     position: absolute;
@@ -2119,6 +2332,20 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .combine-op    { font-size:3.5rem; color:#94a3b8; font-weight:bold; animation:opFade 4.7s ease-in-out 1 both; }
 .combine-card  { cursor:pointer; transition:box-shadow 0.2s; }
 .combine-card:hover { box-shadow:0 4px 18px rgba(134,239,172,0.5); }
+.combine-card.combine-reset .combine-left,
+.combine-card.combine-reset .combine-right,
+.combine-card.combine-reset .combine-result,
+.combine-card.combine-reset .combine-op,
+.combine-card.combine-reset .combine-dot-up,
+.combine-card.combine-reset .combine-dot-up-double,
+.combine-card.combine-reset .combine-dot-down,
+.combine-card.combine-reset .combine-dot-down-double,
+.combine-card.combine-reset .combine-base,
+.combine-card.combine-reset .combine-vowel-base,
+.combine-card.combine-reset .combine-dot-right,
+.combine-card.combine-reset .combine-dot-left {
+    animation: none !important;
+}
 .combine-replay{ font-size:1.4rem; color:#94a3b8; text-align:center; margin-top:15px; }
 @keyframes combineLeft  { 0%,15%{transform:translateX(0);opacity:0} 20%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(98px);opacity:0} 68%{transform:translateX(98px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
 @keyframes combineRight { 0%,15%{transform:translateX(0);opacity:0} 20%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(-98px);opacity:0} 68%{transform:translateX(-98px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
