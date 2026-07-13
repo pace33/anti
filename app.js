@@ -8035,6 +8035,10 @@ function getLessonMouthStyle(item) {
 function renderLessonMouthFace(item) {
     return `
         <div class="mouth-face">
+            <div class="mouth-hair" aria-hidden="true">
+                <span class="mouth-hair-side left"></span>
+                <span class="mouth-hair-side right"></span>
+            </div>
             <span class="mouth-eye left"></span>
             <span class="mouth-eye right"></span>
             <span class="mouth-nose"></span>
