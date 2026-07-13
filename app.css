@@ -1719,8 +1719,15 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     .mouth-face::before,
     .mouth-jaw,
     .mouth-lips {
-        animation: none !important;
         transition: none !important;
+    }
+    .mouth-sound-card.is-playing .mouth-face::before,
+    .mouth-sound-card.is-playing .mouth-jaw,
+    .mouth-sound-card.is-playing .mouth-lips,
+    .mouth-sound-card.is-playing .mouth-teeth,
+    .mouth-sound-card.is-playing .mouth-tongue {
+        animation-duration: var(--mouth-duration, .72s) !important;
+        animation-timing-function: ease-in-out !important;
     }
 }
 @media (max-width: 900px) {

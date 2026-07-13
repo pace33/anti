@@ -8586,7 +8586,7 @@ function stopLessonMouthAudio() {
 function resetLessonMouthCards(step) {
     const selector = step ? `.mouth-sound-card[data-mouth-step="${step}"]` : '.mouth-sound-card';
     document.querySelectorAll(selector).forEach((card) => {
-        card.classList.remove('is-playing', 'is-active');
+        card.classList.remove('is-playing', 'is-active', 'is-reduced-motion');
     });
 }
 
@@ -8599,12 +8599,14 @@ function stopLessonMouthPlayback(step, options = {}) {
 
 function activateLessonMouthCard(step, char, slow = false) {
     const state = getLessonMouthPlaybackState();
-    const duration = isReducedMouthMotion() ? 650 : (slow ? 1350 : 850);
+    const reducedMotion = isReducedMouthMotion();
+    const duration = reducedMotion ? (slow ? 1100 : 720) : (slow ? 1350 : 850);
     const cards = Array.from(document.querySelectorAll(`.mouth-sound-card[data-mouth-step="${step}"]`));
     cards.forEach((card) => {
         const isTarget = card.dataset.mouthChar === char;
-        card.classList.toggle('is-playing', isTarget && !isReducedMouthMotion());
+        card.classList.toggle('is-playing', isTarget);
         card.classList.toggle('is-active', isTarget);
+        card.classList.toggle('is-reduced-motion', isTarget && reducedMotion);
         card.style.setProperty('--mouth-duration', `${duration}ms`);
     });
     state.activeTimer = window.setTimeout(() => {
@@ -8618,7 +8620,7 @@ window.playLessonMouthSequence = function(step, slow = false, options = {}) {
     if (!config) return;
     stopLessonMouthPlayback(step);
     const state = getLessonMouthPlaybackState();
-    const interval = isReducedMouthMotion() ? 650 : (slow ? 1450 : 950);
+    const interval = isReducedMouthMotion() ? (slow ? 1200 : 850) : (slow ? 1450 : 950);
     config.items.forEach((item, index) => {
         const timer = window.setTimeout(() => {
             window.playLessonMouthSound(step, item.char, slow, {
