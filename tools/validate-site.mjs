@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, extname, relative, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,9 +68,10 @@ for (const [sourcePath, source] of [['index.html', index], ['app.css', appCss], 
         if (!raw || /^(?:[a-z]+:|\/\/|#|data:)/i.test(raw)) continue;
         const withoutSuffix = raw.split(/[?#]/, 1)[0];
         const target = resolve(root, dirname(sourcePath), withoutSuffix);
-        assert(target.startsWith(`${root}/`) || target === root, `저장소 밖을 가리키는 참조입니다: ${raw}`);
+        const targetRelative = relative(root, target);
+        assert(targetRelative === '' || (!targetRelative.startsWith('..') && !isAbsolute(targetRelative)), `저장소 밖을 가리키는 참조입니다: ${raw}`);
         assert(existsSync(target) && statSync(target).isFile(), `${sourcePath}의 참조 파일이 없습니다: ${raw}`);
-        checkedReferences.add(relative(root, target));
+        checkedReferences.add(targetRelative);
     }
 }
 

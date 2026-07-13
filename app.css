@@ -1432,61 +1432,194 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .mouth-flow-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    gap: 22px;
     align-items: stretch;
+}
+.mouth-learning-card {
+    overflow: visible;
 }
 .mouth-sound-card {
     position: relative;
     border: 3px solid #fed7aa;
     border-radius: 22px;
     background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
-    padding: 18px 14px;
+    padding: 14px 12px;
     text-align: center;
-    overflow: hidden;
+    overflow: visible;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 .mouth-sound-card::after {
-    content: "";
+    content: "→";
     position: absolute;
     top: 50%;
-    right: -18px;
-    width: 36px;
-    height: 4px;
+    right: -27px;
+    width: 32px;
+    height: 32px;
     border-radius: 999px;
-    background: #fdba74;
-    opacity: 0.75;
+    background: #fff7ed;
+    border: 3px solid #fdba74;
+    color: #ea580c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+    font-weight: 1000;
+    transform: translateY(-50%);
+    z-index: 2;
 }
 .mouth-sound-card:last-child::after {
     display: none;
 }
+.mouth-sound-card.is-playing,
+.mouth-sound-card.is-active {
+    border-color: #fb923c;
+    background: linear-gradient(180deg, #ffedd5 0%, #ffffff 100%);
+    box-shadow: 0 14px 30px rgba(249, 115, 22, 0.2);
+}
 .mouth-letter {
-    font-size: 4.8rem;
+    font-size: 3.4rem;
     font-weight: 1000;
     line-height: 1;
     color: #9a3412;
 }
 .mouth-visual {
-    width: 118px;
-    height: 92px;
-    margin: 12px auto;
-    border-radius: 999px;
-    background: #fee2e2;
-    border: 4px solid #fca5a5;
+    width: 132px;
+    height: 110px;
+    margin: 8px auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 6px 14px rgba(124, 45, 18, 0.12);
 }
-.mouth-shape {
-    width: var(--mouth-width, 36px);
-    height: var(--mouth-height, 12px);
+.mouth-face {
+    position: relative;
+    width: 108px;
+    height: 108px;
+    border: 4px solid #fca5a5;
+    border-radius: 48% 48% 44% 44%;
+    background: #fee2e2;
+    box-shadow: inset 0 8px 18px rgba(124, 45, 18, 0.12);
+    overflow: hidden;
+}
+.mouth-face::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 10px;
+    height: 24px;
+    border-bottom: 4px solid rgba(180, 83, 9, 0.24);
+    border-radius: 0 0 999px 999px;
+    transform: translateY(var(--jaw-drop, 0px));
+    transition: transform .3s ease;
+}
+.mouth-eye {
+    position: absolute;
+    top: 31px;
+    width: 10px;
+    height: 10px;
     border-radius: 999px;
-    background: #7f1d1d;
-    border: 3px solid #b91c1c;
-    animation: mouthPulse 1.8s ease-in-out infinite;
+    background: #2c3e50;
 }
-.mouth-sound-card:nth-child(1) .mouth-shape { --mouth-width: 34px; --mouth-height: 10px; }
-.mouth-sound-card:nth-child(2) .mouth-shape { --mouth-width: 54px; --mouth-height: 22px; }
-.mouth-sound-card:nth-child(3) .mouth-shape { --mouth-width: 72px; --mouth-height: 34px; }
+.mouth-eye.left { left: 30px; }
+.mouth-eye.right { right: 30px; }
+.mouth-nose {
+    position: absolute;
+    top: 47px;
+    left: 50%;
+    width: 8px;
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(180, 83, 9, 0.28);
+    transform: translateX(-50%);
+}
+.mouth-jaw {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 58px;
+    transform: translateY(var(--jaw-drop, 0px));
+    transform-origin: 50% 0;
+}
+.mouth-lips {
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    width: var(--mouth-width, 62px);
+    height: var(--mouth-height, 14px);
+    border: 4px solid #b91c1c;
+    border-radius: 999px;
+    background: #451a03;
+    overflow: hidden;
+    transform: translateX(-50%);
+    box-shadow: 0 3px 0 rgba(127, 29, 29, 0.18);
+}
+.mouth-teeth {
+    position: absolute;
+    top: 0;
+    left: 16%;
+    width: 68%;
+    height: var(--teeth-height, 5px);
+    border-radius: 0 0 10px 10px;
+    background: #fffaf0;
+    border-bottom: 1px solid rgba(120, 53, 15, 0.18);
+}
+.mouth-tongue {
+    position: absolute;
+    left: 20%;
+    bottom: -2px;
+    width: 60%;
+    height: var(--tongue-height, 7px);
+    border-radius: 999px 999px 0 0;
+    background: #fb7185;
+}
+.mouth-growth-note {
+    position: relative;
+    margin-top: 12px;
+    padding: 8px 14px;
+    border: 2px dashed #86efac;
+    border-radius: 18px;
+    background: #f0fdf4;
+    color: #166534;
+    font-weight: 1000;
+    text-align: center;
+}
+.mouth-growth-note::before,
+.mouth-growth-note::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: clamp(28px, 12vw, 90px);
+    height: 3px;
+    border-radius: 999px;
+    background: #86efac;
+    transform: translateY(-50%);
+}
+.mouth-growth-note::before { left: 14px; }
+.mouth-growth-note::after { right: 14px; }
+.mouth-growth-note span {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    padding: 0 12px;
+    background: #f0fdf4;
+}
+.mouth-sequence-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+.mouth-sequence-button {
+    border: 0;
+    border-radius: 16px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #46b3a5, #22c55e);
+    color: #ffffff;
+    font-weight: 1000;
+    box-shadow: 0 8px 18px rgba(34, 197, 94, 0.24);
+}
 .mouth-listen-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1496,7 +1629,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .mouth-listen-button {
     border: 0;
     border-radius: 14px;
-    padding: 10px 8px;
+    padding: 8px 8px;
     background: linear-gradient(135deg, #46b3a5, #22c55e);
     color: #ffffff;
     font-weight: 900;
@@ -1544,13 +1677,87 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     border-color: #ef4444;
     color: #991b1b;
 }
-@keyframes mouthPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+.mouth-sound-card.is-playing .mouth-face::before {
+    animation: mouthChinDrop var(--mouth-duration, .85s) ease-in-out both;
+}
+.mouth-sound-card.is-playing .mouth-jaw {
+    animation: mouthJawDrop var(--mouth-duration, .85s) ease-in-out both;
+}
+.mouth-sound-card.is-playing .mouth-lips {
+    animation: mouthOpen var(--mouth-duration, .85s) ease-in-out both;
+}
+@keyframes mouthChinDrop {
+    0% { transform: translateY(0); }
+    70%, 100% { transform: translateY(var(--jaw-drop, 0px)); }
+}
+@keyframes mouthJawDrop {
+    0% { transform: translateY(0); }
+    70%, 100% { transform: translateY(var(--jaw-drop, 0px)); }
+}
+@keyframes mouthOpen {
+    0% {
+        width: 62px;
+        height: 10px;
+    }
+    70%, 100% {
+        width: var(--mouth-width, 62px);
+        height: var(--mouth-height, 14px);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mouth-sound-card,
+    .mouth-face::before,
+    .mouth-jaw,
+    .mouth-lips {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 @media (max-width: 900px) {
     .learning-activity-layout { grid-template-columns: 1fr 1fr; gap: 12px; }
     .learning-main-card, .learning-practice-card { max-height: 400px; }
+    .mouth-learning-card { max-height: none; }
+    .mouth-flow-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .mouth-sound-card {
+        padding: 10px 6px;
+    }
+    .mouth-sound-card::after {
+        right: -18px;
+        width: 24px;
+        height: 24px;
+        font-size: 1.1rem;
+        border-width: 2px;
+    }
+    .mouth-letter {
+        font-size: 3rem;
+    }
+    .mouth-visual {
+        width: 112px;
+        height: 100px;
+    }
+    .mouth-face {
+        transform: scale(.84);
+    }
+    .mouth-sound-card .text-lg {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+    .mouth-sound-card .text-sm {
+        font-size: .8rem;
+        line-height: 1.18;
+    }
+    .mouth-listen-button {
+        padding: 7px 6px;
+    }
+    .mouth-growth-note::before,
+    .mouth-growth-note::after {
+        display: none;
+    }
+}
+@media (max-width: 680px) {
     .mouth-flow-grid { grid-template-columns: 1fr; }
     .mouth-sound-card::after { display: none; }
 }

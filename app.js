@@ -1009,13 +1009,13 @@ const learningDetailData = {
         sections: [
             {
                 label: '비교하기 1 · 2',
-                title: '입모양을 보고 소리의 차이를 알아봐요',
+                title: '입 모양을 보고 소리의 차이를 알아봐요',
                 cards: [
-                    'ㅣ는 입을 조금 벌려요.',
-                    'ㅐ는 입을 더 벌려요.',
-                    'ㅔ는 입을 가장 크게 벌려요.',
-                    '소리를 듣고 입모양을 함께 살펴보세요.',
-                    '이제 ㅐ와 ㅔ 소리를 듣고 알맞은 글자를 골라 보세요.'
+                    'ㅣ는 입을 작게 벌려요.',
+                    'ㅔ는 입을 조금 더 벌려요.',
+                    'ㅐ는 입을 가장 크게 벌려요.',
+                    '소리를 들으며 입이 벌어지는 모습을 살펴보세요.',
+                    '이제 ㅔ와 ㅐ 소리를 듣고 알맞은 글자를 골라 보세요.'
                 ]
             },
             {
@@ -1991,7 +1991,7 @@ const learningPracticeFlows = {
     12: { listen: 'ㅇ, ㅎ, ㄹ. 이응, 히읗, 리을이에요.', choices: ['ㅇ', 'ㅎ', 'ㄹ', '아'], writeLines: ['ㅇ ㅇ ㅎ ㅎ', 'ㄹ ㄹ 아 아'] },
     13: { listen: '아이, 나무, 기타, 나비. ㅏ와 ㅣ가 들어간 낱말이에요.', choices: ['아이', '나무', '기타', '나비'], writeLines: ['아이 나무', '기타 나비'] },
     14: { listen: '버스, 포도, 거미, 모기. ㅡ, ㅗ, ㅓ가 들어간 낱말이에요.', choices: ['버스', '포도', '거미', '모기'], writeLines: ['버스 포도', '거미 모기'] },
-    15: { listen: 'ㅐ, ㅔ. 입이 점점 크게 벌어지는 소리예요.', choices: ['ㅐ', 'ㅔ', 'ㅏ', 'ㅣ'], writeLines: ['ㅐ ㅐ ㅐ ㅐ', 'ㅔ ㅔ ㅔ ㅔ'] },
+    15: { listen: 'ㅣ, ㅔ, ㅐ. 입이 점점 크게 벌어지는 소리예요.', choices: ['ㅣ', 'ㅔ', 'ㅐ', 'ㅏ'], writeLines: ['ㅔ ㅔ ㅔ ㅔ', 'ㅐ ㅐ ㅐ ㅐ'] },
     16: { listen: 'ㅖ, ㅒ. ㅔ와 ㅐ보다 짧은 선이 하나 더 있어요.', choices: ['ㅖ', 'ㅒ', 'ㅔ', 'ㅐ'], writeLines: ['ㅖ ㅖ ㅖ ㅖ', 'ㅒ ㅒ ㅒ ㅒ'] },
     17: { listen: 'ㅘ, ㅝ. ㅗ+ㅏ=ㅘ, ㅜ+ㅓ=ㅝ로 만들어요.', choices: ['ㅘ', 'ㅝ', '과', '원'], writeLines: ['ㅘ ㅘ ㅘ ㅘ', 'ㅝ ㅝ ㅝ ㅝ'] },
     18: { listen: 'ㅟ, ㅢ. ㅜ+ㅣ=ㅟ, ㅡ+ㅣ=ㅢ로 만들어요.', choices: ['ㅟ', 'ㅢ', '귀', '의'], writeLines: ['ㅟ ㅟ ㅟ ㅟ', 'ㅢ ㅢ ㅢ ㅢ'] },
@@ -7884,16 +7884,18 @@ function renderMakeLettersActivity(step) {
 
 const LESSON_MOUTH_ACTIVITY_CONFIGS = {
     15: {
-        title: '입모양을 보고 소리의 차이를 알아봐요',
+        title: '입 모양을 보고 소리의 차이를 알아봐요',
+        guideText: '소리를 들으며 입이 벌어지는 모습을 살펴보세요.',
+        sequenceText: 'ㅣ → ㅔ → ㅐ 순서로 입이 점점 크게 벌어져요.',
         items: [
-            { char: 'ㅣ', label: '입을 조금 벌려요', description: 'ㅣ는 입을 조금 벌려요.' },
-            { char: 'ㅐ', label: '입을 더 벌려요', description: 'ㅐ는 입을 더 벌려요.' },
-            { char: 'ㅔ', label: '입을 가장 크게 벌려요', description: 'ㅔ는 입을 가장 크게 벌려요.' }
+            { char: 'ㅣ', label: '입을 작게 벌려요', description: 'ㅣ: 입을 작게 벌려요.', mouthShape: { width: 66, height: 11, jawDrop: 0, teethHeight: 4, tongueHeight: 4 } },
+            { char: 'ㅔ', label: '입을 조금 더 벌려요', description: 'ㅔ: 입을 조금 더 벌려요.', mouthShape: { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 } },
+            { char: 'ㅐ', label: '입을 가장 크게 벌려요', description: 'ㅐ: 입을 가장 크게 벌려요.', mouthShape: { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 } }
         ],
-        quizChoices: ['ㅐ', 'ㅔ'],
-        quizTitle: 'ㅐ와 ㅔ 소리 구별',
-        quizPrompt: '이제 ㅐ와 ㅔ 소리를 듣고 알맞은 글자를 골라 보세요.',
-        defaultFollow: 'ㅐ',
+        quizChoices: ['ㅔ', 'ㅐ'],
+        quizTitle: 'ㅔ와 ㅐ 소리 구별',
+        quizPrompt: '이제 ㅔ와 ㅐ 소리를 듣고 알맞은 글자를 골라 보세요.',
+        defaultFollow: 'ㅣ',
         activityType: 'aeEVowelDiscrimination'
     },
     16: {
@@ -7911,11 +7913,11 @@ const LESSON_MOUTH_ACTIVITY_CONFIGS = {
     }
 };
 const LESSON_MOUTH_AUDIO_SOURCES = {
-    'ㅣ': ['audio/vowels/i.mp3', 'sounds/vowels/i.mp3', 'assets/audio/i.mp3'],
-    'ㅐ': ['audio/vowels/ae.mp3', 'sounds/vowels/ae.mp3', 'assets/audio/ae.mp3'],
-    'ㅔ': ['audio/vowels/e.mp3', 'sounds/vowels/e.mp3', 'assets/audio/e.mp3'],
-    'ㅖ': ['audio/vowels/ye.mp3', 'sounds/vowels/ye.mp3', 'assets/audio/ye.mp3'],
-    'ㅒ': ['audio/vowels/yae.mp3', 'sounds/vowels/yae.mp3', 'assets/audio/yae.mp3']
+    'ㅣ': [],
+    'ㅐ': [],
+    'ㅔ': [],
+    'ㅖ': [],
+    'ㅒ': []
 };
 const LESSON_MOUTH_FALLBACK_TEXTS = {
     'ㅣ': { normal: '이', slow: '이' },
@@ -7924,22 +7926,68 @@ const LESSON_MOUTH_FALLBACK_TEXTS = {
     'ㅖ': { normal: '시계', slow: '시계' },
     'ㅒ': { normal: '얘기', slow: '얘기' }
 };
-window.lessonMouthFollowChar = window.lessonMouthFollowChar || { 15: 'ㅐ', 16: 'ㅖ' };
+const LESSON_MOUTH_SHAPE_PRESETS = {
+    'ㅣ': { width: 66, height: 11, jawDrop: 0, teethHeight: 4, tongueHeight: 4 },
+    'ㅔ': { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 },
+    'ㅐ': { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 },
+    'ㅖ': { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 },
+    'ㅒ': { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 }
+};
+window.lessonMouthFollowChar = window.lessonMouthFollowChar || { 15: 'ㅣ', 16: 'ㅖ' };
 window.lessonMouthQuizTarget = window.lessonMouthQuizTarget || {};
+window.lessonMouthPlaybackState = window.lessonMouthPlaybackState || {
+    sequenceTimers: [],
+    activeTimer: null,
+    currentAudio: null
+};
+
+function getLessonMouthShape(item) {
+    return {
+        ...(LESSON_MOUTH_SHAPE_PRESETS[item.char] || LESSON_MOUTH_SHAPE_PRESETS['ㅣ']),
+        ...(item.mouthShape || {})
+    };
+}
+
+function getLessonMouthStyle(item) {
+    const shape = getLessonMouthShape(item);
+    return [
+        `--mouth-width:${shape.width}px`,
+        `--mouth-height:${shape.height}px`,
+        `--jaw-drop:${shape.jawDrop}px`,
+        `--teeth-height:${shape.teethHeight}px`,
+        `--tongue-height:${shape.tongueHeight}px`
+    ].join(';');
+}
+
+function renderLessonMouthFace(item) {
+    return `
+        <div class="mouth-face">
+            <span class="mouth-eye left"></span>
+            <span class="mouth-eye right"></span>
+            <span class="mouth-nose"></span>
+            <div class="mouth-jaw">
+                <div class="mouth-lips">
+                    <span class="mouth-teeth"></span>
+                    <span class="mouth-tongue"></span>
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 function renderLessonMouthIntro(step) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
     if (!config) return '';
     return `
-        <div class="learning-main-card">
+        <div class="learning-main-card mouth-learning-card">
             <div class="learning-card-label">📖 이해하기</div>
             <div class="text-xl font-black text-[#2c3e50] mb-2">${config.title}</div>
-            <div class="text-base font-bold text-stone-600 mb-4">소리를 듣고 입모양을 함께 살펴보세요.</div>
+            <div class="text-base font-bold text-stone-600 mb-4">${config.guideText || '소리를 듣고 입모양을 함께 살펴보세요.'}</div>
             <div class="mouth-flow-grid">
                 ${config.items.map((item) => `
-                    <div class="mouth-sound-card">
+                    <div class="mouth-sound-card" data-mouth-step="${step}" data-mouth-char="${item.char}" style="${getLessonMouthStyle(item)}">
                         <div class="mouth-letter">${item.char}</div>
-                        <div class="mouth-visual" aria-hidden="true"><div class="mouth-shape"></div></div>
+                        <div class="mouth-visual" aria-hidden="true">${renderLessonMouthFace(item)}</div>
                         <div class="text-lg font-black text-[#2c3e50]">${item.label}</div>
                         <div class="text-sm font-bold text-gray-500 mt-1">${item.description}</div>
                         <div class="mouth-listen-row">
@@ -7948,6 +7996,10 @@ function renderLessonMouthIntro(step) {
                         </div>
                     </div>
                 `).join('')}
+            </div>
+            <div class="mouth-growth-note"><span>${config.sequenceText || '입이 점점 크게 벌어져요.'}</span></div>
+            <div class="mouth-sequence-controls">
+                <button type="button" class="mouth-sequence-button" onclick="playLessonMouthSequence(${step}, false)">연속해서 보기</button>
             </div>
             <div class="lesson15-follow-box mt-4">
                 <div class="practice-step-title"><span class="practice-step-number">2</span> 따라 말하기</div>
@@ -8458,30 +8510,134 @@ function playLessonMouthNativeFallback(text, slow = false) {
     }
 }
 
-window.playLessonMouthSound = async function(step, char, slow = false) {
+function getLessonMouthPlaybackState() {
+    window.lessonMouthPlaybackState = window.lessonMouthPlaybackState || {
+        sequenceTimers: [],
+        activeTimer: null,
+        currentAudio: null
+    };
+    return window.lessonMouthPlaybackState;
+}
+
+function isReducedMouthMotion() {
+    return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+function clearLessonMouthSequenceTimers() {
+    const state = getLessonMouthPlaybackState();
+    state.sequenceTimers.forEach((timer) => window.clearTimeout(timer));
+    state.sequenceTimers = [];
+}
+
+function clearLessonMouthActiveTimer() {
+    const state = getLessonMouthPlaybackState();
+    if (state.activeTimer) {
+        window.clearTimeout(state.activeTimer);
+        state.activeTimer = null;
+    }
+}
+
+function stopLessonMouthAudio() {
+    const state = getLessonMouthPlaybackState();
+    if (state.currentAudio) {
+        try {
+            state.currentAudio.pause();
+            state.currentAudio.currentTime = 0;
+        } catch {}
+        state.currentAudio = null;
+    }
+    if (globalTtsAudio) {
+        try {
+            globalTtsAudio.pause();
+            globalTtsAudio.currentTime = 0;
+        } catch {}
+    }
+    if (typeof speechSynthesis !== 'undefined') {
+        try { speechSynthesis.cancel(); } catch {}
+    }
+}
+
+function resetLessonMouthCards(step) {
+    const selector = step ? `.mouth-sound-card[data-mouth-step="${step}"]` : '.mouth-sound-card';
+    document.querySelectorAll(selector).forEach((card) => {
+        card.classList.remove('is-playing', 'is-active');
+    });
+}
+
+function stopLessonMouthPlayback(step, options = {}) {
+    if (!options.keepSequence) clearLessonMouthSequenceTimers();
+    clearLessonMouthActiveTimer();
+    stopLessonMouthAudio();
+    resetLessonMouthCards(step);
+}
+
+function activateLessonMouthCard(step, char, slow = false) {
+    const state = getLessonMouthPlaybackState();
+    const duration = isReducedMouthMotion() ? 650 : (slow ? 1350 : 850);
+    const cards = Array.from(document.querySelectorAll(`.mouth-sound-card[data-mouth-step="${step}"]`));
+    cards.forEach((card) => {
+        const isTarget = card.dataset.mouthChar === char;
+        card.classList.toggle('is-playing', isTarget && !isReducedMouthMotion());
+        card.classList.toggle('is-active', isTarget);
+        card.style.setProperty('--mouth-duration', `${duration}ms`);
+    });
+    state.activeTimer = window.setTimeout(() => {
+        resetLessonMouthCards(step);
+        state.activeTimer = null;
+    }, duration + 250);
+}
+
+window.playLessonMouthSequence = function(step, slow = false, options = {}) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
     if (!config) return;
+    stopLessonMouthPlayback(step);
+    const state = getLessonMouthPlaybackState();
+    const interval = isReducedMouthMotion() ? 650 : (slow ? 1450 : 950);
+    config.items.forEach((item, index) => {
+        const timer = window.setTimeout(() => {
+            window.playLessonMouthSound(step, item.char, slow, {
+                fromSequence: true,
+                skipRecord: true,
+                auto: Boolean(options.auto)
+            });
+        }, index * interval);
+        state.sequenceTimers.push(timer);
+    });
+};
+
+window.playLessonMouthSound = async function(step, char, slow = false, options = {}) {
+    const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
+    if (!config) return;
+    const fromSequence = Boolean(options.fromSequence);
+    stopLessonMouthPlayback(step, { keepSequence: fromSequence });
+    activateLessonMouthCard(step, char, slow);
     window.lessonMouthFollowChar = window.lessonMouthFollowChar || {};
     window.lessonMouthFollowChar[step] = char;
-    const audioReplayCount = incrementKoreanAudioReplayCount({
-        lessonId: step,
-        activityType: slow ? 'mouthSoundSlowListen' : 'mouthSoundListen',
-        answer: char
-    });
-    await recordKoreanAttempt({
-        lessonId: step,
-        lessonTitle: getLessonTitleForReport(step),
-        unitId: getUnitIdForLesson(step),
-        activityType: slow ? 'mouthSoundSlowListen' : 'mouthSoundListen',
-        word: char,
-        answer: char,
-        userAnswer: char,
-        isCorrect: true,
-        errorType: null,
-        audioReplayCount
-    });
+    if (!options.skipRecord) {
+        const recordMouthListen = async () => {
+            const audioReplayCount = incrementKoreanAudioReplayCount({
+                lessonId: step,
+                activityType: slow ? 'mouthSoundSlowListen' : 'mouthSoundListen',
+                answer: char
+            });
+            await recordKoreanAttempt({
+                lessonId: step,
+                lessonTitle: getLessonTitleForReport(step),
+                unitId: getUnitIdForLesson(step),
+                activityType: slow ? 'mouthSoundSlowListen' : 'mouthSoundListen',
+                word: char,
+                answer: char,
+                userAnswer: char,
+                isCorrect: true,
+                errorType: null,
+                audioReplayCount
+            });
+        };
+        recordMouthListen().catch(() => {});
+    }
 
     const sources = LESSON_MOUTH_AUDIO_SOURCES[char] || [];
+    const state = getLessonMouthPlaybackState();
     let played = false;
     const trySource = (index) => {
         if (index >= sources.length) {
@@ -8490,8 +8646,20 @@ window.playLessonMouthSound = async function(step, char, slow = false) {
         }
         const audio = new Audio(sources[index]);
         audio.playbackRate = slow ? 0.68 : 1;
-        audio.onerror = () => trySource(index + 1);
-        audio.play().then(() => { played = true; }).catch(() => trySource(index + 1));
+        state.currentAudio = audio;
+        audio.onended = () => {
+            if (state.currentAudio === audio) state.currentAudio = null;
+        };
+        audio.onerror = () => {
+            if (state.currentAudio === audio) state.currentAudio = null;
+            trySource(index + 1);
+        };
+        audio.play().then(() => {
+            played = true;
+        }).catch(() => {
+            if (state.currentAudio === audio) state.currentAudio = null;
+            trySource(index + 1);
+        });
     };
     trySource(0);
 };
@@ -8946,6 +9114,9 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeVisibleTraceWritingCanvases();
         initializeLessonCompletionCanvases();
         initializeLesson13BoardGames();
+        if (numericStep === 15 && safeIndex === 0) {
+            window.setTimeout(() => window.playLessonMouthSequence?.(15, false, { auto: true }), 250);
+        }
     });
 }
 
