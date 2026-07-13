@@ -3292,7 +3292,7 @@ body {
 }
 
 #my-korean-section .section-dashboard-header {
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
 }
 
 #letter-word-panel .letter-practice-selector-heading .font-black,
