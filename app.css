@@ -1145,6 +1145,104 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .lesson21-practice-syllable:focus-visible {
     border-color: #f97316;
 }
+.lesson21-reference-table {
+    gap: 14px;
+    padding: 14px;
+    border-color: #b6c1d1;
+    border-radius: 8px;
+    background: #ffffff;
+}
+.lesson21-follow-block {
+    display: grid;
+    gap: 0;
+}
+.lesson21-reference-base-row,
+.lesson21-reference-write-row {
+    grid-template-columns: 56px repeat(5, minmax(0, 1fr));
+    gap: 0;
+}
+.lesson21-reference-base-row {
+    border-bottom: 1px solid #b6c1d1;
+}
+.lesson21-reference-corner,
+.lesson21-reference-base,
+.lesson21-reference-write-cell {
+    min-height: 64px;
+    border: 1px solid #b6c1d1;
+    border-radius: 0;
+}
+.lesson21-reference-corner {
+    background: #e7eef8;
+}
+.lesson21-reference-base {
+    display: grid;
+    place-items: center;
+    background: #f8fafc;
+    color: #111827;
+    font-size: 1.8rem;
+    font-weight: 1000;
+}
+.lesson21-reference-write-cell {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 3px;
+    padding: 4px;
+    background: #eff6ff;
+}
+.lesson21-reference-write-cell .lesson21-inline-writing-canvas {
+    width: 100%;
+}
+.lesson21-inline-writing-canvas {
+    width: 100%;
+    height: 52px;
+    border: 1px solid #93c5fd;
+    border-radius: 4px;
+    background: #ffffff;
+}
+.lesson21-reference-sound {
+    min-width: 28px;
+    min-height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #0f766e;
+    font-size: .8rem;
+}
+.lesson21-shaded-rows .lesson21-practice-row {
+    grid-template-columns: repeat(14, minmax(0, 1fr));
+    gap: 2px;
+}
+.lesson21-shaded-rows .lesson21-practice-syllable {
+    display: grid;
+    grid-template-rows: 1fr 26px;
+    align-items: center;
+    justify-items: center;
+    min-height: 80px;
+    padding: 2px;
+}
+.lesson21-practice-letter {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.32rem;
+    font-weight: 1000;
+}
+.lesson21-shaded-writing-canvas {
+    width: min(100%, 34px);
+    height: 24px;
+    border: 1px solid #5da9e9;
+    border-radius: 2px;
+    background: #ffffff;
+}
+.lesson21-small-slot {
+    width: 22px;
+    height: 16px;
+    border: 1px solid #60a5fa;
+    background: #ffffff;
+}
 .lesson21-word-find-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1904,6 +2002,27 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     }
     .lesson21-practice-row {
         grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .lesson21-shaded-rows .lesson21-practice-row {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+    .lesson21-reference-base-row,
+    .lesson21-reference-write-row {
+        grid-template-columns: 42px repeat(5, minmax(0, 1fr));
+    }
+    .lesson21-reference-base,
+    .lesson21-reference-corner,
+    .lesson21-reference-write-cell {
+        min-height: 56px;
+    }
+    .lesson21-reference-write-cell {
+        grid-template-columns: 1fr;
+    }
+    .lesson21-reference-sound {
+        display: none;
+    }
+    .lesson21-inline-writing-canvas {
+        height: 46px;
     }
     .lesson21-practice-syllable {
         min-height: 48px;
@@ -2728,10 +2847,10 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     animation: none !important;
 }
 .combine-replay{ font-size:1.4rem; color:#94a3b8; text-align:center; margin-top:15px; }
-@keyframes combineLeft  { 0%,15%{transform:translateX(0);opacity:0} 20%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(98px);opacity:0} 68%{transform:translateX(98px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
-@keyframes combineRight { 0%,15%{transform:translateX(0);opacity:0} 20%,28%{transform:translateX(0);opacity:1} 46%{transform:translateX(-98px);opacity:0} 68%{transform:translateX(-98px);opacity:0} 85%,100%{transform:translateX(0);opacity:1} }
-@keyframes opFade       { 0%,15%{opacity:0} 20%,28%{opacity:1} 46%{opacity:0} 68%{opacity:0} 85%,100%{opacity:1} }
-@keyframes resultPop    { 0%,66%{transform:scale(0);opacity:0} 76%{transform:scale(1.2);opacity:1} 88%,100%{transform:scale(1);opacity:1} }
+@keyframes combineLeft  { 0%,58%{transform:translateX(0);opacity:1} 72%,100%{transform:translateX(98px);opacity:0} }
+@keyframes combineRight { 0%,58%{transform:translateX(0);opacity:1} 72%,100%{transform:translateX(-98px);opacity:0} }
+@keyframes opFade       { 0%,58%{opacity:1} 72%,100%{opacity:0} }
+@keyframes resultPop    { 0%,58%{transform:scale(.72);opacity:0} 74%{transform:scale(1.12);opacity:1} 86%,100%{transform:scale(1);opacity:1} }
 /* 점이 오른쪽에서 왼쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
 .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:baseFadeIn 4.7s ease-in-out 1 both; z-index:2; }
 .combine-base-up { animation:baseToBelowForO 4.7s ease-in-out 1 both; }
@@ -2741,19 +2860,19 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .combine-dot-up-double { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToAboveDouble 4.7s ease-in-out 1 both; z-index:5; }
 .combine-dot-down{ background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 4.7s ease-in-out 1 both; z-index:5; }
 .combine-dot-down-double { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelowDouble 4.7s ease-in-out 1 both; z-index:5; }
-@keyframes dotToAbove { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(170px,-48px);opacity:1} 74%,100%{transform:translate(170px,-48px);opacity:0} }
-@keyframes dotToAboveDouble { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(142px,-14px);opacity:1} 74%,100%{transform:translate(142px,-14px);opacity:0} }
-@keyframes dotToBelow { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(170px,48px);opacity:1} 74%,100%{transform:translate(170px,48px);opacity:0} }
-@keyframes dotToBelowDouble { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(126px,-18px);opacity:1} 74%,100%{transform:translate(126px,-18px);opacity:0} }
-@keyframes baseFadeIn { 0%,15%{opacity:0} 20%,100%{opacity:1} }
-@keyframes baseToBelowForO { 0%,15%{transform:translateY(0);opacity:0} 20%,30%{transform:translateY(0);opacity:1} 48%,66%{transform:translateY(36px);opacity:1} 74%,100%{transform:translateY(36px);opacity:0} }
-@keyframes baseToAboveForU { 0%,15%{transform:translateY(0);opacity:0} 20%,30%{transform:translateY(0);opacity:1} 48%,66%{transform:translateY(-36px);opacity:1} 74%,100%{transform:translateY(-36px);opacity:0} }
+@keyframes dotToAbove { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(170px,-48px);opacity:0} }
+@keyframes dotToAboveDouble { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(142px,-14px);opacity:0} }
+@keyframes dotToBelow { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(170px,48px);opacity:0} }
+@keyframes dotToBelowDouble { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(126px,-18px);opacity:0} }
+@keyframes baseFadeIn { 0%,58%{opacity:1} 72%,100%{opacity:0} }
+@keyframes baseToBelowForO { 0%,58%{transform:translateY(0);opacity:1} 72%,100%{transform:translateY(36px);opacity:0} }
+@keyframes baseToAboveForU { 0%,58%{transform:translateY(0);opacity:1} 72%,100%{transform:translateY(-36px);opacity:0} }
 .combine-vowel-base { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:verticalBaseHold 4.7s ease-in-out 1 both; z-index:2; }
 .combine-dot-right { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToRightOfVertical 4.7s ease-in-out 1 both; z-index:5; }
 .combine-dot-left { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToLeftOfVertical 4.7s ease-in-out 1 both; z-index:5; }
-@keyframes verticalBaseHold { 0%,15%{opacity:0} 20%,66%{opacity:1} 74%,100%{opacity:0} }
-@keyframes dotToRightOfVertical { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(-144px,0);opacity:1} 74%,100%{transform:translate(-144px,0);opacity:0} }
-@keyframes dotToLeftOfVertical { 0%,15%{transform:translate(0,0);opacity:0} 20%,25%{transform:translate(0,0);opacity:1} 48%,66%{transform:translate(144px,0);opacity:1} 74%,100%{transform:translate(144px,0);opacity:0} }
+@keyframes verticalBaseHold { 0%,58%{opacity:1} 72%,100%{opacity:0} }
+@keyframes dotToRightOfVertical { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(-144px,0);opacity:0} }
+@keyframes dotToLeftOfVertical { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(144px,0);opacity:0} }
 
 /* ===== 입 벌림 진행 애니메이션 ===== */
 .mouth-card {
