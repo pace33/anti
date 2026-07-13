@@ -1686,23 +1686,33 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .mouth-sound-card.is-playing .mouth-lips {
     animation: mouthOpen var(--mouth-duration, .85s) ease-in-out both;
 }
+.mouth-sound-card.is-playing .mouth-teeth,
+.mouth-sound-card.is-playing .mouth-tongue {
+    animation: mouthInteriorReveal var(--mouth-duration, .85s) ease-in-out both;
+}
 @keyframes mouthChinDrop {
-    0% { transform: translateY(0); }
+    0%, 24% { transform: translateY(0); }
     70%, 100% { transform: translateY(var(--jaw-drop, 0px)); }
 }
 @keyframes mouthJawDrop {
-    0% { transform: translateY(0); }
+    0%, 24% { transform: translateY(0); }
     70%, 100% { transform: translateY(var(--jaw-drop, 0px)); }
 }
 @keyframes mouthOpen {
-    0% {
-        width: 62px;
-        height: 10px;
+    0%, 24% {
+        width: var(--mouth-closed-width, 44px);
+        height: var(--mouth-closed-height, 7px);
+        border-width: 3px;
     }
     70%, 100% {
         width: var(--mouth-width, 62px);
         height: var(--mouth-height, 14px);
+        border-width: 4px;
     }
+}
+@keyframes mouthInteriorReveal {
+    0%, 24% { opacity: 0; }
+    66%, 100% { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
     .mouth-sound-card,

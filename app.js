@@ -7977,6 +7977,8 @@ function getLessonMouthStyle(item) {
     return [
         `--mouth-width:${shape.width}px`,
         `--mouth-height:${shape.height}px`,
+        '--mouth-closed-width:44px',
+        '--mouth-closed-height:7px',
         `--jaw-drop:${shape.jawDrop}px`,
         `--teeth-height:${shape.teethHeight}px`,
         `--tongue-height:${shape.tongueHeight}px`
