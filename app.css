@@ -3420,6 +3420,25 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     width: 104px;
     height: 104px;
 }
+.cv-reference-character {
+    display: block;
+    width: 220px;
+    height: 145px;
+    max-width: 100%;
+    border-radius: 12px;
+    background-color: #ffffff;
+    background-image: url('baby_giyeok.webp?v=20260714-mom-baby');
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+.cv-reference-baby {
+    background-size: 233.2% 265.5%;
+    background-position: 12.3% 40%;
+}
+.cv-reference-mom {
+    background-size: 145% 164.8%;
+    background-position: 119% 6.4%;
+}
 .syllable-consonant {
     color: #2563eb;
     transition: color 0.2s ease, transform 0.2s ease;
@@ -3600,6 +3619,10 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     .cv-character .learning-pose-svg {
         width: 78px;
         height: 78px;
+    }
+    .cv-reference-character {
+        width: 220px;
+        height: 145px;
     }
     .cv-syllable-strip {
         grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260714-lesson21-unified-letter">
+    <link rel="stylesheet" href="app.css?v=20260714-understanding2-reference-image">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -940,18 +940,12 @@
                 <div class="cv-animation-board">
                     <div class="cv-demo-row">
                         <button type="button" class="cv-character cv-baby" onclick="speakTextKo('자음 기역')" aria-label="자음 기역 소리 듣기">
-                            <svg class="learning-pose-svg baby-pose-svg" role="img" aria-labelledby="baby-giyeok-title-2">
-                                <title id="baby-giyeok-title-2">자연스러운 자세에서 ㄱ 모양을 떠올리는 자음 아기 캐릭터</title>
-                                <use href="#pose-baby-giyeok"></use>
-                            </svg>
+                            <span class="cv-reference-character cv-reference-baby" role="img" aria-label="두 팔을 앞으로 뻗고 앉은 자음 아기"></span>
                             <span class="cv-role-label">자음 아기</span>
                         </button>
                         <div class="cv-symbol">+</div>
                         <button type="button" class="cv-character cv-mom" onclick="speakTextKo('모음 아')" aria-label="모음 아 소리 듣기">
-                            <svg class="learning-pose-svg mom-pose-svg" role="img" aria-labelledby="mom-ah-title-2">
-                                <title id="mom-ah-title-2">자연스러운 자세에서 ㅏ 모양을 떠올리는 모음 엄마 캐릭터</title>
-                                <use href="#pose-mom-ah"></use>
-                            </svg>
+                            <span class="cv-reference-character cv-reference-mom" role="img" aria-label="오른팔을 옆으로 뻗고 서 있는 모음 엄마"></span>
                             <span class="cv-role-label">모음 엄마</span>
                         </button>
                         <div class="cv-symbol">=</div>
