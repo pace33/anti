@@ -2847,10 +2847,10 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     animation: none !important;
 }
 .combine-replay{ font-size:1.4rem; color:#94a3b8; text-align:center; margin-top:15px; }
-@keyframes combineLeft  { 0%,58%{transform:translateX(0);opacity:1} 72%,100%{transform:translateX(98px);opacity:0} }
-@keyframes combineRight { 0%,58%{transform:translateX(0);opacity:1} 72%,100%{transform:translateX(-98px);opacity:0} }
-@keyframes opFade       { 0%,58%{opacity:1} 72%,100%{opacity:0} }
-@keyframes resultPop    { 0%,58%{transform:scale(.72);opacity:0} 74%{transform:scale(1.12);opacity:1} 86%,100%{transform:scale(1);opacity:1} }
+@keyframes combineLeft  { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(98px);opacity:1} }
+@keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(-98px);opacity:1} }
+@keyframes opFade       { 0%,100%{opacity:1} }
+@keyframes resultPop    { 0%,56%{transform:scale(.72);opacity:0} 70%{transform:scale(1.12);opacity:1} 84%,100%{transform:scale(1);opacity:1} }
 /* 점이 오른쪽에서 왼쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
 .combine-base    { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:baseFadeIn 4.7s ease-in-out 1 both; z-index:2; }
 .combine-base-up { animation:baseToBelowForO 4.7s ease-in-out 1 both; }
@@ -2860,19 +2860,19 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .combine-dot-up-double { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToAboveDouble 4.7s ease-in-out 1 both; z-index:5; }
 .combine-dot-down{ background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelow 4.7s ease-in-out 1 both; z-index:5; }
 .combine-dot-down-double { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToBelowDouble 4.7s ease-in-out 1 both; z-index:5; }
-@keyframes dotToAbove { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(170px,-48px);opacity:0} }
-@keyframes dotToAboveDouble { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(142px,-14px);opacity:0} }
-@keyframes dotToBelow { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(170px,48px);opacity:0} }
-@keyframes dotToBelowDouble { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(126px,-18px);opacity:0} }
-@keyframes baseFadeIn { 0%,58%{opacity:1} 72%,100%{opacity:0} }
-@keyframes baseToBelowForO { 0%,58%{transform:translateY(0);opacity:1} 72%,100%{transform:translateY(36px);opacity:0} }
-@keyframes baseToAboveForU { 0%,58%{transform:translateY(0);opacity:1} 72%,100%{transform:translateY(-36px);opacity:0} }
+@keyframes dotToAbove { 0%,28%{transform:translate(0,0);opacity:1} 68%,100%{transform:translate(170px,-48px);opacity:1} }
+@keyframes dotToAboveDouble { 0%,28%{transform:translate(0,0);opacity:1} 68%,100%{transform:translate(142px,-14px);opacity:1} }
+@keyframes dotToBelow { 0%,28%{transform:translate(0,0);opacity:1} 68%,100%{transform:translate(170px,48px);opacity:1} }
+@keyframes dotToBelowDouble { 0%,28%{transform:translate(0,0);opacity:1} 68%,100%{transform:translate(126px,-18px);opacity:1} }
+@keyframes baseFadeIn { 0%,100%{opacity:1} }
+@keyframes baseToBelowForO { 0%,28%{transform:translateY(0);opacity:1} 68%,100%{transform:translateY(36px);opacity:1} }
+@keyframes baseToAboveForU { 0%,28%{transform:translateY(0);opacity:1} 68%,100%{transform:translateY(-36px);opacity:1} }
 .combine-vowel-base { background:#dbeafe; color:#1e40af; border:2px solid #93c5fd; animation:verticalBaseHold 4.7s ease-in-out 1 both; z-index:2; }
 .combine-dot-right { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToRightOfVertical 4.7s ease-in-out 1 both; z-index:5; }
 .combine-dot-left { background:rgba(252,231,243,0.62); color:#9d174d; border:2px solid #f9a8d4; animation:dotToLeftOfVertical 4.7s ease-in-out 1 both; z-index:5; }
-@keyframes verticalBaseHold { 0%,58%{opacity:1} 72%,100%{opacity:0} }
-@keyframes dotToRightOfVertical { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(-144px,0);opacity:0} }
-@keyframes dotToLeftOfVertical { 0%,58%{transform:translate(0,0);opacity:1} 72%,100%{transform:translate(144px,0);opacity:0} }
+@keyframes verticalBaseHold { 0%,100%{opacity:1} }
+@keyframes dotToRightOfVertical { 0%,28%{transform:translate(0,0);opacity:1} 68%,100%{transform:translate(-144px,0);opacity:1} }
+@keyframes dotToLeftOfVertical { 0%,28%{transform:translate(0,0);opacity:1} 68%,100%{transform:translate(144px,0);opacity:1} }
 
 /* ===== 입 벌림 진행 애니메이션 ===== */
 .mouth-card {
