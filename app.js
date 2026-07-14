@@ -179,6 +179,7 @@ let currentUserIcon = '🐻';
 let currentUserCoins = 0;
 let currentUserBalance = 0;
 let currentUserAeduTokens = 0;
+let currentUserWarningTokens = 0;
 let currentUserAeduExperience = 0;
 let currentUserAeduLevel = 1;
 let currentUserProfileSnapshot = {};
@@ -193,7 +194,7 @@ let drawingWorkspaceMode = 'free';
 let drawingWorkspaceMissionStep = null;
 let drawingCanvasInitialized = false;
 let currentUserDictationStep = -1;
-let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [], sentences: [] }, wrongBank: [], completedBank: [], captures: [], dictationLocked: true, hasCompletedOnce: false };
+let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [] }, wrongBank: [], completedBank: [], captures: [], dictationLocked: true, hasCompletedOnce: false };
 let activeDictationItem = null;
 let activeDictationSession = null;
 let activeDictationCameraStream = null;
@@ -2172,6 +2173,7 @@ function buildAiedueSchoolProfileSnapshot(userData = {}) {
     const coins = asNumber(userData?.coins ?? userData?.balance ?? userData?.aeduTokens ?? currentUserCoins, 0);
     const balance = asNumber(userData?.balance ?? coins ?? currentUserBalance, 0);
     const aeduTokens = asNumber(userData?.aeduTokens ?? userData?.aeduToken ?? balance ?? currentUserAeduTokens, 0);
+    const warningTokens = asNumber(userData?.warningTokens ?? currentUserWarningTokens, 0);
     const aeduExperience = asNumber(userData?.aeduExperience ?? currentUserAeduExperience, 0);
     const aeduLevel = asNumber(userData?.aeduLevel ?? calculateAiedueLevel(aeduExperience), 1);
     return {
@@ -2188,9 +2190,9 @@ function buildAiedueSchoolProfileSnapshot(userData = {}) {
         coins,
         balance,
         aeduTokens,
+        warningTokens,
         aeduExperience,
         aeduLevel,
-        warningTokens: asNumber(userData?.warningTokens, 0),
         currentLearningStep: asNumber(userData?.currentLearningStep ?? currentLearningStep, -1),
         currentDrawingStep: asNumber(userData?.currentDrawingStep ?? currentUserDrawingStep, -1),
         currentDictationStep: asNumber(userData?.currentDictationStep ?? currentUserDictationStep, -1),
@@ -2202,6 +2204,7 @@ function setCurrentAiedueSchoolWalletFromSnapshot(snapshot = {}) {
     currentUserCoins = asNumber(snapshot.coins, currentUserCoins);
     currentUserBalance = asNumber(snapshot.balance, currentUserCoins);
     currentUserAeduTokens = asNumber(snapshot.aeduTokens, currentUserBalance);
+    currentUserWarningTokens = asNumber(snapshot.warningTokens, currentUserWarningTokens);
     const rawExperience = Math.max(0, asNumber(snapshot.aeduExperience, currentUserAeduExperience));
     const hasStoredLevel = Number.isFinite(Number(snapshot.aeduLevel));
     currentUserAeduLevel = hasStoredLevel ? Math.max(1, Math.floor(Number(snapshot.aeduLevel))) : calculateAiedueLevel(rawExperience);
@@ -2361,12 +2364,15 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
 
     if (levelUpCount > 0) {
         currentUserAeduLevel = asNumber(currentUserAeduLevel, 1) + levelUpCount;
+        const beforeWarningTokens = Math.max(0, Math.floor(asNumber(currentUserWarningTokens, 0)));
+        const removedWarningTokens = Math.min(beforeWarningTokens, levelUpCount);
+        currentUserWarningTokens = beforeWarningTokens - removedWarningTokens;
         // 기존 보상 로직과 겹치지 않게, 레벨업에 따른 보상만 지급
         const levelUpPoints = levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD;
         applyAieduePointReward(levelUpPoints);
 
         if (typeof showModal === 'function') {
-            showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${currentUserAeduLevel} (보상으로 ${levelUpPoints}포인트를 받았어요!)`);
+            showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${currentUserAeduLevel} (보상 ${levelUpPoints}포인트${removedWarningTokens ? ` · 주의토큰 ${removedWarningTokens}개 차감` : ''})`);
         }
     }
 
@@ -2375,6 +2381,7 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
         coins: currentUserCoins,
         balance: currentUserBalance,
         aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
         aeduLevel: currentUserAeduLevel
     };
@@ -2386,6 +2393,7 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
         coins: currentUserCoins,
         balance: currentUserBalance,
         aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
         aeduLevel: currentUserAeduLevel,
         updatedAt: serverTimestamp()
@@ -3065,6 +3073,10 @@ function updateSyncedActivityHeaders({ name, coins, icon } = {}) {
     document.querySelectorAll('.sync-aedu-exp-bar').forEach((el) => {
         el.style.width = `${Math.min(100, Math.max(0, exp))}%`;
     });
+    const warnings = typeof currentUserWarningTokens !== 'undefined' ? currentUserWarningTokens : 0;
+    document.querySelectorAll('.sync-warning-tokens').forEach((el) => {
+        el.innerText = Math.max(0, Math.floor(asNumber(warnings, 0)));
+    });
 }
 
 function updateAccountName(name) {
@@ -3122,6 +3134,7 @@ function updateDashboardExperience(userData = {}) {
     currentUserCoins = Number(coins) || 0;
     currentUserBalance = asNumber(currentUserProfileSnapshot.balance, currentUserCoins);
     currentUserAeduTokens = asNumber(currentUserProfileSnapshot.aeduTokens, currentUserBalance);
+    currentUserWarningTokens = asNumber(currentUserProfileSnapshot.warningTokens, 0);
     currentUserAeduExperience = asNumber(currentUserProfileSnapshot.aeduExperience, currentUserAeduExperience);
     currentUserAeduLevel = asNumber(currentUserProfileSnapshot.aeduLevel, calculateAiedueLevel(currentUserAeduExperience));
     drawingPortfolio = {
@@ -3154,6 +3167,8 @@ function updateDashboardExperience(userData = {}) {
     if (headerName) headerName.innerText = name;
     if (headerCoins) headerCoins.innerText = coins;
     if (headerIcon) headerIcon.innerText = icon;
+    const headerWarnings = document.getElementById('dashboard-warning-tokens-header');
+    if (headerWarnings) headerWarnings.innerText = currentUserWarningTokens;
     updateSyncedActivityHeaders({ name, coins, icon });
 
     // Update Level Cards
@@ -4322,6 +4337,7 @@ async function persistDrawingData(extra = {}) {
         coins: currentUserCoins,
         balance: currentUserBalance,
         aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
         aeduLevel: currentUserAeduLevel
     };
@@ -5304,8 +5320,7 @@ function normalizeDictationPortfolio(raw = {}) {
         missions: raw?.missions || {},
         aiWords: Array.isArray(raw?.aiWords) ? raw.aiWords : [],
         koreanBank: {
-            words: Array.from(new Set((Array.isArray(bank.words) ? bank.words : []).map(cleanKoreanWord).filter(Boolean))).slice(0, 300),
-            sentences: Array.from(new Set((Array.isArray(bank.sentences) ? bank.sentences : []).map(cleanKoreanSentence).filter(Boolean))).slice(0, 200)
+            words: Array.from(new Set((Array.isArray(bank.words) ? bank.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, 300)
         },
         wrongBank: Array.isArray(raw?.wrongBank) ? raw.wrongBank.map(normalizeDictationBankItem).filter(Boolean) : [],
         completedBank: Array.isArray(raw?.completedBank) ? raw.completedBank.map(normalizeDictationBankItem).filter(Boolean) : [],
@@ -5314,16 +5329,21 @@ function normalizeDictationPortfolio(raw = {}) {
         hasCompletedOnce: Boolean(raw?.hasCompletedOnce)
     };
 }
-function extractKoreanBankFromText(text) {
-    const sentences = String(text || '').split(/[\n.!?。]+/).map(cleanKoreanSentence).filter((line) => line.length >= 4).slice(0, 50);
-    const words = Array.from(new Set(String(text || '').match(/[가-힣]{2,}/g) || [])).map(cleanKoreanWord).filter((word) => word.length >= 2 && word.length <= 8).slice(0, 80);
-    return { words, sentences };
+const KOREAN_VERB_LIKE_ENDINGS = ['하다','했다','한다','해요','되다','된다','됐다','가다','간다','가요','오다','온다','와요','먹다','먹어요','보다','봐요','읽다','읽어요','쓰다','써요','있다','없다','좋다'];
+function isLikelyKoreanNounBankWord(word) {
+    const clean = cleanKoreanWord(word);
+    if (clean.length < 2 || clean.length > 8) return false;
+    if (KOREAN_VERB_LIKE_ENDINGS.some((ending) => clean.endsWith(ending))) return false;
+    return true;
 }
-function mergeKoreanBank({ words = [], sentences = [] }) {
-    const bank = dictationPortfolio.koreanBank || { words: [], sentences: [] };
+function extractKoreanBankFromText(text) {
+    const words = Array.from(new Set(String(text || '').match(/[가-힣]{2,}/g) || [])).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord).slice(0, 80);
+    return { words };
+}
+function mergeKoreanBank({ words = [] }) {
+    const bank = dictationPortfolio.koreanBank || { words: [] };
     dictationPortfolio.koreanBank = {
-        words: Array.from(new Set([...(bank.words || []), ...words.map(cleanKoreanWord).filter(Boolean)])).slice(0, 300),
-        sentences: Array.from(new Set([...(bank.sentences || []), ...sentences.map(cleanKoreanSentence).filter(Boolean)])).slice(0, 200)
+        words: Array.from(new Set([...(bank.words || []), ...words.map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)])).slice(0, 300)
     };
 }
 async function persistDictationData(extra = {}) {
@@ -5332,6 +5352,7 @@ async function persistDictationData(extra = {}) {
         coins: currentUserCoins,
         balance: currentUserBalance,
         aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
         aeduLevel: currentUserAeduLevel
     };
@@ -5347,13 +5368,13 @@ function isDictationMissionLocked() {
 function updateDictationDashboardPreview() {
     dictationPortfolio = normalizeDictationPortfolio(dictationPortfolio);
     const wrong = dictationPortfolio.wrongBank.length, done = dictationPortfolio.completedBank.length;
-    const words = dictationPortfolio.koreanBank.words.length, sentences = dictationPortfolio.koreanBank.sentences.length;
+    const words = dictationPortfolio.koreanBank.words.length;
     const summary = document.getElementById('dictation-bank-summary'); if (summary) summary.innerText = `오답 ${wrong}개 · 완료 ${done}개`;
-    const bankSummary = document.getElementById('korean-bank-summary'); if (bankSummary) bankSummary.innerText = `단어 ${words}개 · 문장 ${sentences}개`;
+    const bankSummary = document.getElementById('korean-bank-summary'); if (bankSummary) bankSummary.innerText = `단어 ${words}개`;
     const badge = document.getElementById('dictation-lock-badge'); const desc = document.getElementById('dictation-mission-desc'); const card = document.getElementById('dictation-mission-card');
     const locked = isDictationMissionLocked();
     if (badge) badge.innerText = locked ? '잠겨 있음' : '오늘의 미션';
-    if (desc) desc.innerText = locked ? '미션을 하려면 단어 은행 사진을 먼저 찍어야 해요!' : '오답 5개 + 새 문장 5개로 도전해요!';
+    if (desc) desc.innerText = locked ? '미션을 하려면 단어 은행 사진을 먼저 찍어야 해요!' : '단어 은행 기반으로 받아쓰기 10문장을 바로 생성해요!';
     if (card) card.classList.toggle('opacity-70', locked);
 }
 function makeSentenceFromWords(words, index = 0) {
@@ -5363,9 +5384,8 @@ function makeSentenceFromWords(words, index = 0) {
 }
 function createDictationMissionSession() {
     const wrongItems = [...(dictationPortfolio.wrongBank || [])].sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0)).slice(0, 5).map((item) => ({ sentence: item.sentence, source: 'wrong-bank' }));
-    const bank = dictationPortfolio.koreanBank || { words: [], sentences: [] }; const generated = []; const existing = new Set(wrongItems.map((item) => item.sentence));
-    for (const sentence of bank.sentences || []) { if (generated.length >= 5) break; const clean = cleanKoreanSentence(sentence); if (clean && !existing.has(clean)) generated.push({ sentence: clean, source: 'bank-sentence' }); }
-    for (let i = 0; generated.length < 5 && i < 20; i += 1) { const sentence = makeSentenceFromWords(bank.words || [], i); if (!existing.has(sentence) && !generated.some((item) => item.sentence === sentence)) generated.push({ sentence, source: 'generated-word' }); }
+    const bank = dictationPortfolio.koreanBank || { words: [] }; const generated = []; const existing = new Set(wrongItems.map((item) => item.sentence));
+    for (let i = 0; generated.length < (10 - wrongItems.length) && i < 40; i += 1) { const sentence = makeSentenceFromWords(bank.words || [], i); if (!existing.has(sentence) && !generated.some((item) => item.sentence === sentence)) generated.push({ sentence, source: 'generated-word' }); }
     return { kind: 'mission', items: [...wrongItems, ...generated].slice(0, 10), currentIndex: 0, graded: null, saved: false, autoSaved: false, startedAt: new Date().toISOString() };
 }
 function renderDictationSessionList() {
@@ -5433,9 +5453,9 @@ window.openAiWordPracticeActivity = function() { window.openDictationPracticeAct
 window.openDictationPracticeActivity = function(filter = 'all') {
     const wrong = filter === 'completed' ? [] : (dictationPortfolio.wrongBank || []); const done = filter === 'wrong' ? [] : (dictationPortfolio.completedBank || []);
     const items = [...wrong, ...done].slice(0, 20).map((item) => ({ sentence: item.sentence, source: item.correctCount >= 3 ? 'completed-bank' : 'wrong-bank' }));
-    if (!items.length) { items.push(...(dictationPortfolio.koreanBank?.sentences || []).slice(0, 10).map((sentence) => ({ sentence, source: 'bank-sentence' }))); items.push(...(dictationPortfolio.koreanBank?.words || []).slice(0, 10).map((_, i) => ({ sentence: makeSentenceFromWords(dictationPortfolio.koreanBank.words, i), source: 'generated-word' }))); }
+    if (!items.length) { items.push(...(dictationPortfolio.koreanBank?.words || []).slice(0, 10).map((_, i) => ({ sentence: makeSentenceFromWords(dictationPortfolio.koreanBank.words, i), source: 'generated-word' }))); }
     if (!items.length) { showModal('연습할 문장이 아직 없어요. 단어 은행 촬영을 먼저 해주세요.'); openDictationBankCamera(); return; }
-    configureDictationWorkspace({ kind: 'practice', items, currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() }, { badge: '받아쓰기 연습하기', title: '받아쓰기 연습하기', desc: '오답/완료/단어 은행 문장을 보고 따라 써요.' });
+    configureDictationWorkspace({ kind: 'practice', items, currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() }, { badge: '받아쓰기 연습하기', title: '받아쓰기 연습하기', desc: '오답/완료/단어 은행 기반 문장을 보고 따라 써요.' });
 }
 function stopDictationCamera() {
     if (activeDictationCameraStream) {
@@ -5551,18 +5571,17 @@ async function extractDictationWordsWithAi(text) {
     const fallbackExtracted = extractKoreanBankFromText(text);
     try {
         const existingWords = (dictationPortfolio.koreanBank?.words || []).join(', ');
-        const prompt = `다음은 OCR과 AI 사진 분석으로 얻은 문구입니다. 초등 국어 단어 은행에 넣을 한국어 명사/동사/형용사 단어만 골라주세요. 조사, 어미, 중복, 한 글자, 의미 없는 조각은 제외하세요. 이미 단어 은행에 있는 단어는 제외하세요. 기존 단어: ${existingWords || '없음'}
+        const prompt = `다음은 OCR과 AI 사진 분석으로 얻은 문구입니다. 초등 국어 단어 은행에 넣을 한국어 명사만 골라주세요. 동사와 형용사는 반드시 제외하세요. 조사, 어미, 중복, 한 글자, 의미 없는 조각은 제외하세요. 이미 단어 은행에 있는 단어는 제외하세요. 기존 단어: ${existingWords || '없음'}
 
 문구:
 ${text}
 
-반드시 JSON만 출력: {"words":["단어"],"sentences":["짧은 문장"]}`;
+반드시 JSON만 출력: {"words":["명사"]}`;
         const raw = await callKoreanAiGenerate(prompt, { printTimeout: '3m' }) || '{}';
         const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
         const parsed = JSON.parse(cleaned);
         return {
-            words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter((word) => word.length >= 2))),
-            sentences: Array.from(new Set((Array.isArray(parsed.sentences) ? parsed.sentences : []).map(cleanKoreanSentence).filter((sentence) => sentence.length >= 4)))
+            words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)))
         };
     } catch (error) {
         console.warn('dictation AI word extraction fallback', error);
@@ -5613,18 +5632,17 @@ window.saveDictationBankPhoto = async function() {
     const text = document.getElementById('dictation-ocr-text').value;
     const aiExtracted = await extractDictationWordsWithAi(text);
     const fallbackExtracted = extractKoreanBankFromText(text);
-    const candidateWords = Array.from(new Set([...(aiExtracted.words || []), ...(fallbackExtracted.words || [])].map(cleanKoreanWord).filter((word) => word.length >= 2)));
+    const candidateWords = Array.from(new Set([...(aiExtracted.words || []), ...(fallbackExtracted.words || [])].map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)));
     const existing = new Set(dictationPortfolio.koreanBank?.words || []);
     const words = candidateWords.filter((word) => !existing.has(word));
     const duplicateCount = candidateWords.length - words.length;
-    const sentences = Array.from(new Set([...(aiExtracted.sentences || []), ...(fallbackExtracted.sentences || [])].map(cleanKoreanSentence).filter((sentence) => sentence.length >= 4)));
-    if (!words.length && !sentences.length) { showModal('새로 저장할 단어를 찾지 못했어요. OCR/AI 분석 글자를 직접 고쳐 적어주세요. 이미 있는 단어는 중복 저장하지 않습니다.'); return; }
-    mergeKoreanBank({ words, sentences });
-    dictationPortfolio.captures = [{ text, aiAnalysis: activeDictationImageAnalysis, words, skippedDuplicateWords: duplicateCount, sentences, photo: document.getElementById('dictation-photo-preview').src || '', savedAt: new Date().toISOString() }, ...(dictationPortfolio.captures || [])].slice(0, 20);
+    if (!words.length) { showModal('새로 저장할 명사 단어를 찾지 못했어요. OCR/AI 분석 글자를 직접 고쳐 적어주세요. 이미 있는 단어는 중복 저장하지 않습니다.'); return; }
+    mergeKoreanBank({ words });
+    dictationPortfolio.captures = [{ text, aiAnalysis: activeDictationImageAnalysis, words, skippedDuplicateWords: duplicateCount, photo: document.getElementById('dictation-photo-preview').src || '', savedAt: new Date().toISOString() }, ...(dictationPortfolio.captures || [])].slice(0, 20);
     dictationPortfolio.dictationLocked = false;
     await persistDictationData();
     stopDictationCamera();
-    showModal(`새 단어 ${words.length}개를 단어 은행에 저장했어요.${duplicateCount > 0 ? ` 중복 단어 ${duplicateCount}개는 제외했어요.` : ''}${sentences.length ? ` 문장 ${sentences.length}개도 문장 은행에 저장했어요.` : ''} 받아쓰기 잠금이 해제됐어요!`);
+    showModal(`새 단어 ${words.length}개를 단어 은행에 저장했어요.${duplicateCount > 0 ? ` 중복 단어 ${duplicateCount}개는 제외했어요.` : ''} 받아쓰기 잠금이 해제됐어요!`);
 }
 function normalizeForGrade(text) { return String(text || '').replace(/[^가-힣0-9]/g, '').trim(); }
 async function gradeDictationSessionWithAi() {
@@ -5731,12 +5749,12 @@ function upsertWrongOrCompleted(result, now) {
     dictationPortfolio.wrongBank = wrongBank.sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0)).slice(0, 100); dictationPortfolio.completedBank = completedBank.slice(0, 150);
 }
 window.startNextDictationMission = function() {
-    configureDictationWorkspace(createDictationMissionSession(), { badge: '오늘의 미션', title: '받아쓰기 미션', desc: '새로 고른 오답 5개 + 새 문장 5개를 다시 풀어요.' });
+    configureDictationWorkspace(createDictationMissionSession(), { badge: '오늘의 미션', title: '받아쓰기 미션', desc: '단어 은행 기반 10문장을 다시 생성해요.' });
 }
 window.completeDictationItem = async function() {
     showModal('미션 채점 결과는 AI 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
 }
-window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [], sentences: [] }; showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">국어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto">${(bank.words || []).map((word) => `<span class="px-3 py-1 rounded-full bg-red-50 text-red-500 font-bold">${escapeHtml(word)}</span>`).join('') || '<span class="text-gray-400">아직 단어가 없어요.</span>'}</div></div><div><div class="font-black text-red-500 mb-2">문장 은행 ${bank.sentences.length}개</div><div class="space-y-2 max-h-56 overflow-y-auto">${(bank.sentences || []).map((sentence) => `<div class="p-3 rounded-2xl bg-gray-50 font-bold text-gray-600">${escapeHtml(sentence)}</div>`).join('') || '<div class="text-gray-400">아직 문장이 없어요.</div>'}</div></div></div>`); }
+window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">국어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="flex flex-wrap gap-2 max-h-64 overflow-y-auto">${(bank.words || []).map((word) => `<span class="px-3 py-1 rounded-full bg-red-50 text-red-500 font-bold">${escapeHtml(word)}</span>`).join('') || '<span class="text-gray-400">아직 단어가 없어요.</span>'}</div><p class="text-xs text-gray-400 font-bold mt-4">문장 은행은 사용하지 않아요. 받아쓰기/문해력 문장은 단어 은행을 바탕으로 미션 시작 때 생성됩니다.</p></div></div>`); }
 
 window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
 window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button type="button" class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${escapeHtml(text)}</button>`).join(''); }
@@ -5771,6 +5789,7 @@ async function persistLiteracyData(extra = {}) {
         coins: currentUserCoins,
         balance: currentUserBalance,
         aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
         aeduLevel: currentUserAeduLevel
     };
@@ -5827,6 +5846,23 @@ function isLiteracyUnlocked(difficulty, type) {
     return false;
 }
 
+function getLiteracyDanPlan(dan = null) {
+    const level = Math.max(1, Math.floor(asNumber(dan ?? currentUserProfileSnapshot?.literacyDan ?? literacyPortfolio?.dan, 1)));
+    const cycle = Math.floor((level - 1) / 3);
+    const typeStep = (level - 1) % 3;
+    const difficulties = ['easy', 'normal', 'hard', 'expert'];
+    const difficulty = difficulties[Math.min(cycle, difficulties.length - 1)] || 'expert';
+    const types = typeStep === 0 ? ['multipleChoice'] : (typeStep === 1 ? ['multipleChoice', 'shortAnswer'] : ['multipleChoice', 'shortAnswer', 'essay']);
+    return { dan: level, difficulty, types, type: types[Math.floor(Math.random() * types.length)] };
+}
+function updateLiteracyDanBadges() {
+    const plan = getLiteracyDanPlan();
+    const label = `문해력 ${plan.dan}단`;
+    ['literacy-dan-dashboard-badge', 'literacy-dan-workspace-badge'].forEach((id) => { const el = document.getElementById(id); if (el) el.innerText = label; });
+    const desc = document.getElementById('literacy-mission-desc');
+    if (desc) desc.innerText = `${label} 기준으로 ${plan.difficulty.toUpperCase()} · ${plan.types.map(t => ({multipleChoice:'객관식', shortAnswer:'단답형', essay:'서술형'}[t] || t)).join('/')} 문제가 자동 출제돼요.`;
+}
+
 function chooseRecommendedLiteracyMission() {
     const difficulties = ['easy', 'normal', 'hard', 'expert'];
     for (const difficulty of difficulties) {
@@ -5859,11 +5895,11 @@ function updateLiteracyDashboardPreview() {
     }
 
     const words = dictationPortfolio?.koreanBank?.words?.length || 0;
-    const sentences = dictationPortfolio?.koreanBank?.sentences?.length || 0;
     const bankSummary = document.getElementById('literacy-korean-bank-summary');
     if (bankSummary) {
-        bankSummary.innerText = `단어 ${words}개 · 문장 ${sentences}개`;
+        bankSummary.innerText = `단어 ${words}개`;
     }
+    updateLiteracyDanBadges();
 }
 
 function generateQuestionHash(passage, question) {
@@ -6055,110 +6091,33 @@ window.openLiteracyLimitBreak = async function() {
 };
 
 window.openTodayLiteracyMission = function() {
-    function renderMissionSelectContent(selectedDiff, selectedType) {
-        const diffs = ['easy', 'normal', 'hard', 'expert'];
-        const types = [
-            { id: 'multipleChoice', label: '객관식 (4지선다)' },
-            { id: 'shortAnswer', label: '단답형' },
-            { id: 'essay', label: '서술형' }
-        ];
+    const plan = getLiteracyDanPlan();
+    window.startTodayLiteracyMission(plan.difficulty, plan.type);
+};
 
-        let activeType = selectedType;
-        const isTypeUnlocked = (d, t) => isLiteracyUnlocked(d, t);
-
-        if (!isTypeUnlocked(selectedDiff, activeType)) {
-            const firstUnlocked = types.find(t => isTypeUnlocked(selectedDiff, t.id));
-            activeType = firstUnlocked ? firstUnlocked.id : 'multipleChoice';
-        }
-
-        const html = `
-            <div class="text-left p-2 font-sans">
-                <h3 class="text-3xl font-black text-[#2c3e50] mb-4 flex items-center gap-2">📘 [오늘의 문해력 미션]</h3>
-                <p class="text-gray-500 font-bold mb-6">다양한 난이도와 유형의 문제를 풀어 생각을 넓혀보세요.</p>
-
-                <div class="mb-6">
-                    <label class="block font-black text-gray-700 mb-2">1. 난이도 선택</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        ${diffs.map(d => {
-                            const unlocked = isLiteracyUnlocked(d, 'multipleChoice');
-                            const selected = d === selectedDiff;
-                            const prevMap = { normal: 'easy', hard: 'normal', expert: 'hard' };
-                            const prev = prevMap[d];
-                            const conditionText = d === 'easy' ? '기본 해금' : `${prev.toUpperCase()} 객관식·단답형·서술형 목표 달성`;
-                            return `
-                                <button type="button" class="flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${selected ? 'bg-blue-600 border-blue-600 text-white' : unlocked ? 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50' : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'}"
-                                    ${unlocked ? `onclick="window.changeMissionSelection('${d}', '${activeType}')"` : 'disabled'}>
-                                    <span class="text-xl font-black">${d.toUpperCase()}</span>
-                                    <span class="text-[9px] mt-1 font-bold ${selected ? 'text-blue-100' : unlocked ? 'text-blue-600' : 'text-gray-400'}">${conditionText}</span>
-                                </button>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block font-black text-gray-700 mb-2">2. 유형 선택</label>
-                    <div class="space-y-2">
-                        ${types.map(t => {
-                            const unlocked = isTypeUnlocked(selectedDiff, t.id);
-                            const selected = t.id === activeType;
-                            let conditionText = '';
-                            if (t.id === 'shortAnswer') conditionText = `(${selectedDiff.toUpperCase()} 객관식 10문제 이상 + 오답률 20%↓ 시 해금)`;
-                            if (t.id === 'essay') conditionText = `(${selectedDiff.toUpperCase()} 객관식 20%↓ + 단답형 30%↓ 시 해금)`;
-                            return `
-                                <button type="button" class="w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${selected ? 'bg-blue-600 border-blue-600 text-white' : unlocked ? 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50' : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'}"
-                                    ${unlocked ? `onclick="window.changeMissionSelection('${selectedDiff}', '${t.id}')"` : 'disabled'}>
-                                    <span class="text-lg font-black">${t.label}</span>
-                                    ${unlocked ? `<span class="text-xs font-bold ${selected ? 'text-blue-200' : 'text-blue-600'}">선택 가능</span>` : `<span class="text-xs text-red-400 font-bold">${conditionText}</span>`}
-                                </button>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-
-                <button type="button" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all"
-                    onclick="window.startTodayLiteracyMission('${selectedDiff}', '${activeType}')">
-                    오늘의 미션 시작하기!
-                </button>
-            </div>
-        `;
-        return html;
+window.startTodayLiteracyMission = async function(diff, type) {
+    showActivityLoading();
+    try {
+        const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 8);
+        const prompt = generateLiteracyPrompt(diff, type, bankWords);
+        const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
+        const questionData = parseAiQuestionResponse(responseText);
+        if (!questionData || !questionData.passage || !questionData.question) throw new Error("AI가 문해력 문제를 올바르게 생성하지 못했습니다.");
+        questionData.difficulty = diff;
+        questionData.type = type;
+        questionData.literacyDan = getLiteracyDanPlan().dan;
+        hideActivityLoading();
+        setupLiteracyWorkspace(questionData, false);
+    } catch (e) {
+        hideActivityLoading();
+        console.error(e);
+        showModal(`문제 생성에 실패했습니다: ${escapeHtml(e.message || e)}. 다시 시도해 주세요.`);
     }
+};
 
-    window.changeMissionSelection = function(diff, type) {
-        const html = renderMissionSelectContent(diff, type);
-        showModal(html);
-    };
-
-    window.startTodayLiteracyMission = async function(diff, type) {
-        window.handleModalConfirm();
-        showActivityLoading();
-        try {
-            const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 5);
-            const prompt = generateLiteracyPrompt(diff, type, bankWords);
-
-            const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
-            const questionData = parseAiQuestionResponse(responseText);
-
-            if (!questionData || !questionData.passage || !questionData.question) {
-                throw new Error("AI가 문해력 문제를 올바르게 생성하지 못했습니다.");
-            }
-
-            questionData.difficulty = diff;
-            questionData.type = type;
-
-            hideActivityLoading();
-            setupLiteracyWorkspace(questionData, false);
-        } catch (e) {
-            hideActivityLoading();
-            console.error(e);
-            showModal(`문제 생성에 실패했습니다: ${escapeHtml(e.message || e)}. 다시 시도해 주세요.`);
-        }
-    };
-
-    const recommended = chooseRecommendedLiteracyMission();
-    const initialHtml = renderMissionSelectContent(recommended.difficulty, recommended.type);
-    showModal(initialHtml);
+window.nextLiteracyQuestion = function() {
+    const plan = getLiteracyDanPlan();
+    window.startTodayLiteracyMission(plan.difficulty, plan.type);
 };
 
 function generateLiteracyPrompt(difficulty, type, bankWords) {
@@ -6228,6 +6187,7 @@ function setupLiteracyWorkspace(questionData, isLimitBreak = false) {
     document.getElementById('literacy-passage-difficulty').innerText = questionData.difficulty.toUpperCase();
     document.getElementById('literacy-passage-content').innerText = questionData.passage;
     document.getElementById('literacy-question-content').innerText = questionData.question;
+    updateLiteracyDanBadges();
 
     const typeLabel = document.getElementById('literacy-question-type');
     const typeNames = { multipleChoice: '객관식 (4지선다)', shortAnswer: '단답형', essay: '서술형' };
@@ -6375,6 +6335,20 @@ async function showLiteracyResult(isCorrect, details) {
                 stageMultiplier
             });
         }
+    } else {
+        const claimId = `litwrong-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        activeLiteracyQuestion.pendingReviewRewardId = claimId;
+        let left = 60;
+        const renderClaim = () => {
+            const extra = document.getElementById('literacy-wrong-review-reward');
+            if (!extra) return;
+            extra.innerHTML = left > 0
+                ? `<button type="button" class="mt-4 w-full py-3 bg-gray-200 text-gray-500 font-black rounded-2xl" disabled>예시 답안 확인 후 경험치 받기 (${left}초)</button>`
+                : `<button type="button" class="mt-4 w-full py-3 bg-orange-500 text-white font-black rounded-2xl" onclick="claimLiteracyWrongReviewReward('${claimId}')">예시 답안을 따라 확인하고 경험치 받기</button>`;
+        };
+        explanation.insertAdjacentHTML('beforeend', '<div id="literacy-wrong-review-reward"></div>');
+        renderClaim();
+        const timer = window.setInterval(() => { left -= 1; renderClaim(); if (left <= 0) window.clearInterval(timer); }, 1000);
     }
 
     const diff = activeLiteracyQuestion.difficulty;
@@ -6419,6 +6393,17 @@ async function showLiteracyResult(isCorrect, details) {
     }
 
     await persistLiteracyData({ coins: currentUserCoins });
+}
+
+window.claimLiteracyWrongReviewReward = async function(claimId) {
+    if (!activeLiteracyQuestion || activeLiteracyQuestion.pendingReviewRewardId !== claimId || activeLiteracyQuestion.reviewRewardClaimed) return;
+    activeLiteracyQuestion.reviewRewardClaimed = true;
+    const stageMultiplier = calculateStageExperienceMultiplier(4);
+    const finalExp = 2 * stageMultiplier;
+    if (finalExp > 0) applyAiedueExperienceReward(finalExp, { source: 'literacy-wrong-review', claimId });
+    await persistLiteracyData();
+    const box = document.getElementById('literacy-wrong-review-reward');
+    if (box) box.innerHTML = '<div class="mt-4 p-3 bg-orange-50 text-orange-600 font-black rounded-2xl text-center">오답은 그대로 기록되고, 복습 경험치만 받았어요!</div>';
 }
 
 window.openMyLiteracyRecord = function() {
@@ -12548,7 +12533,7 @@ window.closeClassManagement = function() {
 window.loadStudents = async function() {
     const tbody = document.getElementById('student-list-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10">목록을 불러오는 중...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10">목록을 불러오는 중...</td></tr>';
 
     try {
         const classRef = doc(db, 'classes', currentUserId);
@@ -12560,7 +12545,7 @@ window.loadStudents = async function() {
                 renderTeacherTestKoreanReportRow(tbody);
                 return;
             }
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-gray-400">학급에 등록된 학생이 없어요.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">학급에 등록된 학생이 없어요.</td></tr>';
             return;
         }
 
@@ -12608,6 +12593,16 @@ window.loadStudents = async function() {
                 </td>
                 <td class="py-4 px-4 text-teal-600 font-bold">${escapeHtml(student.userCode)}</td>
                 <td class="py-4 px-4">
+                    <div class="text-sm font-black text-yellow-600">돈 ${formatAiedueShopCurrency(asNumber(student.balance ?? student.coins ?? student.aeduTokens, 0))}</div>
+                    <div class="text-sm font-black text-red-500">주의토큰 ${asNumber(student.warningTokens, 0)}개</div>
+                </td>
+                <td class="py-4 px-4">
+                    <div class="flex flex-col gap-2 min-w-[150px]">
+                        <div class="flex gap-1"><input id="wallet-money-${escapeHtml(sid)}" type="number" class="w-20 px-2 py-1 border rounded-xl text-xs" placeholder="돈"><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','money',1)">지급</button><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','money',-1)">차감</button></div>
+                        <div class="flex gap-1"><input id="wallet-warning-${escapeHtml(sid)}" type="number" class="w-20 px-2 py-1 border rounded-xl text-xs" placeholder="토큰"><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','warning',1)">지급</button><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','warning',-1)">차감</button></div>
+                    </div>
+                </td>
+                <td class="py-4 px-4">
                     <div class="flex gap-2">${toggleHtml}</div>
                 </td>
                 <td class="py-4 px-4">
@@ -12625,7 +12620,39 @@ window.loadStudents = async function() {
             renderTeacherTestKoreanReportRow(tbody);
             return;
         }
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-red-500">목록을 불러오지 못했습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-red-500">목록을 불러오지 못했습니다.</td></tr>';
+    }
+}
+
+window.adjustStudentKoreanWallet = async function(sid, kind, direction) {
+    try {
+        const inputId = kind === 'warning' ? `wallet-warning-${sid}` : `wallet-money-${sid}`;
+        const rawAmount = Math.abs(asNumber(document.getElementById(inputId)?.value, 0));
+        if (!rawAmount) { showModal('지급/차감할 숫자를 입력해주세요.'); return; }
+        const delta = rawAmount * (direction < 0 ? -1 : 1);
+        const userRef = doc(db, 'users', sid);
+        const snap = await getDoc(userRef);
+        if (!snap.exists()) throw new Error('학생 정보를 찾지 못했습니다.');
+        const data = snap.data();
+        const update = {};
+        if (kind === 'warning') {
+            update.warningTokens = Math.max(0, asNumber(data.warningTokens, 0) + delta);
+        } else {
+            const currentMoney = asNumber(data.balance ?? data.coins ?? data.aeduTokens, 0);
+            const nextMoney = Math.max(0, currentMoney + delta);
+            update.balance = nextMoney;
+            update.coins = nextMoney;
+            update.aeduTokens = nextMoney;
+        }
+        await setDoc(userRef, { ...update, updatedAt: serverTimestamp() }, { merge: true });
+        try {
+            await addDoc(collection(db, 'transferLog'), { teacherId: currentUserId, studentId: sid, kind, delta, source: 'aiedue-korean-class-management', createdAt: serverTimestamp() });
+        } catch (logError) { console.warn('wallet transfer log failed', logError); }
+        showModal(`${kind === 'warning' ? '주의토큰' : '돈'} ${rawAmount}${kind === 'warning' ? '개' : '원'} ${direction < 0 ? '차감' : '지급'} 완료`);
+        await loadStudents();
+    } catch (err) {
+        console.error('student wallet adjust failed', err);
+        showModal(`학생 돈/주의토큰 변경 실패: ${escapeHtml(err.message || err)}`);
     }
 }
 
