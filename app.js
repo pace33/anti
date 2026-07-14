@@ -5069,15 +5069,15 @@ function renderVowelOriginExplanations() {
 const vowelOriginStages = {
     ground: {
         duration: 6000,
-        speech: '땅은 옆으로 길게 펼쳐져 있어요. 땅의 모양에서 모음 으가 태어났어요. 소리는 으예요.'
+        speech: '땅은 옆으로 길게 펼쳐져 있어요. 땅의 모양에서 ㅡ가 태어났어요. 소리는 으 예요.'
     },
     person: {
         duration: 5800,
-        speech: '사람은 땅 위에 곧게 서 있어요. 서 있는 사람의 모양에서 모음 이가 태어났어요. 소리는 이예요.'
+        speech: '사람은 땅 위에 곧게 서 있어요. 서 있는 사람의 모양에서 ㅣ가 태어났어요. 소리는 이 예요.'
     },
     sun: {
         duration: 5400,
-        speech: '해는 하늘에 둥글게 떠 있어요. 둥근 해의 모양에서 동그라미가 태어났어요. 둥근 모양을 살펴보세요.'
+        speech: '해는 하늘에 둥글게 떠 있어요. 둥근 해의 모양에서 점이 태어났어요.'
     }
 };
 let vowelOriginTimers = [];
