@@ -1554,6 +1554,301 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     color: #0f766e;
     font-size: .8rem;
 }
+.lesson21-m-intro-page {
+    overflow-x: hidden;
+}
+.lesson21-m-feedback {
+    margin: 10px 0 14px;
+    padding: 14px 18px;
+    border: 2px solid #9ddfc6;
+    border-radius: 10px;
+    background: #eefbf4;
+    color: #174a43;
+    font-size: 1.12rem;
+    font-weight: 900;
+    text-align: center;
+}
+.lesson21-m-table {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+}
+.lesson21-m-block {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    min-width: 0;
+    overflow: hidden;
+    border: 2px solid #aab8c9;
+    border-radius: 10px;
+    background: #ffffff;
+}
+.lesson21-m-side-column {
+    display: grid;
+    grid-template-rows: 82px 150px;
+    min-width: 0;
+    background: #eaf2fb;
+}
+.lesson21-m-base-heading {
+    display: grid;
+    place-items: center;
+    padding: 6px;
+    border-bottom: 1px solid #aab8c9;
+    color: #334e70;
+    font-size: .92rem;
+    font-weight: 900;
+    text-align: center;
+}
+.lesson21-m-batchim-label {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 44px;
+    border: 0;
+    background: #dceafb;
+    color: #173b67;
+    cursor: pointer;
+}
+.lesson21-m-batchim-label span {
+    font-size: .78rem;
+    font-weight: 800;
+}
+.lesson21-m-batchim-label strong {
+    font-size: 2.25rem;
+    line-height: 1;
+}
+.lesson21-m-pair-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    min-width: 0;
+}
+.lesson21-m-pair {
+    display: grid;
+    grid-template-rows: 82px 150px;
+    min-width: 0;
+    border-left: 1px solid #aab8c9;
+    background: #ffffff;
+    transition: background-color .2s ease, box-shadow .2s ease;
+}
+.lesson21-m-base-button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 5px;
+    border: 0;
+    border-bottom: 1px solid #aab8c9;
+    background: #fbfdff;
+    color: #162d4a;
+    cursor: pointer;
+    transition: background-color .25s ease, transform .25s ease, color .25s ease;
+}
+.lesson21-m-display-letter {
+    font-size: 2.5rem;
+    font-weight: 1000;
+    line-height: 1;
+}
+.lesson21-m-listen-label {
+    position: absolute;
+    right: 4px;
+    bottom: 3px;
+    opacity: 0;
+    color: #0f766e;
+    font-size: .68rem;
+    font-weight: 800;
+}
+.lesson21-m-writing-cell {
+    position: relative;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) 24px;
+    min-width: 0;
+    padding: 8px 8px 5px;
+    background: #f8fbff;
+    transition: background-color .25s ease, box-shadow .25s ease;
+}
+.lesson21-m-trace-canvas {
+    display: block;
+    width: 100%;
+    height: 112px;
+    min-width: 0;
+    border: 2px solid #c8d7e7;
+    border-radius: 7px;
+    background: #ffffff;
+    cursor: crosshair;
+    touch-action: none;
+}
+.lesson21-m-cell-hint {
+    align-self: center;
+    overflow: hidden;
+    opacity: 0;
+    color: #19766d;
+    font-size: .72rem;
+    font-weight: 800;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: opacity .2s ease;
+}
+.lesson21-m-pair.is-active .lesson21-m-writing-cell {
+    background: #eafaf6;
+    box-shadow: inset 0 0 0 3px #65cdb5;
+}
+.lesson21-m-pair.is-active .lesson21-m-trace-canvas {
+    border-color: #43bca4;
+}
+.lesson21-m-pair.is-active .lesson21-m-cell-hint {
+    opacity: 1;
+}
+.lesson21-m-pair.needs-guidance .lesson21-m-writing-cell {
+    animation: lesson21MGuide 800ms ease-out 1;
+}
+.lesson21-m-moving-batchim {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    top: 48%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    color: #159f91;
+    font-size: 2.25rem;
+    font-weight: 1000;
+    line-height: 1;
+    pointer-events: none;
+    transform: translate(-50%, 0);
+}
+.lesson21-m-moving-batchim small {
+    color: #f97316;
+    font-size: 1.3rem;
+}
+.lesson21-m-pair.is-merging .lesson21-m-moving-batchim {
+    animation: lesson21MBatchimRise 900ms ease-in-out forwards;
+}
+.lesson21-m-pair.is-first-merge.is-merging .lesson21-m-moving-batchim {
+    animation-duration: 1100ms;
+}
+.lesson21-m-base-button.is-merging .lesson21-m-display-letter {
+    color: #49627e;
+}
+.lesson21-m-pair.is-complete {
+    background: #effbf3;
+}
+.lesson21-m-pair.is-complete .lesson21-m-writing-cell {
+    background: #f2fbf6;
+}
+.lesson21-m-pair.is-complete .lesson21-m-base-button {
+    background: #dff6e6;
+    color: #145c4f;
+}
+.lesson21-m-base-button.is-complete .lesson21-m-listen-label {
+    opacity: 1;
+}
+.lesson21-m-base-button.is-complete-pulse {
+    animation: lesson21MResultPulse 620ms ease-out 1;
+}
+.lesson21-m-tip {
+    margin-top: 14px;
+    font-size: 1rem;
+}
+@keyframes lesson21MBatchimRise {
+    0% { opacity: 0; transform: translate(-50%, 12px) scale(.82); }
+    20% { opacity: 1; }
+    72% { opacity: 1; transform: translate(-50%, -94px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -108px) scale(.92); }
+}
+@keyframes lesson21MResultPulse {
+    0% { transform: scale(.92); }
+    55% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+@keyframes lesson21MGuide {
+    0% { box-shadow: inset 0 0 0 2px rgba(249, 115, 22, 0); }
+    50% { box-shadow: inset 0 0 0 4px rgba(249, 115, 22, .35); }
+    100% { box-shadow: inset 0 0 0 2px rgba(249, 115, 22, 0); }
+}
+@media (max-width: 900px) {
+    .lesson21-m-block {
+        grid-template-columns: 76px minmax(0, 1fr);
+    }
+    .lesson21-m-side-column,
+    .lesson21-m-pair {
+        grid-template-rows: 72px 132px;
+    }
+    .lesson21-m-trace-canvas {
+        height: 94px;
+    }
+    .lesson21-m-writing-cell {
+        padding: 7px 5px 4px;
+    }
+    .lesson21-m-batchim-label span,
+    .lesson21-m-cell-hint {
+        font-size: .65rem;
+    }
+}
+@media (max-width: 640px) {
+    .lesson21-m-block {
+        display: block;
+        overflow: visible;
+        border-radius: 8px;
+    }
+    .lesson21-m-side-column {
+        display: block;
+    }
+    .lesson21-m-base-heading {
+        display: none;
+    }
+    .lesson21-m-batchim-label {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        min-height: 58px;
+        border-bottom: 1px solid #aab8c9;
+    }
+    .lesson21-m-batchim-label span {
+        font-size: .85rem;
+    }
+    .lesson21-m-batchim-label strong {
+        font-size: 1.8rem;
+    }
+    .lesson21-m-pair-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 10px;
+    }
+    .lesson21-m-pair {
+        grid-template-rows: 72px 154px;
+        overflow: hidden;
+        border: 1px solid #aab8c9;
+        border-radius: 8px;
+    }
+    .lesson21-m-trace-canvas {
+        height: 112px;
+    }
+    .lesson21-m-feedback {
+        font-size: 1rem;
+    }
+}
+@media (max-width: 400px) {
+    .lesson21-m-pair-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lesson21-m-pair,
+    .lesson21-m-base-button,
+    .lesson21-m-writing-cell,
+    .lesson21-m-cell-hint {
+        transition: none;
+    }
+    .lesson21-m-pair.is-merging .lesson21-m-moving-batchim,
+    .lesson21-m-base-button.is-complete-pulse,
+    .lesson21-m-pair.needs-guidance .lesson21-m-writing-cell {
+        animation-duration: 1ms;
+    }
+}
 .lesson21-shaded-rows .lesson21-practice-row {
     grid-template-columns: repeat(14, minmax(0, 1fr));
     gap: 2px;

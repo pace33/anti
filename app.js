@@ -7651,6 +7651,51 @@ function renderLesson21SoundButton(text, className = 'lesson21-sound-button') {
     return `<button type="button" class="${className}" onclick="speakLesson13Word('${text}', this)" aria-label="${text} 소리 듣기">🔊 ${text}</button>`;
 }
 
+function renderLesson21MBatchimIntroPage(lessonId) {
+    const config = getLesson21BatchimConfig('ㅁ');
+    const rows = [config.intro.slice(0, 5), config.intro.slice(5)];
+    return `
+        <div class="lesson21-page lesson21-intro-page lesson21-m-intro-page" data-lesson21-m-intro="${lessonId}">
+            <div class="lesson21-instruction"><strong>따라하기</strong> · ㅁ 받침을 넣어 글자를 완성해요</div>
+            <div id="lesson21-m-feedback" class="lesson21-m-feedback" role="status" aria-live="polite">
+                점선을 따라 ㅁ 받침을 써 보세요.
+            </div>
+            <div class="lesson21-m-table" role="table" aria-label="ㅁ 받침을 넣어 글자 완성하기">
+                ${rows.map((row, rowIndex) => `
+                    <section class="lesson21-m-block" role="rowgroup" aria-label="ㅁ 받침 따라쓰기 ${rowIndex + 1}번째 줄">
+                        <div class="lesson21-m-side-column">
+                            <div class="lesson21-m-base-heading" role="columnheader">기본 글자</div>
+                            <button type="button" class="lesson21-m-batchim-label" onclick="speakTextKo('ㅁ 받침을 써 보세요.')" aria-label="넣을 받침 ㅁ. 눌러서 안내 듣기">
+                                <span>넣을 받침</span>
+                                <strong>ㅁ</strong>
+                            </button>
+                        </div>
+                        <div class="lesson21-m-pair-grid">
+                            ${row.map((item, columnIndex) => {
+                                const itemIndex = rowIndex * 5 + columnIndex;
+                                return `
+                                    <div class="lesson21-m-pair" data-lesson21-m-index="${itemIndex}" data-base="${item.base}" data-result="${item.result}">
+                                        <button type="button" class="lesson21-m-base-button" data-base="${item.base}" data-result="${item.result}" onclick="speakLesson21MIntroLetter(this)" aria-label="기본 글자 ${item.base} 소리 듣기">
+                                            <span class="lesson21-m-display-letter">${item.base}</span>
+                                            <span class="lesson21-m-listen-label" aria-hidden="true">눌러서 들어요</span>
+                                        </button>
+                                        <div class="lesson21-m-writing-cell">
+                                            <canvas id="lesson21-m-trace-${itemIndex}" class="lesson21-m-trace-canvas" data-index="${itemIndex}" data-base="${item.base}" data-result="${item.result}" tabindex="0" aria-label="${item.base} 아래에 ㅁ 받침 따라쓰기"></canvas>
+                                            <span class="lesson21-m-cell-hint">여기에 ㅁ을 써요</span>
+                                            <span class="lesson21-m-moving-batchim" aria-hidden="true"><small>+</small>ㅁ</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </section>
+                `).join('')}
+            </div>
+            <div class="lesson21-tip lesson21-m-tip">기본 글자를 보고, 아래 점선을 따라 ㅁ 받침을 써 보세요.</div>
+        </div>
+    `;
+}
+
 function renderLesson21IntroPage(batchim) {
     const config = getLesson21BatchimConfig(batchim);
     const rows = [config.intro.slice(0, 5), config.intro.slice(5)];
@@ -7779,12 +7824,274 @@ function renderLesson21ChallengePage(lessonId, batchim) {
 }
 
 function renderLesson21Page(lessonId, batchim, pageIndex) {
+    if (pageIndex === 0 && batchim === 'ㅁ') return renderLesson21MBatchimIntroPage(lessonId);
     if (pageIndex === 0) return renderLesson21IntroPage(batchim);
     if (pageIndex === 1) return renderLesson21FollowPage(lessonId, batchim);
     if (pageIndex === 2) return renderLesson21PracticePage(lessonId, batchim);
     if (pageIndex === 3) return renderLesson21WordFindPage(lessonId, batchim);
     return renderLesson21ChallengePage(lessonId, batchim);
 }
+
+function setLesson21MFeedback(page, message) {
+    const feedback = page?.querySelector('#lesson21-m-feedback');
+    if (feedback) feedback.textContent = message;
+}
+
+function setLesson21MActivePair(page, index, announce = true) {
+    if (!page) return;
+    const pairs = Array.from(page.querySelectorAll('.lesson21-m-pair'));
+    const pair = pairs.find((item) => Number(item.dataset.lesson21MIndex) === Number(index));
+    if (!pair || pair.classList.contains('is-complete')) return;
+
+    pairs.forEach((item) => {
+        const isActive = item === pair;
+        item.classList.toggle('is-active', isActive);
+        item.querySelector('.lesson21-m-trace-canvas')?.setAttribute('aria-current', isActive ? 'step' : 'false');
+    });
+    page.dataset.activeIndex = String(index);
+    if (announce) {
+        setLesson21MFeedback(page, `이번에는 ${pair.dataset.base}에 ㅁ 받침을 넣어 볼까요?`);
+    }
+}
+
+function drawLesson21MTraceCanvas(canvas) {
+    const ctx = canvas.getContext('2d');
+    const { width, height } = resizeCanvasForDisplay(canvas, ctx);
+    if (width < 2 || height < 2) return;
+
+    const guide = {
+        left: width * 0.24,
+        right: width * 0.76,
+        top: height * 0.18,
+        bottom: height * 0.78
+    };
+    canvas._lesson21MGuide = guide;
+    ctx.clearRect(0, 0, width, height);
+
+    ctx.save();
+    ctx.strokeStyle = canvas.dataset.completed === 'true' ? '#7dd3c7' : '#fdba74';
+    ctx.lineWidth = Math.max(3, Math.min(width, height) * 0.035);
+    ctx.setLineDash([7, 7]);
+    ctx.lineJoin = 'round';
+    ctx.strokeRect(guide.left, guide.top, guide.right - guide.left, guide.bottom - guide.top);
+    ctx.setLineDash([]);
+
+    if (canvas.dataset.completed !== 'true') {
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.arc(guide.left, guide.top, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = `700 ${Math.max(13, Math.min(width, height) * 0.13)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('1', Math.max(12, guide.left - 15), Math.max(13, guide.top - 10));
+    }
+    ctx.restore();
+
+    const paths = canvas._lesson21MPaths || [];
+    ctx.save();
+    ctx.strokeStyle = '#159f91';
+    ctx.lineWidth = Math.max(7, Math.min(width, height) * 0.065);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    paths.forEach((path) => {
+        if (!path.length) return;
+        ctx.beginPath();
+        path.forEach((point, pointIndex) => {
+            const x = point.x * width;
+            const y = point.y * height;
+            if (pointIndex === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+    });
+    ctx.restore();
+}
+
+function getLesson21MCanvasPoint(canvas, event) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
+        y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height)))
+    };
+}
+
+function isLesson21MTraceComplete(canvas) {
+    const paths = canvas._lesson21MPaths || [];
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    const bounds = { left: 0.24, right: 0.76, top: 0.18, bottom: 0.78 };
+    const tolerance = 0.17;
+    const sideBins = [new Set(), new Set(), new Set(), new Set()];
+    let pathLength = 0;
+
+    const addBin = (sideIndex, position) => {
+        const clamped = Math.max(0, Math.min(0.999, position));
+        sideBins[sideIndex].add(Math.floor(clamped * 3));
+    };
+
+    paths.forEach((path) => {
+        path.forEach((point, pointIndex) => {
+            if (pointIndex > 0) {
+                const previous = path[pointIndex - 1];
+                pathLength += Math.hypot((point.x - previous.x) * width, (point.y - previous.y) * height);
+            }
+            if (Math.abs(point.y - bounds.top) <= tolerance && point.x >= bounds.left - tolerance && point.x <= bounds.right + tolerance) {
+                addBin(0, (point.x - bounds.left) / (bounds.right - bounds.left));
+            }
+            if (Math.abs(point.x - bounds.right) <= tolerance && point.y >= bounds.top - tolerance && point.y <= bounds.bottom + tolerance) {
+                addBin(1, (point.y - bounds.top) / (bounds.bottom - bounds.top));
+            }
+            if (Math.abs(point.y - bounds.bottom) <= tolerance && point.x >= bounds.left - tolerance && point.x <= bounds.right + tolerance) {
+                addBin(2, (point.x - bounds.left) / (bounds.right - bounds.left));
+            }
+            if (Math.abs(point.x - bounds.left) <= tolerance && point.y >= bounds.top - tolerance && point.y <= bounds.bottom + tolerance) {
+                addBin(3, (point.y - bounds.top) / (bounds.bottom - bounds.top));
+            }
+        });
+    });
+
+    const coveredBins = sideBins.reduce((total, bins) => total + bins.size, 0);
+    const guidePerimeter = 2 * ((bounds.right - bounds.left) * width + (bounds.bottom - bounds.top) * height);
+    return sideBins.every((bins) => bins.size >= 1) && coveredBins >= 8 && pathLength >= guidePerimeter * 0.46;
+}
+
+async function recordLesson21MIntroCompletion(lessonId, base, result) {
+    const lesson = getChanchanLesson(lessonId);
+    await recordKoreanAttempt({
+        lessonId,
+        lessonTitle: lesson?.title || 'ㅁ, ㅂ 받침',
+        unitId: lesson?.unit || getUnitIdForLesson(lessonId),
+        activityType: 'fillOneJamo',
+        word: result,
+        answer: 'ㅁ',
+        userAnswer: `${base}에 ㅁ 받침 쓰기 완료`,
+        isCorrect: true,
+        errorType: null
+    });
+}
+
+function completeLesson21MTrace(canvas) {
+    if (!canvas || canvas.dataset.completed === 'true') return;
+    const page = canvas.closest('.lesson21-m-intro-page');
+    const pair = canvas.closest('.lesson21-m-pair');
+    const baseButton = pair?.querySelector('.lesson21-m-base-button');
+    const displayLetter = pair?.querySelector('.lesson21-m-display-letter');
+    if (!page || !pair || !baseButton || !displayLetter) return;
+
+    const itemIndex = Number(canvas.dataset.index);
+    const base = canvas.dataset.base;
+    const result = canvas.dataset.result;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mergeDuration = reduceMotion ? 80 : (itemIndex === 0 ? 1100 : 900);
+
+    canvas.dataset.completed = 'true';
+    pair.classList.remove('is-active');
+    pair.classList.add('is-merging');
+    if (itemIndex === 0) pair.classList.add('is-first-merge');
+    baseButton.classList.add('is-merging');
+    setLesson21MFeedback(page, `잘했어요! ${base}에 ㅁ 받침을 넣으면 ${result}이 돼요.`);
+    drawLesson21MTraceCanvas(canvas);
+
+    window.setTimeout(() => {
+        displayLetter.textContent = result;
+        baseButton.dataset.completed = 'true';
+        baseButton.setAttribute('aria-label', `완성 글자 ${result}. 눌러서 소리 듣기`);
+        pair.classList.remove('is-merging');
+        pair.classList.add('is-complete');
+        baseButton.classList.remove('is-merging');
+        baseButton.classList.add('is-complete', 'is-complete-pulse');
+        window.setTimeout(() => baseButton.classList.remove('is-complete-pulse'), reduceMotion ? 100 : 650);
+
+        if (itemIndex === 0) speakTextKo(`${base}에 ㅁ 받침을 넣으면 ${result}이 돼요. ${result}!`);
+        else speakTextKo(result);
+        recordLesson21MIntroCompletion(page.dataset.lesson21MIntro, base, result).catch(() => {});
+
+        const pairs = Array.from(page.querySelectorAll('.lesson21-m-pair'));
+        const remaining = pairs.filter((item) => !item.classList.contains('is-complete'));
+        if (!remaining.length) {
+            setLesson21MFeedback(page, '참 잘했어요! ㅁ 받침 글자를 모두 완성했어요.');
+            return;
+        }
+
+        const nextPair = pairs.slice(itemIndex + 1).find((item) => !item.classList.contains('is-complete')) || remaining[0];
+        const nextIndex = Number(nextPair.dataset.lesson21MIndex);
+        setLesson21MActivePair(page, nextIndex, false);
+        window.setTimeout(() => {
+            if (page.dataset.activeIndex === String(nextIndex) && !nextPair.classList.contains('is-complete')) {
+                setLesson21MFeedback(page, `이번에는 ${nextPair.dataset.base}에 ㅁ 받침을 넣어 볼까요?`);
+            }
+        }, reduceMotion ? 100 : 1500);
+    }, mergeDuration);
+}
+
+function initializeLesson21MBatchimIntroCanvases() {
+    const page = document.querySelector('.lesson21-m-intro-page');
+    if (!page || page.dataset.initialized === 'true') return;
+    page.dataset.initialized = 'true';
+
+    const canvases = Array.from(page.querySelectorAll('.lesson21-m-trace-canvas'));
+    canvases.forEach((canvas) => {
+        canvas._lesson21MPaths = [];
+        canvas._lesson21MActivePath = null;
+        drawLesson21MTraceCanvas(canvas);
+
+        const activate = () => {
+            if (canvas.dataset.completed !== 'true') setLesson21MActivePair(page, Number(canvas.dataset.index));
+        };
+        canvas.addEventListener('focus', activate);
+        canvas.addEventListener('pointerdown', (event) => {
+            if (canvas.dataset.completed === 'true') return;
+            event.preventDefault();
+            activate();
+            canvas.setPointerCapture?.(event.pointerId);
+            canvas._lesson21MActivePath = [getLesson21MCanvasPoint(canvas, event)];
+            canvas._lesson21MPaths.push(canvas._lesson21MActivePath);
+            setLesson21MFeedback(page, '좋아요! 천천히 이어서 써 보세요.');
+        });
+        canvas.addEventListener('pointermove', (event) => {
+            if (!canvas._lesson21MActivePath || canvas.dataset.completed === 'true') return;
+            event.preventDefault();
+            const point = getLesson21MCanvasPoint(canvas, event);
+            const previous = canvas._lesson21MActivePath[canvas._lesson21MActivePath.length - 1];
+            if (Math.hypot(point.x - previous.x, point.y - previous.y) < 0.005) return;
+            canvas._lesson21MActivePath.push(point);
+            drawLesson21MTraceCanvas(canvas);
+        });
+
+        const finishPath = (event) => {
+            if (!canvas._lesson21MActivePath || canvas.dataset.completed === 'true') return;
+            event?.preventDefault?.();
+            canvas._lesson21MActivePath = null;
+            if (isLesson21MTraceComplete(canvas)) {
+                completeLesson21MTrace(canvas);
+            } else {
+                const pair = canvas.closest('.lesson21-m-pair');
+                pair?.classList.add('needs-guidance');
+                setLesson21MFeedback(page, '천천히 ㅁ 모양을 따라 써 보세요.');
+                window.setTimeout(() => pair?.classList.remove('needs-guidance'), 800);
+                drawLesson21MTraceCanvas(canvas);
+            }
+        };
+        canvas.addEventListener('pointerup', finishPath);
+        canvas.addEventListener('pointercancel', finishPath);
+
+        if ('ResizeObserver' in window) {
+            const observer = new ResizeObserver(() => drawLesson21MTraceCanvas(canvas));
+            observer.observe(canvas);
+            canvas._lesson21MResizeObserver = observer;
+        }
+    });
+
+    const firstPair = page.querySelector('.lesson21-m-pair');
+    if (firstPair) setLesson21MActivePair(page, Number(firstPair.dataset.lesson21MIndex), false);
+}
+
+window.speakLesson21MIntroLetter = function speakLesson21MIntroLetter(button) {
+    const text = button.dataset.completed === 'true' ? button.dataset.result : button.dataset.base;
+    speakLesson13Word(text, button);
+};
 
 window.recordLesson21BatchimWrite = async function recordLesson21BatchimWrite(lessonId, batchim, word, btn) {
     const lesson = getChanchanLesson(lessonId);
@@ -10256,6 +10563,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     nextBtn.classList.toggle('hidden', isLast);
     completeBtn.classList.toggle('hidden', !isLast);
     requestAnimationFrame(() => {
+        initializeLesson21MBatchimIntroCanvases();
         initializeVisibleTraceWritingCanvases();
         initializeLessonCompletionCanvases();
         initializeLesson13BoardGames();
