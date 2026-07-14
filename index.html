@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260714-animation-fix5">
+    <link rel="stylesheet" href="app.css?v=20260714-animation-fix6">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -867,13 +867,19 @@
                 <h4 class="text-2xl font-bold text-[#2c3e50] mb-6">엄마는 모음, 아기는 자음</h4>
                 <div class="bg-white rounded-3xl p-10 shadow-sm flex flex-col items-center justify-center">
                     <div class="flex gap-16 items-end justify-center mb-8">
-                        <div class="text-center">
-                            <img src="baby_giyeok.webp" width="1024" height="1024" alt="자음 아이 캐릭터" style="height:160px;object-fit:contain;">
-                            <p class="text-base font-bold text-[#46b3a5] mt-2">자음 (아기)</p>
+                        <div class="text-center learning-character-pose">
+                            <div class="learning-character-image-wrap">
+                                <span class="learning-character-shape consonant" aria-hidden="true">ㄱ</span>
+                                <img src="baby_giyeok.webp" width="1024" height="1024" alt="ㄱ 모양을 하고 있는 자음 아기 캐릭터" style="height:190px;object-fit:contain;">
+                            </div>
+                            <p class="text-base font-bold text-[#46b3a5] mt-2">ㄱ 모양 자음 (아기)</p>
                         </div>
-                        <div class="text-center">
-                            <img src="mom_ah.webp" width="1024" height="1024" alt="모음 엄마 캐릭터" style="height:160px;object-fit:contain;">
-                            <p class="text-base font-bold text-[#ff9d76] mt-2">모음 (엄마)</p>
+                        <div class="text-center learning-character-pose">
+                            <div class="learning-character-image-wrap">
+                                <span class="learning-character-shape vowel" aria-hidden="true">ㅏ</span>
+                                <img src="mom_ah.webp" width="1024" height="1024" alt="ㅏ 모양을 하고 있는 모음 엄마 캐릭터" style="height:190px;object-fit:contain;">
+                            </div>
+                            <p class="text-base font-bold text-[#ff9d76] mt-2">ㅏ 모양 모음 (엄마)</p>
                         </div>
                     </div>
                     <div class="text-9xl font-black tracking-[2rem] text-[#46b3a5] ml-[2rem] flex gap-8 justify-center">
@@ -893,13 +899,13 @@
                         <button type="button" class="cv-character cv-baby" onclick="speakTextKo('자음 기역')" aria-label="자음 기역 소리 듣기">
                             <span class="cv-floating-letter consonant">ㄱ</span>
                             <img src="baby_giyeok.webp" width="1024" height="1024" alt="자음 아기">
-                            <span class="cv-role-label">자음 아기</span>
+                            <span class="cv-role-label">ㄱ 모양 자음 아기</span>
                         </button>
                         <div class="cv-symbol">+</div>
                         <button type="button" class="cv-character cv-mom" onclick="speakTextKo('모음 아')" aria-label="모음 아 소리 듣기">
                             <span class="cv-floating-letter vowel">ㅏ</span>
                             <img src="mom_ah.webp" width="1024" height="1024" alt="모음 엄마">
-                            <span class="cv-role-label">모음 엄마</span>
+                            <span class="cv-role-label">ㅏ 모양 모음 엄마</span>
                         </button>
                         <div class="cv-symbol">=</div>
                         <button type="button" class="cv-result-card" onclick="speakChar('가')" aria-label="가 소리 듣기">
@@ -1393,7 +1399,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260714-animation-fix5"></script>
+    <script type="module" src="app.js?v=20260714-animation-fix6"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
