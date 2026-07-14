@@ -2627,37 +2627,33 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     }
 }
 /* 이해하기 2 자음/모음 선택 스타일 */
+.hangul-pose-definitions {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.learning-character-pose-row {
+    flex-wrap: wrap;
+}
 .learning-character-pose {
     min-width: 190px;
 }
 .learning-character-image-wrap {
-    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
-.learning-character-shape {
-    position: absolute;
-    top: 4px;
-    right: -8px;
-    z-index: 2;
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border: 3px solid currentColor;
-    border-radius: 999px;
-    background: #ffffff;
-    font-size: 1.65rem;
-    font-weight: 900;
-    line-height: 1;
-    box-shadow: 0 5px 12px rgba(44, 62, 80, 0.14);
+.learning-pose-svg {
+    display: block;
+    width: 190px;
+    height: 190px;
+    overflow: visible;
 }
-.learning-character-shape.consonant {
-    color: #2563eb;
-}
-.learning-character-shape.vowel {
-    color: #f97316;
+.cv-character .learning-pose-svg {
+    width: 104px;
+    height: 104px;
 }
 .syllable-consonant {
     color: #2563eb;
@@ -2812,6 +2808,16 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     74%, 100% { transform: scale(1); opacity: 1; }
 }
 @media (max-width: 760px) {
+    .learning-character-pose-row {
+        gap: 24px;
+    }
+    .learning-character-pose {
+        min-width: 130px;
+    }
+    .learning-character-image-wrap .learning-pose-svg {
+        width: 150px;
+        height: 150px;
+    }
     .cv-demo-row {
         grid-template-columns: 1fr;
     }
@@ -2824,6 +2830,10 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
         min-height: 140px;
     }
     .cv-character img {
+        height: 78px;
+    }
+    .cv-character .learning-pose-svg {
+        width: 78px;
         height: 78px;
     }
     .cv-syllable-strip {

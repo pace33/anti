@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260714-animation-fix6">
+    <link rel="stylesheet" href="app.css?v=20260714-character-pose">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -859,6 +859,37 @@
 
         <!-- [배움 시작 활동 섹션] -->
         <div id="learning-start-section" class="view-section fade-in hidden bg-white">
+            <svg class="hangul-pose-definitions" aria-hidden="true" focusable="false">
+                <defs>
+                    <symbol id="pose-baby-giyeok" viewBox="0 0 220 220">
+                        <path d="M43 75 H158 V178" fill="none" stroke="#276f68" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M43 75 H158 V178" fill="none" stroke="#58c9bb" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="54" cy="70" r="35" fill="#ffe6d5" stroke="#276f68" stroke-width="4"/>
+                        <path d="M26 60 Q35 34 57 35 Q76 36 83 53 Q66 45 50 47 Q38 48 26 60" fill="#68483e"/>
+                        <path d="M38 69 Q43 65 48 69 M60 69 Q65 65 70 69" fill="none" stroke="#2c3e50" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="31" cy="78" r="5" fill="#f5a3a3" opacity=".75"/>
+                        <circle cx="76" cy="78" r="5" fill="#f5a3a3" opacity=".75"/>
+                        <path d="M46 82 Q54 90 63 82" fill="none" stroke="#b95f55" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="19" cy="75" r="10" fill="#ffe6d5" stroke="#276f68" stroke-width="4"/>
+                        <path d="M136 198 Q158 190 179 198" fill="none" stroke="#276f68" stroke-width="14" stroke-linecap="round"/>
+                        <path d="M136 195 Q157 188 176 195" fill="none" stroke="#fff7e8" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M103 54 Q116 43 128 54" fill="none" stroke="#e8fff9" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+                    </symbol>
+                    <symbol id="pose-mom-ah" viewBox="0 0 220 220">
+                        <path d="M82 45 V181 M82 104 H172" fill="none" stroke="#9b4b2e" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M82 45 V181 M82 104 H172" fill="none" stroke="#ff9d76" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="82" cy="47" r="36" fill="#ffe5d4" stroke="#9b4b2e" stroke-width="4"/>
+                        <path d="M48 51 Q46 15 81 11 Q116 15 116 51 Q106 37 97 34 Q78 43 58 34 Q52 41 48 51" fill="#744437"/>
+                        <path d="M63 48 Q68 43 73 48 M91 48 Q96 43 101 48" fill="none" stroke="#2c3e50" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="57" cy="58" r="5" fill="#f5a3a3" opacity=".75"/>
+                        <circle cx="107" cy="58" r="5" fill="#f5a3a3" opacity=".75"/>
+                        <path d="M73 62 Q82 72 92 62" fill="none" stroke="#b95f55" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="194" cy="104" r="11" fill="#ffe5d4" stroke="#9b4b2e" stroke-width="4"/>
+                        <path d="M56 202 Q69 193 82 202 M83 202 Q96 193 109 202" fill="none" stroke="#744437" stroke-width="11" stroke-linecap="round"/>
+                        <path d="M67 116 V158 M98 116 V158" fill="none" stroke="#ffd6c2" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+                    </symbol>
+                </defs>
+            </svg>
             <div class="flex items-start justify-between mb-8">
                 <div>
                     <div class="text-3xl font-black text-[#2c3e50]">배움 시작: 모음과 자음</div>
@@ -871,20 +902,24 @@
                 <div class="aiedu-badge mb-4">이해하기 1</div>
                 <h4 class="text-2xl font-bold text-[#2c3e50] mb-6">엄마는 모음, 아기는 자음</h4>
                 <div class="bg-white rounded-3xl p-10 shadow-sm flex flex-col items-center justify-center">
-                    <div class="flex gap-16 items-end justify-center mb-8">
+                    <div class="learning-character-pose-row flex gap-16 items-end justify-center mb-8">
                         <div class="text-center learning-character-pose">
                             <div class="learning-character-image-wrap">
-                                <span class="learning-character-shape consonant" aria-hidden="true">ㄱ</span>
-                                <img src="baby_giyeok.webp" width="1024" height="1024" alt="ㄱ 모양을 하고 있는 자음 아기 캐릭터" style="height:190px;object-fit:contain;">
+                                <svg class="learning-pose-svg" role="img" aria-labelledby="baby-giyeok-title-1">
+                                    <title id="baby-giyeok-title-1">몸 전체가 ㄱ 모양인 자음 아기 캐릭터</title>
+                                    <use href="#pose-baby-giyeok"></use>
+                                </svg>
                             </div>
-                            <p class="text-base font-bold text-[#46b3a5] mt-2">ㄱ 모양 자음 (아기)</p>
+                            <p class="text-base font-bold text-[#46b3a5] mt-2">자음 (아기)</p>
                         </div>
                         <div class="text-center learning-character-pose">
                             <div class="learning-character-image-wrap">
-                                <span class="learning-character-shape vowel" aria-hidden="true">ㅏ</span>
-                                <img src="mom_ah.webp" width="1024" height="1024" alt="ㅏ 모양을 하고 있는 모음 엄마 캐릭터" style="height:190px;object-fit:contain;">
+                                <svg class="learning-pose-svg" role="img" aria-labelledby="mom-ah-title-1">
+                                    <title id="mom-ah-title-1">몸 전체가 ㅏ 모양인 모음 엄마 캐릭터</title>
+                                    <use href="#pose-mom-ah"></use>
+                                </svg>
                             </div>
-                            <p class="text-base font-bold text-[#ff9d76] mt-2">ㅏ 모양 모음 (엄마)</p>
+                            <p class="text-base font-bold text-[#ff9d76] mt-2">모음 (엄마)</p>
                         </div>
                     </div>
                     <div class="text-9xl font-black tracking-[2rem] text-[#46b3a5] ml-[2rem] flex gap-8 justify-center">
@@ -902,15 +937,19 @@
                 <div class="cv-animation-board">
                     <div class="cv-demo-row">
                         <button type="button" class="cv-character cv-baby" onclick="speakTextKo('자음 기역')" aria-label="자음 기역 소리 듣기">
-                            <span class="cv-floating-letter consonant">ㄱ</span>
-                            <img src="baby_giyeok.webp" width="1024" height="1024" alt="자음 아기">
-                            <span class="cv-role-label">ㄱ 모양 자음 아기</span>
+                            <svg class="learning-pose-svg" role="img" aria-labelledby="baby-giyeok-title-2">
+                                <title id="baby-giyeok-title-2">몸 전체가 ㄱ 모양인 자음 아기 캐릭터</title>
+                                <use href="#pose-baby-giyeok"></use>
+                            </svg>
+                            <span class="cv-role-label">자음 아기</span>
                         </button>
                         <div class="cv-symbol">+</div>
                         <button type="button" class="cv-character cv-mom" onclick="speakTextKo('모음 아')" aria-label="모음 아 소리 듣기">
-                            <span class="cv-floating-letter vowel">ㅏ</span>
-                            <img src="mom_ah.webp" width="1024" height="1024" alt="모음 엄마">
-                            <span class="cv-role-label">ㅏ 모양 모음 엄마</span>
+                            <svg class="learning-pose-svg" role="img" aria-labelledby="mom-ah-title-2">
+                                <title id="mom-ah-title-2">몸 전체가 ㅏ 모양인 모음 엄마 캐릭터</title>
+                                <use href="#pose-mom-ah"></use>
+                            </svg>
+                            <span class="cv-role-label">모음 엄마</span>
                         </button>
                         <div class="cv-symbol">=</div>
                         <button type="button" class="cv-result-card" onclick="speakChar('가')" aria-label="가 소리 듣기">
@@ -1404,7 +1443,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260714-animation-fix6"></script>
+    <script type="module" src="app.js?v=20260714-character-pose"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
