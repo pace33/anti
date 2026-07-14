@@ -1740,6 +1740,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 }
 .lesson-line-match-word,
 .lesson-line-match-picture {
+    position: relative;
     min-width: 0;
     min-height: 58px;
     border: 3px solid #bfdbfe;
@@ -1748,6 +1749,25 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     color: #20364b;
     font-size: 1.55rem;
     font-weight: 1000;
+}
+.lesson-line-match-word::after,
+.lesson-line-match-picture::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    border: 3px solid #fb923c;
+    border-radius: 50%;
+    background: #ffffff;
+    transform: translateY(-50%);
+}
+.lesson-line-match-word::after { right: 3px; }
+.lesson-line-match-picture::before { left: 3px; }
+.lesson-line-match-word.is-matched::after,
+.lesson-line-match-picture.is-matched::before {
+    border-color: #22c55e;
+    background: #dcfce7;
 }
 .lesson-line-match-picture { font-size: 2rem; }
 .lesson-line-match-word.is-selected,

@@ -8551,13 +8551,39 @@ const LESSON_LINE_MATCH_CONFIGS = {
 
 window.lessonLineMatchState = window.lessonLineMatchState || {};
 
+function getLessonLineMatchState(lessonId, config) {
+    const stateKey = String(lessonId);
+    const itemKeys = config.items.map((item) => item.key);
+    const state = window.lessonLineMatchState[stateKey] || { pendingKey: '', matches: {}, pictureOrder: [] };
+    state.matches = state.matches || {};
+    state.pictureOrder = state.pictureOrder || [];
+    const hasCurrentOrder = state.pictureOrder?.length === itemKeys.length
+        && state.pictureOrder.every((key) => itemKeys.includes(key));
+
+    if (!hasCurrentOrder) {
+        state.pictureOrder = [...itemKeys];
+        for (let index = state.pictureOrder.length - 1; index > 0; index -= 1) {
+            const swapIndex = Math.floor(Math.random() * (index + 1));
+            [state.pictureOrder[index], state.pictureOrder[swapIndex]] = [state.pictureOrder[swapIndex], state.pictureOrder[index]];
+        }
+        if (state.pictureOrder.length > 1 && state.pictureOrder.every((key, index) => key === itemKeys[index])) {
+            state.pictureOrder.push(state.pictureOrder.shift());
+        }
+    }
+
+    window.lessonLineMatchState[stateKey] = state;
+    return state;
+}
+
 function renderLessonLineMatch(lessonId) {
     const config = LESSON_LINE_MATCH_CONFIGS[Number(lessonId)];
     if (!config) return '';
+    const state = getLessonLineMatchState(lessonId, config);
+    const pictureItems = state.pictureOrder.map((key) => config.items.find((item) => item.key === key)).filter(Boolean);
     return `
         <div class="learning-practice-card lesson-line-match-shell">
             <div class="learning-card-label practice-label">선긋기 · ${config.title}</div>
-            <div class="lesson13-instruction">${config.prompt}</div>
+            <div class="lesson13-instruction">왼쪽 단어 하나와 알맞은 오른쪽 그림 하나를 찾아 선으로 이어요.</div>
             <div class="lesson-line-match-status" id="lesson-line-match-status-${lessonId}">단어를 먼저 골라요.</div>
             <div class="lesson-line-match-board" data-line-match-board="${lessonId}">
                 <svg class="lesson-line-match-svg" aria-hidden="true">
@@ -8566,14 +8592,14 @@ function renderLessonLineMatch(lessonId) {
                 <div class="lesson-line-match-column words">
                     <div class="lesson-line-match-heading">단어</div>
                     ${config.items.map((item) => `
-                        <button type="button" class="lesson-line-match-word" data-line-word-key="${item.key}"
+                        <button type="button" class="lesson-line-match-word${state.matches[item.key] ? ' is-matched' : ''}" data-line-word-key="${item.key}"
                             onclick="selectLessonLineMatch(${lessonId}, 'word', '${item.key}', this)">${item.word}</button>
                     `).join('')}
                 </div>
                 <div class="lesson-line-match-column pictures">
                     <div class="lesson-line-match-heading">그림</div>
-                    ${config.items.map((item) => `
-                        <button type="button" class="lesson-line-match-picture" data-line-picture-key="${item.key}"
+                    ${pictureItems.map((item) => `
+                        <button type="button" class="lesson-line-match-picture${state.matches[item.key] ? ' is-matched' : ''}" data-line-picture-key="${item.key}"
                             onclick="selectLessonLineMatch(${lessonId}, 'picture', '${item.key}', this)"
                             aria-label="${item.word} 그림">${item.icon}</button>
                     `).join('')}
@@ -8598,9 +8624,9 @@ function drawLessonLineMatchLine(lessonId, key) {
     const boardRect = board.getBoundingClientRect();
     const wordRect = wordButton.getBoundingClientRect();
     const pictureRect = pictureButton.getBoundingClientRect();
-    line.setAttribute('x1', String(wordRect.right - boardRect.left));
+    line.setAttribute('x1', String(wordRect.right - boardRect.left - 9));
     line.setAttribute('y1', String(wordRect.top + wordRect.height / 2 - boardRect.top));
-    line.setAttribute('x2', String(pictureRect.left - boardRect.left));
+    line.setAttribute('x2', String(pictureRect.left - boardRect.left + 9));
     line.setAttribute('y2', String(pictureRect.top + pictureRect.height / 2 - boardRect.top));
     line.style.visibility = 'visible';
 }
@@ -8609,9 +8635,7 @@ window.selectLessonLineMatch = async function(lessonId, side, key, button) {
     const config = LESSON_LINE_MATCH_CONFIGS[Number(lessonId)];
     const item = config?.items.find((candidate) => candidate.key === key);
     if (!item) return;
-    const stateKey = String(lessonId);
-    const state = window.lessonLineMatchState[stateKey] || { pendingKey: '', matches: {} };
-    window.lessonLineMatchState[stateKey] = state;
+    const state = getLessonLineMatchState(lessonId, config);
     const board = getLessonLineMatchBoard(lessonId);
     const status = document.getElementById(`lesson-line-match-status-${lessonId}`);
     if (side === 'word') {
@@ -8622,13 +8646,17 @@ window.selectLessonLineMatch = async function(lessonId, side, key, button) {
         state.pendingKey = key;
         board?.querySelectorAll('.lesson-line-match-word').forEach((el) => el.classList.toggle('is-selected', el === button));
         board?.querySelectorAll('.lesson-line-match-picture').forEach((el) => el.classList.remove('is-target'));
-        board?.querySelector(`[data-line-picture-key="${key}"]`)?.classList.add('is-target');
         speakLesson13Word(item.word, button);
         if (status) status.textContent = `${item.word}를 골랐어요. 알맞은 그림을 눌러요.`;
         return;
     }
     if (!state.pendingKey) {
         if (status) status.textContent = '먼저 왼쪽 단어를 골라요.';
+        return;
+    }
+    if (state.matches[key]) {
+        if (status) status.textContent = '이미 연결한 그림이에요. 다른 그림을 골라요.';
+        speakTextKo('이미 연결한 그림이에요');
         return;
     }
     const isCorrect = state.pendingKey === key;
@@ -10231,6 +10259,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeVisibleTraceWritingCanvases();
         initializeLessonCompletionCanvases();
         initializeLesson13BoardGames();
+        redrawLessonLineMatchLines();
         document.querySelectorAll('.combine-card').forEach((card, cardIndex) => {
             if (!card.dataset.combineAutoplayed) {
                 card.dataset.combineAutoplayed = 'true';
