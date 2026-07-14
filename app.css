@@ -3558,6 +3558,31 @@ body {
     }
 }
 
+/* Reduced motion still needs a readable, step-by-step combination cue. */
+@media (prefers-reduced-motion: reduce) {
+    .combine-card .combine-box,
+    .combine-card .combine-op {
+        animation-duration: 4.7s !important;
+        animation-iteration-count: 1 !important;
+        animation-timing-function: ease-in-out !important;
+        animation-name: combineReducedPart !important;
+    }
+    .combine-card .combine-result {
+        animation-name: combineReducedResult !important;
+    }
+}
+
+@keyframes combineReducedPart {
+    0%, 46% { opacity: 1; transform: none; }
+    62%, 72% { opacity: .42; transform: none; }
+    86%, 100% { opacity: 1; transform: none; }
+}
+
+@keyframes combineReducedResult {
+    0%, 52% { opacity: 0; transform: none; }
+    64%, 78%, 100% { opacity: 1; transform: none; }
+}
+
 @media (forced-colors: active) {
     :where(button, a, input, textarea, select, [role="button"]) {
         border: 2px solid ButtonText;

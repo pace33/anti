@@ -4700,17 +4700,23 @@ window.restartCombineAnim = function(card, options = {}) {
         + '.combine-base, .combine-vowel-base, .combine-dot-right, .combine-dot-left'
     ));
     const delays = animatedParts.map((part) => part.style.animationDelay);
+    if (card._combineRestartFrame) {
+        window.cancelAnimationFrame(card._combineRestartFrame);
+        card._combineRestartFrame = null;
+    }
     card.classList.add('combine-reset');
     animatedParts.forEach((part) => {
         part.style.animation = 'none';
     });
     void card.offsetWidth;
-    requestAnimationFrame(() => {
+    card._combineRestartFrame = window.requestAnimationFrame(() => {
         animatedParts.forEach((part, index) => {
             part.style.animation = '';
             part.style.animationDelay = delays[index] || '';
         });
         card.classList.remove('combine-reset');
+        void card.offsetWidth;
+        card._combineRestartFrame = null;
     });
 
     // 기존 진행 중인 모든 합성 음성 대기열 취소
