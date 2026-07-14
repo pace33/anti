@@ -2747,6 +2747,10 @@ window.openAiedueKoreanShop = async function() {
     }
 }
 
+window.openAiedueKoreanCloud = function openAiedueKoreanCloud() {
+    window.location.href = 'https://aiedue.netlify.app/';
+}
+
 window.openAiedueKoreanShopItemEditor = function(itemId = '') {
     const item = itemId ? aiedueKoreanShopItemsCache.get(itemId) : {};
     showKoreanShopModal(`
@@ -3065,6 +3069,7 @@ const topLevelSectionIds = [
     'letter-writing-section',
     'word-writing-quiz-section',
     'word-listening-quiz-section',
+    'reading-practice-section',
     'hangul-game-section',
     'literacy-workspace-section'
 ];
@@ -3214,6 +3219,7 @@ function hideAllActivitySections() {
         'letter-writing-section',
         'word-writing-quiz-section',
         'word-listening-quiz-section',
+        'reading-practice-section',
         'hangul-game-section',
         'my-drawing-section',
         'drawing-workspace-section',
@@ -3338,6 +3344,139 @@ window.openWordWritingQuizActivity = function openWordWritingQuizActivity() {
 
 window.openWordListeningQuizActivity = function openWordListeningQuizActivity() {
     showTopLevelSection('word-listening-quiz-section');
+}
+
+window.openReadingPracticeActivity = function openReadingPracticeActivity() {
+    showTopLevelSection('reading-practice-section');
+    requestAnimationFrame(() => {
+        renderReadingPracticeCards();
+    });
+}
+
+const readingPracticeCards = [
+    { phrase: '안녕하세요', emoji: '👋' },
+    { phrase: '감사합니다', emoji: '🙏' },
+    { phrase: '죄송합니다', emoji: '😢' },
+    { phrase: '사랑해요', emoji: '💖' },
+    { phrase: '안녕히 가세요', emoji: '👋' },
+    { phrase: '잘 먹겠습니다', emoji: '🍱' },
+    { phrase: '괜찮아요', emoji: '😊' },
+    { phrase: '또 만나요', emoji: '🗓️' },
+    { phrase: '고마워요', emoji: '🤗' },
+    { phrase: '반가워요', emoji: '✨' }
+];
+let readingSlowMode = false;
+let readingActiveCard = null;
+let readingSlowTimer = null;
+
+window.toggleReadingSlowMode = function toggleReadingSlowMode() {
+    readingSlowMode = !readingSlowMode;
+    const btn = document.getElementById('reading-slow-toggle');
+    if (btn) {
+        btn.setAttribute('aria-pressed', readingSlowMode ? 'true' : 'false');
+        btn.classList.toggle('active', readingSlowMode);
+        btn.innerHTML = readingSlowMode
+            ? '<span aria-hidden="true">🐌</span><span>느리게 읽는 중</span>'
+            : '<span aria-hidden="true">🐢</span><span>느리게 읽기</span>';
+    }
+    clearReadingSpeechState();
+}
+
+function clearReadingSpeechState() {
+    if (readingSlowTimer) {
+        clearTimeout(readingSlowTimer);
+        readingSlowTimer = null;
+    }
+    if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+    }
+    if (readingActiveCard) {
+        readingActiveCard.querySelectorAll('.reading-card-char').forEach((span) => {
+            span.classList.remove('active');
+        });
+        readingActiveCard = null;
+    }
+}
+
+function speakReadingPhrase(card, phrase) {
+    clearReadingSpeechState();
+    card.classList.add('reading-card-bounce');
+    window.setTimeout(() => card.classList.remove('reading-card-bounce'), 420);
+    if (readingSlowMode) {
+        speakReadingPhraseSlowly(card, phrase);
+        return;
+    }
+    const chars = card.querySelectorAll('.reading-card-char');
+    chars.forEach((span) => span.classList.add('active'));
+    if (window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.lang = 'ko-KR';
+        utterance.pitch = 1.08;
+        utterance.rate = 0.96;
+        utterance.onend = utterance.onerror = () => chars.forEach((span) => span.classList.remove('active'));
+        window.speechSynthesis.speak(utterance);
+    } else {
+        window.setTimeout(() => chars.forEach((span) => span.classList.remove('active')), 1000);
+    }
+}
+
+function speakReadingPhraseSlowly(card, phrase) {
+    readingActiveCard = card;
+    const spans = card.querySelectorAll('.reading-card-char');
+    const chars = Array.from(phrase);
+    let index = 0;
+    const speakNext = () => {
+        if (index >= chars.length) {
+            clearReadingSpeechState();
+            return;
+        }
+        const char = chars[index];
+        const span = spans[index];
+        if (!char.trim()) {
+            index += 1;
+            readingSlowTimer = window.setTimeout(speakNext, 220);
+            return;
+        }
+        if (span) span.classList.add('active');
+        const finishChar = () => {
+            if (span) span.classList.remove('active');
+            index += 1;
+            readingSlowTimer = window.setTimeout(speakNext, 180);
+        };
+        if (window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(char);
+            utterance.lang = 'ko-KR';
+            utterance.pitch = 1.1;
+            utterance.rate = 0.82;
+            utterance.onend = finishChar;
+            utterance.onerror = finishChar;
+            window.speechSynthesis.speak(utterance);
+        } else {
+            readingSlowTimer = window.setTimeout(finishChar, 420);
+        }
+    };
+    speakNext();
+}
+
+function renderReadingPracticeCards() {
+    const grid = document.getElementById('reading-cards-grid');
+    if (!grid || grid.dataset.rendered === 'true') return;
+    grid.dataset.rendered = 'true';
+    grid.innerHTML = readingPracticeCards.map((item, index) => {
+        const chars = Array.from(item.phrase).map((char, charIndex) => (
+            `<span class="reading-card-char${char === ' ' ? ' space' : ''}" data-index="${charIndex}">${char === ' ' ? '&nbsp;' : char}</span>`
+        )).join('');
+        return `<button type="button" class="reading-card" data-index="${index}" aria-label="${item.phrase} 읽기">
+            <span class="reading-card-emoji" aria-hidden="true">${item.emoji}</span>
+            <span class="reading-card-phrase">${chars}</span>
+        </button>`;
+    }).join('');
+    grid.querySelectorAll('.reading-card').forEach((card) => {
+        card.addEventListener('click', () => {
+            const item = readingPracticeCards[Number(card.dataset.index)];
+            if (item) speakReadingPhrase(card, item.phrase);
+        });
+    });
 }
 
 window.openHangulGameActivity = function openHangulGameActivity() {

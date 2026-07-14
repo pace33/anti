@@ -230,10 +230,16 @@
             </div>
 
             <!-- 하단 고정 버튼 -->
-            <button type="button" class="shop-btn" onclick="openAiedueKoreanShop()">
-                <span class="text-2xl">🛒</span>
-                <span class="font-bold text-lg">상점</span>
-            </button>
+            <div class="dashboard-bottom-actions" aria-label="에이두 국어 바로가기">
+                <button type="button" class="shop-btn cloud-btn" onclick="openAiedueKoreanCloud()" aria-label="에이두 클라우드 열기">
+                    <span class="text-2xl">☁️</span>
+                    <span class="font-bold text-lg">에이두 클라우드</span>
+                </button>
+                <button type="button" class="shop-btn" onclick="openAiedueKoreanShop()">
+                    <span class="text-2xl">🛒</span>
+                    <span class="font-bold text-lg">상점</span>
+                </button>
+            </div>
         </div>
 
         <!-- [3-1. 에이두 그리기 대시보드 섹션 - 1단계] -->
@@ -548,10 +554,10 @@
                             <button type="button" class="btn-outline py-3 text-base" onclick="openLetterWritingActivity('sentence')">문장</button>
                         </div>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-indigo-50 to-purple-50" onclick="openHangulGameActivity()">
-                        <div class="text-6xl mb-3">🎮</div>
-                        <div class="text-2xl font-black text-[#2c3e50]">한글 게임</div>
-                        <p class="text-sm text-purple-600 font-black mt-2">소리를 듣고 맞는 글자와 낱말을 찾아요</p>
+                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-indigo-50 to-purple-50" onclick="openReadingPracticeActivity()">
+                        <div class="text-6xl mb-3">📖</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">읽기 연습</div>
+                        <p class="text-sm text-purple-600 font-black mt-2">카드를 누르면 글자와 문장을 읽어줘요</p>
                     </div>
                 </div>
             </div>
@@ -1068,6 +1074,28 @@
                         <button type="button" id="letter-sentence-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- [읽기 연습 섹션: 에이두 국어 카드 이전] -->
+        <div id="reading-practice-section" class="view-section fade-in hidden bg-white">
+            <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
+                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 한글 해득 대시보드로 돌아가기">
+                    <span aria-hidden="true">←</span>
+                    <span>에이두 한글 해득</span>
+                </button>
+                <button type="button" id="reading-slow-toggle" class="reading-slow-toggle pointer-events-auto" onclick="toggleReadingSlowMode()" aria-pressed="false">
+                    <span aria-hidden="true">🐢</span>
+                    <span>느리게 읽기</span>
+                </button>
+            </div>
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-8 overflow-y-auto custom-scrollbar">
+                <div class="w-full text-center mb-8">
+                    <div class="aiedu-badge bg-indigo-500 mb-4">읽기 연습</div>
+                    <h2 class="text-5xl font-black text-[#2c3e50] mb-3">에이두 국어 카드</h2>
+                    <p class="text-xl text-gray-500 font-bold">카드를 클릭하면 읽어줍니다. 느리게 읽기를 켜면 한 글자씩 강조해요.</p>
+                </div>
+                <div id="reading-cards-grid" class="reading-cards-grid w-full" aria-live="polite"></div>
             </div>
         </div>
 
