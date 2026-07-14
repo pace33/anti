@@ -3321,8 +3321,8 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     animation: none !important;
 }
 .combine-replay{ font-size:1.4rem; color:#94a3b8; text-align:center; margin-top:15px; }
-@keyframes combineLeft  { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(98px);opacity:1} }
-@keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(-98px);opacity:1} }
+@keyframes combineLeft  { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(82px);opacity:1} }
+@keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(-82px);opacity:1} }
 @keyframes opFade       { 0%,100%{opacity:1} }
 @keyframes resultPop    { 0%,56%{transform:scale(.72);opacity:0} 70%{transform:scale(1.12);opacity:1} 84%,100%{transform:scale(1);opacity:1} }
 /* 점이 오른쪽에서 왼쪽으로 슬라이드하여 ㅡ 위/아래로 안착 */
