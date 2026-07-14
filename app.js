@@ -8078,7 +8078,8 @@ function isLesson21MTraceComplete(canvas) {
 
     const coveredBins = sideBins.reduce((total, bins) => total + bins.size, 0);
     const guidePerimeter = 2 * ((bounds.right - bounds.left) * width + (bounds.bottom - bounds.top) * height);
-    return sideBins.every((bins) => bins.size >= 1) && coveredBins >= 8 && pathLength >= guidePerimeter * 0.46;
+    const tracedEverySide = sideBins.every((bins) => bins.size >= 2 && bins.has(1));
+    return tracedEverySide && coveredBins >= 9 && pathLength >= guidePerimeter * 0.5;
 }
 
 async function recordLesson21MIntroCompletion(lessonId, base, result) {
