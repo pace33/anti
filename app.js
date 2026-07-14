@@ -33,10 +33,23 @@ import {
     arrayUnion,
     arrayRemove
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import {
+    getStorage,
+    ref as storageRef,
+    uploadBytes,
+    listAll,
+    getMetadata,
+    getDownloadURL,
+    deleteObject
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm";
+import { PDFDocument } from "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 // =========================================================================
 
 let currentView = 'student';
@@ -2747,9 +2760,118 @@ window.openAiedueKoreanShop = async function() {
     }
 }
 
+// =========================================================================
+// --- AIEDUE KOREAN NATIVE CLOUD (no school redirect/iframe) ---
+// =========================================================================
+const koreanCloudState = { students: [], selectedStudentId: null, selectedStudentName: '', editor: null };
+function getKoreanCloudUserId() { return currentUserId || auth.currentUser?.uid || null; }
+function getKoreanCloudDisplayName(fileName = '') { return String(fileName).replace(/^\d+_/, '').replace(/\.pdf$/i, ''); }
+function formatKoreanCloudFileSize(bytes = 0) { if (bytes < 1024) return `${bytes} B`; if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`; return `${(bytes / (1024 * 1024)).toFixed(1)} MB`; }
+
 window.openAiedueKoreanCloud = function openAiedueKoreanCloud() {
-    window.location.href = 'https://aiedue.netlify.app/';
+    if (!loginSuccess || !getKoreanCloudUserId()) { showModal('로그인 후 에이두 클라우드를 사용할 수 있어요.'); return; }
+    showTopLevelSection('aiedue-korean-cloud-section');
+    const main = document.getElementById('main-container'); if (main) main.style.maxWidth = '1200px';
+    renderAiedueKoreanCloud();
 }
+window.closeAiedueKoreanCloud = function closeAiedueKoreanCloud() { showTopLevelSection('dashboard-section'); const main = document.getElementById('main-container'); if (main) main.style.maxWidth = ''; }
+
+async function renderAiedueKoreanCloud() {
+    const isTeacher = currentUserRole === 'teacher';
+    document.getElementById('korean-cloud-teacher-panel')?.classList.toggle('hidden', !isTeacher);
+    document.getElementById('korean-cloud-student-panel')?.classList.toggle('hidden', isTeacher);
+    const title = document.getElementById('korean-cloud-title'); if (title) title.textContent = isTeacher ? '에이두 국어 클라우드' : '나의 에이두 국어 클라우드';
+    const desc = document.getElementById('korean-cloud-desc'); if (desc) desc.textContent = isTeacher ? '에이두 국어 안에서 내 PDF를 관리하고 우리 반 학생에게 배부해요.' : '배부 받은 PDF를 열고 쓰기·그리기·수정할 수 있어요.';
+    await loadAiedueKoreanCloudFiles(getKoreanCloudUserId(), isTeacher ? 'korean-cloud-teacher-my-files' : 'korean-cloud-student-my-files', isTeacher ? 'korean-cloud-teacher-my-empty' : 'korean-cloud-student-my-empty');
+    if (isTeacher) await loadAiedueKoreanCloudStudents();
+}
+
+async function loadAiedueKoreanCloudFiles(userId, listId, emptyId) {
+    const list = document.getElementById(listId); const empty = document.getElementById(emptyId); if (!list || !userId) return [];
+    list.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400 font-bold">파일을 불러오는 중...</div>';
+    try {
+        const result = await listAll(storageRef(storage, `cloud/${userId}`));
+        const files = [];
+        for (const itemRef of result.items) { const meta = await getMetadata(itemRef).catch(() => ({})); files.push({ name: itemRef.name, fullPath: itemRef.fullPath, ref: itemRef, size: meta.size || 0, timeCreated: meta.timeCreated || '', ownerId: userId }); }
+        files.sort((a, b) => new Date(b.timeCreated || 0) - new Date(a.timeCreated || 0));
+        list.innerHTML = ''; if (empty) empty.classList.toggle('hidden', files.length > 0); if (!files.length) return files;
+        files.forEach((file) => list.appendChild(createAiedueKoreanCloudFileCard(file, userId))); return files;
+    } catch (error) { console.error('Aiedue Korean cloud load failed:', error); list.innerHTML = '<div class="col-span-full text-center py-8 text-red-500 font-bold">파일 목록을 불러오지 못했어요.</div>'; if (empty) empty.classList.add('hidden'); return []; }
+}
+
+function createAiedueKoreanCloudFileCard(file, ownerId) {
+    const isTeacher = currentUserRole === 'teacher'; const card = document.createElement('div');
+    const date = file.timeCreated ? new Date(file.timeCreated).toLocaleString('ko-KR') : '';
+    card.className = 'korean-cloud-file-card bg-white border border-amber-100 rounded-3xl p-4 shadow-sm flex flex-col gap-3';
+    card.innerHTML = `<div class="flex items-start gap-3"><div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-2xl">📄</div><div class="min-w-0 flex-1"><div class="font-black text-[#2c3e50] truncate" title="${escapeHtml(file.name)}">${escapeHtml(getKoreanCloudDisplayName(file.name))}</div><div class="text-xs text-gray-400 mt-1">${formatKoreanCloudFileSize(file.size)}${date ? ` · ${escapeHtml(date)}` : ''}</div></div></div><div class="grid grid-cols-2 gap-2 mt-auto"><button type="button" class="btn-primary px-3 py-2 text-sm korean-cloud-open">열기</button>${isTeacher ? '<button type="button" class="btn-outline px-3 py-2 text-sm korean-cloud-send">배부</button>' : ''}<button type="button" class="btn-outline px-3 py-2 text-sm korean-cloud-rename">수정</button><button type="button" class="btn-outline px-3 py-2 text-sm text-red-500 korean-cloud-delete">삭제</button></div>`;
+    card.querySelector('.korean-cloud-open')?.addEventListener('click', () => openAiedueKoreanPdfEditor(file.fullPath, ownerId));
+    card.querySelector('.korean-cloud-send')?.addEventListener('click', () => openAiedueKoreanCloudDistributeModal(file));
+    card.querySelector('.korean-cloud-rename')?.addEventListener('click', () => renameAiedueKoreanCloudFile(file, ownerId));
+    card.querySelector('.korean-cloud-delete')?.addEventListener('click', () => deleteAiedueKoreanCloudFile(file, ownerId));
+    return card;
+}
+
+async function uploadAiedueKoreanCloudFile(file, targetUserId = getKoreanCloudUserId()) {
+    if (!file || file.type !== 'application/pdf') { showModal('PDF 파일만 업로드할 수 있어요.'); return; }
+    if (!targetUserId) return;
+    try { const safeName = file.name.replace(/[\\/]/g, '_'); await uploadBytes(storageRef(storage, `cloud/${targetUserId}/${Date.now()}_${safeName}`), file, { contentType: 'application/pdf' }); showModal('업로드가 완료되었어요.'); await refreshAiedueKoreanCloudListForOwner(targetUserId); }
+    catch (error) { console.error('Aiedue Korean cloud upload failed:', error); showModal('업로드 중 오류가 발생했어요.'); }
+}
+async function deleteAiedueKoreanCloudFile(file, ownerId) { if (!confirm('이 PDF를 삭제할까요?')) return; try { await deleteObject(file.ref || storageRef(storage, file.fullPath)); await refreshAiedueKoreanCloudListForOwner(ownerId); } catch (error) { console.error('Aiedue Korean cloud delete failed:', error); showModal('삭제 중 오류가 발생했어요.'); } }
+async function renameAiedueKoreanCloudFile(file, ownerId) {
+    const next = prompt('새 파일 이름을 입력하세요.', getKoreanCloudDisplayName(file.name)); if (!next || !next.trim()) return;
+    try { const url = await getDownloadURL(file.ref || storageRef(storage, file.fullPath)); const blob = await fetch(url).then((r) => r.blob()); const timestamp = file.name.match(/^\d+/)?.[0] || Date.now(); const newName = `${timestamp}_${next.trim().replace(/\.pdf$/i, '')}.pdf`; await uploadBytes(storageRef(storage, `cloud/${ownerId}/${newName}`), blob, { contentType: 'application/pdf' }); await deleteObject(file.ref || storageRef(storage, file.fullPath)); await refreshAiedueKoreanCloudListForOwner(ownerId); }
+    catch (error) { console.error('Aiedue Korean cloud rename failed:', error); showModal('파일 수정 중 오류가 발생했어요.'); }
+}
+async function refreshAiedueKoreanCloudListForOwner(ownerId) { if (ownerId === getKoreanCloudUserId()) await renderAiedueKoreanCloud(); else await loadAiedueKoreanCloudFiles(ownerId, 'korean-cloud-student-files', 'korean-cloud-student-empty'); }
+
+async function loadAiedueKoreanCloudStudents() { const list = document.getElementById('korean-cloud-student-list'); if (!list) return; list.innerHTML = '<div class="text-center py-8 text-gray-400 font-bold col-span-full">학생 목록을 불러오는 중...</div>'; try { koreanCloudState.students = await getAiedueKoreanClassStudents(); renderAiedueKoreanCloudStudentList(''); } catch (error) { console.error('Aiedue Korean cloud students failed:', error); list.innerHTML = '<div class="text-center py-8 text-red-500 font-bold col-span-full">학생 목록을 불러오지 못했어요.</div>'; } }
+function renderAiedueKoreanCloudStudentList(filter = '') { const list = document.getElementById('korean-cloud-student-list'); if (!list) return; const term = filter.trim().toLowerCase(); const students = koreanCloudState.students.filter((s) => !term || String(s.name || '').toLowerCase().includes(term) || String(s.userCode || '').toLowerCase().includes(term)); if (!students.length) { list.innerHTML = '<div class="text-center py-8 text-gray-400 font-bold col-span-full">표시할 학생이 없어요.</div>'; return; } list.innerHTML = students.map((s) => `<button type="button" class="korean-embed-card bg-white rounded-3xl p-4 text-left border hover:border-amber-300" onclick="openAiedueKoreanCloudStudentFiles('${escapeInlineJsString(s.id || s.uid)}', '${escapeInlineJsString(s.name || '이름 없음')}')"><div class="text-lg font-black text-[#2c3e50]">${escapeHtml(s.name || '이름 없음')}</div><div class="text-xs text-gray-400 mt-1">${escapeHtml(s.userCode || s.code || '')}</div><div class="text-sm text-amber-600 font-bold mt-3">학생 파일 보기 →</div></button>`).join(''); }
+window.openAiedueKoreanCloudStudentFiles = async function openAiedueKoreanCloudStudentFiles(studentId, studentName) { koreanCloudState.selectedStudentId = studentId; koreanCloudState.selectedStudentName = studentName; document.getElementById('korean-cloud-student-files-panel')?.classList.remove('hidden'); const name = document.getElementById('korean-cloud-selected-student-name'); if (name) name.textContent = `${studentName} 학생 파일`; await loadAiedueKoreanCloudFiles(studentId, 'korean-cloud-student-files', 'korean-cloud-student-empty'); }
+
+async function openAiedueKoreanCloudDistributeModal(file) {
+    const students = koreanCloudState.students.length ? koreanCloudState.students : await getAiedueKoreanClassStudents(); if (!students.length) { showModal('배부할 학생이 없어요.'); return; }
+    const overlay = document.createElement('div'); overlay.className = 'fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[1300] p-4';
+    overlay.innerHTML = `<div class="bg-white rounded-[32px] p-6 w-full max-w-lg shadow-2xl"><div class="flex justify-between items-start gap-3 mb-5"><div><h3 class="text-2xl font-black text-[#2c3e50]">PDF 배부</h3><p class="text-sm text-gray-500 font-bold mt-1">${escapeHtml(getKoreanCloudDisplayName(file.name))}</p></div><button type="button" class="btn-outline px-3 py-2" data-close>닫기</button></div><button type="button" class="btn-primary w-full py-3 mb-4" data-all>우리 반 전체에게 배부</button><div class="max-h-[45vh] overflow-y-auto space-y-2 custom-scrollbar">${students.map((s) => `<button type="button" class="w-full p-3 rounded-2xl border text-left hover:bg-amber-50" data-send="${escapeHtml(s.id || s.uid)}" data-name="${escapeHtml(s.name || '이름 없음')}"><b>${escapeHtml(s.name || '이름 없음')}</b><span class="block text-xs text-gray-400">${escapeHtml(s.userCode || '')}</span></button>`).join('')}</div></div>`; document.body.appendChild(overlay);
+    const close = () => overlay.remove(); overlay.querySelector('[data-close]')?.addEventListener('click', close); overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    const copyTo = async (studentIds) => { const url = await getDownloadURL(file.ref || storageRef(storage, file.fullPath)); const blob = await fetch(url).then((r) => r.blob()); for (const sid of studentIds) await uploadBytes(storageRef(storage, `cloud/${sid}/${file.name}`), blob, { contentType: 'application/pdf' }); };
+    overlay.querySelector('[data-all]')?.addEventListener('click', async (e) => { if (!confirm(`${students.length}명에게 배부할까요?`)) return; e.currentTarget.disabled = true; e.currentTarget.textContent = '배부 중...'; try { await copyTo(students.map((s) => s.id || s.uid)); close(); showModal('우리 반 전체에게 배부했어요.'); } catch (error) { console.error(error); showModal('배부 중 오류가 발생했어요.'); } });
+    overlay.querySelectorAll('[data-send]').forEach((btn) => btn.addEventListener('click', async () => { btn.disabled = true; btn.textContent = '배부 중...'; try { await copyTo([btn.dataset.send]); close(); showModal(`${btn.dataset.name} 학생에게 배부했어요.`); } catch (error) { console.error(error); showModal('배부 중 오류가 발생했어요.'); } }));
+}
+
+window.triggerAiedueKoreanCloudUpload = function triggerAiedueKoreanCloudUpload(target = 'mine') { document.getElementById(target === 'student' ? 'korean-cloud-student-upload-input' : 'korean-cloud-upload-input')?.click(); }
+document.getElementById('korean-cloud-upload-input')?.addEventListener('change', (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) uploadAiedueKoreanCloudFile(file, getKoreanCloudUserId()); });
+document.getElementById('korean-cloud-student-upload-input')?.addEventListener('change', (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file && koreanCloudState.selectedStudentId) uploadAiedueKoreanCloudFile(file, koreanCloudState.selectedStudentId); });
+document.getElementById('korean-cloud-student-search')?.addEventListener('input', (event) => renderAiedueKoreanCloudStudentList(event.target.value));
+
+async function openAiedueKoreanPdfEditor(filePath, ownerId) {
+    const modal = document.getElementById('korean-cloud-pdf-editor-modal'); const canvas = document.getElementById('korean-cloud-pdf-canvas'); const drawCanvas = document.getElementById('korean-cloud-draw-canvas'); const loading = document.getElementById('korean-cloud-pdf-loading'); if (!modal || !canvas || !drawCanvas) return;
+    modal.classList.remove('hidden'); loading?.classList.remove('hidden'); const ctx = canvas.getContext('2d'); const drawCtx = drawCanvas.getContext('2d');
+    try { const ref = storageRef(storage, filePath); const url = await getDownloadURL(ref); const pdf = await pdfjsLib.getDocument(url).promise; koreanCloudState.editor = { filePath, ownerId, ref, url, pdf, page: 1, total: pdf.numPages, scale: 1.2, mode: 'pen', drawing: false, overlays: {}, canvas, drawCanvas, ctx, drawCtx }; setupAiedueKoreanPdfCanvasEvents(); await renderAiedueKoreanPdfPage(); }
+    catch (error) { console.error('Aiedue Korean PDF open failed:', error); showModal('PDF를 열 수 없어요.'); closeAiedueKoreanPdfEditor(); }
+    finally { loading?.classList.add('hidden'); }
+}
+async function renderAiedueKoreanPdfPage() { const ed = koreanCloudState.editor; if (!ed) return; const page = await ed.pdf.getPage(ed.page); const area = document.getElementById('korean-cloud-pdf-area'); const baseViewport = page.getViewport({ scale: 1 }); const fitScale = area ? Math.min(1.6, Math.max(0.75, (area.clientWidth - 36) / baseViewport.width)) : 1.2; ed.scale = fitScale; const viewport = page.getViewport({ scale: ed.scale }); ed.canvas.width = ed.drawCanvas.width = viewport.width; ed.canvas.height = ed.drawCanvas.height = viewport.height; await page.render({ canvasContext: ed.ctx, viewport }).promise; redrawAiedueKoreanPdfOverlay(); const pageInfo = document.getElementById('korean-cloud-page-info'); if (pageInfo) pageInfo.textContent = `${ed.page} / ${ed.total}`; }
+function setupAiedueKoreanPdfCanvasEvents() {
+    const ed = koreanCloudState.editor; if (!ed || ed.drawCanvas.dataset.ready === '1') return; ed.drawCanvas.dataset.ready = '1';
+    const getPos = (event) => { const touch = event.touches?.[0] || event.changedTouches?.[0]; const src = touch || event; const rect = ed.drawCanvas.getBoundingClientRect(); return { x: (src.clientX - rect.left) / ed.scale, y: (src.clientY - rect.top) / ed.scale }; };
+    const down = (event) => { event.preventDefault(); const pos = getPos(event); if (ed.mode === 'text') { const text = prompt('넣을 글자를 입력하세요.'); if (text?.trim()) { const page = ed.page; ed.overlays[page] ||= { paths: [], texts: [] }; ed.overlays[page].texts.push({ ...pos, text: text.trim(), color: document.getElementById('korean-cloud-editor-color')?.value || '#ef4444', size: 20 }); redrawAiedueKoreanPdfOverlay(); } return; } ed.drawing = true; ed.currentPath = [pos]; };
+    const move = (event) => { if (!ed.drawing) return; event.preventDefault(); ed.currentPath.push(getPos(event)); redrawAiedueKoreanPdfOverlay(true); };
+    const up = () => { if (!ed.drawing) return; ed.drawing = false; const page = ed.page; ed.overlays[page] ||= { paths: [], texts: [] }; if (ed.currentPath?.length > 1) ed.overlays[page].paths.push({ points: [...ed.currentPath], color: document.getElementById('korean-cloud-editor-color')?.value || '#ef4444', width: Number(document.getElementById('korean-cloud-editor-width')?.value || 4) }); ed.currentPath = []; redrawAiedueKoreanPdfOverlay(); };
+    ed.drawCanvas.addEventListener('mousedown', down); ed.drawCanvas.addEventListener('mousemove', move); document.addEventListener('mouseup', up); ed.drawCanvas.addEventListener('touchstart', down, { passive: false }); ed.drawCanvas.addEventListener('touchmove', move, { passive: false }); ed.drawCanvas.addEventListener('touchend', up);
+}
+function redrawAiedueKoreanPdfOverlay(includeCurrent = false) { const ed = koreanCloudState.editor; if (!ed) return; ed.drawCtx.clearRect(0, 0, ed.drawCanvas.width, ed.drawCanvas.height); const overlay = ed.overlays[ed.page] || { paths: [], texts: [] }; const drawPath = (path) => { if (!path.points || path.points.length < 2) return; ed.drawCtx.beginPath(); ed.drawCtx.strokeStyle = path.color; ed.drawCtx.lineWidth = path.width * ed.scale; ed.drawCtx.lineCap = 'round'; ed.drawCtx.lineJoin = 'round'; ed.drawCtx.moveTo(path.points[0].x * ed.scale, path.points[0].y * ed.scale); path.points.slice(1).forEach((p) => ed.drawCtx.lineTo(p.x * ed.scale, p.y * ed.scale)); ed.drawCtx.stroke(); }; overlay.paths.forEach(drawPath); if (includeCurrent && ed.currentPath?.length) drawPath({ points: ed.currentPath, color: document.getElementById('korean-cloud-editor-color')?.value || '#ef4444', width: Number(document.getElementById('korean-cloud-editor-width')?.value || 4) }); overlay.texts.forEach((t) => { ed.drawCtx.fillStyle = t.color; ed.drawCtx.font = `${t.size * ed.scale}px "Noto Sans KR", sans-serif`; ed.drawCtx.fillText(t.text, t.x * ed.scale, t.y * ed.scale); }); }
+window.setAiedueKoreanPdfTool = function setAiedueKoreanPdfTool(mode) { if (!koreanCloudState.editor) return; koreanCloudState.editor.mode = mode; document.querySelectorAll('.korean-cloud-tool').forEach((btn) => btn.classList.toggle('active', btn.dataset.tool === mode)); }
+window.prevAiedueKoreanPdfPage = async function prevAiedueKoreanPdfPage() { const ed = koreanCloudState.editor; if (ed && ed.page > 1) { ed.page--; await renderAiedueKoreanPdfPage(); } }
+window.nextAiedueKoreanPdfPage = async function nextAiedueKoreanPdfPage() { const ed = koreanCloudState.editor; if (ed && ed.page < ed.total) { ed.page++; await renderAiedueKoreanPdfPage(); } }
+window.clearAiedueKoreanPdfPage = function clearAiedueKoreanPdfPage() { const ed = koreanCloudState.editor; if (!ed) return; ed.overlays[ed.page] = { paths: [], texts: [] }; redrawAiedueKoreanPdfOverlay(); }
+window.saveAiedueKoreanPdfEditor = async function saveAiedueKoreanPdfEditor() {
+    const ed = koreanCloudState.editor; if (!ed) return; const saveBtn = document.getElementById('korean-cloud-pdf-save'); if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
+    try { const originalBytes = await fetch(ed.url).then((r) => r.arrayBuffer()); const pdfDoc = await PDFDocument.load(originalBytes); const pages = pdfDoc.getPages(); for (const [pageNumStr, overlay] of Object.entries(ed.overlays)) { if (!overlay.paths?.length && !overlay.texts?.length) continue; const pageNum = Number(pageNumStr); const page = pages[pageNum - 1]; const pdfPage = await ed.pdf.getPage(pageNum); const viewport = pdfPage.getViewport({ scale: 2 }); const tmp = document.createElement('canvas'); tmp.width = viewport.width; tmp.height = viewport.height; const tmpCtx = tmp.getContext('2d'); const scale = 2; tmpCtx.clearRect(0, 0, tmp.width, tmp.height); overlay.paths.forEach((path) => { tmpCtx.beginPath(); tmpCtx.strokeStyle = path.color; tmpCtx.lineWidth = path.width * scale; tmpCtx.lineCap = 'round'; tmpCtx.lineJoin = 'round'; tmpCtx.moveTo(path.points[0].x * scale, path.points[0].y * scale); path.points.slice(1).forEach((p) => tmpCtx.lineTo(p.x * scale, p.y * scale)); tmpCtx.stroke(); }); overlay.texts.forEach((t) => { tmpCtx.fillStyle = t.color; tmpCtx.font = `${t.size * scale}px "Noto Sans KR", sans-serif`; tmpCtx.fillText(t.text, t.x * scale, t.y * scale); }); const png = await pdfDoc.embedPng(tmp.toDataURL('image/png')); page.drawImage(png, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() }); } const bytes = await pdfDoc.save(); await uploadBytes(ed.ref, new Blob([bytes], { type: 'application/pdf' }), { contentType: 'application/pdf' }); ed.overlays = {}; showModal('PDF가 저장되었어요.'); await refreshAiedueKoreanCloudListForOwner(ed.ownerId); }
+    catch (error) { console.error('Aiedue Korean PDF save failed:', error); showModal('PDF 저장 중 오류가 발생했어요.'); }
+    finally { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; } }
+}
+window.closeAiedueKoreanPdfEditor = function closeAiedueKoreanPdfEditor() { document.getElementById('korean-cloud-pdf-editor-modal')?.classList.add('hidden'); koreanCloudState.editor = null; }
 
 window.openAiedueKoreanShopItemEditor = function(itemId = '') {
     const item = itemId ? aiedueKoreanShopItemsCache.get(itemId) : {};
@@ -3071,6 +3193,7 @@ const topLevelSectionIds = [
     'word-listening-quiz-section',
     'reading-practice-section',
     'hangul-game-section',
+    'aiedue-korean-cloud-section',
     'literacy-workspace-section'
 ];
 
@@ -3221,6 +3344,7 @@ function hideAllActivitySections() {
         'word-listening-quiz-section',
         'reading-practice-section',
         'hangul-game-section',
+        'aiedue-korean-cloud-section',
         'my-drawing-section',
         'drawing-workspace-section',
         'my-dictation-section',

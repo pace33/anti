@@ -1405,6 +1405,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- [에이두 국어 내장 클라우드 섹션] -->
+        <div id="aiedue-korean-cloud-section" class="view-section hidden bg-[#f8faf5] p-6 md:p-8 overflow-y-auto">
+            <div class="w-full max-w-6xl mx-auto">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <div><p class="text-sm font-black text-amber-500">☁️ AIEDUE KOREAN CLOUD</p><h2 id="korean-cloud-title" class="text-3xl md:text-4xl font-black text-[#2c3e50] mt-1">에이두 국어 클라우드</h2><p id="korean-cloud-desc" class="text-gray-500 font-bold mt-2">에이두 국어 안에서 PDF를 업로드하고 열고 배부해요.</p></div>
+                    <div class="flex flex-wrap gap-2"><button type="button" class="btn-primary px-5 py-3" onclick="triggerAiedueKoreanCloudUpload('mine')">PDF 업로드</button><button type="button" class="btn-outline px-5 py-3" onclick="closeAiedueKoreanCloud()">대시보드</button></div>
+                </div>
+                <input id="korean-cloud-upload-input" type="file" accept="application/pdf" class="hidden"><input id="korean-cloud-student-upload-input" type="file" accept="application/pdf" class="hidden">
+                <div id="korean-cloud-teacher-panel" class="hidden space-y-8">
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        <section class="xl:col-span-2 bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><div class="mb-4"><h3 class="text-2xl font-black text-[#2c3e50]">내 파일</h3><p class="text-sm text-gray-500 font-bold">업로드 / 열기 / 배부 / 수정 / 삭제</p></div><div id="korean-cloud-teacher-my-files" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div><div id="korean-cloud-teacher-my-empty" class="hidden text-center py-12 rounded-3xl bg-amber-50/50 border-2 border-dashed border-amber-100 text-gray-500 font-bold">아직 업로드한 PDF가 없어요.</div></section>
+                        <section class="bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><h3 class="text-2xl font-black text-[#2c3e50] mb-3">우리 반 학생</h3><input id="korean-cloud-student-search" type="text" class="premium-input py-3 text-sm mb-4" placeholder="학생 이름/코드 검색"><div id="korean-cloud-student-list" class="grid grid-cols-1 gap-3 max-h-[460px] overflow-y-auto custom-scrollbar pr-1"></div></section>
+                    </div>
+                    <section id="korean-cloud-student-files-panel" class="hidden bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4"><div><h3 id="korean-cloud-selected-student-name" class="text-2xl font-black text-[#2c3e50]">학생 파일</h3><p class="text-sm text-gray-500 font-bold">학생 클라우드에 직접 올리거나 파일을 열어 확인할 수 있어요.</p></div><button type="button" class="btn-primary px-4 py-2" onclick="triggerAiedueKoreanCloudUpload('student')">학생에게 PDF 업로드</button></div><div id="korean-cloud-student-files" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div><div id="korean-cloud-student-empty" class="hidden text-center py-10 rounded-3xl bg-gray-50 text-gray-400 font-bold">학생 파일이 없어요.</div></section>
+                </div>
+                <div id="korean-cloud-student-panel" class="hidden bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><div class="mb-4"><h3 class="text-2xl font-black text-[#2c3e50]">내 파일</h3><p class="text-sm text-gray-500 font-bold">선생님이 배부한 PDF를 열고 수정할 수 있어요.</p></div><div id="korean-cloud-student-my-files" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div><div id="korean-cloud-student-my-empty" class="hidden text-center py-12 rounded-3xl bg-amber-50/50 border-2 border-dashed border-amber-100 text-gray-500 font-bold">아직 파일이 없어요.</div></div>
+            </div>
+        </div>
     </div>
 
     <div id="student-signup-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
@@ -1493,5 +1512,13 @@
             <button type="button" class="btn-outline w-full py-4 mt-8" onclick="closeIconModal()">닫기</button>
         </div>
     </div>
+
+
+    <!-- 에이두 국어 PDF 뷰어/편집기 -->
+    <div id="korean-cloud-pdf-editor-modal" class="fixed inset-0 bg-slate-900 z-[1250] hidden flex flex-col">
+        <div class="flex flex-wrap items-center gap-2 p-3 bg-slate-800 text-white border-b border-slate-700"><button type="button" class="korean-cloud-tool active px-3 py-2 rounded-lg bg-slate-700" data-tool="pen" onclick="setAiedueKoreanPdfTool('pen')">연필</button><button type="button" class="korean-cloud-tool px-3 py-2 rounded-lg bg-slate-700" data-tool="text" onclick="setAiedueKoreanPdfTool('text')">텍스트</button><button type="button" class="px-3 py-2 rounded-lg bg-slate-700" onclick="clearAiedueKoreanPdfPage()">현재 쪽 지우기</button><label class="flex items-center gap-2 text-sm text-slate-200">색 <input id="korean-cloud-editor-color" type="color" value="#ef4444" class="w-8 h-8 bg-transparent"></label><label class="flex items-center gap-2 text-sm text-slate-200">굵기 <input id="korean-cloud-editor-width" type="range" min="1" max="18" value="4"></label><div class="ml-auto flex items-center gap-2"><button type="button" class="px-3 py-2 rounded-lg bg-slate-700" onclick="prevAiedueKoreanPdfPage()">◀</button><span id="korean-cloud-page-info" class="font-bold text-sm min-w-[64px] text-center">1 / 1</span><button type="button" class="px-3 py-2 rounded-lg bg-slate-700" onclick="nextAiedueKoreanPdfPage()">▶</button><button id="korean-cloud-pdf-save" type="button" class="px-4 py-2 rounded-lg bg-emerald-600 font-bold" onclick="saveAiedueKoreanPdfEditor()">저장</button><button type="button" class="px-4 py-2 rounded-lg bg-red-600 font-bold" onclick="closeAiedueKoreanPdfEditor()">닫기</button></div></div>
+        <div id="korean-cloud-pdf-area" class="relative flex-1 overflow-auto bg-slate-700 p-4 flex justify-center items-start"><div id="korean-cloud-pdf-loading" class="absolute inset-0 bg-slate-800/80 text-white font-black flex items-center justify-center z-10">PDF를 불러오는 중...</div><div class="relative bg-white shadow-2xl"><canvas id="korean-cloud-pdf-canvas"></canvas><canvas id="korean-cloud-draw-canvas" class="absolute left-0 top-0 touch-none"></canvas></div></div>
+    </div>
+
 </body>
 </html>
