@@ -415,9 +415,9 @@ const learningDetailData = {
                 label: '이해하기',
                 title: '모음은 우리가 살고 있는 세상에서 시작해요.',
                 cards: [
-                    'ㅡ는 땅을 나타내요. 소리는 “으”예요.',
-                    'ㅣ는 서 있는 사람을 나타내요. 소리는 “이”예요.',
-                    '●는 둥근 해를 나타내요.'
+                    '땅은 옆으로 길게 펼쳐져 있어요. 땅의 모양에서 ㅡ가 태어났어요.',
+                    '사람은 땅 위에 곧게 서 있어요. 서 있는 사람의 모양에서 ㅣ가 태어났어요.',
+                    '해는 하늘에 둥글게 떠 있어요. 둥근 해의 모양에서 ●가 태어났어요.'
                 ]
             },
             {
@@ -5009,29 +5009,149 @@ function renderCardContent(card) {
 
 function renderVowelOriginScene() {
     return `<div class="vowel-origin-scene" aria-label="땅, 사람, 둥근 해에서 모음이 시작되는 그림">
-        <button type="button" class="vowel-origin-card" onclick="speakChar('ㅡ')" aria-label="땅, 으 소리 듣기">
-            <div class="origin-sky-band"></div>
-            <div class="origin-ground-band"></div>
-            <div class="origin-letter">ㅡ</div>
-            <div class="origin-ground-line"></div>
+        <button type="button" class="vowel-origin-card origin-ground-card" data-origin-type="ground" onclick="playVowelOriginCard('ground', { speak: true })" aria-label="땅에서 ㅡ가 되는 모습 다시 보기와 음성 듣기">
+            <div class="origin-card-visual" aria-hidden="true">
+                <div class="origin-sky-band"><span class="origin-cloud cloud-one"></span><span class="origin-cloud cloud-two"></span></div>
+                <div class="origin-ground-band"><span class="origin-grass-blade grass-one"></span><span class="origin-grass-blade grass-two"></span><span class="origin-flower"></span></div>
+                <div class="origin-soil-band"></div>
+                <div class="origin-focus-line"><span class="origin-light-sweep"></span></div>
+                <div class="origin-result-glyph">ㅡ</div>
+            </div>
             <div class="origin-card-label">땅</div>
         </button>
-        <button type="button" class="vowel-origin-card" onclick="speakChar('ㅣ')" aria-label="사람, 이 소리 듣기">
-            <div class="origin-sky-band"></div>
-            <div class="origin-ground-band"></div>
-            <div class="origin-letter">ㅣ</div>
-            <div class="origin-person-shape"></div>
-            <div class="origin-card-label">사람</div>
+        <button type="button" class="vowel-origin-card origin-person-card" data-origin-type="person" onclick="playVowelOriginCard('person', { speak: true })" aria-label="서 있는 사람에서 ㅣ가 되는 모습 다시 보기와 음성 듣기">
+            <div class="origin-card-visual" aria-hidden="true">
+                <div class="origin-sky-band"></div>
+                <div class="origin-person-ground"></div>
+                <div class="origin-person-character">
+                    <span class="origin-person-head"><i class="origin-person-hair"></i><i class="origin-person-eyes"></i><i class="origin-person-smile"></i></span>
+                    <span class="origin-person-body"></span>
+                    <span class="origin-person-arm arm-left"></span><span class="origin-person-arm arm-right"></span>
+                    <span class="origin-person-leg leg-left"></span><span class="origin-person-leg leg-right"></span>
+                </div>
+                <div class="origin-vertical-light"></div>
+                <div class="origin-result-glyph">ㅣ</div>
+            </div>
+            <div class="origin-card-label">서 있는 사람</div>
         </button>
-        <button type="button" class="vowel-origin-card" onclick="speakChar('●')" aria-label="둥근 해 소리 듣기">
-            <div class="origin-sky-band"></div>
-            <div class="origin-ground-band"></div>
-            <div class="origin-letter"><span class="small-dot-char">●</span></div>
-            <div class="origin-sun-dot"></div>
+        <button type="button" class="vowel-origin-card origin-sun-card" data-origin-type="sun" onclick="playVowelOriginCard('sun', { speak: true })" aria-label="둥근 해에서 동그라미가 되는 모습 다시 보기와 음성 듣기">
+            <div class="origin-card-visual" aria-hidden="true">
+                <div class="origin-sky-band"><span class="origin-cloud cloud-one"></span><span class="origin-cloud cloud-two"></span></div>
+                <div class="origin-sun-figure">
+                    <span class="origin-sun-ray ray-1"></span><span class="origin-sun-ray ray-2"></span><span class="origin-sun-ray ray-3"></span><span class="origin-sun-ray ray-4"></span>
+                    <span class="origin-sun-ray ray-5"></span><span class="origin-sun-ray ray-6"></span><span class="origin-sun-ray ray-7"></span><span class="origin-sun-ray ray-8"></span>
+                    <span class="origin-sun-core"></span>
+                </div>
+                <div class="origin-result-glyph"><span class="small-dot-char">●</span></div>
+            </div>
             <div class="origin-card-label">둥근 해</div>
         </button>
     </div>`;
 }
+
+function renderVowelOriginExplanations() {
+    return `<div class="origin-explanation-list" aria-live="polite">
+        <div class="origin-explanation origin-ground-explanation" data-origin-description="ground">
+            <div class="origin-explanation-glyph">ㅡ</div>
+            <div><strong>땅은 옆으로 길게 펼쳐져 있어요.</strong><span>땅의 모양에서 「ㅡ」가 태어났어요.</span><span>소리는 「으」예요.</span></div>
+        </div>
+        <div class="origin-explanation origin-person-explanation" data-origin-description="person">
+            <div class="origin-explanation-glyph">ㅣ</div>
+            <div><strong>사람은 땅 위에 곧게 서 있어요.</strong><span>서 있는 사람의 모양에서 「ㅣ」가 태어났어요.</span><span>소리는 「이」예요.</span></div>
+        </div>
+        <div class="origin-explanation origin-sun-explanation" data-origin-description="sun">
+            <div class="origin-explanation-glyph"><span class="small-dot-char">●</span></div>
+            <div><strong>해는 하늘에 둥글게 떠 있어요.</strong><span>둥근 해의 모양에서 「●」가 태어났어요.</span></div>
+        </div>
+    </div>`;
+}
+
+const vowelOriginStages = {
+    ground: {
+        duration: 6000,
+        speech: '땅은 옆으로 길게 펼쳐져 있어요. 으, 으!'
+    },
+    person: {
+        duration: 5800,
+        speech: '사람은 땅 위에 곧게 서 있어요. 이, 이!'
+    },
+    sun: {
+        duration: 5400,
+        speech: '해는 하늘에 둥글게 떠 있어요. 동그란 해의 모양을 살펴보세요.'
+    }
+};
+let vowelOriginTimers = [];
+let vowelOriginSequenceToken = 0;
+
+function clearVowelOriginTimers() {
+    vowelOriginTimers.forEach((timer) => window.clearTimeout(timer));
+    vowelOriginTimers = [];
+}
+
+window.stopVowelOriginSequence = function stopVowelOriginSequence() {
+    vowelOriginSequenceToken += 1;
+    clearVowelOriginTimers();
+};
+
+function resetVowelOriginCards() {
+    document.querySelectorAll('.vowel-origin-card').forEach((card) => {
+        card.classList.remove('is-origin-active', 'is-origin-playing', 'is-origin-complete');
+    });
+    document.querySelectorAll('.origin-explanation').forEach((description) => {
+        description.classList.remove('is-origin-active');
+    });
+}
+
+function runVowelOriginStage(type, { speak = false, token = vowelOriginSequenceToken } = {}) {
+    const config = vowelOriginStages[type];
+    const card = document.querySelector(`.vowel-origin-card[data-origin-type="${type}"]`);
+    const description = document.querySelector(`.origin-explanation[data-origin-description="${type}"]`);
+    if (!config || !card || token !== vowelOriginSequenceToken) return 0;
+
+    document.querySelectorAll('.vowel-origin-card').forEach((item) => item.classList.remove('is-origin-active'));
+    document.querySelectorAll('.origin-explanation').forEach((item) => item.classList.remove('is-origin-active'));
+    card.classList.remove('is-origin-playing', 'is-origin-complete');
+    void card.offsetWidth;
+    card.classList.add('is-origin-active', 'is-origin-playing');
+    description?.classList.add('is-origin-active');
+
+    if (speak) {
+        cancelSpeech();
+        speakTextKo(config.speech);
+    }
+
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const duration = reducedMotion ? 1700 : config.duration;
+    const completionTimer = window.setTimeout(() => {
+        if (token !== vowelOriginSequenceToken || !card.isConnected) return;
+        card.classList.remove('is-origin-playing');
+        card.classList.add('is-origin-complete');
+    }, duration);
+    vowelOriginTimers.push(completionTimer);
+    return duration;
+}
+
+window.playVowelOriginCard = function playVowelOriginCard(type, options = {}) {
+    window.stopVowelOriginSequence();
+    resetVowelOriginCards();
+    runVowelOriginStage(type, { speak: options.speak !== false, token: vowelOriginSequenceToken });
+};
+
+window.playVowelOriginSequence = function playVowelOriginSequence() {
+    window.stopVowelOriginSequence();
+    resetVowelOriginCards();
+    const token = vowelOriginSequenceToken;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const pause = reducedMotion ? 450 : 800;
+    let startAt = 350;
+
+    ['ground', 'person', 'sun'].forEach((type) => {
+        const duration = reducedMotion ? 1700 : vowelOriginStages[type].duration;
+        const timer = window.setTimeout(() => runVowelOriginStage(type, { speak: false, token }), startAt);
+        vowelOriginTimers.push(timer);
+        startAt += duration + pause;
+    });
+};
 
 // 이해하기 2: 자음 전체 선택 + 음성
 window.selectConsonants = function() {
@@ -9827,6 +9947,7 @@ window.closeLearningStartActivity = function closeLearningStartActivity() {
 }
 
 function renderLearningDetail(step, sectionIndex = 0) {
+    window.stopVowelOriginSequence?.();
     const detail = learningDetailData[step];
     if (!detail) return;
     const numericStep = Number(step);
@@ -9919,13 +10040,16 @@ function renderLearningDetail(step, sectionIndex = 0) {
                     <span class="text-xl font-bold text-stone-700">${sectionTitle}</span>
                 </div>`
             : '';
-        const introHtml = step === 7 && safeIndex === 0
+        const introHtml = step === 1 && safeIndex === 0
+            ? renderVowelOriginExplanations()
+            : step === 7 && safeIndex === 0
             ? `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">
                     <div>아, 야, 어, 여, 오, 요, 우, 유, 으, 이를 순서대로 읽어요.</div>
                     <div class="mt-2">같은 글자 배열을 따라 쓰며 소리 내어 읽어요.</div>
                 </div>`
             : (introCards.length ? introCards : activityCards.slice(0, 2)).map((card) => renderCardContent(card)).join('');
         const renderLearningChipText = (word) => word === '●' ? '<span class="small-dot-char">●</span>' : word;
+        const vowelOriginTypeByWord = { 'ㅡ': 'ground', 'ㅣ': 'person', '●': 'sun' };
         const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
         const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
         let contentHtml = '';
@@ -9977,9 +10101,17 @@ function renderLearningDetail(step, sectionIndex = 0) {
                         </div>
                     `}
                     <div class="${step === 7 ? '' : 'mt-4'}">
-                    <div class="learning-card-label">📖 배움 글자</div>
+                    <div class="learning-card-label">📖 ${step === 1 ? '배울 글자' : '배움 글자'}</div>
                     <div class="${wordChipWrapClass}">
-                        ${practiceFlow.choices.map((word) => `<button type="button" class="${wordChipClass}" onclick="speakChar('${word}')" aria-label="${word} 소리 듣기">${renderLearningChipText(word)}</button>`).join('')}
+                        ${practiceFlow.choices.map((word) => {
+                            const originType = step === 1 ? vowelOriginTypeByWord[word] : '';
+                            const originClass = originType ? ` origin-learning-chip origin-${originType}-chip` : '';
+                            const originAction = originType
+                                ? `playVowelOriginCard('${originType}', { speak: true })`
+                                : `speakChar('${word}')`;
+                            const ariaLabel = originType ? `${word} 모양이 만들어지는 모습 다시 보기` : `${word} 소리 듣기`;
+                            return `<button type="button" class="${wordChipClass}${originClass}" onclick="${originAction}" aria-label="${ariaLabel}">${renderLearningChipText(word)}</button>`;
+                        }).join('')}
                     </div>
                     </div>
                 </div>
@@ -10107,6 +10239,9 @@ function renderLearningDetail(step, sectionIndex = 0) {
         });
         if ((numericStep === 15 || numericStep === 16) && safeIndex === 0) {
             window.setTimeout(() => window.playLessonMouthSequence?.(numericStep, false, { auto: true }), 250);
+        }
+        if (numericStep === 1 && safeIndex === 0) {
+            window.setTimeout(() => window.playVowelOriginSequence?.(), 250);
         }
     });
 }
