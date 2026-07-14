@@ -1639,14 +1639,14 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     min-height: 44px;
     padding: 5px;
     border: 0;
-    border-bottom: 1px solid #aab8c9;
+    border-bottom: 0;
     background: #fbfdff;
     color: #162d4a;
     cursor: pointer;
     transition: background-color .25s ease, transform .25s ease, color .25s ease;
 }
 .lesson21-m-display-letter {
-    font-size: 2.5rem;
+    font-size: 3.15rem;
     font-weight: 1000;
     line-height: 1;
 }
@@ -1665,7 +1665,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     grid-template-rows: minmax(0, 1fr) 24px;
     min-width: 0;
     padding: 8px 8px 5px;
-    background: #f8fbff;
+    background: #fbfdff;
     transition: background-color .25s ease, box-shadow .25s ease;
 }
 .lesson21-m-trace-canvas {
@@ -1673,7 +1673,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     width: 100%;
     height: 112px;
     min-width: 0;
-    border: 2px solid #c8d7e7;
+    border: 0;
     border-radius: 7px;
     background: #ffffff;
     cursor: crosshair;
@@ -1696,7 +1696,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     box-shadow: inset 0 0 0 3px #65cdb5;
 }
 .lesson21-m-pair.is-active .lesson21-m-trace-canvas {
-    border-color: #43bca4;
+    box-shadow: inset 0 0 0 2px #43bca4;
 }
 .lesson21-m-pair.is-active .lesson21-m-cell-hint {
     opacity: 1;
