@@ -3012,6 +3012,38 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .learning-character-pose-row {
     flex-wrap: wrap;
 }
+.learning-start-reference-card {
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+}
+.learning-start-reference-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+}
+.learning-start-reference-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+.learning-start-image-hotspot {
+    position: absolute;
+    top: 8%;
+    bottom: 6%;
+    width: 40%;
+    border: 0;
+    border-radius: 24px;
+    background: transparent;
+    cursor: pointer;
+}
+.learning-start-image-hotspot.baby { left: 6%; }
+.learning-start-image-hotspot.mom { right: 6%; }
+.learning-start-image-hotspot:focus-visible {
+    outline: 5px solid rgba(70, 179, 165, .7);
+    outline-offset: -6px;
+}
 .learning-character-pose {
     min-width: 190px;
 }

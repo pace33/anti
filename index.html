@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260714-one-to-one-lines">
+    <link rel="stylesheet" href="app.css?v=20260714-learning-start-image">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -923,32 +923,11 @@
             <div id="understanding-1-pane" class="learning-pane p-8 mb-8">
                 <div class="aiedu-badge mb-4">이해하기 1</div>
                 <h4 class="text-2xl font-bold text-[#2c3e50] mb-6">엄마는 모음, 아기는 자음</h4>
-                <div class="bg-white rounded-3xl p-10 shadow-sm flex flex-col items-center justify-center">
-                    <div class="learning-character-pose-row flex gap-16 items-end justify-center mb-8">
-                        <div class="text-center learning-character-pose">
-                            <div class="learning-character-image-wrap">
-                                <svg class="learning-pose-svg baby-pose-svg" role="img" aria-labelledby="baby-giyeok-title-1">
-                                    <title id="baby-giyeok-title-1">자연스러운 자세에서 ㄱ 모양을 떠올리는 자음 아기 캐릭터</title>
-                                    <use href="#pose-baby-giyeok"></use>
-                                    <path class="pose-guide-stroke baby-pose-guide" d="M56 93 C78 92 99 94 121 101 C135 112 137 139 134 177"/>
-                                </svg>
-                            </div>
-                            <p class="text-base font-bold text-[#46b3a5] mt-2">자음 아기</p>
-                        </div>
-                        <div class="text-center learning-character-pose">
-                            <div class="learning-character-image-wrap">
-                                <svg class="learning-pose-svg mom-pose-svg" role="img" aria-labelledby="mom-ah-title-1">
-                                    <title id="mom-ah-title-1">자연스러운 자세에서 ㅏ 모양을 떠올리는 모음 엄마 캐릭터</title>
-                                    <use href="#pose-mom-ah"></use>
-                                    <path class="pose-guide-stroke mom-pose-guide" d="M112 72 C112 104 112 139 112 184 M112 98 C137 98 161 103 188 104"/>
-                                </svg>
-                            </div>
-                            <p class="text-base font-bold text-[#ff9d76] mt-2">모음 엄마</p>
-                        </div>
-                    </div>
-                    <div class="learning-pose-letters text-9xl font-black tracking-[2rem] ml-[2rem] flex gap-8 justify-center">
-                        <span onclick="speakTextKo('자음')" title="자음" class="learning-pose-letter baby-pose-letter cursor-pointer transition-all hover:scale-110 select-none relative group">ㄱ<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">자음</span></span>
-                        <span onclick="speakTextKo('모음')" title="모음" class="learning-pose-letter mom-pose-letter cursor-pointer transition-all hover:scale-110 select-none relative group">ㅏ<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">모음</span></span>
+                <div class="learning-start-reference-card bg-white rounded-3xl shadow-sm">
+                    <div class="learning-start-reference-wrap">
+                        <img src="learning_start_mom_baby.png?v=20260714" width="1458" height="1085" alt="두 팔을 앞으로 뻗고 앉은 자음 아기와 오른팔을 옆으로 뻗고 선 모음 엄마, 아래에 ㄱ과 ㅏ가 표시된 그림" class="learning-start-reference-image">
+                        <button type="button" class="learning-start-image-hotspot baby" onclick="speakTextKo('자음')" aria-label="자음 아기와 ㄱ 소리 듣기" title="자음 듣기"></button>
+                        <button type="button" class="learning-start-image-hotspot mom" onclick="speakTextKo('모음')" aria-label="모음 엄마와 ㅏ 소리 듣기" title="모음 듣기"></button>
                     </div>
                 </div>
                 <p class="text-center text-gray-500 mt-6 text-lg">그림과 글자를 비교해서 모음(엄마), 자음(아기)을 찾아봐요.</p>
