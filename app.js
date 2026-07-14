@@ -4838,7 +4838,14 @@ window.restartCombineAnim = function(card, options = {}) {
         + '.combine-dot-up, .combine-dot-up-double, .combine-dot-down, .combine-dot-down-double, '
         + '.combine-base, .combine-vowel-base, .combine-dot-right, .combine-dot-left'
     ));
-    const delays = animatedParts.map((part) => part.style.animationDelay);
+    if (!card._combineBaseDelays) {
+        card._combineBaseDelays = animatedParts.map((part) => part.style.animationDelay);
+    }
+    const delays = card._combineBaseDelays;
+    const startDelay = Math.max(0, Number(options.startDelay) || 0);
+    const getAnimationDelay = (delay) => startDelay
+        ? `calc(${delay || '0s'} + ${startDelay}s)`
+        : (delay || '');
     if (card._combineRestartFrame) {
         window.cancelAnimationFrame(card._combineRestartFrame);
         card._combineRestartFrame = null;
@@ -4851,7 +4858,7 @@ window.restartCombineAnim = function(card, options = {}) {
     card._combineRestartFrame = window.requestAnimationFrame(() => {
         animatedParts.forEach((part, index) => {
             part.style.animation = '';
-            part.style.animationDelay = delays[index] || '';
+            part.style.animationDelay = getAnimationDelay(delays[index]);
         });
         card.classList.remove('combine-reset');
         void card.offsetWidth;
@@ -10092,10 +10099,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeVisibleTraceWritingCanvases();
         initializeLessonCompletionCanvases();
         initializeLesson13BoardGames();
-        document.querySelectorAll('.combine-card').forEach((card) => {
+        document.querySelectorAll('.combine-card').forEach((card, cardIndex) => {
             if (!card.dataset.combineAutoplayed) {
                 card.dataset.combineAutoplayed = 'true';
-                window.restartCombineAnim(card, { speak: false });
+                window.restartCombineAnim(card, { speak: false, startDelay: cardIndex * 4.7 });
             }
         });
         if ((numericStep === 15 || numericStep === 16) && safeIndex === 0) {
