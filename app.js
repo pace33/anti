@@ -7624,7 +7624,11 @@ async function recordKoreanAttempt({
             ]);
         }
     } catch (error) {
-        console.error('Korean attempt Firebase save failed:', error);
+        if (error?.code === 'permission-denied') {
+            console.warn('Korean attempt cloud save skipped: permission denied.');
+        } else {
+            console.error('Korean attempt Firebase save failed:', error);
+        }
     }
     return attempt;
 }
