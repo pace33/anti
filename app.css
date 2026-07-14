@@ -3006,6 +3006,69 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     height: 190px;
     overflow: visible;
 }
+.pose-guide-stroke {
+    fill: none;
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 360;
+    stroke-dashoffset: 360;
+    opacity: 0;
+    pointer-events: none;
+}
+.baby-pose-guide {
+    stroke: #83ead8;
+    filter: drop-shadow(0 0 5px rgba(70, 179, 165, .95));
+}
+.mom-pose-guide {
+    stroke: #ffc09f;
+    filter: drop-shadow(0 0 5px rgba(255, 125, 66, .9));
+}
+.learning-pose-letter {
+    display: inline-block;
+    transform-origin: center;
+}
+.baby-pose-letter {
+    color: #2c9e8f;
+}
+.mom-pose-letter {
+    color: #f47d4a;
+}
+#understanding-1-pane.pose-sequence-playing .baby-pose-svg {
+    animation: naturalBabyPoseEnter .9s ease-out 1 both;
+}
+#understanding-1-pane.pose-sequence-playing .baby-pose-guide {
+    animation: naturalPoseGuideDraw 2.4s ease-in-out .8s 1 both;
+}
+#understanding-1-pane.pose-sequence-playing .baby-pose-letter {
+    animation: naturalPoseLetterPulse .75s ease-in-out 3.05s 1 both;
+}
+#understanding-1-pane.pose-sequence-playing .mom-pose-svg {
+    animation: naturalMomPoseEnter .9s ease-out 4s 1 both;
+}
+#understanding-1-pane.pose-sequence-playing .mom-pose-guide {
+    animation: naturalPoseGuideDraw 2.4s ease-in-out 4.8s 1 both;
+}
+#understanding-1-pane.pose-sequence-playing .mom-pose-letter {
+    animation: naturalPoseLetterPulse .75s ease-in-out 7.05s 1 both;
+}
+@keyframes naturalBabyPoseEnter {
+    0% { opacity: 0; transform: translate(12px, 10px) scale(.94); }
+    100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+@keyframes naturalMomPoseEnter {
+    0% { opacity: 0; transform: translateY(12px) scale(.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes naturalPoseGuideDraw {
+    0% { opacity: 0; stroke-dashoffset: 360; }
+    16%, 76% { opacity: .92; }
+    88%, 100% { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes naturalPoseLetterPulse {
+    0%, 100% { transform: scale(1); text-shadow: none; }
+    52% { transform: scale(1.16); text-shadow: 0 0 20px currentColor; }
+}
 .cv-character .learning-pose-svg {
     width: 104px;
     height: 104px;
@@ -3193,6 +3256,20 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     }
     .cv-syllable-strip {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #understanding-1-pane.pose-sequence-playing .learning-pose-svg,
+    #understanding-1-pane.pose-sequence-playing .learning-pose-letter,
+    #understanding-1-pane.pose-sequence-playing .pose-guide-stroke {
+        animation: none !important;
+    }
+    #understanding-1-pane .learning-pose-svg {
+        opacity: 1;
+        transform: none;
+    }
+    #understanding-1-pane .pose-guide-stroke {
+        opacity: 0;
     }
 }
 /* ===== 글자 결합 애니메이션 ===== */

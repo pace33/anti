@@ -10930,7 +10930,8 @@ window.resetTraceWritingCanvas = function resetTraceWritingCanvas(target) {
 
 window.goToUnderstandingStep = function goToUnderstandingStep(step) {
     currentUnderstandingStep = step === 2 ? 2 : 1;
-    document.getElementById('understanding-1-pane').classList.toggle('hidden', currentUnderstandingStep !== 1);
+    const understandingOnePane = document.getElementById('understanding-1-pane');
+    understandingOnePane.classList.toggle('hidden', currentUnderstandingStep !== 1);
     document.getElementById('understanding-2-pane').classList.toggle('hidden', currentUnderstandingStep !== 2);
     const nextBtn = document.getElementById('learning-next-btn');
     const completeBtn = document.getElementById('learning-complete-btn');
@@ -10942,6 +10943,11 @@ window.goToUnderstandingStep = function goToUnderstandingStep(step) {
         nextBtn.classList.remove('hidden');
         completeBtn.disabled = true;
         completeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        understandingOnePane.classList.remove('pose-sequence-playing');
+        requestAnimationFrame(() => {
+            void understandingOnePane.offsetWidth;
+            understandingOnePane.classList.add('pose-sequence-playing');
+        });
     }
 }
 
