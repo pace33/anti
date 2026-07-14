@@ -7782,7 +7782,7 @@ function renderLesson21MBatchimIntroPage(lessonId) {
         <div class="lesson21-page lesson21-intro-page lesson21-m-intro-page" data-lesson21-m-intro="${lessonId}">
             <div class="lesson21-instruction"><strong>따라하기</strong> · ㅁ 받침을 넣어 글자를 완성해요</div>
             <div id="lesson21-m-feedback" class="lesson21-m-feedback" role="status" aria-live="polite">
-                점선을 따라 ㅁ 받침을 써 보세요.
+                1번 획부터 화살표 방향으로 따라 써 보세요.
             </div>
             <div class="lesson21-m-table" role="table" aria-label="ㅁ 받침을 넣어 글자 완성하기">
                 ${rows.map((row, rowIndex) => `
@@ -7805,7 +7805,7 @@ function renderLesson21MBatchimIntroPage(lessonId) {
                                         </button>
                                         <div class="lesson21-m-writing-cell">
                                             <canvas id="lesson21-m-trace-${itemIndex}" class="lesson21-m-trace-canvas" data-index="${itemIndex}" data-base="${item.base}" data-result="${item.result}" tabindex="0" aria-label="${item.base} 아래에 ㅁ 받침 따라쓰기"></canvas>
-                                            <span class="lesson21-m-cell-hint">여기에 ㅁ을 써요</span>
+                                            <span class="lesson21-m-cell-hint">1번부터 써요</span>
                                             <span class="lesson21-m-moving-batchim" aria-hidden="true"><small>+</small>ㅁ</span>
                                         </div>
                                     </div>
@@ -7815,7 +7815,7 @@ function renderLesson21MBatchimIntroPage(lessonId) {
                     </section>
                 `).join('')}
             </div>
-            <div class="lesson21-tip lesson21-m-tip">기본 글자를 보고, 아래 점선을 따라 ㅁ 받침을 써 보세요.</div>
+            <div class="lesson21-tip lesson21-m-tip">번호와 화살표를 보고 1번부터 차례로 ㅁ 받침을 써 보세요.</div>
         </div>
     `;
 }
@@ -7978,6 +7978,34 @@ function setLesson21MActivePair(page, index, announce = true) {
     }
 }
 
+const LESSON21_M_STROKES = [
+    { start: [0.24, 0.18], end: [0.24, 0.78], direction: '아래로' },
+    { start: [0.24, 0.18], end: [0.76, 0.18], direction: '오른쪽으로' },
+    { start: [0.76, 0.18], end: [0.76, 0.78], direction: '아래로' },
+    { start: [0.24, 0.78], end: [0.76, 0.78], direction: '오른쪽으로' }
+];
+
+function drawLesson21MStrokeArrow(ctx, stroke, width, height) {
+    const startX = stroke.start[0] * width;
+    const startY = stroke.start[1] * height;
+    const endX = stroke.end[0] * width;
+    const endY = stroke.end[1] * height;
+    const angle = Math.atan2(endY - startY, endX - startX);
+    const arrowSize = Math.max(7, Math.min(width, height) * 0.075);
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(endX, endY);
+    ctx.lineTo(endX - arrowSize * Math.cos(angle - Math.PI / 6), endY - arrowSize * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(endX, endY);
+    ctx.lineTo(endX - arrowSize * Math.cos(angle + Math.PI / 6), endY - arrowSize * Math.sin(angle + Math.PI / 6));
+    ctx.stroke();
+}
+
 function drawLesson21MTraceCanvas(canvas) {
     const ctx = canvas.getContext('2d');
     const { width, height } = resizeCanvasForDisplay(canvas, ctx);
@@ -7993,22 +8021,32 @@ function drawLesson21MTraceCanvas(canvas) {
     ctx.clearRect(0, 0, width, height);
 
     ctx.save();
-    ctx.strokeStyle = canvas.dataset.completed === 'true' ? '#7dd3c7' : '#fdba74';
-    ctx.lineWidth = Math.max(3, Math.min(width, height) * 0.035);
+    ctx.strokeStyle = canvas.dataset.completed === 'true' ? '#7dd3c7' : '#f7cfa8';
+    ctx.lineWidth = Math.max(2, Math.min(width, height) * 0.025);
     ctx.setLineDash([7, 7]);
     ctx.lineJoin = 'round';
     ctx.strokeRect(guide.left, guide.top, guide.right - guide.left, guide.bottom - guide.top);
     ctx.setLineDash([]);
 
     if (canvas.dataset.completed !== 'true') {
+        const strokeIndex = Math.min(LESSON21_M_STROKES.length - 1, canvas._lesson21MStrokeIndex || 0);
+        const stroke = LESSON21_M_STROKES[strokeIndex];
+        const startX = stroke.start[0] * width;
+        const startY = stroke.start[1] * height;
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = Math.max(4, Math.min(width, height) * 0.045);
+        ctx.setLineDash([9, 7]);
+        drawLesson21MStrokeArrow(ctx, stroke, width, height);
         ctx.fillStyle = '#f97316';
         ctx.beginPath();
-        ctx.arc(guide.left, guide.top, 5, 0, Math.PI * 2);
+        ctx.arc(startX, startY, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.font = `700 ${Math.max(13, Math.min(width, height) * 0.13)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('1', Math.max(12, guide.left - 15), Math.max(13, guide.top - 10));
+        const numberX = Math.max(12, Math.min(width - 12, startX - 15));
+        const numberY = Math.max(13, Math.min(height - 13, startY - 10));
+        ctx.fillText(String(strokeIndex + 1), numberX, numberY);
     }
     ctx.restore();
 
@@ -8038,6 +8076,52 @@ function getLesson21MCanvasPoint(canvas, event) {
         x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
         y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height)))
     };
+}
+
+function getLesson21MStrokeDistance(point, target, width, height) {
+    return Math.hypot((point.x - target[0]) * width, (point.y - target[1]) * height);
+}
+
+function isLesson21MStrokeStart(canvas, point) {
+    const stroke = LESSON21_M_STROKES[canvas._lesson21MStrokeIndex || 0];
+    if (!stroke) return false;
+    const rect = canvas.getBoundingClientRect();
+    const tolerance = Math.max(26, Math.min(rect.width, rect.height) * 0.22);
+    return getLesson21MStrokeDistance(point, stroke.start, rect.width, rect.height) <= tolerance;
+}
+
+function isLesson21MCurrentStrokeComplete(canvas, path) {
+    const stroke = LESSON21_M_STROKES[canvas._lesson21MStrokeIndex || 0];
+    if (!stroke || !path || path.length < 2) return false;
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    const tolerance = Math.max(22, Math.min(width, height) * 0.18);
+    const startDistance = getLesson21MStrokeDistance(path[0], stroke.start, width, height);
+    const endDistance = getLesson21MStrokeDistance(path[path.length - 1], stroke.end, width, height);
+    const targetLength = Math.hypot(
+        (stroke.end[0] - stroke.start[0]) * width,
+        (stroke.end[1] - stroke.start[1]) * height
+    );
+    let pathLength = 0;
+    let nearStrokePoints = 0;
+    const isVertical = stroke.start[0] === stroke.end[0];
+
+    path.forEach((point, index) => {
+        if (index > 0) {
+            const previous = path[index - 1];
+            pathLength += Math.hypot((point.x - previous.x) * width, (point.y - previous.y) * height);
+        }
+        const axisDistance = isVertical
+            ? Math.abs(point.x - stroke.start[0]) * width
+            : Math.abs(point.y - stroke.start[1]) * height;
+        if (axisDistance <= tolerance) nearStrokePoints += 1;
+    });
+
+    return startDistance <= tolerance
+        && endDistance <= tolerance
+        && pathLength >= targetLength * 0.62
+        && nearStrokePoints / path.length >= 0.7;
 }
 
 function isLesson21MTraceComplete(canvas) {
@@ -8160,6 +8244,7 @@ function initializeLesson21MBatchimIntroCanvases() {
     canvases.forEach((canvas) => {
         canvas._lesson21MPaths = [];
         canvas._lesson21MActivePath = null;
+        canvas._lesson21MStrokeIndex = 0;
         drawLesson21MTraceCanvas(canvas);
 
         const activate = () => {
@@ -8170,10 +8255,20 @@ function initializeLesson21MBatchimIntroCanvases() {
             if (canvas.dataset.completed === 'true') return;
             event.preventDefault();
             activate();
+            const startPoint = getLesson21MCanvasPoint(canvas, event);
+            const strokeIndex = canvas._lesson21MStrokeIndex || 0;
+            if (!isLesson21MStrokeStart(canvas, startPoint)) {
+                const pair = canvas.closest('.lesson21-m-pair');
+                pair?.classList.add('needs-guidance');
+                setLesson21MFeedback(page, `${strokeIndex + 1}번 주황색 점에서 시작해 보세요.`);
+                window.setTimeout(() => pair?.classList.remove('needs-guidance'), 800);
+                return;
+            }
             canvas.setPointerCapture?.(event.pointerId);
-            canvas._lesson21MActivePath = [getLesson21MCanvasPoint(canvas, event)];
+            canvas._lesson21MActivePath = [startPoint];
             canvas._lesson21MPaths.push(canvas._lesson21MActivePath);
-            setLesson21MFeedback(page, '좋아요! 천천히 이어서 써 보세요.');
+            const stroke = LESSON21_M_STROKES[strokeIndex];
+            setLesson21MFeedback(page, `좋아요! ${strokeIndex + 1}번 획을 ${stroke.direction} 천천히 써 보세요.`);
         });
         canvas.addEventListener('pointermove', (event) => {
             if (!canvas._lesson21MActivePath || canvas.dataset.completed === 'true') return;
@@ -8188,13 +8283,26 @@ function initializeLesson21MBatchimIntroCanvases() {
         const finishPath = (event) => {
             if (!canvas._lesson21MActivePath || canvas.dataset.completed === 'true') return;
             event?.preventDefault?.();
+            const finishedPath = canvas._lesson21MActivePath;
             canvas._lesson21MActivePath = null;
-            if (isLesson21MTraceComplete(canvas)) {
-                completeLesson21MTrace(canvas);
+            const strokeIndex = canvas._lesson21MStrokeIndex || 0;
+            if (isLesson21MCurrentStrokeComplete(canvas, finishedPath)) {
+                canvas._lesson21MStrokeIndex = strokeIndex + 1;
+                if (canvas._lesson21MStrokeIndex >= LESSON21_M_STROKES.length) {
+                    completeLesson21MTrace(canvas);
+                } else {
+                    const nextStroke = LESSON21_M_STROKES[canvas._lesson21MStrokeIndex];
+                    const hint = canvas.closest('.lesson21-m-pair')?.querySelector('.lesson21-m-cell-hint');
+                    if (hint) hint.textContent = `${canvas._lesson21MStrokeIndex + 1}번 획을 써요`;
+                    setLesson21MFeedback(page, `잘했어요! 이제 ${canvas._lesson21MStrokeIndex + 1}번 획을 ${nextStroke.direction} 써 보세요.`);
+                    drawLesson21MTraceCanvas(canvas);
+                }
             } else {
+                canvas._lesson21MPaths.pop();
                 const pair = canvas.closest('.lesson21-m-pair');
                 pair?.classList.add('needs-guidance');
-                setLesson21MFeedback(page, '천천히 ㅁ 모양을 따라 써 보세요.');
+                const stroke = LESSON21_M_STROKES[strokeIndex];
+                setLesson21MFeedback(page, `${strokeIndex + 1}번 획을 주황색 화살표 방향으로 다시 써 보세요.`);
                 window.setTimeout(() => pair?.classList.remove('needs-guidance'), 800);
                 drawLesson21MTraceCanvas(canvas);
             }
