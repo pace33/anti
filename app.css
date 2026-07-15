@@ -2421,6 +2421,160 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
 }
+
+/* Lesson 21: Chanchan Hangul ㅂ batchim word writing */
+.lesson21-b-word-writing-page {
+    display: grid;
+    gap: 16px;
+}
+.lesson21-b-word-tip {
+    padding: 10px 14px;
+    border-left: 5px solid #72a94b;
+    background: #f5faef;
+    color: #456b2d;
+    font-size: .95rem;
+    font-weight: 800;
+}
+.lesson21-b-word-rows {
+    display: grid;
+    gap: 22px;
+    padding: 18px;
+    border: 2px solid #c6d3e0;
+    border-radius: 8px;
+    background: #ffffff;
+}
+.lesson21-b-word-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: center;
+    gap: 18px;
+}
+.lesson21-b-word-group {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    padding-top: 36px;
+}
+.lesson21-b-word-listen {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 68px;
+    min-height: 34px;
+    padding: 5px 9px;
+    border: 1px solid #8eb8d0;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #285e7c;
+    font-size: .8rem;
+    font-weight: 900;
+}
+.lesson21-b-word-strip {
+    display: flex;
+    align-items: stretch;
+}
+.lesson21-b-word-syllable {
+    display: grid;
+    grid-template-rows: 58px 56px 18px;
+    width: 92px;
+    min-height: 132px;
+    overflow: hidden;
+    border: 1px solid #b9c5d0;
+    background: #ffffff;
+}
+.lesson21-b-word-syllable + .lesson21-b-word-syllable {
+    border-left: 0;
+}
+.lesson21-b-word-syllable:first-child {
+    border-radius: 8px 0 0 8px;
+}
+.lesson21-b-word-syllable:last-child {
+    border-radius: 0 8px 8px 0;
+}
+.lesson21-b-word-syllable:only-child {
+    border-radius: 8px;
+}
+.lesson21-b-word-base {
+    display: grid;
+    place-items: center;
+    background: #dbe8f5;
+    color: #152e4d;
+    font-size: 2.35rem;
+    font-weight: 1000;
+    line-height: 1;
+}
+.lesson21-b-word-canvas {
+    align-self: center;
+    width: 78px;
+    height: 50px;
+    margin: 3px auto;
+    border: 2px solid #f2aa68;
+    border-radius: 6px;
+    background: #fffdf9;
+    touch-action: none;
+}
+.lesson21-b-word-empty {
+    display: block;
+    width: 100%;
+    height: 56px;
+    background: #ffffff;
+}
+.lesson21-b-word-status {
+    display: grid;
+    place-items: center;
+    color: #9a4c18;
+    font-size: .72rem;
+    font-weight: 900;
+}
+.lesson21-b-word-syllable.is-reading {
+    grid-template-rows: 58px 56px 18px;
+}
+.lesson21-b-word-syllable.is-complete {
+    border-color: #55b77a;
+    background: #ebf8ef;
+}
+.lesson21-b-word-syllable.is-complete .lesson21-b-word-status {
+    color: #197247;
+}
+.lesson21-b-word-group.is-complete .lesson21-b-word-listen {
+    border-color: #55b77a;
+    background: #ebf8ef;
+    color: #176b43;
+}
+.lesson21-b-word-progress {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px 16px;
+    border: 2px dashed #69cf98;
+    border-radius: 8px;
+    background: #effbf3;
+    color: #185d3d;
+    font-size: .95rem;
+    font-weight: 850;
+}
+.lesson21-b-word-progress strong {
+    white-space: nowrap;
+}
+@media (max-width: 700px) {
+    .lesson21-b-word-rows {
+        padding: 12px;
+    }
+    .lesson21-b-word-row {
+        justify-content: flex-start;
+    }
+    .lesson21-b-word-syllable {
+        width: 84px;
+    }
+    .lesson21-b-word-progress {
+        display: grid;
+    }
+}
 .lesson21-word-find-card {
     display: grid;
     gap: 10px;

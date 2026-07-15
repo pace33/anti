@@ -8032,6 +8032,57 @@ function renderLesson21PracticePage(lessonId, batchim) {
     `;
 }
 
+const LESSON21_B_WORD_WRITING_ROWS = [
+    [
+        { word: '탑', syllables: [{ base: '타', result: '탑', write: true }] },
+        { word: '톱', syllables: [{ base: '토', result: '톱', write: true }] },
+        { word: '답', syllables: [{ base: '다', result: '답', write: true }] },
+        { word: '맵다', syllables: [{ base: '매', result: '맵', write: true }, { base: '다' }] },
+        { word: '밉다', syllables: [{ base: '미', result: '밉', write: true }, { base: '다' }] }
+    ],
+    [
+        { word: '접시', syllables: [{ base: '저', result: '접', write: true }, { base: '시' }] },
+        { word: '대답', syllables: [{ base: '대' }, { base: '다', result: '답', write: true }] },
+        { word: '무섭다', syllables: [{ base: '무' }, { base: '서', result: '섭', write: true }, { base: '다' }] }
+    ]
+];
+
+function renderLesson21BWordWritingPage(lessonId) {
+    let writingIndex = 0;
+    return `
+        <div class="lesson21-page lesson21-b-word-writing-page" data-lesson21-b-word-writing="${lessonId}">
+            <div class="lesson21-instruction"><strong>쓰기</strong> · 단어를 듣고 빈 받침 자리에 ㅂ을 써 보세요.</div>
+            <div class="lesson21-b-word-tip">처음에는 단어를 한 번에 듣고, 어려우면 받침 소리를 나누어 들어 보세요.</div>
+            <div class="lesson21-b-word-rows" aria-label="찬찬한글 ㅂ 받침 단어 쓰기">
+                ${LESSON21_B_WORD_WRITING_ROWS.map((row, rowIndex) => `
+                    <div class="lesson21-b-word-row" role="group" aria-label="ㅂ 받침 단어 ${rowIndex + 1}번째 줄">
+                        ${row.map((item) => `
+                            <section class="lesson21-b-word-group" data-word="${item.word}" aria-label="${item.word} 쓰기">
+                                <button type="button" class="lesson21-b-word-listen" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">🔊 <span>듣기</span></button>
+                                <div class="lesson21-b-word-strip">
+                                    ${item.syllables.map((syllable) => {
+                                        if (!syllable.write) return `<div class="lesson21-b-word-syllable is-reading"><span class="lesson21-b-word-base">${syllable.base}</span><span class="lesson21-b-word-empty" aria-hidden="true"></span></div>`;
+                                        const index = writingIndex++;
+                                        return `<div class="lesson21-b-word-syllable is-writing" data-base="${syllable.base}" data-result="${syllable.result}">
+                                            <span class="lesson21-b-word-base">${syllable.base}</span>
+                                            <canvas class="trace-writing-canvas lesson21-b-word-canvas" data-guide="ㅂ" data-lesson21-compact-guide data-lesson21-b-word-target="${index}" data-word="${item.word}" data-base="${syllable.base}" data-result="${syllable.result}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="${item.word}의 빈 받침 자리에 ㅂ 쓰기"></canvas>
+                                            <span class="lesson21-b-word-status" aria-live="polite">ㅂ 쓰기</span>
+                                        </div>`;
+                                    }).join('')}
+                                </div>
+                            </section>
+                        `).join('')}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="lesson21-b-word-progress" role="status" aria-live="polite">
+                <span>주황색 점부터 차례로 ㅂ 받침을 써 보세요.</span>
+                <strong id="lesson21-b-word-progress-count">단어 쓰기 0 / 8</strong>
+            </div>
+        </div>
+    `;
+}
+
 function renderLesson21WordFindPage(lessonId, batchim) {
     const config = getLesson21BatchimConfig(batchim);
     return `
@@ -8078,6 +8129,7 @@ function renderLesson21Page(lessonId, batchim, pageIndex) {
     if (pageIndex === 0) return renderLesson21IntroPage(batchim);
     if (pageIndex === 1 && batchim === 'ㅁ') return renderLesson21MPracticePage(lessonId);
     if (pageIndex === 1) return renderLesson21FollowPage(lessonId, batchim);
+    if (pageIndex === 2 && batchim === 'ㅁ') return renderLesson21BWordWritingPage(lessonId);
     if (pageIndex === 2) return renderLesson21PracticePage(lessonId, batchim);
     if (pageIndex === 3) return renderLesson21WordFindPage(lessonId, batchim);
     return renderLesson21ChallengePage(lessonId, batchim);
@@ -8528,6 +8580,27 @@ function completeLesson21MixedPracticeCanvas(canvas) {
     if (next) {
         window.setTimeout(() => next.classList.add('is-next'), 350);
     }
+}
+
+function completeLesson21BWordCanvas(canvas) {
+    if (!canvas || canvas.dataset.lesson21BWordCompleted === 'true') return;
+    const page = canvas.closest('.lesson21-b-word-writing-page');
+    const syllable = canvas.closest('.lesson21-b-word-syllable.is-writing');
+    const group = canvas.closest('.lesson21-b-word-group');
+    if (!page || !syllable || !group) return;
+
+    canvas.dataset.lesson21BWordCompleted = 'true';
+    syllable.classList.add('is-complete');
+    const status = syllable.querySelector('.lesson21-b-word-status');
+    if (status) status.textContent = '✓ 완성';
+    group.classList.add('is-complete');
+    const listenLabel = group.querySelector('.lesson21-b-word-listen span');
+    if (listenLabel) listenLabel.textContent = group.dataset.word;
+
+    const completed = page.querySelectorAll('.lesson21-b-word-canvas[data-lesson21-b-word-completed="true"]').length;
+    const progress = page.querySelector('#lesson21-b-word-progress-count');
+    if (progress) progress.textContent = `단어 쓰기 ${completed} / 8`;
+    speakTextKo(group.dataset.word);
 }
 
 window.resetLesson21MPracticeCanvas = function resetLesson21MPracticeCanvas() {
@@ -10911,6 +10984,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
             const batchim = safeIndex < 5 ? 'ㅁ' : 'ㅂ';
             const localIndex = safeIndex % 5;
             sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 쓰기`, `${batchim} 받침 · 단어 찾기`, `${batchim} 받침 · 도전하기`][localIndex];
+            if (safeIndex === 2) sectionTitle = 'ㅂ 받침 · 단어 쓰기';
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -11517,7 +11591,7 @@ function drawTraceWritingGuide(target) {
     const fillWord = canvas.dataset.fillWord || '';
     const fillPrefix = canvas.dataset.fillPrefix || '';
 
-    if (canvas.dataset.lesson21MixedTarget !== undefined) {
+    if (canvas.dataset.lesson21MixedTarget !== undefined || canvas.dataset.lesson21CompactGuide !== undefined) {
         const char = chars[0];
         const completedCount = canvas._traceCompleted?.[0] || 0;
         ctx.fillStyle = '#fffdf9';
@@ -11786,7 +11860,7 @@ function initializeTraceWritingCanvas(target) {
                 const completed = canvas._traceCompleted || {};
                 const nextStrokeIndex = completed[charIndex] || 0;
                 const nextStroke = cell?.strokes?.[nextStrokeIndex];
-                if (nextStroke && canvas.dataset.lesson21MixedTarget !== undefined) nextStroke.lesson21Compact = true;
+                if (nextStroke && (canvas.dataset.lesson21MixedTarget !== undefined || canvas.dataset.lesson21CompactGuide !== undefined)) nextStroke.lesson21Compact = true;
                 if (!nextStroke || !traceIsNearCurrentStrokeStart(p, nextStroke)) {
                     activePointerId = null;
                     return;
@@ -11835,6 +11909,9 @@ function initializeTraceWritingCanvas(target) {
             const completedCount = canvas._traceCompleted[activeTrace.cellIndex] || 0;
             if (canvas.dataset.lesson21MixedTarget && completedCell?.strokes?.length && completedCount >= completedCell.strokes.length) {
                 completeLesson21MixedPracticeCanvas(canvas);
+            }
+            if (canvas.dataset.lesson21BWordTarget !== undefined && completedCell?.strokes?.length && completedCount >= completedCell.strokes.length) {
+                completeLesson21BWordCanvas(canvas);
             }
             if (canvas.dataset.fillLesson && !canvas.dataset.fillRecorded) {
                 const cell = completedCell;
