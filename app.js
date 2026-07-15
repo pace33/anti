@@ -77,9 +77,11 @@ function getActivityRouteFromLocation() {
 
 let pendingActivityRoute = getActivityRouteFromLocation();
 
-function showActivityLoading() {
+function showActivityLoading(message = '로딩중...') {
     const overlay = document.getElementById('activity-loading-overlay');
     if (!overlay) return;
+    const text = overlay.querySelector('.activity-loading-text');
+    if (text) text.innerText = message;
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
     overlay.setAttribute('aria-busy', 'true');
@@ -3160,7 +3162,7 @@ function updateDashboardExperience(userData = {}) {
     if (currentUserRole === 'teacher') {
         currentUserDictationStep = Math.max(currentUserDictationStep, dictationItems.length);
     }
-    literacyPortfolio = normalizeLiteracyPortfolio(userData?.literacyPortfolio);
+    literacyPortfolio = normalizeLiteracyPortfolio(userData?.literacyPortfolio, userData?.literacyDan);
 
     // Main Sidebar/Drawer Info
     document.getElementById('dashboard-account-name').innerText = name;
@@ -5775,10 +5777,11 @@ async function createSpellingQuestion() {
 window.checkSpellingAnswer = function(index) { if (!activeSpellingQuestion) return; const buttons = document.querySelectorAll('#spelling-quiz-options .btn-choice'); buttons.forEach((button, buttonIndex) => { button.disabled = true; if (buttonIndex === activeSpellingQuestion.answerIndex) button.classList.add('!bg-green-100', '!border-green-400'); }); const isCorrect = index === activeSpellingQuestion.answerIndex; const feedback = document.getElementById('spelling-quiz-feedback'); feedback.classList.remove('hidden'); feedback.innerHTML = `<div class="text-xl font-black ${isCorrect ? 'text-green-600' : 'text-red-500'}">${isCorrect ? '정답이에요!' : '아쉬워요. 초록색 문장이 틀린 문장이에요.'}</div><div class="mt-3 text-2xl font-black text-[#2c3e50]">${escapeHtml(activeSpellingQuestion.options[activeSpellingQuestion.answerIndex])}</div><p class="mt-3 text-gray-600 font-bold">${escapeHtml(activeSpellingQuestion.reason || '틀린 부분을 바르게 고쳐 읽어봐요.')}</p>`; }
 
 // --- 에이두 문해력 핵심 로직 ---
-function normalizeLiteracyPortfolio(raw = {}) {
+function normalizeLiteracyPortfolio(raw = {}, fallbackDan = 1) {
     if (!raw || typeof raw !== 'object') raw = {};
     const history = Array.isArray(raw.history) ? raw.history : [];
     const stats = raw.stats || {};
+    const dan = Math.max(1, Math.floor(asNumber(raw.dan, asNumber(fallbackDan, 1))));
     const keys = [
         'easy-multipleChoice', 'easy-shortAnswer', 'easy-essay',
         'normal-multipleChoice', 'normal-shortAnswer', 'normal-essay',
@@ -5790,7 +5793,7 @@ function normalizeLiteracyPortfolio(raw = {}) {
             stats[k] = { attempts: 0, corrects: 0, wrongs: 0 };
         }
     });
-    return { history, stats };
+    return { history, stats, dan };
 }
 
 async function persistLiteracyData(extra = {}) {
@@ -5857,7 +5860,7 @@ function isLiteracyUnlocked(difficulty, type) {
 }
 
 function getLiteracyDanPlan(dan = null) {
-    const level = Math.max(1, Math.floor(asNumber(dan ?? currentUserProfileSnapshot?.literacyDan ?? literacyPortfolio?.dan, 1)));
+    const level = Math.max(1, Math.floor(asNumber(dan ?? literacyPortfolio?.dan ?? currentUserProfileSnapshot?.literacyDan, 1)));
     const cycle = Math.floor((level - 1) / 3);
     const typeStep = (level - 1) % 3;
     const difficulties = ['easy', 'normal', 'hard', 'expert'];
@@ -5865,10 +5868,38 @@ function getLiteracyDanPlan(dan = null) {
     const types = typeStep === 0 ? ['multipleChoice'] : (typeStep === 1 ? ['multipleChoice', 'shortAnswer'] : ['multipleChoice', 'shortAnswer', 'essay']);
     return { dan: level, difficulty, types, type: types[Math.floor(Math.random() * types.length)] };
 }
+
+function advanceLiteracyDanIfReady() {
+    const previousDan = getLiteracyDanPlan().dan;
+    let nextDan = previousDan;
+
+    while (nextDan < 12) {
+        const plan = getLiteracyDanPlan(nextDan);
+        const requiredType = ['multipleChoice', 'shortAnswer', 'essay'][(nextDan - 1) % 3];
+        if (!isLiteracyMastered(plan.difficulty, requiredType)) break;
+        nextDan += 1;
+    }
+
+    literacyPortfolio.dan = nextDan;
+    if (nextDan === previousDan) return null;
+    return { previousDan, nextDan, nextPlan: getLiteracyDanPlan(nextDan) };
+}
+
+function showLiteracyPromotionNotice(promotion) {
+    if (!promotion) return;
+    const typeNames = { multipleChoice: '객관식', shortAnswer: '단답형', essay: '서술형' };
+    const nextTypes = promotion.nextPlan.types.map(type => typeNames[type] || type).join(' · ');
+    showAiedueAutoToast(
+        `🎉 문해력 ${promotion.nextDan}단 승단!`,
+        `이제 ${promotion.nextPlan.difficulty.toUpperCase()} · ${nextTypes} 문제가 나와요.`,
+        5000
+    );
+}
 function updateLiteracyDanBadges() {
     const plan = getLiteracyDanPlan();
     const label = `문해력 ${plan.dan}단`;
-    ['literacy-dan-dashboard-badge', 'literacy-dan-workspace-badge'].forEach((id) => { const el = document.getElementById(id); if (el) el.innerText = label; });
+    const badge = document.getElementById('literacy-dan-dashboard-badge');
+    if (badge) badge.innerText = label;
     const desc = document.getElementById('literacy-mission-desc');
     if (desc) desc.innerText = `${label} 기준으로 ${plan.difficulty.toUpperCase()} · ${plan.types.map(t => ({multipleChoice:'객관식', shortAnswer:'단답형', essay:'서술형'}[t] || t)).join('/')} 문제가 자동 출제돼요.`;
 }
@@ -6106,7 +6137,7 @@ window.openTodayLiteracyMission = function() {
 };
 
 window.startTodayLiteracyMission = async function(diff, type) {
-    showActivityLoading();
+    showActivityLoading('문해력 문제 로딩중...');
     try {
         const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 8);
         const prompt = generateLiteracyPrompt(diff, type, bankWords);
@@ -6200,13 +6231,6 @@ function setupLiteracyWorkspace(questionData, isLimitBreak = false) {
     userLiteracyAnswerChecked = false;
 
     showTopLevelSection('literacy-workspace-section');
-
-    const badge = document.getElementById('literacy-workspace-badge');
-    badge.innerText = isLimitBreak ? '한계 돌파' : '오늘의 미션';
-    badge.className = `aiedu-badge ${isLimitBreak ? 'bg-purple-600' : 'bg-blue-600'}`;
-
-    const title = document.getElementById('literacy-workspace-title');
-    title.innerText = isLimitBreak ? '도전! 한계 돌파' : '에이두 문해력 문제';
 
     document.getElementById('literacy-passage-difficulty').innerText = questionData.difficulty.toUpperCase();
     document.getElementById('literacy-passage-content').innerText = questionData.passage;
@@ -6390,6 +6414,8 @@ async function showLiteracyResult(isCorrect, details) {
         literacyPortfolio.stats[statKey].wrongs++;
     }
 
+    const literacyPromotion = advanceLiteracyDanIfReady();
+
     literacyPortfolio.history = [
         {
             passage: activeLiteracyQuestion.passage,
@@ -6416,7 +6442,12 @@ async function showLiteracyResult(isCorrect, details) {
         }
     }
 
-    await persistLiteracyData({ coins: currentUserCoins });
+    await persistLiteracyData({
+        coins: currentUserCoins,
+        literacyDan: literacyPortfolio.dan
+    });
+    updateLiteracyDanBadges();
+    showLiteracyPromotionNotice(literacyPromotion);
 }
 
 window.claimLiteracyWrongReviewReward = async function(claimId) {
@@ -6484,11 +6515,6 @@ window.openMyLiteracyRecord = function() {
         </div>
     `;
     showModal(msg);
-};
-
-window.goLiteracyDashboard = function() {
-    showTopLevelSection('literacy-activities-section');
-    updateLiteracyDashboardPreview();
 };
 
 window.closeEmbeddedActivity = function closeEmbeddedActivity() {
@@ -12959,6 +12985,16 @@ onAuthStateChanged(auth, async (user) => {
         await loadKoreanExperienceMultipliers(teacherId, classId);
 
         updateDashboardExperience(userData);
+        const recoveredLiteracyPromotion = advanceLiteracyDanIfReady();
+        if (recoveredLiteracyPromotion) {
+            await setDoc(userRef, {
+                literacyPortfolio,
+                literacyDan: literacyPortfolio.dan,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            updateLiteracyDanBadges();
+            showLiteracyPromotionNotice(recoveredLiteracyPromotion);
+        }
         loginSuccess = true;
 
         // 이미 대시보드/활동 화면이라면 패스, 아니라면 요청된 활동 또는 대시보드 열기

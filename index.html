@@ -468,21 +468,14 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <div class="w-full flex justify-between items-center mb-6">
-                    <div>
-                        <span id="literacy-workspace-badge" class="aiedu-badge bg-blue-600">오늘의 미션</span>
-                        <h2 id="literacy-workspace-title" class="text-4xl font-black text-[#2c3e50] mt-2">에이두 문해력 문제</h2><div id="literacy-dan-workspace-badge" class="inline-flex mt-3 px-4 py-2 rounded-2xl bg-blue-50 text-blue-700 font-black">문해력 1단</div>
-                    </div>
-                    <button type="button" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all" onclick="goLiteracyDashboard()">
-                        목록으로 돌아가기
-                    </button>
-                </div>
-
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
                     <div class="bg-gray-50 border-4 border-gray-200 rounded-[30px] p-8 flex flex-col min-h-[400px]">
                         <h3 class="text-2xl font-black text-gray-700 mb-4 flex items-center gap-2">📖 읽기 지문 <span id="literacy-passage-difficulty" class="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Easy</span></h3>
                         <div id="literacy-passage-content" class="text-xl font-bold text-gray-800 leading-relaxed whitespace-pre-wrap flex-grow overflow-y-auto max-h-[450px] custom-scrollbar">
-                            문제를 불러오는 중입니다...
+                            <span class="literacy-inline-loading" role="status">
+                                <span class="literacy-inline-loading-spinner" aria-hidden="true"></span>
+                                <span>문해력 문제 로딩중...</span>
+                            </span>
                         </div>
                     </div>
 
