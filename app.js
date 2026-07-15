@@ -8241,9 +8241,13 @@ const LESSON21_M_STROKES = [
 ];
 
 const LESSON21_B_STROKES = [
-    { start: [0.24, 0.16], end: [0.24, 0.80], direction: '아래로' },
-    { start: [0.76, 0.16], end: [0.76, 0.80], direction: '아래로' },
-    { start: [0.24, 0.18], end: [0.76, 0.18], direction: '오른쪽으로' },
+    { start: [0.24, 0.18], end: [0.24, 0.78], direction: '아래로' },
+    {
+        start: [0.24, 0.18],
+        end: [0.76, 0.78],
+        points: [[0.24, 0.18], [0.76, 0.18], [0.76, 0.78]],
+        direction: '오른쪽으로 쓴 뒤 아래로'
+    },
     { start: [0.24, 0.49], end: [0.76, 0.49], direction: '오른쪽으로' },
     { start: [0.24, 0.78], end: [0.76, 0.78], direction: '오른쪽으로' }
 ];
@@ -8252,17 +8256,23 @@ function getLesson21IntroStrokes(canvas) {
     return canvas?.dataset?.batchim === 'ㅂ' ? LESSON21_B_STROKES : LESSON21_M_STROKES;
 }
 
+function getLesson21IntroStrokePoints(stroke) {
+    return stroke.points || [stroke.start, stroke.end];
+}
+
 function drawLesson21MStrokeArrow(ctx, stroke, width, height) {
-    const startX = stroke.start[0] * width;
-    const startY = stroke.start[1] * height;
-    const endX = stroke.end[0] * width;
-    const endY = stroke.end[1] * height;
-    const angle = Math.atan2(endY - startY, endX - startX);
+    const points = getLesson21IntroStrokePoints(stroke);
+    const scaledPoints = points.map(([x, y]) => [x * width, y * height]);
+    const [endX, endY] = scaledPoints[scaledPoints.length - 1];
+    const [previousX, previousY] = scaledPoints[scaledPoints.length - 2];
+    const angle = Math.atan2(endY - previousY, endX - previousX);
     const arrowSize = Math.max(7, Math.min(width, height) * 0.075);
 
     ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
+    scaledPoints.forEach(([x, y], index) => {
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.beginPath();
@@ -8294,9 +8304,12 @@ function drawLesson21MTraceCanvas(canvas) {
     ctx.setLineDash([7, 7]);
     ctx.lineJoin = 'round';
     strokes.forEach((stroke) => {
+        const points = getLesson21IntroStrokePoints(stroke);
         ctx.beginPath();
-        ctx.moveTo(stroke.start[0] * width, stroke.start[1] * height);
-        ctx.lineTo(stroke.end[0] * width, stroke.end[1] * height);
+        points.forEach(([x, y], index) => {
+            if (index === 0) ctx.moveTo(x * width, y * height);
+            else ctx.lineTo(x * width, y * height);
+        });
         ctx.stroke();
     });
     ctx.setLineDash([]);
@@ -8372,29 +8385,54 @@ function isLesson21MCurrentStrokeComplete(canvas, path) {
     const tolerance = Math.max(22, Math.min(width, height) * 0.18);
     const startDistance = getLesson21MStrokeDistance(path[0], stroke.start, width, height);
     const endDistance = getLesson21MStrokeDistance(path[path.length - 1], stroke.end, width, height);
-    const targetLength = Math.hypot(
-        (stroke.end[0] - stroke.start[0]) * width,
-        (stroke.end[1] - stroke.start[1]) * height
-    );
+    const strokePoints = getLesson21IntroStrokePoints(stroke);
+    const targetLength = strokePoints.slice(1).reduce((total, point, index) => {
+        const previous = strokePoints[index];
+        return total + Math.hypot(
+            (point[0] - previous[0]) * width,
+            (point[1] - previous[1]) * height
+        );
+    }, 0);
     let pathLength = 0;
     let nearStrokePoints = 0;
-    const isVertical = stroke.start[0] === stroke.end[0];
+    const isBentStroke = strokePoints.length > 2;
+    const isVertical = !isBentStroke && stroke.start[0] === stroke.end[0];
 
     path.forEach((point, index) => {
         if (index > 0) {
             const previous = path[index - 1];
             pathLength += Math.hypot((point.x - previous.x) * width, (point.y - previous.y) * height);
         }
-        const axisDistance = isVertical
-            ? Math.abs(point.x - stroke.start[0]) * width
-            : Math.abs(point.y - stroke.start[1]) * height;
-        if (axisDistance <= tolerance) nearStrokePoints += 1;
+        if (isBentStroke) {
+            const nearTop = Math.abs(point.y - strokePoints[0][1]) * height <= tolerance
+                && point.x >= strokePoints[0][0] - 0.08
+                && point.x <= strokePoints[1][0] + 0.08;
+            const nearRight = Math.abs(point.x - strokePoints[1][0]) * width <= tolerance
+                && point.y >= strokePoints[1][1] - 0.08
+                && point.y <= strokePoints[2][1] + 0.08;
+            if (nearTop || nearRight) nearStrokePoints += 1;
+        } else {
+            const axisDistance = isVertical
+                ? Math.abs(point.x - stroke.start[0]) * width
+                : Math.abs(point.y - stroke.start[1]) * height;
+            if (axisDistance <= tolerance) nearStrokePoints += 1;
+        }
     });
+
+    let nextWaypointIndex = 1;
+    path.forEach((point) => {
+        if (nextWaypointIndex >= strokePoints.length - 1) return;
+        if (getLesson21MStrokeDistance(point, strokePoints[nextWaypointIndex], width, height) <= tolerance) {
+            nextWaypointIndex += 1;
+        }
+    });
+    const passedEveryCorner = nextWaypointIndex >= strokePoints.length - 1;
 
     return startDistance <= tolerance
         && endDistance <= tolerance
         && pathLength >= targetLength * 0.62
-        && nearStrokePoints / path.length >= 0.7;
+        && nearStrokePoints / path.length >= 0.7
+        && passedEveryCorner;
 }
 
 function isLesson21MTraceComplete(canvas) {
@@ -8469,6 +8507,11 @@ function completeLesson21MTrace(canvas) {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const mergeDuration = reduceMotion ? 80 : (itemIndex === 0 ? 1100 : 900);
 
+    if (batchim === 'ㅂ') {
+        canvas._lesson21MPaths = getLesson21IntroStrokes(canvas).map((stroke) => (
+            getLesson21IntroStrokePoints(stroke).map(([x, y]) => ({ x, y }))
+        ));
+    }
     canvas.dataset.completed = 'true';
     pair.classList.remove('is-active');
     pair.classList.add('is-merging');
