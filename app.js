@@ -2778,11 +2778,21 @@ function formatKoreanCloudFileSize(bytes = 0) { if (bytes < 1024) return `${byte
 
 window.openAiedueKoreanCloud = function openAiedueKoreanCloud() {
     if (!loginSuccess || !getKoreanCloudUserId()) { showModal('로그인 후 에이두 클라우드를 사용할 수 있어요.'); return; }
-    showTopLevelSection('aiedue-korean-cloud-section');
-    const main = document.getElementById('main-container'); if (main) main.style.maxWidth = '1200px';
+    const main = document.getElementById('main-container');
+    const cloud = document.getElementById('aiedue-korean-cloud-section');
+    if (!main || !cloud) return;
+    if (cloud.parentElement !== main) main.appendChild(cloud);
+    cloud.classList.remove('hidden');
+    cloud.style.display = 'flex';
+    cloud.style.zIndex = '60';
     renderAiedueKoreanCloud();
 }
-window.closeAiedueKoreanCloud = function closeAiedueKoreanCloud() { showTopLevelSection('dashboard-section'); const main = document.getElementById('main-container'); if (main) main.style.maxWidth = ''; }
+window.closeAiedueKoreanCloud = function closeAiedueKoreanCloud() {
+    const cloud = document.getElementById('aiedue-korean-cloud-section');
+    if (!cloud) return;
+    cloud.classList.add('hidden');
+    cloud.style.display = 'none';
+}
 
 async function renderAiedueKoreanCloud() {
     const isTeacher = currentUserRole === 'teacher';
@@ -6120,8 +6130,23 @@ window.nextLiteracyQuestion = function() {
     window.startTodayLiteracyMission(plan.difficulty, plan.type);
 };
 
+const AIEDUE_LITERACY_FALLBACK_TOPICS = [
+    '학교 방송', '비 오는 등굣길', '도서관 약속', '운동회 준비', '잃어버린 물건 찾기',
+    '친구에게 사과하기', '동아리 발표', '가족 여행 일기', '시장 심부름', '새 전학생 맞이'
+];
+let literacyFallbackTopicIndex = Math.floor(Math.random() * AIEDUE_LITERACY_FALLBACK_TOPICS.length);
+
+function pickLiteracyFallbackTopic() {
+    const topic = AIEDUE_LITERACY_FALLBACK_TOPICS[literacyFallbackTopicIndex % AIEDUE_LITERACY_FALLBACK_TOPICS.length];
+    literacyFallbackTopicIndex += 1;
+    return topic;
+}
+
 function generateLiteracyPrompt(difficulty, type, bankWords) {
-    const wordListStr = bankWords.length > 0 ? bankWords.join(', ') : '나무, 학교, 하늘';
+    const hasBankWords = bankWords.length > 0;
+    const sourceGuide = hasBankWords
+        ? `3. 단어 은행 반영: 아래 단어를 지문의 중심 소재로 자연스럽게 사용해 주세요.\n   단어 은행: ${bankWords.join(', ')}`
+        : `3. 생성 주제: ${pickLiteracyFallbackTopic()}\n   단어 은행이 비어 있으므로 위 주제를 중심 소재로 사용하되, 문제 양식은 현재 에이두 국어 문해력 양식을 그대로 따르세요.`;
     let difficultyGuide = '';
     if (difficulty === 'easy') {
         difficultyGuide = '쉬움: 짧은 한 문단 지문으로, 초등학교 1~2학년이 읽기 쉬운 3문장 내외와 아주 친숙한 단어로 구성해 주세요.';
@@ -6153,8 +6178,7 @@ function generateLiteracyPrompt(difficulty, type, bankWords) {
    - 난이도 기준: ${difficultyGuide}
 2. 문제 유형: ${type === 'multipleChoice' ? '객관식' : type === 'shortAnswer' ? '단답형' : '서술형'}
    - 문제 유형 기준: ${typeGuide}
-3. 반영 단어: 가능하면 아래 단어 은행의 단어를 자연스럽게 지문에 녹여내어 사용해 주세요:
-   단어 은행: ${wordListStr}
+${sourceGuide}
 
 반드시 백틱(\`\`\`)이나 JSON 이외의 잡다한 설명은 포함하지 말고, 순수한 JSON 텍스트만 출력하세요.`;
 }
@@ -6465,10 +6489,6 @@ window.openMyLiteracyRecord = function() {
 window.goLiteracyDashboard = function() {
     showTopLevelSection('literacy-activities-section');
     updateLiteracyDashboardPreview();
-};
-
-window.nextLiteracyQuestion = function() {
-    goLiteracyDashboard();
 };
 
 window.closeEmbeddedActivity = function closeEmbeddedActivity() {

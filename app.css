@@ -5199,6 +5199,25 @@ body {
     box-shadow: 0 20px 38px rgba(37, 99, 235, .36);
 }
 
+.korean-cloud-overlay {
+    inset: 0;
+    padding: clamp(16px, 3vw, 32px);
+    align-items: flex-start;
+    justify-content: center;
+    background: rgba(241, 248, 239, .72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.korean-cloud-shell {
+    min-height: 100%;
+    padding: clamp(20px, 3vw, 32px);
+    border: 2px solid rgba(183, 228, 161, .9);
+    border-radius: 32px;
+    background: rgba(248, 250, 245, .96);
+    box-shadow: 0 24px 64px rgba(44, 62, 80, .18);
+}
+
 .korean-embed-card {
     border-color: rgba(203, 213, 225, 0.55);
     box-shadow: 0 12px 30px rgba(44, 62, 80, 0.07);
