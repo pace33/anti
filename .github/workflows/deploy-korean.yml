@@ -111,7 +111,21 @@ jobs:
           $config = 'C:\Users\y5496\aiedue-repo\Caddyfile'
           if (!(Test-Path $config)) { throw "Caddyfile not found: $config" }
           caddy validate --config $config
-          caddy reload --config $config
+
+          # Static /korean deploys only copy files, but keep reload best-effort for route changes.
+          # On the self-hosted Windows runner, `caddy reload` can occasionally hang even after
+          # the config is valid and the existing route is serving the copied files. Bound it so
+          # the following public smoke test can prove the deployment instead of leaving the run
+          # stuck until GitHub cancels it.
+          $reloadJob = Start-Job -ScriptBlock { param($configPath) caddy reload --config $configPath } -ArgumentList $config
+          if (Wait-Job $reloadJob -Timeout 20) {
+            Receive-Job $reloadJob
+          } else {
+            Stop-Job $reloadJob -ErrorAction SilentlyContinue
+            Receive-Job $reloadJob -ErrorAction SilentlyContinue
+            Write-Warning 'caddy reload timed out after 20 seconds; continuing to public smoke test.'
+          }
+          Remove-Job $reloadJob -Force -ErrorAction SilentlyContinue
 
       - name: Smoke test public /korean site
         shell: powershell
@@ -123,8 +137,12 @@ jobs:
           if ($html -notmatch 'activity-loading-overlay') { throw 'Public page did not include the loading UI.' }
           if ($html -notmatch 'src="app.js') { throw 'Public page did not reference app.js.' }
           if ($html -notmatch 'href="app.css') { throw 'Public page did not reference app.css.' }
+          if ($html -notmatch 'dashboard-warning-tokens-header') { throw 'Public page did not include warning-token header marker.' }
+          if ($html -notmatch 'sync-warning-tokens') { throw 'Public page did not include warning-token sync markers.' }
 
           $app = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
           if ($app -notmatch 'aiedueKoreanDrawings') { throw 'Public app.js did not include Firebase drawing storage.' }
+          if ($app -notmatch 'adjustStudentKoreanWallet') { throw 'Public app.js did not include teacher warning-token wallet controls.' }
+          if ($app -notmatch 'warningTokens') { throw 'Public app.js did not include warning-token persistence.' }
           if ($app -match 'korean-db/db-api') { throw 'Public app.js still references the retired Korean DB mirror.' }
-          Write-Host 'Smoke test passed: modular page and Firebase drawing storage are reachable.'
+          Write-Host 'Smoke test passed: modular page, warning tokens, and Firebase drawing storage are reachable.'
