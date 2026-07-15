@@ -110,22 +110,34 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $config = 'C:\Users\y5496\aiedue-repo\Caddyfile'
           if (!(Test-Path $config)) { throw "Caddyfile not found: $config" }
-          caddy validate --config $config
+          function Invoke-CaddyBounded($arguments, $timeoutSeconds, $required) {
+            $stdout = Join-Path $env:RUNNER_TEMP ("caddy-{0}.out" -f ([guid]::NewGuid().ToString('N')))
+            $stderr = Join-Path $env:RUNNER_TEMP ("caddy-{0}.err" -f ([guid]::NewGuid().ToString('N')))
+            $process = Start-Process -FilePath 'caddy' -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+            if (-not $process.WaitForExit($timeoutSeconds * 1000)) {
+              $process.Kill()
+              $process.WaitForExit()
+              $message = "caddy $($arguments -join ' ') timed out after ${timeoutSeconds}s"
+              if ($required) { throw $message }
+              Write-Warning "$message; continuing to public smoke test."
+            } elseif ($process.ExitCode -ne 0) {
+              Get-Content $stdout -ErrorAction SilentlyContinue
+              Get-Content $stderr -ErrorAction SilentlyContinue
+              throw "caddy $($arguments -join ' ') failed with exit code $($process.ExitCode)"
+            } else {
+              Get-Content $stdout -ErrorAction SilentlyContinue
+              Get-Content $stderr -ErrorAction SilentlyContinue
+            }
+          }
+
+          Invoke-CaddyBounded @('validate', '--config', $config) 25 $false
 
           # Static /korean deploys only copy files, but keep reload best-effort for route changes.
           # On the self-hosted Windows runner, `caddy reload` can occasionally hang even after
           # the config is valid and the existing route is serving the copied files. Bound it so
           # the following public smoke test can prove the deployment instead of leaving the run
           # stuck until GitHub cancels it.
-          $reloadJob = Start-Job -ScriptBlock { param($configPath) caddy reload --config $configPath } -ArgumentList $config
-          if (Wait-Job $reloadJob -Timeout 20) {
-            Receive-Job $reloadJob
-          } else {
-            Stop-Job $reloadJob -ErrorAction SilentlyContinue
-            Receive-Job $reloadJob -ErrorAction SilentlyContinue
-            Write-Warning 'caddy reload timed out after 20 seconds; continuing to public smoke test.'
-          }
-          Remove-Job $reloadJob -Force -ErrorAction SilentlyContinue
+          Invoke-CaddyBounded @('reload', '--config', $config) 20 $false
 
       - name: Smoke test public /korean site
         shell: powershell
