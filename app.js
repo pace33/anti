@@ -7969,7 +7969,6 @@ function renderLesson21MPracticePage(lessonId) {
                                 </button>
                                 <canvas class="trace-writing-canvas lesson21-m-inline-canvas" data-guide="${batchim}" data-lesson21-mixed-target="${target.targetIndex}" data-base="${base}" data-batchim="${batchim}" data-result="${result}" tabindex="0" aria-label="${result}의 ${batchim} 받침 획순 따라쓰기"></canvas>
                                 <span class="lesson21-m-cell-action">${batchim} 쓰기</span>
-                                ${target.targetIndex === 0 ? '<span class="lesson21-m-first-hint" aria-hidden="true">먼저 써 보세요</span>' : ''}
                             </div>`;
                         }).join('')}
                     </div>
