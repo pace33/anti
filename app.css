@@ -2241,6 +2241,181 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
         animation-iteration-count: 1;
     }
 }
+
+/* Lesson 21: mixed ㅁ/ㅂ inline handwriting board */
+#main-container:has(.lesson21-m-practice-page) {
+    width: min(calc(100% - 32px), 1400px);
+    max-width: 1400px;
+}
+.lesson21-m-practice-page {
+    width: min(100%, 1400px);
+    margin-inline: auto;
+    overflow: visible;
+}
+.lesson21-m-practice-instruction {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+}
+.lesson21-m-practice-instruction > span {
+    display: grid;
+    gap: 4px;
+}
+.lesson21-m-practice-instruction small {
+    color: #496a8d;
+    font-size: .9rem;
+    font-weight: 750;
+}
+.lesson21-m-shuffle-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 112px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 2px solid #77b7dd;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #17547c;
+    font-size: .92rem;
+    font-weight: 900;
+}
+.lesson21-m-board-scroller {
+    max-width: 100%;
+    padding-bottom: 8px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-color: #8db7cb #e8f1f5;
+}
+.lesson21-m-syllable-board {
+    width: 100%;
+    min-width: 1240px;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 8px;
+}
+.lesson21-m-syllable-row {
+    grid-template-columns: repeat(14, minmax(76px, 1fr));
+    gap: 5px;
+}
+.lesson21-m-syllable-cell,
+.lesson21-m-syllable-cell.is-target {
+    min-width: 76px;
+    min-height: 112px;
+    padding: 7px 5px;
+    border-radius: 7px;
+}
+.lesson21-m-syllable-cell.is-reading {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 4px;
+    border: 1px solid #c8d4e0;
+    background: #ffffff;
+}
+.lesson21-m-syllable-cell.is-reading .lesson21-m-cell-letter {
+    align-self: end;
+    font-size: 2.15rem;
+}
+.lesson21-m-read-label {
+    color: #718096;
+    font-size: .68rem;
+    font-weight: 800;
+}
+.lesson21-m-syllable-cell.is-target {
+    grid-template-rows: 36px 52px 16px;
+    align-content: center;
+    border: 2px solid #8abbd2;
+    background: #eef7fb;
+}
+.lesson21-m-cell-sound {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 36px;
+    padding: 0 22px 0 2px;
+    border: 0;
+    background: transparent;
+    color: #152e4d;
+}
+.lesson21-m-cell-sound .lesson21-m-cell-letter {
+    font-size: 2rem;
+}
+.lesson21-m-sound-mark {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    font-size: .76rem;
+}
+.lesson21-m-inline-canvas {
+    display: block;
+    width: 58px;
+    height: 50px;
+    margin: 0 auto;
+    border: 1px solid #9bc6d9;
+    border-radius: 6px;
+    background: #ffffff;
+    touch-action: none;
+}
+.lesson21-m-syllable-cell.is-target .lesson21-m-cell-action {
+    color: #315f75;
+    font-size: .68rem;
+    line-height: 1;
+}
+.lesson21-m-syllable-cell.is-selected {
+    border: 3px solid #f28a3c;
+    background: #fff7ed;
+    box-shadow: 0 4px 10px rgba(194, 92, 23, .16);
+}
+.lesson21-m-syllable-cell.is-complete {
+    border: 2px solid #55b77a;
+    background: #eaf8ef;
+}
+.lesson21-m-syllable-cell.is-complete.is-selected {
+    border: 3px solid #f28a3c;
+    background: #eef9f2;
+}
+.lesson21-m-syllable-cell.is-complete .lesson21-m-cell-letter {
+    color: #126348;
+}
+.lesson21-m-syllable-cell.is-next {
+    animation: lesson21MNextTarget 760ms ease-in-out 2;
+}
+.lesson21-m-first-hint {
+    bottom: calc(100% + 5px);
+}
+@media (max-width: 820px) {
+    .lesson21-m-syllable-row {
+        grid-template-columns: repeat(14, minmax(76px, 1fr));
+    }
+    .lesson21-m-syllable-cell,
+    .lesson21-m-syllable-cell.is-target {
+        min-height: 112px;
+    }
+}
+@media (max-width: 560px) {
+    .lesson21-m-practice-instruction {
+        grid-template-columns: 1fr;
+    }
+    .lesson21-m-shuffle-button {
+        justify-self: start;
+    }
+    .lesson21-m-progress-copy {
+        display: grid;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lesson21-m-syllable-cell.is-next {
+        animation-duration: 1ms;
+        animation-iteration-count: 1;
+    }
+}
 .lesson21-word-find-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

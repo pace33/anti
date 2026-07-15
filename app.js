@@ -7875,64 +7875,107 @@ function addLesson21FinalBatchim(base, batchim) {
     return String.fromCharCode(base.charCodeAt(0) + finalIndex);
 }
 
-function renderLesson21MPracticePage(lessonId) {
-    const config = getLesson21BatchimConfig('ㅁ');
-    const targetPositions = new Set([1, 4, 7, 10, 13, 15, 18, 21, 24, 27, 29, 32, 35, 38, 41, 43, 46, 49, 52, 55]);
+const LESSON21_MIXED_PRACTICE_ROWS = [
+    ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하'],
+    ['거', '너', '더', '러', '머', '버', '서', '어', '저', '처', '커', '터', '퍼', '허'],
+    ['고', '노', '도', '로', '모', '보', '소', '오', '조', '초', '코', '토', '포', '호'],
+    ['구', '누', '두', '루', '무', '부', '수', '우', '주', '추', '쿠', '투', '푸', '후'],
+    ['그', '느', '드', '르', '므', '브', '스', '으', '즈', '츠', '크', '트', '프', '흐'],
+    ['기', '니', '디', '리', '미', '비', '시', '이', '지', '치', '키', '티', '피', '히']
+];
+
+function shuffleLesson21Items(items) {
+    const result = [...items];
+    for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+    }
+    return result;
+}
+
+function createLesson21MixedPracticeLayout() {
+    const rowCounts = shuffleLesson21Items([3, 3, 3, 3, 4, 4]);
+    let selectedByRow = null;
+
+    for (let attempt = 0; attempt < 200 && !selectedByRow; attempt += 1) {
+        const columnCounts = Array(14).fill(0);
+        const candidateRows = [];
+        let valid = true;
+        for (let rowIndex = 0; rowIndex < 6; rowIndex += 1) {
+            const desired = rowCounts[rowIndex];
+            const candidates = shuffleLesson21Items(Array.from({ length: 14 }, (_, index) => index))
+                .sort((a, b) => columnCounts[a] - columnCounts[b]);
+            const picked = [];
+            for (const columnIndex of candidates) {
+                if (columnCounts[columnIndex] >= 2) continue;
+                const next = [...picked, columnIndex].sort((a, b) => a - b);
+                const hasFourTogether = next.some((value, index) => index >= 3
+                    && value - next[index - 1] === 1
+                    && next[index - 1] - next[index - 2] === 1
+                    && next[index - 2] - next[index - 3] === 1);
+                if (hasFourTogether) continue;
+                picked.push(columnIndex);
+                if (picked.length === desired) break;
+            }
+            if (picked.length !== desired) {
+                valid = false;
+                break;
+            }
+            picked.forEach((columnIndex) => { columnCounts[columnIndex] += 1; });
+            candidateRows.push(picked.sort((a, b) => a - b));
+        }
+        if (valid) selectedByRow = candidateRows;
+    }
+
+    if (!selectedByRow) selectedByRow = [[1, 5, 10], [3, 7, 13], [0, 4, 9], [2, 6, 11], [1, 5, 9, 13], [0, 4, 8, 12]];
+    const targetBatchims = shuffleLesson21Items([...Array(10).fill('ㅁ'), ...Array(10).fill('ㅂ')]);
+    const targets = new Map();
     let targetIndex = 0;
+    selectedByRow.forEach((columns, rowIndex) => {
+        columns.forEach((columnIndex) => {
+            targets.set(`${rowIndex}-${columnIndex}`, { batchim: targetBatchims[targetIndex], targetIndex });
+            targetIndex += 1;
+        });
+    });
+    return targets;
+}
+
+function renderLesson21MPracticePage(lessonId) {
+    const targets = createLesson21MixedPracticeLayout();
     return `
         <div class="lesson21-page lesson21-follow-page lesson21-m-practice-page" data-lesson21-m-practice="${lessonId}">
             <div class="lesson21-m-practice-instruction">
-                <strong>음영 칸을 눌러 보세요.</strong>
-                <span>소리를 듣고 ㅁ 받침을 쓰면 새로운 글자가 완성돼요.</span>
+                <span><strong>소리를 잘 듣고 빈칸에 알맞은 받침을 써 보세요.</strong><small>ㅁ 받침 10칸과 ㅂ 받침 10칸이 숨어 있어요.</small></span>
+                <button type="button" class="lesson21-m-shuffle-button" onclick="restartLesson21MixedPractice()" aria-label="받침 연습 칸 다시 섞기">↻ <span>다시 섞기</span></button>
             </div>
-            <section id="lesson21-m-focus-panel" class="lesson21-m-focus-panel hidden" aria-label="선택한 글자 집중 연습">
-                <div class="lesson21-m-focus-summary">
-                    <div class="lesson21-m-focus-equation" aria-live="polite">
-                        <span id="lesson21-m-focus-base" class="lesson21-m-focus-base">나</span>
-                        <span aria-hidden="true">+</span>
-                        <span class="lesson21-m-focus-batchim">ㅁ</span>
-                        <span aria-hidden="true">→</span>
-                        <span id="lesson21-m-focus-result" class="lesson21-m-focus-result">?</span>
-                    </div>
-                    <div class="lesson21-m-focus-actions">
-                        <button type="button" id="lesson21-m-base-listen" class="lesson21-m-listen-button" onclick="speakLesson21MPracticeBase(this)" aria-label="기본 음절 듣기">🔊 <span>나 듣기</span></button>
-                        <button type="button" id="lesson21-m-result-listen" class="lesson21-m-listen-button is-result hidden" onclick="speakLesson21MPracticeResult(this)" aria-label="완성 글자 듣기">🔊 <span>남 다시 듣기</span></button>
-                        <button type="button" id="lesson21-m-practice-reset" class="lesson21-m-reset-button" onclick="resetLesson21MPracticeCanvas()">↻ 다시 쓰기</button>
-                    </div>
-                </div>
-                <div class="lesson21-m-focus-writing">
-                    <canvas id="lesson21-m-practice-canvas" class="lesson21-m-trace-canvas lesson21-m-practice-canvas" tabindex="0" aria-label="선택한 음절에 넣을 ㅁ 받침 획순 따라쓰기"></canvas>
-                    <span class="lesson21-m-practice-moving-batchim" aria-hidden="true">ㅁ</span>
-                </div>
-                <div id="lesson21-m-practice-feedback" class="lesson21-m-practice-feedback" role="status" aria-live="polite">1번 획부터 화살표 방향으로 따라 써 보세요.</div>
-            </section>
-            <div class="lesson21-m-syllable-board" role="grid" aria-label="ㅁ 받침 연습 음절 56개">
-                ${config.practiceRows.map((row, rowIndex) => `
-                    <div class="lesson21-m-syllable-row" role="row" aria-label="${['ㅏ', 'ㅓ', 'ㅗ', 'ㅜ'][rowIndex]} 계열">
+            <div class="lesson21-m-board-scroller" tabindex="0" aria-label="받침 연습표, 화면이 좁으면 좌우로 이동할 수 있습니다">
+            <div class="lesson21-m-syllable-board" role="grid" aria-label="ㅁ, ㅂ 받침 연습 음절 84개">
+                ${LESSON21_MIXED_PRACTICE_ROWS.map((row, rowIndex) => `
+                    <div class="lesson21-m-syllable-row" role="row" aria-label="${['ㅏ', 'ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'][rowIndex]} 계열">
                         ${row.map((base, colIndex) => {
-                            const position = rowIndex * row.length + colIndex;
-                            const isTarget = targetPositions.has(position);
-                            const currentTargetIndex = isTarget ? targetIndex++ : -1;
-                            const result = isTarget ? addLesson21FinalBatchim(base, 'ㅁ') : base;
-                            return isTarget
-                                ? `<button type="button" class="lesson21-m-syllable-cell is-target ${currentTargetIndex === 0 ? 'is-first-target' : ''}" role="gridcell" data-target-index="${currentTargetIndex}" data-base="${base}" data-result="${result}" aria-current="false" aria-label="${base}, ㅁ 받침 써 보기" onclick="selectLesson21MPracticeTarget(this)">
-                                    <span class="lesson21-m-cell-letter">${base}</span>
-                                    <span class="lesson21-m-cell-action" aria-hidden="true">✎ 써 보기</span>
-                                    ${currentTargetIndex === 0 ? '<span class="lesson21-m-first-hint" aria-hidden="true">눌러 보세요</span>' : ''}
-                                </button>`
-                                : `<button type="button" class="lesson21-m-syllable-cell" role="gridcell" aria-label="${base} 소리 듣기" onclick="speakLesson13Word('${base}', this)">
-                                    <span class="lesson21-m-cell-letter">${base}</span>
-                                </button>`;
+                            const target = targets.get(`${rowIndex}-${colIndex}`);
+                            const batchim = target?.batchim || ((rowIndex + colIndex) % 2 === 0 ? 'ㅁ' : 'ㅂ');
+                            const result = addLesson21FinalBatchim(base, batchim);
+                            if (!target) return `<button type="button" class="lesson21-m-syllable-cell is-reading" role="gridcell" aria-label="${result} 소리 듣기" onclick="speakLesson13Word('${result}', this)"><span class="lesson21-m-cell-letter">${result}</span><span class="lesson21-m-read-label">읽기</span></button>`;
+                            return `<div class="lesson21-m-syllable-cell is-target ${target.targetIndex === 0 ? 'is-first-target is-selected' : ''}" role="gridcell" data-target-index="${target.targetIndex}" data-base="${base}" data-batchim="${batchim}" data-result="${result}" aria-current="${target.targetIndex === 0 ? 'true' : 'false'}">
+                                <button type="button" class="lesson21-m-cell-sound" onclick="selectLesson21MixedPracticeCell(this)" aria-label="${result} 소리 듣기">
+                                    <span class="lesson21-m-cell-letter">${base}</span><span class="lesson21-m-sound-mark" aria-hidden="true">🔊</span>
+                                </button>
+                                <canvas class="trace-writing-canvas lesson21-m-inline-canvas" data-guide="${batchim}" data-lesson21-mixed-target="${target.targetIndex}" data-base="${base}" data-batchim="${batchim}" data-result="${result}" tabindex="0" aria-label="${result}의 ${batchim} 받침 획순 따라쓰기"></canvas>
+                                <span class="lesson21-m-cell-action">${batchim} 쓰기</span>
+                                ${target.targetIndex === 0 ? '<span class="lesson21-m-first-hint" aria-hidden="true">먼저 써 보세요</span>' : ''}
+                            </div>`;
                         }).join('')}
                     </div>
                 `).join('')}
             </div>
+            </div>
             <div class="lesson21-m-progress-panel" aria-live="polite">
                 <div class="lesson21-m-progress-copy">
-                    <span id="lesson21-m-progress-text">20개의 음영 칸을 눌러 ㅁ 받침 글자를 만들어 보세요.</span>
-                    <strong id="lesson21-m-progress-count">완성 0 / 20</strong>
+                    <span id="lesson21-m-progress-text">색칠된 칸을 눌러 소리를 듣고, 빈칸에 알맞은 받침을 써 보세요.</span>
+                    <strong id="lesson21-m-progress-count">받침 쓰기 0 / 20</strong>
                 </div>
-                <div class="lesson21-m-progress-track" role="progressbar" aria-label="ㅁ 받침 연습 진행도" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0">
+                <div class="lesson21-m-progress-track" role="progressbar" aria-label="ㅁ, ㅂ 받침 연습 진행도" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0">
                     <span id="lesson21-m-progress-fill"></span>
                 </div>
             </div>
@@ -8424,13 +8467,60 @@ function updateLesson21MPracticeProgress(page) {
     const count = page.querySelector('#lesson21-m-progress-count');
     const fill = page.querySelector('#lesson21-m-progress-fill');
     const track = page.querySelector('.lesson21-m-progress-track');
-    if (count) count.textContent = `완성 ${completed} / 20`;
+    if (count) count.textContent = `받침 쓰기 ${completed} / 20`;
     if (fill) fill.style.width = `${completed * 5}%`;
     track?.setAttribute('aria-valuenow', String(completed));
     if (text) {
-        if (completed === 0) text.textContent = '20개의 음영 칸을 눌러 ㅁ 받침 글자를 만들어 보세요.';
-        else if (completed === 20) text.textContent = '참 잘했어요! ㅁ 받침 글자 20개를 모두 완성했어요.';
-        else text.textContent = `${completed}개를 완성했어요! ${remaining}개가 남았어요.`;
+        if (completed === 0) text.textContent = '색칠된 칸을 눌러 소리를 듣고, 빈칸에 알맞은 받침을 써 보세요.';
+        else if (completed === 20) text.textContent = '참 잘했어요! ㅁ, ㅂ 받침 글자 20개를 모두 완성했어요.';
+        else text.textContent = `${completed}개를 완성했어요. ${remaining}개가 남았어요.`;
+    }
+}
+
+window.restartLesson21MixedPractice = function restartLesson21MixedPractice() {
+    renderLearningDetail(currentLearningActivityStep, currentLearningDetailSectionIndex);
+};
+
+window.selectLesson21MixedPracticeCell = function selectLesson21MixedPracticeCell(button) {
+    const page = button.closest('.lesson21-m-practice-page');
+    const cell = button.closest('.lesson21-m-syllable-cell.is-target');
+    if (!page || !cell) return;
+    page.querySelectorAll('.lesson21-m-syllable-cell.is-target').forEach((item) => {
+        const selected = item === cell;
+        item.classList.toggle('is-selected', selected);
+        item.setAttribute('aria-current', selected ? 'true' : 'false');
+    });
+    cell.classList.remove('is-first-target');
+    cell.querySelector('.lesson21-m-first-hint')?.remove();
+    speakLesson13Word(cell.dataset.result, button);
+};
+
+function completeLesson21MixedPracticeCanvas(canvas) {
+    if (!canvas || canvas.dataset.lesson21MixedCompleted === 'true') return;
+    const page = canvas.closest('.lesson21-m-practice-page');
+    const cell = canvas.closest('.lesson21-m-syllable-cell.is-target');
+    if (!page || !cell) return;
+    canvas.dataset.lesson21MixedCompleted = 'true';
+    cell.classList.add('is-complete', 'is-selected');
+    cell.classList.remove('is-first-target');
+    cell.querySelector('.lesson21-m-first-hint')?.remove();
+    page.querySelectorAll('.lesson21-m-syllable-cell.is-target').forEach((item) => {
+        const selected = item === cell;
+        item.classList.toggle('is-selected', selected);
+        item.setAttribute('aria-current', selected ? 'true' : 'false');
+    });
+    const letter = cell.querySelector('.lesson21-m-cell-letter');
+    const action = cell.querySelector('.lesson21-m-cell-action');
+    if (letter) letter.textContent = cell.dataset.result;
+    if (action) action.textContent = '✓ 완성';
+    cell.querySelector('.lesson21-m-cell-sound')?.setAttribute('aria-label', `${cell.dataset.result} 완성, 소리 듣기`);
+    updateLesson21MPracticeProgress(page);
+    speakTextKo(cell.dataset.result);
+    recordLesson21MIntroCompletion(page.dataset.lesson21MPractice, cell.dataset.base, cell.dataset.result).catch(() => {});
+
+    const next = page.querySelector('.lesson21-m-syllable-cell.is-target:not(.is-complete)');
+    if (next) {
+        window.setTimeout(() => next.classList.add('is-next'), 350);
     }
 }
 
@@ -8542,89 +8632,8 @@ function completeLesson21MPracticeTrace(canvas) {
 
 function initializeLesson21MPracticePage() {
     const page = document.querySelector('.lesson21-m-practice-page');
-    const canvas = page?.querySelector('#lesson21-m-practice-canvas');
-    if (!page || !canvas || page.dataset.initialized === 'true') return;
+    if (!page || page.dataset.initialized === 'true') return;
     page.dataset.initialized = 'true';
-    canvas._lesson21MPaths = [];
-    canvas._lesson21MActivePath = null;
-    canvas._lesson21MStrokeIndex = 0;
-
-    page.querySelectorAll('.lesson21-m-syllable-cell.is-target').forEach((cell) => {
-        if (!lesson21MPracticeCompleted.has(cell.dataset.result)) return;
-        cell.classList.add('is-complete');
-        cell.querySelector('.lesson21-m-cell-letter').textContent = cell.dataset.result;
-        cell.querySelector('.lesson21-m-cell-action').textContent = '✓ 완성';
-        cell.setAttribute('aria-label', `${cell.dataset.base}에서 ${cell.dataset.result} 완성. 눌러서 다시 연습하기`);
-    });
-    const firstPending = page.querySelector('.lesson21-m-syllable-cell.is-target:not(.is-complete)');
-    if (page.querySelector('.lesson21-m-syllable-cell.is-first-target.is-complete')) {
-        page.querySelectorAll('.lesson21-m-syllable-cell.is-first-target').forEach((cell) => cell.classList.remove('is-first-target'));
-        page.querySelectorAll('.lesson21-m-first-hint').forEach((hint) => hint.remove());
-        if (firstPending) {
-            firstPending.classList.add('is-first-target');
-            firstPending.insertAdjacentHTML('beforeend', '<span class="lesson21-m-first-hint" aria-hidden="true">눌러 보세요</span>');
-        }
-    }
-
-    canvas.addEventListener('pointerdown', (event) => {
-        if (canvas.dataset.completed === 'true') return;
-        event.preventDefault();
-        const startPoint = getLesson21MCanvasPoint(canvas, event);
-        const strokeIndex = canvas._lesson21MStrokeIndex || 0;
-        if (!isLesson21MStrokeStart(canvas, startPoint)) {
-            page.querySelector('#lesson21-m-focus-panel')?.classList.add('needs-guidance');
-            setLesson21MPracticeFeedback(page, `${strokeIndex + 1}번 주황색 점에서 시작해 보세요.`);
-            window.setTimeout(() => page.querySelector('#lesson21-m-focus-panel')?.classList.remove('needs-guidance'), 800);
-            return;
-        }
-        canvas.setPointerCapture?.(event.pointerId);
-        canvas._lesson21MActivePath = [startPoint];
-        canvas._lesson21MPaths.push(canvas._lesson21MActivePath);
-        const stroke = LESSON21_M_STROKES[strokeIndex];
-        setLesson21MPracticeFeedback(page, `좋아요! ${strokeIndex + 1}번 획을 ${stroke.direction} 천천히 써 보세요.`);
-    });
-    canvas.addEventListener('pointermove', (event) => {
-        if (!canvas._lesson21MActivePath || canvas.dataset.completed === 'true') return;
-        event.preventDefault();
-        const point = getLesson21MCanvasPoint(canvas, event);
-        const previous = canvas._lesson21MActivePath[canvas._lesson21MActivePath.length - 1];
-        if (Math.hypot(point.x - previous.x, point.y - previous.y) < 0.004) return;
-        canvas._lesson21MActivePath.push(point);
-        drawLesson21MTraceCanvas(canvas);
-    });
-    const finishPath = (event) => {
-        if (!canvas._lesson21MActivePath || canvas.dataset.completed === 'true') return;
-        event?.preventDefault?.();
-        const finishedPath = canvas._lesson21MActivePath;
-        canvas._lesson21MActivePath = null;
-        const strokeIndex = canvas._lesson21MStrokeIndex || 0;
-        if (isLesson21MCurrentStrokeComplete(canvas, finishedPath)) {
-            canvas._lesson21MStrokeIndex = strokeIndex + 1;
-            if (canvas._lesson21MStrokeIndex >= LESSON21_M_STROKES.length) {
-                completeLesson21MPracticeTrace(canvas);
-            } else {
-                const nextStroke = LESSON21_M_STROKES[canvas._lesson21MStrokeIndex];
-                setLesson21MPracticeFeedback(page, `잘했어요! 이제 ${canvas._lesson21MStrokeIndex + 1}번 획을 ${nextStroke.direction} 써 보세요.`);
-                drawLesson21MTraceCanvas(canvas);
-            }
-        } else {
-            canvas._lesson21MPaths.pop();
-            const panel = page.querySelector('#lesson21-m-focus-panel');
-            panel?.classList.add('needs-guidance');
-            setLesson21MPracticeFeedback(page, `${strokeIndex + 1}번 획을 주황색 화살표 방향으로 다시 써 보세요.`);
-            window.setTimeout(() => panel?.classList.remove('needs-guidance'), 800);
-            drawLesson21MTraceCanvas(canvas);
-        }
-    };
-    canvas.addEventListener('pointerup', finishPath);
-    canvas.addEventListener('pointercancel', finishPath);
-    if ('ResizeObserver' in window) {
-        const observer = new ResizeObserver(() => {
-            if (!page.querySelector('#lesson21-m-focus-panel')?.classList.contains('hidden')) drawLesson21MTraceCanvas(canvas);
-        });
-        observer.observe(canvas);
-        canvas._lesson21MResizeObserver = observer;
-    }
     updateLesson21MPracticeProgress(page);
 }
 
@@ -10240,6 +10249,17 @@ function initializeLessonCompletionCanvas(canvas) {
         return { x: source.clientX - rect.left, y: source.clientY - rect.top };
     };
     const start = (ev) => {
+        if (canvas.dataset.lesson21MixedTarget !== undefined) {
+            const page = canvas.closest('.lesson21-m-practice-page');
+            const currentCell = canvas.closest('.lesson21-m-syllable-cell.is-target');
+            page?.querySelectorAll('.lesson21-m-syllable-cell.is-target').forEach((item) => {
+                const selected = item === currentCell;
+                item.classList.toggle('is-selected', selected);
+                item.setAttribute('aria-current', selected ? 'true' : 'false');
+            });
+            currentCell?.classList.remove('is-first-target', 'is-next');
+            currentCell?.querySelector('.lesson21-m-first-hint')?.remove();
+        }
         if (ev.pointerId !== undefined) {
             activePointerId = ev.pointerId;
             try { canvas.setPointerCapture(ev.pointerId); } catch {}
@@ -11491,6 +11511,56 @@ function drawTraceWritingGuide(target) {
     const fillWord = canvas.dataset.fillWord || '';
     const fillPrefix = canvas.dataset.fillPrefix || '';
 
+    if (canvas.dataset.lesson21MixedTarget !== undefined) {
+        const char = chars[0];
+        const completedCount = canvas._traceCompleted?.[0] || 0;
+        ctx.fillStyle = '#fffdf9';
+        ctx.fillRect(0, 0, W, H);
+        ctx.save();
+        ctx.fillStyle = '#f1cfad';
+        ctx.font = `900 ${Math.max(30, H * 0.72)}px 'Noto Sans KR', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(char, W / 2, H * 0.54);
+        ctx.restore();
+
+        const strokes = [];
+        collectSingleTraceChar(char, { x: W * 0.14, y: H * 0.08, w: W * 0.72, h: H * 0.84 }, strokes);
+        strokes.forEach((item, strokeIndex) => {
+            const points = item.stroke.points?.map((point) => tracePointForStroke(item, point)) || [];
+            if (points.length < 2) return;
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = strokeIndex < completedCount ? '#59b9a8' : (strokeIndex === completedCount ? '#f28a3c' : '#e8b67f');
+            ctx.lineWidth = strokeIndex === completedCount ? 3 : 1.8;
+            ctx.setLineDash(strokeIndex > completedCount ? [3, 3] : []);
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+            ctx.stroke();
+            ctx.restore();
+        });
+        const current = strokes[completedCount];
+        if (current) {
+            current.lesson21Compact = true;
+            const start = traceStrokeStartPoint(current);
+            ctx.save();
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = "800 7px sans-serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(completedCount + 1), start.x, start.y + .5);
+            ctx.restore();
+        }
+        canvas._traceCells = [{ index: 0, char, bx: 0, by: 0, boxW: W, boxH: H, strokes }];
+        return;
+    }
+
     if (fillWord) {
         ctx.fillStyle = '#fef9f0';
         ctx.fillRect(0, 0, W, H);
@@ -11635,7 +11705,8 @@ function tracePathLength(path) {
 
 function traceIsNearCurrentStrokeStart(point, strokeItem) {
     const scale = Math.min(strokeItem.box.w, strokeItem.box.h);
-    return traceDistance(point, traceStrokeStartPoint(strokeItem)) <= Math.max(36, scale * 0.34);
+    const tolerance = strokeItem.lesson21Compact ? Math.max(10, scale * 0.28) : Math.max(36, scale * 0.34);
+    return traceDistance(point, traceStrokeStartPoint(strokeItem)) <= tolerance;
 }
 
 function traceDidCompleteStroke(path, strokeItem) {
@@ -11644,7 +11715,9 @@ function traceDidCompleteStroke(path, strokeItem) {
     if (strokeItem.stroke.dot) return tracePathLength(path) >= Math.max(8, scale * 0.06);
     if (strokeItem.stroke.circle) return tracePathLength(path) >= scale * 0.6;
     const last = path[path.length - 1];
-    return tracePathLength(path) >= scale * 0.14 && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= Math.max(40, scale * 0.38);
+    const minimumLength = strokeItem.lesson21Compact ? scale * 0.42 : scale * 0.14;
+    const endTolerance = strokeItem.lesson21Compact ? Math.max(11, scale * 0.3) : Math.max(40, scale * 0.38);
+    return tracePathLength(path) >= minimumLength && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= endTolerance;
 }
 
 function initializeTraceWritingCanvas(target) {
@@ -11707,6 +11780,7 @@ function initializeTraceWritingCanvas(target) {
                 const completed = canvas._traceCompleted || {};
                 const nextStrokeIndex = completed[charIndex] || 0;
                 const nextStroke = cell?.strokes?.[nextStrokeIndex];
+                if (nextStroke && canvas.dataset.lesson21MixedTarget !== undefined) nextStroke.lesson21Compact = true;
                 if (!nextStroke || !traceIsNearCurrentStrokeStart(p, nextStroke)) {
                     activePointerId = null;
                     return;
@@ -11751,9 +11825,13 @@ function initializeTraceWritingCanvas(target) {
             canvas._traceCompleted = canvas._traceCompleted || {};
             canvas._tracePaths.push(activePath);
             canvas._traceCompleted[activeTrace.cellIndex] = activeTrace.strokeIndex + 1;
+            const completedCell = (canvas._traceCells || []).find((item) => item.index === activeTrace.cellIndex);
+            const completedCount = canvas._traceCompleted[activeTrace.cellIndex] || 0;
+            if (canvas.dataset.lesson21MixedTarget && completedCell?.strokes?.length && completedCount >= completedCell.strokes.length) {
+                completeLesson21MixedPracticeCanvas(canvas);
+            }
             if (canvas.dataset.fillLesson && !canvas.dataset.fillRecorded) {
-                const cell = (canvas._traceCells || []).find((item) => item.index === activeTrace.cellIndex);
-                const completedCount = canvas._traceCompleted[activeTrace.cellIndex] || 0;
+                const cell = completedCell;
                 if (cell?.strokes?.length && completedCount >= cell.strokes.length) {
                     canvas.dataset.fillRecorded = 'true';
                     window.submitFillOneJamo(canvas.dataset.fillLesson, Number(canvas.dataset.fillIndex || 0));
