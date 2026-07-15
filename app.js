@@ -7894,15 +7894,16 @@ function shuffleLesson21Items(items) {
 }
 
 function createLesson21MixedPracticeLayout() {
-    const rowCounts = shuffleLesson21Items([3, 3, 3, 3, 4, 4]);
+    const displayedRowIndexes = shuffleLesson21Items([0, 1, 2, 3, 4, 5]).slice(0, 3).sort((a, b) => a - b);
+    const rowCounts = shuffleLesson21Items([6, 7, 7]);
     let selectedByRow = null;
 
     for (let attempt = 0; attempt < 200 && !selectedByRow; attempt += 1) {
         const columnCounts = Array(14).fill(0);
         const candidateRows = [];
         let valid = true;
-        for (let rowIndex = 0; rowIndex < 6; rowIndex += 1) {
-            const desired = rowCounts[rowIndex];
+        for (let displayRowIndex = 0; displayRowIndex < 3; displayRowIndex += 1) {
+            const desired = rowCounts[displayRowIndex];
             const candidates = shuffleLesson21Items(Array.from({ length: 14 }, (_, index) => index))
                 .sort((a, b) => columnCounts[a] - columnCounts[b]);
             const picked = [];
@@ -7927,21 +7928,26 @@ function createLesson21MixedPracticeLayout() {
         if (valid) selectedByRow = candidateRows;
     }
 
-    if (!selectedByRow) selectedByRow = [[1, 5, 10], [3, 7, 13], [0, 4, 9], [2, 6, 11], [1, 5, 9, 13], [0, 4, 8, 12]];
+    if (!selectedByRow) selectedByRow = [[0, 2, 5, 7, 10, 13], [1, 3, 5, 7, 9, 11, 13], [0, 2, 4, 6, 8, 10, 12]];
     const targetBatchims = shuffleLesson21Items([...Array(10).fill('ㅁ'), ...Array(10).fill('ㅂ')]);
     const targets = new Map();
     let targetIndex = 0;
-    selectedByRow.forEach((columns, rowIndex) => {
+    selectedByRow.forEach((columns, displayRowIndex) => {
+        const rowIndex = displayedRowIndexes[displayRowIndex];
         columns.forEach((columnIndex) => {
             targets.set(`${rowIndex}-${columnIndex}`, { batchim: targetBatchims[targetIndex], targetIndex });
             targetIndex += 1;
         });
     });
-    return targets;
+    return {
+        rows: displayedRowIndexes.map((rowIndex) => ({ rowIndex, syllables: LESSON21_MIXED_PRACTICE_ROWS[rowIndex] })),
+        targets
+    };
 }
 
 function renderLesson21MPracticePage(lessonId) {
-    const targets = createLesson21MixedPracticeLayout();
+    const layout = createLesson21MixedPracticeLayout();
+    const targets = layout.targets;
     return `
         <div class="lesson21-page lesson21-follow-page lesson21-m-practice-page" data-lesson21-m-practice="${lessonId}">
             <div class="lesson21-m-practice-instruction">
@@ -7949,8 +7955,8 @@ function renderLesson21MPracticePage(lessonId) {
                 <button type="button" class="lesson21-m-shuffle-button" onclick="restartLesson21MixedPractice()" aria-label="받침 연습 칸 다시 섞기">↻ <span>다시 섞기</span></button>
             </div>
             <div class="lesson21-m-board-scroller" tabindex="0" aria-label="받침 연습표, 화면이 좁으면 좌우로 이동할 수 있습니다">
-            <div class="lesson21-m-syllable-board" role="grid" aria-label="ㅁ, ㅂ 받침 연습 음절 84개">
-                ${LESSON21_MIXED_PRACTICE_ROWS.map((row, rowIndex) => `
+            <div class="lesson21-m-syllable-board" role="grid" aria-label="무작위 세 줄로 제시된 ㅁ, ㅂ 받침 연습 음절 42개">
+                ${layout.rows.map(({ rowIndex, syllables: row }) => `
                     <div class="lesson21-m-syllable-row" role="row" aria-label="${['ㅏ', 'ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'][rowIndex]} 계열">
                         ${row.map((base, colIndex) => {
                             const target = targets.get(`${rowIndex}-${colIndex}`);
