@@ -8067,6 +8067,53 @@ function renderLesson21BWordWritingPage(lessonId) {
     `;
 }
 
+const LESSON21_M_PICTURE_WRITING_ITEMS = [
+    { word: '참외', icon: '🍈', parts: [{ text: '참', write: true }, { text: '외' }] },
+    { word: '그림', icon: '🖼️', parts: [{ text: '그' }, { text: '림', write: true }] },
+    { word: '김치', icon: '🥬', parts: [{ text: '김', write: true }, { text: '치' }] },
+    { word: '구름', icon: '☁️', parts: [{ text: '구' }, { text: '름', write: true }] }
+];
+
+function renderLesson21MPictureWritingPage(lessonId) {
+    let writingIndex = 0;
+    return `
+        <div class="lesson21-page lesson21-m-picture-writing-page" data-lesson21-m-picture-writing="${lessonId}">
+            <div class="lesson21-instruction"><strong>단어 찾기</strong> · 보기를 보고 그림에 어울리는 단어를 써 보세요.</div>
+            <div class="lesson21-m-picture-tip">그림의 이름을 듣고, <strong>하늘색 칸만</strong> 직접 써요.</div>
+            <section class="lesson21-m-picture-bank" aria-label="보기 글자">
+                <span class="lesson21-m-picture-bank-label">보기</span>
+                <div class="lesson21-m-picture-bank-items">
+                    ${['름', '림', '김', '참'].map((letter) => `<button type="button" onclick="speakLesson13Word('${letter}', this)" aria-label="${letter} 소리 듣기">${letter}</button>`).join('')}
+                </div>
+            </section>
+            <div class="lesson21-m-picture-grid" aria-label="그림 보고 ㅁ 받침 글씨 쓰기">
+                ${LESSON21_M_PICTURE_WRITING_ITEMS.map((item) => `
+                    <section class="lesson21-m-picture-item" data-word="${item.word}" aria-label="${item.word} 쓰기">
+                        <button type="button" class="lesson21-m-picture-image" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 그림, 소리 듣기">
+                            <span aria-hidden="true">${item.icon}</span>
+                            <small>🔊 ${item.word} 듣기</small>
+                        </button>
+                        <div class="lesson21-m-picture-word" aria-label="${item.word}">
+                            ${item.parts.map((part) => {
+                                if (!part.write) return `<span class="lesson21-m-picture-printed">${part.text}</span>`;
+                                const index = writingIndex++;
+                                return `<span class="lesson21-m-picture-write-cell" data-letter="${part.text}">
+                                    <canvas class="trace-writing-canvas lesson21-m-picture-canvas" data-guide="${part.text}" data-lesson21-compact-guide data-lesson21-m-picture-target="${index}" data-word="${item.word}" data-letter="${part.text}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="하늘색 칸에 ${part.text} 쓰기"></canvas>
+                                    <span class="lesson21-m-picture-write-status" aria-live="polite">${part.text} 쓰기</span>
+                                </span>`;
+                            }).join('')}
+                        </div>
+                    </section>
+                `).join('')}
+            </div>
+            <div class="lesson21-m-picture-progress" role="status" aria-live="polite">
+                <span>하늘색 칸은 네 곳이에요. 보기의 글자를 찾아 천천히 써 보세요.</span>
+                <strong id="lesson21-m-picture-progress-count">글씨 쓰기 0 / 4</strong>
+            </div>
+        </div>
+    `;
+}
+
 function renderLesson21WordFindPage(lessonId, batchim) {
     const config = getLesson21BatchimConfig(batchim);
     return `
@@ -8115,6 +8162,7 @@ function renderLesson21Page(lessonId, batchim, pageIndex) {
     if (pageIndex === 1) return renderLesson21FollowPage(lessonId, batchim);
     if (pageIndex === 2 && batchim === 'ㅁ') return renderLesson21BWordWritingPage(lessonId);
     if (pageIndex === 2) return renderLesson21PracticePage(lessonId, batchim);
+    if (pageIndex === 3 && batchim === 'ㅁ') return renderLesson21MPictureWritingPage(lessonId);
     if (pageIndex === 3) return renderLesson21WordFindPage(lessonId, batchim);
     return renderLesson21ChallengePage(lessonId, batchim);
 }
@@ -8585,6 +8633,25 @@ function completeLesson21BWordCanvas(canvas) {
     const progress = page.querySelector('#lesson21-b-word-progress-count');
     if (progress) progress.textContent = `단어 쓰기 ${completed} / 8`;
     speakTextKo(group.dataset.word);
+}
+
+function completeLesson21MPictureCanvas(canvas) {
+    if (!canvas || canvas.dataset.lesson21MPictureCompleted === 'true') return;
+    const page = canvas.closest('.lesson21-m-picture-writing-page');
+    const item = canvas.closest('.lesson21-m-picture-item');
+    const cell = canvas.closest('.lesson21-m-picture-write-cell');
+    if (!page || !item || !cell) return;
+
+    canvas.dataset.lesson21MPictureCompleted = 'true';
+    cell.classList.add('is-complete');
+    const status = cell.querySelector('.lesson21-m-picture-write-status');
+    if (status) status.textContent = `✓ ${canvas.dataset.letter} 완성`;
+    item.classList.add('is-complete');
+
+    const completed = page.querySelectorAll('.lesson21-m-picture-canvas[data-lesson21-m-picture-completed="true"]').length;
+    const progress = page.querySelector('#lesson21-m-picture-progress-count');
+    if (progress) progress.textContent = `글씨 쓰기 ${completed} / 4`;
+    speakTextKo(item.dataset.word);
 }
 
 window.resetLesson21MPracticeCanvas = function resetLesson21MPracticeCanvas() {
@@ -10969,6 +11036,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
             const localIndex = safeIndex % 5;
             sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 쓰기`, `${batchim} 받침 · 단어 찾기`, `${batchim} 받침 · 도전하기`][localIndex];
             if (safeIndex === 2) sectionTitle = 'ㅂ 받침 · 단어 쓰기';
+            if (safeIndex === 3) sectionTitle = 'ㅁ 받침 · 그림 보고 쓰기';
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -11896,6 +11964,9 @@ function initializeTraceWritingCanvas(target) {
             }
             if (canvas.dataset.lesson21BWordTarget !== undefined && completedCell?.strokes?.length && completedCount >= completedCell.strokes.length) {
                 completeLesson21BWordCanvas(canvas);
+            }
+            if (canvas.dataset.lesson21MPictureTarget !== undefined && completedCell?.strokes?.length && completedCount >= completedCell.strokes.length) {
+                completeLesson21MPictureCanvas(canvas);
             }
             if (canvas.dataset.fillLesson && !canvas.dataset.fillRecorded) {
                 const cell = completedCell;

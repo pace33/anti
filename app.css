@@ -2561,6 +2561,164 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .lesson21-b-word-progress strong {
     white-space: nowrap;
 }
+
+/* Lesson 21: Chanchan Hangul ㅁ batchim picture word writing */
+.lesson21-m-picture-writing-page {
+    display: grid;
+    gap: 16px;
+}
+.lesson21-m-picture-tip {
+    padding: 10px 14px;
+    border-left: 5px solid #72a94b;
+    background: #f5faef;
+    color: #456b2d;
+    font-weight: 850;
+}
+.lesson21-m-picture-bank {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    overflow: hidden;
+    border: 2px solid #d6dec8;
+    border-radius: 8px;
+    background: #fff;
+}
+.lesson21-m-picture-bank-label {
+    display: grid;
+    place-items: center;
+    background: #6f934a;
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 950;
+}
+.lesson21-m-picture-bank-items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+}
+.lesson21-m-picture-bank-items button {
+    min-width: 68px;
+    min-height: 58px;
+    border: 2px solid #b7cadc;
+    border-radius: 7px;
+    background: #dbe8f5;
+    color: #152e4d;
+    font-size: 2rem;
+    font-weight: 1000;
+}
+.lesson21-m-picture-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+    padding: 20px;
+    border: 2px solid #c6d3e0;
+    border-radius: 8px;
+    background: #fff;
+}
+.lesson21-m-picture-item {
+    display: grid;
+    grid-template-columns: minmax(110px, .75fr) minmax(210px, 1.25fr);
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.lesson21-m-picture-image {
+    display: grid;
+    place-items: center;
+    gap: 5px;
+    min-height: 156px;
+    border: 0;
+    border-radius: 8px;
+    background: #f7fbff;
+    color: #285e7c;
+    font-weight: 900;
+}
+.lesson21-m-picture-image > span {
+    font-size: 4.4rem;
+    line-height: 1;
+}
+.lesson21-m-picture-image small {
+    font-size: .78rem;
+}
+.lesson21-m-picture-word {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+.lesson21-m-picture-printed,
+.lesson21-m-picture-write-cell {
+    width: min(126px, 50%);
+    min-height: 156px;
+    border: 2px solid #b7c4d0;
+}
+.lesson21-m-picture-printed {
+    display: grid;
+    place-items: center;
+    background: #fff;
+    color: #172d49;
+    font-size: 3.2rem;
+    font-weight: 1000;
+}
+.lesson21-m-picture-write-cell {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) 25px;
+    padding: 6px;
+    background: #dbe8f5;
+}
+.lesson21-m-picture-word > :first-child {
+    border-radius: 8px 0 0 8px;
+}
+.lesson21-m-picture-word > :last-child {
+    margin-left: -2px;
+    border-radius: 0 8px 8px 0;
+}
+.lesson21-m-picture-canvas {
+    width: 100%;
+    height: 116px;
+    border: 2px dashed #75a7cf;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .78);
+    touch-action: none;
+}
+.lesson21-m-picture-write-status {
+    display: grid;
+    place-items: center;
+    color: #285e7c;
+    font-size: .76rem;
+    font-weight: 900;
+}
+.lesson21-m-picture-write-cell.is-complete {
+    border-color: #4fb47a;
+    background: #e1f6e8;
+}
+.lesson21-m-picture-write-cell.is-complete .lesson21-m-picture-write-status {
+    color: #176b43;
+}
+.lesson21-m-picture-item.is-complete .lesson21-m-picture-image {
+    box-shadow: inset 0 0 0 2px #86d3a2;
+    background: #f1fbf4;
+}
+.lesson21-m-picture-progress {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px 16px;
+    border: 2px dashed #69cf98;
+    border-radius: 8px;
+    background: #effbf3;
+    color: #185d3d;
+    font-weight: 850;
+}
+.lesson21-m-picture-progress strong {
+    white-space: nowrap;
+}
+@media (max-width: 900px) {
+    .lesson21-m-picture-grid {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+}
 @media (max-width: 700px) {
     .lesson21-b-word-rows {
         padding: 12px;
@@ -2573,6 +2731,36 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     }
     .lesson21-b-word-progress {
         display: grid;
+    }
+    .lesson21-m-picture-grid {
+        padding: 12px;
+    }
+    .lesson21-m-picture-progress {
+        display: grid;
+    }
+}
+@media (max-width: 480px) {
+    .lesson21-m-picture-bank {
+        grid-template-columns: 1fr;
+    }
+    .lesson21-m-picture-bank-label {
+        min-height: 42px;
+    }
+    .lesson21-m-picture-item {
+        grid-template-columns: 94px minmax(0, 1fr);
+    }
+    .lesson21-m-picture-image {
+        min-height: 142px;
+    }
+    .lesson21-m-picture-image > span {
+        font-size: 3.4rem;
+    }
+    .lesson21-m-picture-printed,
+    .lesson21-m-picture-write-cell {
+        min-height: 142px;
+    }
+    .lesson21-m-picture-canvas {
+        height: 102px;
     }
 }
 .lesson21-word-find-card {
