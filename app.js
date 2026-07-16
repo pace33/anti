@@ -8794,6 +8794,7 @@ function drawLesson21MTraceCanvas(canvas) {
     const { width, height } = resizeCanvasForDisplay(canvas, ctx);
     if (width < 2 || height < 2) return;
     const strokes = getLesson21IntroStrokes(canvas);
+    const isBieup = canvas.dataset.batchim === 'ㅂ';
 
     const guide = {
         left: width * 0.24,
@@ -8805,9 +8806,11 @@ function drawLesson21MTraceCanvas(canvas) {
     ctx.clearRect(0, 0, width, height);
 
     ctx.save();
-    ctx.strokeStyle = canvas.dataset.completed === 'true' ? '#7dd3c7' : '#f7cfa8';
-    ctx.lineWidth = Math.max(2, Math.min(width, height) * 0.025);
-    ctx.setLineDash([7, 7]);
+    ctx.strokeStyle = canvas.dataset.completed === 'true' ? '#7dd3c7' : (isBieup ? '#dda36b' : '#f7cfa8');
+    ctx.lineWidth = isBieup
+        ? Math.max(5, Math.min(width, height) * 0.055)
+        : Math.max(2, Math.min(width, height) * 0.025);
+    ctx.setLineDash(isBieup ? [] : [7, 7]);
     ctx.lineJoin = 'round';
     strokes.forEach((stroke) => {
         const points = getLesson21IntroStrokePoints(stroke);
