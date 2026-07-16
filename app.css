@@ -3053,9 +3053,17 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 .lesson21-m-picture-write-cell {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) 25px;
+    grid-template-rows: 58px minmax(72px, 1fr) 25px;
     padding: 6px;
     background: #dbe8f5;
+}
+.lesson21-m-picture-write-base {
+    display: grid;
+    place-items: center;
+    color: #172d49;
+    font-size: 3rem;
+    font-weight: 1000;
+    line-height: 1;
 }
 .lesson21-m-picture-word > :first-child {
     border-radius: 8px 0 0 8px;
@@ -3066,7 +3074,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 .lesson21-m-picture-canvas {
     width: 100%;
-    height: 116px;
+    height: 82px;
     border: 2px dashed #75a7cf;
     border-radius: 6px;
     background: rgba(255, 255, 255, .78);
@@ -3151,7 +3159,10 @@ body.rpg-hud-active .page-number { bottom: 112px; }
         min-height: 142px;
     }
     .lesson21-m-picture-canvas {
-        height: 102px;
+        height: 76px;
+    }
+    .lesson21-m-picture-write-base {
+        font-size: 2.55rem;
     }
 }
 .lesson21-word-find-card {

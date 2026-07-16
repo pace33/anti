@@ -8359,6 +8359,14 @@ function addLesson21FinalBatchim(base, batchim) {
     return String.fromCharCode(base.charCodeAt(0) + finalIndex);
 }
 
+function removeLesson21FinalBatchim(syllable, batchim) {
+    const finalIndexMap = { 'ㅁ': 16, 'ㅂ': 17 };
+    const finalIndex = finalIndexMap[batchim];
+    const code = syllable?.charCodeAt?.(0) - 0xAC00;
+    if (!finalIndex || code < 0 || code > 11171 || code % 28 !== finalIndex) return syllable;
+    return String.fromCharCode(syllable.charCodeAt(0) - finalIndex);
+}
+
 const LESSON21_MIXED_PRACTICE_ROWS = [
     ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카', '타', '파', '하'],
     ['거', '너', '더', '러', '머', '버', '서', '어', '저', '처', '커', '터', '퍼', '허'],
@@ -8610,10 +8618,11 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
 };
 
 function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
-    const config = LESSON21_PICTURE_WRITING_CONFIGS[batchim] || LESSON21_PICTURE_WRITING_CONFIGS['ㅁ'];
+    const selectedBatchim = batchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const config = LESSON21_PICTURE_WRITING_CONFIGS[selectedBatchim];
     let writingIndex = 0;
     return `
-        <div class="lesson21-page lesson21-m-picture-writing-page" data-lesson21-m-picture-writing="${lessonId}" data-batchim="${batchim}">
+        <div class="lesson21-page lesson21-m-picture-writing-page" data-lesson21-m-picture-writing="${lessonId}" data-batchim="${selectedBatchim}">
             <div class="lesson21-instruction"><strong>단어 찾기</strong> · 보기를 보고 그림에 어울리는 단어를 써 보세요.</div>
             <div class="lesson21-m-picture-tip">그림의 이름을 듣고, <strong>하늘색 칸만</strong> 직접 써요.</div>
             <section class="lesson21-m-picture-bank" aria-label="보기 글자">
@@ -8622,7 +8631,7 @@ function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
                     ${config.bank.map((letter) => `<button type="button" onclick="speakLesson13Word('${letter}', this)" aria-label="${letter} 소리 듣기">${letter}</button>`).join('')}
                 </div>
             </section>
-            <div class="lesson21-m-picture-grid" aria-label="그림 보고 ${batchim} 받침 글씨 쓰기">
+            <div class="lesson21-m-picture-grid" aria-label="그림 보고 ${selectedBatchim} 받침 글씨 쓰기">
                 ${config.items.map((item) => `
                     <section class="lesson21-m-picture-item" data-word="${item.word}" aria-label="${item.word} 쓰기">
                         <button type="button" class="lesson21-m-picture-image" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 그림, 소리 듣기">
@@ -8633,9 +8642,11 @@ function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
                             ${item.parts.map((part) => {
                                 if (!part.write) return `<span class="lesson21-m-picture-printed">${part.text}</span>`;
                                 const index = writingIndex++;
+                                const base = removeLesson21FinalBatchim(part.text, selectedBatchim);
                                 return `<span class="lesson21-m-picture-write-cell" data-letter="${part.text}">
-                                    <canvas class="trace-writing-canvas lesson21-m-picture-canvas" data-guide="${part.text}" data-lesson21-compact-guide data-lesson21-m-picture-target="${index}" data-word="${item.word}" data-letter="${part.text}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="하늘색 칸에 ${part.text} 쓰기"></canvas>
-                                    <span class="lesson21-m-picture-write-status" aria-live="polite">${part.text} 쓰기</span>
+                                    <span class="lesson21-m-picture-write-base" aria-hidden="true">${base}</span>
+                                    <canvas class="trace-writing-canvas lesson21-m-picture-canvas" data-guide="${selectedBatchim}" data-lesson21-compact-guide data-lesson21-easy-guide data-lesson21-m-picture-target="${index}" data-word="${item.word}" data-letter="${part.text}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="${base} 아래 받침 자리에 ${selectedBatchim} 쓰기"></canvas>
+                                    <span class="lesson21-m-picture-write-status" aria-live="polite">${selectedBatchim} 쓰기</span>
                                 </span>`;
                             }).join('')}
                         </div>
@@ -11937,7 +11948,7 @@ const traceStrokeMap = {
     'ㄷ': [{ points: [[0.28, 0.24], [0.74, 0.24]] }, { points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
     'ㅌ': [{ points: [[0.28, 0.22], [0.74, 0.22]] }, { points: [[0.28, 0.22], [0.28, 0.78]] }, { points: [[0.28, 0.5], [0.68, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
     'ㅁ': [{ points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.24], [0.74, 0.24]] }, { points: [[0.74, 0.24], [0.74, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
-    'ㅂ': [{ points: [[0.3, 0.2], [0.3, 0.78]] }, { points: [[0.72, 0.2], [0.72, 0.78]] }, { points: [[0.3, 0.5], [0.72, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
+    'ㅂ': [{ points: [[0.3, 0.2], [0.3, 0.78]] }, { points: [[0.3, 0.2], [0.72, 0.2], [0.72, 0.78]] }, { points: [[0.3, 0.5], [0.72, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
     'ㅍ': [{ points: [[0.32, 0.22], [0.32, 0.78]] }, { points: [[0.26, 0.22], [0.76, 0.22]] }, { points: [[0.7, 0.22], [0.7, 0.78]] }, { points: [[0.26, 0.78], [0.76, 0.78]] }],
     'ㅅ': [{ points: [[0.5, 0.22], [0.28, 0.78]] }, { points: [[0.5, 0.22], [0.76, 0.78]] }],
     'ㅈ': [{ points: [[0.24, 0.24], [0.78, 0.24]] }, { points: [[0.5, 0.28], [0.28, 0.78]] }, { points: [[0.5, 0.28], [0.76, 0.78]] }],
@@ -12247,6 +12258,7 @@ function drawTraceWritingGuide(target) {
         const current = strokes[completedCount];
         if (current) {
             current.lesson21Compact = true;
+            current.lesson21Easy = canvas.dataset.lesson21EasyGuide !== undefined;
             const start = traceStrokeStartPoint(current);
             ctx.save();
             ctx.fillStyle = '#f97316';
@@ -12408,7 +12420,9 @@ function tracePathLength(path) {
 
 function traceIsNearCurrentStrokeStart(point, strokeItem) {
     const scale = Math.min(strokeItem.box.w, strokeItem.box.h);
-    const tolerance = strokeItem.lesson21Compact ? Math.max(10, scale * 0.28) : Math.max(36, scale * 0.34);
+    const tolerance = strokeItem.lesson21Easy
+        ? Math.max(18, scale * 0.4)
+        : strokeItem.lesson21Compact ? Math.max(10, scale * 0.28) : Math.max(36, scale * 0.34);
     return traceDistance(point, traceStrokeStartPoint(strokeItem)) <= tolerance;
 }
 
@@ -12418,8 +12432,12 @@ function traceDidCompleteStroke(path, strokeItem) {
     if (strokeItem.stroke.dot) return tracePathLength(path) >= Math.max(8, scale * 0.06);
     if (strokeItem.stroke.circle) return tracePathLength(path) >= scale * 0.6;
     const last = path[path.length - 1];
-    const minimumLength = strokeItem.lesson21Compact ? scale * 0.42 : scale * 0.14;
-    const endTolerance = strokeItem.lesson21Compact ? Math.max(11, scale * 0.3) : Math.max(40, scale * 0.38);
+    const minimumLength = strokeItem.lesson21Easy
+        ? scale * 0.28
+        : strokeItem.lesson21Compact ? scale * 0.42 : scale * 0.14;
+    const endTolerance = strokeItem.lesson21Easy
+        ? Math.max(18, scale * 0.42)
+        : strokeItem.lesson21Compact ? Math.max(11, scale * 0.3) : Math.max(40, scale * 0.38);
     return tracePathLength(path) >= minimumLength && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= endTolerance;
 }
 
@@ -12484,6 +12502,7 @@ function initializeTraceWritingCanvas(target) {
                 const nextStrokeIndex = completed[charIndex] || 0;
                 const nextStroke = cell?.strokes?.[nextStrokeIndex];
                 if (nextStroke && (canvas.dataset.lesson21MixedTarget !== undefined || canvas.dataset.lesson21CompactGuide !== undefined)) nextStroke.lesson21Compact = true;
+                if (nextStroke && canvas.dataset.lesson21EasyGuide !== undefined) nextStroke.lesson21Easy = true;
                 if (!nextStroke || !traceIsNearCurrentStrokeStart(p, nextStroke)) {
                     activePointerId = null;
                     return;
