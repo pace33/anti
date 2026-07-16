@@ -8487,29 +8487,46 @@ function renderLesson21PracticePage(lessonId, batchim) {
     `;
 }
 
-const LESSON21_B_WORD_WRITING_ROWS = [
-    [
-        { word: '탑', syllables: [{ base: '타', result: '탑', write: true }] },
-        { word: '돕다', syllables: [{ base: '도', result: '돕', write: true }, { base: '다' }] },
-        { word: '맵다', syllables: [{ base: '매', result: '맵', write: true }, { base: '다' }] },
-        { word: '밉다', syllables: [{ base: '미', result: '밉', write: true }, { base: '다' }] }
+const LESSON21_WORD_WRITING_ROWS = {
+    'ㅁ': [
+        [
+            { word: '춤', syllables: [{ base: '추', result: '춤', write: true }] },
+            { word: '염소', syllables: [{ base: '여', result: '염', write: true }, { base: '소' }] },
+            { word: '하품', syllables: [{ base: '하' }, { base: '푸', result: '품', write: true }] },
+            { word: '튀김', syllables: [{ base: '튀' }, { base: '기', result: '김', write: true }] }
+        ],
+        [
+            { word: '냄비', syllables: [{ base: '내', result: '냄', write: true }, { base: '비' }] },
+            { word: '아침', syllables: [{ base: '아' }, { base: '치', result: '침', write: true }] },
+            { word: '부침개', syllables: [{ base: '부' }, { base: '치', result: '침', write: true }, { base: '개' }] }
+        ]
     ],
-    [
-        { word: '접시', syllables: [{ base: '저', result: '접', write: true }, { base: '시' }] },
-        { word: '대답', syllables: [{ base: '대' }, { base: '다', result: '답', write: true }] },
-        { word: '무섭다', syllables: [{ base: '무' }, { base: '서', result: '섭', write: true }, { base: '다' }] }
+    'ㅂ': [
+        [
+            { word: '탑', syllables: [{ base: '타', result: '탑', write: true }] },
+            { word: '돕다', syllables: [{ base: '도', result: '돕', write: true }, { base: '다' }] },
+            { word: '맵다', syllables: [{ base: '매', result: '맵', write: true }, { base: '다' }] },
+            { word: '밉다', syllables: [{ base: '미', result: '밉', write: true }, { base: '다' }] }
+        ],
+        [
+            { word: '접시', syllables: [{ base: '저', result: '접', write: true }, { base: '시' }] },
+            { word: '대답', syllables: [{ base: '대' }, { base: '다', result: '답', write: true }] },
+            { word: '무섭다', syllables: [{ base: '무' }, { base: '서', result: '섭', write: true }, { base: '다' }] }
+        ]
     ]
-];
+};
 
-function renderLesson21BWordWritingPage(lessonId) {
+function renderLesson21BatchimWordWritingPage(lessonId, batchim = 'ㅁ') {
+    const selectedBatchim = batchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const rows = LESSON21_WORD_WRITING_ROWS[selectedBatchim];
     let writingIndex = 0;
     return `
         <div class="lesson21-page lesson21-b-word-writing-page" data-lesson21-b-word-writing="${lessonId}">
-            <div class="lesson21-instruction"><strong>쓰기</strong> · 단어를 듣고 빈 받침 자리에 ㅂ을 써 보세요.</div>
+            <div class="lesson21-instruction"><strong>쓰기</strong> · 단어를 듣고 빈 받침 자리에 ${selectedBatchim}을 써 보세요.</div>
             <div class="lesson21-b-word-tip">처음에는 단어를 한 번에 듣고, 어려우면 받침 소리를 나누어 들어 보세요.</div>
-            <div class="lesson21-b-word-rows" aria-label="찬찬한글 ㅂ 받침 단어 쓰기">
-                ${LESSON21_B_WORD_WRITING_ROWS.map((row, rowIndex) => `
-                    <div class="lesson21-b-word-row" role="group" aria-label="ㅂ 받침 단어 ${rowIndex + 1}번째 줄">
+            <div class="lesson21-b-word-rows" aria-label="찬찬한글 ${selectedBatchim} 받침 단어 쓰기">
+                ${rows.map((row, rowIndex) => `
+                    <div class="lesson21-b-word-row" role="group" aria-label="${selectedBatchim} 받침 단어 ${rowIndex + 1}번째 줄">
                         ${row.map((item) => `
                             <section class="lesson21-b-word-group" data-word="${item.word}" aria-label="${item.word} 쓰기">
                                 <button type="button" class="lesson21-b-word-listen" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">🔊 <span>듣기</span></button>
@@ -8519,8 +8536,8 @@ function renderLesson21BWordWritingPage(lessonId) {
                                         const index = writingIndex++;
                                         return `<div class="lesson21-b-word-syllable is-writing" data-base="${syllable.base}" data-result="${syllable.result}">
                                             <span class="lesson21-b-word-base">${syllable.base}</span>
-                                            <canvas class="trace-writing-canvas lesson21-b-word-canvas" data-guide="ㅂ" data-lesson21-compact-guide data-lesson21-b-word-target="${index}" data-word="${item.word}" data-base="${syllable.base}" data-result="${syllable.result}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="${item.word}의 빈 받침 자리에 ㅂ 쓰기"></canvas>
-                                            <span class="lesson21-b-word-status" aria-live="polite">ㅂ 쓰기</span>
+                                            <canvas class="trace-writing-canvas lesson21-b-word-canvas" data-guide="${selectedBatchim}" data-lesson21-compact-guide data-lesson21-b-word-target="${index}" data-word="${item.word}" data-base="${syllable.base}" data-result="${syllable.result}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="${item.word}의 빈 받침 자리에 ${selectedBatchim} 쓰기"></canvas>
+                                            <span class="lesson21-b-word-status" aria-live="polite">${selectedBatchim} 쓰기</span>
                                         </div>`;
                                     }).join('')}
                                 </div>
@@ -8530,7 +8547,7 @@ function renderLesson21BWordWritingPage(lessonId) {
                 `).join('')}
             </div>
             <div class="lesson21-b-word-progress" role="status" aria-live="polite">
-                <span>주황색 점부터 차례로 ㅂ 받침을 써 보세요.</span>
+                <span>주황색 점부터 차례로 ${selectedBatchim} 받침을 써 보세요.</span>
                 <strong id="lesson21-b-word-progress-count">단어 쓰기 0 / 7</strong>
             </div>
         </div>
@@ -8643,7 +8660,7 @@ function renderLesson21ChallengePage(lessonId, batchim) {
 function renderLesson21Page(lessonId, batchim, pageIndex) {
     if (pageIndex === 0) return renderLesson21MBatchimIntroPage(lessonId, batchim);
     if (pageIndex === 1) return renderLesson21MPracticePage(lessonId, batchim);
-    if (pageIndex === 2) return renderLesson21BWordWritingPage(lessonId);
+    if (pageIndex === 2) return renderLesson21BatchimWordWritingPage(lessonId, batchim);
     if (pageIndex === 3) return renderLesson21MPictureWritingPage(lessonId, batchim);
     return renderLesson21ChallengePage(lessonId, batchim);
 }
@@ -11552,8 +11569,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         } else if (isCustomLesson21) {
             const batchim = safeIndex < 5 ? 'ㅁ' : 'ㅂ';
             const localIndex = safeIndex % 5;
-            sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 쓰기`, `${batchim} 받침 · 단어 찾기`, `${batchim} 받침 · 도전하기`][localIndex];
-            if (safeIndex === 2) sectionTitle = 'ㅂ 받침 · 단어 쓰기';
+            sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 단어 쓰기`, `${batchim} 받침 · 단어 찾기`, `${batchim} 받침 · 도전하기`][localIndex];
             if (safeIndex === 3) sectionTitle = 'ㅁ 받침 · 그림 보고 쓰기';
             if (safeIndex === 8) sectionTitle = 'ㅂ 받침 · 그림 보고 쓰기';
         } else if (isComplexLineLesson && safeIndex === 3) {
