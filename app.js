@@ -9056,6 +9056,122 @@ function renderLesson21Page(lessonId, batchim, pageIndex) {
     return renderLesson21ChallengePage(lessonId, batchim);
 }
 
+const LESSON25_LISTEN_CHOICE_QUESTIONS = [
+    { choices: ['암', '앙'], answer: '암' },
+    { choices: ['앋', '압'], answer: '앋' },
+    { choices: ['안', '알'], answer: '알' },
+    { choices: ['앙', '알'], answer: '앙' },
+    { choices: ['임', '입'], answer: '입' },
+    { choices: ['익', '잉'], answer: '잉' },
+    { choices: ['잉', '일'], answer: '일' },
+    { choices: ['임', '읻'], answer: '읻' },
+    { choices: ['읍', '은'], answer: '읍' },
+    { choices: ['읻', '윽'], answer: '윽' },
+    { choices: ['운', '움'], answer: '움' },
+    { choices: ['울', '웁'], answer: '웁' },
+    { choices: ['억', '업'], answer: '억' },
+    { choices: ['엉', '언'], answer: '언' },
+    { choices: ['올', '옥'], answer: '옥' },
+    { choices: ['온', '옫'], answer: '온' },
+    { choices: ['양', '약'], answer: '약' },
+    { choices: ['용', '욜'], answer: '욜' },
+    { choices: ['역', '엳'], answer: '역' },
+    { choices: ['윰', '윧'], answer: '윧' }
+];
+
+function renderLesson25ListenChoicePage() {
+    return `
+        <div class="lesson25-listen-page" data-lesson25-listen-page>
+            <div class="lesson25-listen-guide">
+                <strong>듣고 찾기</strong>
+                <span>문제 소리를 듣고 두 글자 중 알맞은 글자를 골라 ○표 해 보세요.</span>
+            </div>
+            <div class="lesson25-listen-progress" role="status" aria-live="polite">
+                <span id="lesson25-listen-progress-text">1번부터 문제 소리를 들어 보세요.</span>
+                <strong id="lesson25-listen-progress-count">푼 문제 0 / 20</strong>
+            </div>
+            <div class="lesson25-question-grid" aria-label="받침 소리 듣고 알맞은 글자 고르기 20문제">
+                ${LESSON25_LISTEN_CHOICE_QUESTIONS.map((question, index) => `
+                    <section class="lesson25-question-card ${index === 0 ? 'is-current' : ''}" data-lesson25-question="${index}" data-answer="${question.answer}" aria-label="${index + 1}번 문제">
+                        <div class="lesson25-question-head">
+                            <span class="lesson25-question-number">${index + 1}</span>
+                            <button type="button" class="lesson25-question-sound" onclick="playLesson25QuestionSound(${index}, this)" aria-label="${index + 1}번 문제 소리 듣기">🔊 <span>문제 소리 듣기</span></button>
+                        </div>
+                        <div class="lesson25-choice-pair" role="group" aria-label="${index + 1}번 글자 선택">
+                            ${question.choices.map((choice) => `<button type="button" class="lesson25-choice-button" onclick="selectLesson25Answer(${index}, '${choice}', this)" aria-label="${choice} 선택"><span>${choice}</span><small aria-hidden="true">(　)</small></button>`).join('')}
+                        </div>
+                        <p class="lesson25-question-feedback" aria-live="polite">소리를 듣고 골라요.</p>
+                    </section>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+window.playLesson25QuestionSound = function playLesson25QuestionSound(index, button) {
+    const question = LESSON25_LISTEN_CHOICE_QUESTIONS[index];
+    const card = button?.closest('.lesson25-question-card');
+    if (!question || !card) return;
+    document.querySelectorAll('.lesson25-question-card').forEach((item) => item.classList.toggle('is-current', item === card));
+    card.classList.add('is-playing');
+    window.setTimeout(() => card.classList.remove('is-playing'), 850);
+    speakTextKo(question.answer);
+};
+
+window.selectLesson25Answer = async function selectLesson25Answer(index, selected, button) {
+    const question = LESSON25_LISTEN_CHOICE_QUESTIONS[index];
+    const card = button?.closest('.lesson25-question-card');
+    if (!question || !card || card.classList.contains('is-complete')) return;
+    const isCorrect = selected === question.answer;
+    const feedback = card.querySelector('.lesson25-question-feedback');
+    card.querySelectorAll('.lesson25-choice-button').forEach((choice) => choice.classList.remove('is-try-again'));
+
+    await recordKoreanAttempt({
+        lessonId: 25,
+        lessonTitle: '배움 25: 도전, 받침왕! (1)',
+        unitId: getUnitIdForLesson(25),
+        activityType: 'listenAndFind',
+        word: question.answer,
+        answer: question.answer,
+        userAnswer: selected,
+        isCorrect,
+        retryIndex: isCorrect ? 0 : nextKoreanRetryIndex({ lessonId: 25, activityType: 'listenAndFind', answer: question.answer }),
+        errorType: isCorrect ? null : KOREAN_ERROR_TYPES.BATCHIM
+    });
+
+    if (!isCorrect) {
+        button.classList.add('is-try-again');
+        if (feedback) feedback.textContent = '다시 소리를 듣고 골라 보세요.';
+        speakTextKo('다시 들어 보아요.');
+        return;
+    }
+
+    resetKoreanRetryIndex({ lessonId: 25, activityType: 'listenAndFind', answer: question.answer });
+    card.classList.add('is-complete');
+    card.classList.remove('is-current');
+    button.classList.add('is-correct');
+    button.querySelector('small').textContent = '( ○ )';
+    card.querySelectorAll('.lesson25-choice-button').forEach((choice) => {
+        choice.disabled = true;
+        if (choice !== button) choice.classList.add('is-not-answer');
+    });
+    if (feedback) feedback.textContent = `맞았어요! ${question.answer}이에요.`;
+    speakTextKo(`${question.answer}. 맞았어요.`);
+
+    const page = card.closest('[data-lesson25-listen-page]');
+    const completed = page.querySelectorAll('.lesson25-question-card.is-complete').length;
+    const count = page.querySelector('#lesson25-listen-progress-count');
+    const progressText = page.querySelector('#lesson25-listen-progress-text');
+    if (count) count.textContent = `푼 문제 ${completed} / ${LESSON25_LISTEN_CHOICE_QUESTIONS.length}`;
+    const nextCard = page.querySelector('.lesson25-question-card:not(.is-complete)');
+    if (nextCard) {
+        nextCard.classList.add('is-current');
+        if (progressText) progressText.textContent = `${Number(nextCard.dataset.lesson25Question) + 1}번 문제 소리를 들어 보세요.`;
+    } else if (progressText) {
+        progressText.textContent = '참 잘했어요! 20문제를 모두 풀었어요.';
+    }
+};
+
 function setLesson21MFeedback(page, message) {
     const feedback = page?.querySelector('#lesson21-m-feedback');
     if (feedback) feedback.textContent = message;
@@ -11950,6 +12066,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isPictureWordLesson = Boolean(PICTURE_WORD_LESSON_CONFIGS[numericStep]);
     const isComplexLineLesson = numericStep >= 15 && numericStep <= 19;
     const isCustomLesson20 = numericStep === 20;
+    const isCustomLesson25 = numericStep === 25;
     const batchimPageSequence = LESSON_BATCHIM_PAGE_SEQUENCES[numericStep] || [];
     const isCustomBatchimLesson = batchimPageSequence.length > 0;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
@@ -12054,6 +12171,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
         if (isCustomBatchimLesson) {
             const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             contentHtml = renderLesson21Page(numericStep, batchim, safeIndex % 5);
+        } else if (isCustomLesson25 && safeIndex === 0) {
+            contentHtml = renderLesson25ListenChoicePage();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
@@ -12191,7 +12310,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         }
 
         const chanchanLesson = getChanchanLesson(step);
-        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && !isCustomBatchimLesson && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
+        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && !isCustomLesson25 && !isCustomBatchimLesson && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
             ['readThreeTimes', 'fillOneJamo', 'wordPictureMatch', 'nonsenseWordRead', 'batchimFamily', 'finalAssessment'].includes(activity)
         ) ? `<div class="mt-4">${renderLessonDetail(step)}</div>` : '';
 
