@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260716-full-bieup-syllables">
+    <link rel="stylesheet" href="app.css?v=20260716-full-bieup-lesson-photo-bank">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -156,6 +156,11 @@
                     </div>
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
                 </div>
+                <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 수업 사진 찍기">
+                    <span class="lesson-photo-icon" aria-hidden="true">📷</span>
+                    <span><strong>오늘의 수업 사진 찍기</strong><small>사진 1장당 500포인트 · 하루 최대 3회</small></span>
+                </button>
+                <input id="lesson-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleLessonPhotoCapture(this)" aria-label="오늘의 수업 사진 선택">
             </div>
 
             <!-- Information Drawer (Right Side) -->
@@ -334,12 +339,7 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
-                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fff0f0]" onclick="openDictationPracticeActivity()">
-                        <div class="text-7xl mb-6">✍️</div>
-                        <div class="text-5xl font-black text-[#2c3e50]">받아쓰기 연습하기</div>
-                        <p class="text-gray-500 mt-2 text-lg">오답/완료 문장을 보고 따라 쓰며 연습해요</p>
-                    </div>
+                <div class="grid grid-cols-1 gap-8 w-full mb-6">
                     <div id="dictation-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-red-50" onclick="openTodayDictationActivity()">
                         <div id="dictation-lock-badge" class="aiedu-badge bg-red-500 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">받아쓰기 미션</h3>
@@ -347,21 +347,16 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationPracticeActivity()">
+                        <div class="text-5xl mb-3">✍️</div>
+                        <div class="text-xl font-bold">받아쓰기 연습하기</div>
+                        <p class="text-sm text-gray-500 mt-2">오답과 완료 문장을 보고 따라 써요</p>
+                    </div>
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openMyDictationFromDashboard()">
                         <div class="text-5xl mb-3">📚</div>
                         <div class="text-xl font-bold">나의 기록</div>
                         <p id="dictation-bank-summary" class="text-sm text-red-500 font-black mt-2">오답 0개 · 완료 0개</p>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationBankCamera()">
-                        <div class="text-5xl mb-3">📷</div>
-                        <div class="text-xl font-bold">단어 은행 촬영</div>
-                        <p class="text-sm text-gray-500 mt-2">사진에서 단어를 뽑아 은행에 저장해요</p>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationBankModal()">
-                        <div class="text-5xl mb-3">🏦</div>
-                        <div class="text-xl font-bold">국어 은행</div>
-                        <p id="korean-bank-summary" class="text-sm text-gray-500 mt-2">단어 0개 · 문장 0개</p>
                     </div>
                 </div>
             </div>
@@ -393,39 +388,27 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
+                <div class="grid grid-cols-1 gap-8 w-full mb-6">
                     <!-- 오늘의 미션 -->
                     <div id="literacy-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-blue-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openTodayLiteracyMission()">
                         <div class="aiedu-badge bg-blue-600 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">에이두 문해력 문제</h3>
                         <p id="literacy-mission-desc" class="text-xl text-blue-600 font-bold">내 문해력 단증에 맞춰 자동으로 문제가 나와요!</p><div id="literacy-dan-dashboard-badge" class="mt-4 px-4 py-2 rounded-2xl bg-white text-blue-700 font-black shadow-sm">문해력 1단</div>
                     </div>
-                    <!-- 한계 돌파 -->
-                    <div id="literacy-limit-break-card" class="grid-item p-10 flex flex-col items-center justify-center bg-purple-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyLimitBreak()">
-                        <div class="aiedu-badge bg-purple-600 mb-6">한계 돌파</div>
-                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도전! 한계 돌파</h3>
-                        <p id="literacy-limit-break-desc" class="text-xl text-purple-600 font-bold">공용 한계돌파 은행의 오답에 도전하세요!</p>
-                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                    <!-- 한계 돌파 -->
+                    <div id="literacy-limit-break-card" class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyLimitBreak()">
+                        <div class="text-5xl mb-3">🚀</div>
+                        <div class="text-xl font-bold">도전! 한계 돌파</div>
+                        <p id="literacy-limit-break-desc" class="text-sm text-purple-600 font-black mt-2">공용 한계돌파 은행의 오답에 도전해요</p>
+                    </div>
                     <!-- 나의 기록 -->
                     <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openMyLiteracyRecord()">
                         <div class="text-5xl mb-3">📚</div>
                         <div class="text-xl font-bold">나의 기록</div>
                         <p id="literacy-record-summary" class="text-sm text-blue-600 font-black mt-2">정답 0개 · 오답 0개</p>
-                    </div>
-                    <!-- 단어 은행 촬영 -->
-                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openDictationBankCamera()">
-                        <div class="text-5xl mb-3">📷</div>
-                        <div class="text-xl font-bold">단어 은행 촬영</div>
-                        <p class="text-sm text-gray-500 mt-2">사진에서 단어를 뽑아 은행에 저장해요</p>
-                    </div>
-                    <!-- 국어 은행 -->
-                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openDictationBankModal()">
-                        <div class="text-5xl mb-3">🏦</div>
-                        <div class="text-xl font-bold">국어 은행</div>
-                        <p id="literacy-korean-bank-summary" class="text-sm text-gray-500 mt-2">단어 0개</p>
                     </div>
                 </div>
             </div>
@@ -1509,7 +1492,7 @@
                 <span class="rpg-wallet-line"><span>⭐ <span class="sync-coins">0</span></span><span>⚠️ <span class="sync-warning-tokens">0</span></span></span>
             </button>
             <div class="rpg-profile-tools" aria-label="계정 메뉴">
-                <button type="button" class="rpg-tool-button" onclick="openSettingsModal()" aria-label="환경 설정"><span aria-hidden="true">⚙️</span><span>설정</span></button>
+                <button type="button" class="rpg-tool-button" onclick="goBackFromRpgHud()" aria-label="뒤로 가기"><span aria-hidden="true">←</span><span>뒤로</span></button>
                 <button type="button" id="rpg-student-shop-btn" class="rpg-tool-button rpg-student-shop-button" onclick="openAiedueKoreanShop()" aria-label="상점"><span aria-hidden="true">🛒</span><span>상점</span></button>
                 <button type="button" id="rpg-teacher-manage-btn" class="rpg-tool-button hidden" onclick="openClassManagement()" aria-label="학급 관리"><span aria-hidden="true">🏫</span><span>학급</span></button>
                 <button type="button" class="rpg-tool-button rpg-logout-button" onclick="handleLogout()" aria-label="로그아웃"><span aria-hidden="true">🚪</span><span>나가기</span></button>
@@ -1530,11 +1513,19 @@
                 <span class="rpg-action-icon" aria-hidden="true">🛒</span>
                 <span>상점</span>
             </button>
+            <button type="button" class="rpg-action-button rpg-settings-button" onclick="openSettingsModal()">
+                <span class="rpg-action-icon" aria-hidden="true">⚙️</span>
+                <span>환경 설정</span>
+            </button>
+            <button type="button" class="rpg-action-button rpg-bank-button" onclick="openDictationBankModal()">
+                <span class="rpg-action-icon" aria-hidden="true">🏦</span>
+                <span>국어 은행</span>
+            </button>
         </div>
 
     </nav>
 
-    <script type="module" src="app.js?v=20260716-full-bieup-syllables"></script>
+    <script type="module" src="app.js?v=20260716-full-bieup-lesson-photo-bank"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

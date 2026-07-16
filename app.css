@@ -152,7 +152,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     -webkit-backdrop-filter: blur(16px);
 }
 .aiedue-rpg-hud.actions-open .rpg-action-tray {
-    width: 350px;
+    width: 680px;
     padding-inline: 7px;
     opacity: 1;
     pointer-events: auto;
@@ -161,7 +161,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     transform: translateX(0);
 }
 .rpg-action-button {
-    min-width: 160px;
+    min-width: 155px;
     flex: 1;
     display: flex;
     align-items: center;
@@ -179,6 +179,8 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .rpg-action-icon { font-size: 1.35rem; }
 .rpg-cloud-button { color: #397da4; border-color: #cfeaf5; background: linear-gradient(135deg, #f3fbff, #e7f7fd); }
 .rpg-shop-button { color: #3d8d64; border-color: #ccebd7; background: linear-gradient(135deg, #f3fcf5, #e4f7e9); }
+.rpg-settings-button { color: #6b7280; border-color: #e2e8f0; background: linear-gradient(135deg, #fff, #f7f8fa); }
+.rpg-bank-button { color: #b45309; border-color: #fde3b3; background: linear-gradient(135deg, #fffaf0, #fff2cf); }
 
 .rpg-experience-track {
     position: absolute;
@@ -199,14 +201,37 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 
 body.rpg-hud-active .page-number { bottom: 112px; }
 
+.lesson-photo-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 340px;
+    padding: 12px 18px;
+    border: 2px solid rgba(70, 179, 165, .3);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .95);
+    color: #28756a;
+    text-align: left;
+    box-shadow: 0 12px 30px rgba(44, 62, 80, .13);
+    backdrop-filter: blur(12px);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.lesson-photo-button:hover { transform: translateY(-3px); box-shadow: 0 17px 34px rgba(44, 62, 80, .18); }
+.lesson-photo-button > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.lesson-photo-button strong { font-size: 1rem; font-weight: 1000; }
+.lesson-photo-button small { color: #dd7a39; font-size: .72rem; font-weight: 900; }
+.lesson-photo-icon { font-size: 1.8rem; }
+
 @media (max-width: 860px) {
     .aiedue-rpg-hud { left: 18px; bottom: 18px; }
     .rpg-profile-banner { min-width: 390px; padding-left: 72px; }
     .rpg-profile-copy { min-width: 92px; }
     .rpg-profile-copy strong { max-width: 105px; }
-    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: 280px; }
-    .rpg-action-button { min-width: 126px; }
+    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: 560px; }
+    .rpg-action-button { min-width: 124px; }
     .rpg-action-button > span:last-child { font-size: .76rem; }
+    .lesson-photo-button { max-width: 270px; padding: 10px 13px; }
+    .lesson-photo-button strong { font-size: .88rem; }
 }
 
 @media (max-width: 640px) {
@@ -220,14 +245,18 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     .rpg-wallet-line { flex-direction: column; gap: 0; font-size: .58rem; }
     .rpg-profile-tools { gap: 3px; }
     .rpg-tool-button { min-width: 35px; width: 35px; height: 44px; border-radius: 12px; padding: 0; font-size: .54rem; }
-    .rpg-action-tray { position: absolute; left: 0; bottom: calc(100% + 8px); height: 58px; }
-    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: min(320px, 100%); }
-    .rpg-action-button { min-width: 130px; gap: 5px; padding: 3px 6px; border-radius: 14px; }
+    .rpg-action-tray { position: absolute; left: 0; bottom: calc(100% + 8px); height: 0; flex-wrap: wrap; }
+    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: min(340px, 100%); height: 124px; }
+    .rpg-action-button { min-width: 0; flex: 0 0 calc(50% - 4px); height: 50px; gap: 5px; padding: 3px 6px; border-radius: 14px; }
     .rpg-action-button > span:last-child { font-size: .68rem; }
     .rpg-action-icon { font-size: 1rem; }
     .rpg-experience-track { left: 62px; right: 5px; }
     .rpg-experience-label { right: 9px; }
     body.rpg-hud-active .page-number { bottom: 110px; }
+    .lesson-photo-button { position: absolute; top: 94px; right: 14px; max-width: 235px; padding: 8px 11px; }
+    .lesson-photo-icon { font-size: 1.35rem; }
+    .lesson-photo-button strong { font-size: .76rem; }
+    .lesson-photo-button small { font-size: .6rem; }
 }
 
 @media (max-width: 520px) {
@@ -6417,7 +6446,8 @@ body {
 }
 
 /* 에이두 국어: 읽기 연습 카드 */
-.my-korean-unit-bar {display:flex;align-items:center;gap:4px;max-width:760px;padding:5px;border:1px solid #dcebd6;border-radius:18px;background:rgba(255,255,255,.94);box-shadow:0 10px 26px rgba(44,62,80,.1);overflow-x:auto;scrollbar-width:thin;}
+.my-korean-unit-bar {position:absolute;top:92px;left:210px;right:36px;display:flex;align-items:center;gap:4px;max-width:760px;padding:5px;border:1px solid #dcebd6;border-radius:18px;background:rgba(255,255,255,.94);box-shadow:0 10px 26px rgba(44,62,80,.1);overflow-x:auto;scrollbar-width:thin;}
+#my-korean-section .stitched {margin-top:10rem !important;}
 .my-korean-unit-tab {flex:0 0 auto;min-width:58px;padding:9px 10px;border:1px solid transparent;border-radius:12px;background:transparent;color:#64748b;font-size:.82rem;font-weight:1000;white-space:nowrap;transition:background .2s ease,color .2s ease,transform .2s ease;}
 .my-korean-unit-tab:hover {background:#f0f8ec;color:#28756a;transform:translateY(-1px);}
 .my-korean-unit-tab.active {box-shadow:0 5px 12px rgba(70,179,165,.16);}
@@ -6445,5 +6475,5 @@ body {
 .reading-card-bounce {animation:readingCardBounce .42s ease;}
 @keyframes readingCardBounce {0%,100%{transform:scale(1);}50%{transform:scale(1.055);}}
 @media (max-width:992px){.reading-cards-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
-@media (max-width:860px){.my-korean-unit-bar{max-width:calc(100vw - 250px);}.activity-logo-button .login-mini-logo{width:125px;}#letter-writing-section .writing-mode-buttons .nav-tab{min-width:0;padding:8px 10px;font-size:.82rem;}}
+@media (max-width:860px){.my-korean-unit-bar{left:170px;right:18px;max-width:none;}.activity-logo-button .login-mini-logo{width:125px;}#letter-writing-section .writing-mode-buttons .nav-tab{min-width:0;padding:8px 10px;font-size:.82rem;}}
 @media (max-width:576px){.my-korean-unit-bar{position:absolute;top:80px;left:10px;right:10px;max-width:none;}.my-korean-unit-tab{min-width:54px;padding:8px;font-size:.76rem;}#my-korean-section .stitched{margin-top:9rem !important;}.activity-logo-button .login-mini-logo{width:94px;}#letter-writing-section .writing-mode-quick-card{padding:4px;}.letter-practice-kind-tabs{gap:6px}.letter-practice-kind-tabs .nav-tab{min-width:0;flex:1;padding:9px 8px}.reading-category-tabs{gap:7px}.reading-category-tabs .nav-tab{min-width:0;flex:1;padding:10px}.reading-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.reading-card{min-height:150px;border-radius:24px;}}
