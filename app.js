@@ -5561,9 +5561,13 @@ function renderCardContent(card) {
     return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
 }
 
-function renderVowelOriginScene() {
-    return `<div class="vowel-origin-scene" aria-label="땅, 사람, 둥근 해에서 모음이 시작되는 그림">
-        <button type="button" class="vowel-origin-card origin-ground-card" data-origin-type="ground" onclick="playVowelOriginCard('ground', { speak: true })" aria-label="땅에서 ㅡ가 되는 모습 다시 보기와 음성 듣기">
+function renderVowelOriginScene(types = ['ground', 'person', 'sun']) {
+    const enabledTypes = new Set(types);
+    const sceneLabel = enabledTypes.has('sun')
+        ? '땅, 사람, 둥근 해의 모습에서 모음을 찾는 그림'
+        : '땅과 서 있는 사람의 모습에서 ㅡ와 ㅣ를 찾는 그림';
+    return `<div class="vowel-origin-scene" style="--origin-card-count:${enabledTypes.size}" aria-label="${sceneLabel}">
+        ${enabledTypes.has('ground') ? `<button type="button" class="vowel-origin-card origin-ground-card" data-origin-type="ground" onclick="playVowelOriginCard('ground', { speak: true })" aria-label="땅에서 ㅡ가 되는 모습 다시 보기와 음성 듣기">
             <div class="origin-card-visual" aria-hidden="true">
                 <div class="origin-sky-band"><span class="origin-cloud cloud-one"></span><span class="origin-cloud cloud-two"></span></div>
                 <div class="origin-ground-band"><span class="origin-grass-blade grass-one"></span><span class="origin-grass-blade grass-two"></span><span class="origin-flower"></span></div>
@@ -5572,8 +5576,8 @@ function renderVowelOriginScene() {
                 <div class="origin-result-glyph">ㅡ</div>
             </div>
             <div class="origin-card-label">땅</div>
-        </button>
-        <button type="button" class="vowel-origin-card origin-person-card" data-origin-type="person" onclick="playVowelOriginCard('person', { speak: true })" aria-label="서 있는 사람에서 ㅣ가 되는 모습 다시 보기와 음성 듣기">
+        </button>` : ''}
+        ${enabledTypes.has('person') ? `<button type="button" class="vowel-origin-card origin-person-card" data-origin-type="person" onclick="playVowelOriginCard('person', { speak: true })" aria-label="서 있는 사람에서 ㅣ가 되는 모습 다시 보기와 음성 듣기">
             <div class="origin-card-visual" aria-hidden="true">
                 <div class="origin-sky-band"></div>
                 <div class="origin-person-ground"></div>
@@ -5587,8 +5591,8 @@ function renderVowelOriginScene() {
                 <div class="origin-result-glyph">ㅣ</div>
             </div>
             <div class="origin-card-label">서 있는 사람</div>
-        </button>
-        <button type="button" class="vowel-origin-card origin-sun-card" data-origin-type="sun" onclick="playVowelOriginCard('sun', { speak: true })" aria-label="둥근 해에서 동그라미가 되는 모습 다시 보기와 음성 듣기">
+        </button>` : ''}
+        ${enabledTypes.has('sun') ? `<button type="button" class="vowel-origin-card origin-sun-card" data-origin-type="sun" onclick="playVowelOriginCard('sun', { speak: true })" aria-label="둥근 해에서 동그라미가 되는 모습 다시 보기와 음성 듣기">
             <div class="origin-card-visual" aria-hidden="true">
                 <div class="origin-sky-band"><span class="origin-cloud cloud-one"></span><span class="origin-cloud cloud-two"></span></div>
                 <div class="origin-sun-figure">
@@ -5599,24 +5603,25 @@ function renderVowelOriginScene() {
                 <div class="origin-result-glyph"><span class="small-dot-char">●</span></div>
             </div>
             <div class="origin-card-label">둥근 해</div>
-        </button>
+        </button>` : ''}
     </div>`;
 }
 
-function renderVowelOriginExplanations() {
+function renderVowelOriginExplanations(types = ['ground', 'person', 'sun']) {
+    const enabledTypes = new Set(types);
     return `<div class="origin-explanation-list" aria-live="polite">
-        <div class="origin-explanation origin-ground-explanation" data-origin-description="ground">
+        ${enabledTypes.has('ground') ? `<div class="origin-explanation origin-ground-explanation" data-origin-description="ground">
             <div class="origin-explanation-glyph">ㅡ</div>
             <div><strong>땅은 옆으로 길게 펼쳐져 있어요.</strong><span>땅의 모양에서 「ㅡ」가 태어났어요.</span><span>소리는 「으」예요.</span></div>
-        </div>
-        <div class="origin-explanation origin-person-explanation" data-origin-description="person">
+        </div>` : ''}
+        ${enabledTypes.has('person') ? `<div class="origin-explanation origin-person-explanation" data-origin-description="person">
             <div class="origin-explanation-glyph">ㅣ</div>
             <div><strong>사람은 땅 위에 곧게 서 있어요.</strong><span>서 있는 사람의 모양에서 「ㅣ」가 태어났어요.</span><span>소리는 「이」예요.</span></div>
-        </div>
-        <div class="origin-explanation origin-sun-explanation" data-origin-description="sun">
+        </div>` : ''}
+        ${enabledTypes.has('sun') ? `<div class="origin-explanation origin-sun-explanation" data-origin-description="sun">
             <div class="origin-explanation-glyph"><span class="small-dot-char">●</span></div>
             <div><strong>해는 하늘에 둥글게 떠 있어요.</strong><span>둥근 해의 모양에서 「●」가 태어났어요.</span></div>
-        </div>
+        </div>` : ''}
     </div>`;
 }
 
@@ -5699,7 +5704,10 @@ window.playVowelOriginSequence = function playVowelOriginSequence() {
     const pause = reducedMotion ? 450 : 800;
     let startAt = 350;
 
-    ['ground', 'person', 'sun'].forEach((type) => {
+    const visibleTypes = Array.from(document.querySelectorAll('.vowel-origin-card[data-origin-type]'))
+        .map((card) => card.dataset.originType)
+        .filter((type) => vowelOriginStages[type]);
+    visibleTypes.forEach((type) => {
         const duration = reducedMotion ? 1700 : vowelOriginStages[type].duration;
         const timer = window.setTimeout(() => runVowelOriginStage(type, { speak: false, token }), startAt);
         vowelOriginTimers.push(timer);
@@ -11583,8 +11591,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
                     <span class="text-xl font-bold text-stone-700">${sectionTitle}</span>
                 </div>`
             : '';
-        const introHtml = step === 1 && safeIndex === 0
-            ? renderVowelOriginExplanations()
+        const isVowelOriginIntro = (step === 1 || step === 4) && safeIndex === 0;
+        const vowelOriginTypes = step === 4 ? ['ground', 'person'] : ['ground', 'person', 'sun'];
+        const introHtml = isVowelOriginIntro
+            ? renderVowelOriginExplanations(vowelOriginTypes)
             : step === 7 && safeIndex === 0
             ? `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">
                     <div>아, 야, 어, 여, 오, 요, 우, 유, 으, 이를 순서대로 읽어요.</div>
@@ -11638,16 +11648,16 @@ function renderLearningDetail(step, sectionIndex = 0) {
                 <div class="learning-main-card">
                     ${step === 7 ? '' : `
                         <div class="learning-card-label">📖 이해하기</div>
-                        ${step === 1 ? renderVowelOriginScene() : ''}
+                        ${isVowelOriginIntro ? renderVowelOriginScene(vowelOriginTypes) : ''}
                         <div class="grid gap-3">
                             ${introHtml}
                         </div>
                     `}
                     <div class="${step === 7 ? '' : 'mt-4'}">
-                    <div class="learning-card-label">📖 ${step === 1 ? '배울 글자' : '배움 글자'}</div>
+                    <div class="learning-card-label">📖 ${isVowelOriginIntro ? '배울 글자' : '배움 글자'}</div>
                     <div class="${wordChipWrapClass}">
-                        ${practiceFlow.choices.map((word) => {
-                            const originType = step === 1 ? vowelOriginTypeByWord[word] : '';
+                        ${(step === 4 ? ['ㅡ', 'ㅣ'] : practiceFlow.choices).map((word) => {
+                            const originType = isVowelOriginIntro ? vowelOriginTypeByWord[word] : '';
                             const originClass = originType ? ` origin-learning-chip origin-${originType}-chip` : '';
                             const originAction = originType
                                 ? `playVowelOriginCard('${originType}', { speak: true })`
@@ -11786,7 +11796,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         if ((numericStep === 15 || numericStep === 16) && safeIndex === 0) {
             window.setTimeout(() => window.playLessonMouthSequence?.(numericStep, false, { auto: true }), 250);
         }
-        if (numericStep === 1 && safeIndex === 0) {
+        if ((numericStep === 1 || numericStep === 4) && safeIndex === 0) {
             window.setTimeout(() => window.playVowelOriginSequence?.(), 250);
         }
     });

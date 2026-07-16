@@ -594,7 +594,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 .vowel-origin-scene {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--origin-card-count, 3), minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 18px;
     padding: 16px;
