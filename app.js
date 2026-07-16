@@ -5213,7 +5213,7 @@ let isAudioUnlocked = false;
 let activeTtsRequestId = 0;
 let activeTtsAbortController = null;
 let activeTtsObjectUrl = '';
-const AIEDUE_SCHOOL_TTS_ENDPOINT = '/.netlify/functions/tts-handler';
+const AIEDUE_SCHOOL_TTS_ENDPOINT = 'https://us-central1-mansungcoin-c6e06.cloudfunctions.net/ttsHandler';
 const AIEDUE_TTS_CHUNK_LIMIT = 180;
 
 function unlockAudioAndSpeech() {
@@ -5235,12 +5235,12 @@ function unlockAudioAndSpeech() {
 
     // If HTML5 Audio is unlocked, we can remove the listeners
     if (isAudioUnlocked) {
-        window.removeEventListener('click', unlockAudioAndSpeech);
-        window.removeEventListener('touchstart', unlockAudioAndSpeech);
+        window.removeEventListener('click', unlockAudioAndSpeech, true);
+        window.removeEventListener('touchstart', unlockAudioAndSpeech, true);
     }
 }
-window.addEventListener('click', unlockAudioAndSpeech);
-window.addEventListener('touchstart', unlockAudioAndSpeech);
+window.addEventListener('click', unlockAudioAndSpeech, true);
+window.addEventListener('touchstart', unlockAudioAndSpeech, true);
 
 function cancelSpeech() {
     activeTtsRequestId += 1;
@@ -5291,6 +5291,7 @@ async function playAiedueSchoolTtsChunk(text, playbackRate, requestId, signal) {
         signal
     });
     if (!response.ok) throw new Error(`에이두 스쿨 TTS 응답 오류 (${response.status})`);
+    if (!response.headers.get('content-type')?.startsWith('audio/')) throw new Error('에이두 스쿨 TTS가 음원으로 응답하지 않았습니다.');
     const audioBlob = await response.blob();
     if (requestId !== activeTtsRequestId) throw new DOMException('재생이 취소됐습니다.', 'AbortError');
     activeTtsObjectUrl = URL.createObjectURL(audioBlob);
