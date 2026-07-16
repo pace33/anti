@@ -12238,8 +12238,8 @@ function drawTraceWritingGuide(target) {
             const middle = H * 0.5;
             const bottom = H * 0.735;
             ctx.save();
-            ctx.strokeStyle = '#f2cfad';
-            ctx.lineWidth = Math.max(6, H * 0.07);
+            ctx.strokeStyle = '#dda36b';
+            ctx.lineWidth = Math.max(6, H * 0.075);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.beginPath();
@@ -12269,6 +12269,7 @@ function drawTraceWritingGuide(target) {
         strokes.forEach((item, strokeIndex) => {
             const points = item.stroke.points?.map((point) => tracePointForStroke(item, point)) || [];
             if (points.length < 2) return;
+            if (isBieupGuide && strokeIndex > completedCount) return;
             ctx.save();
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
