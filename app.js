@@ -2539,7 +2539,9 @@ const SAFE_MODAL_ACTIONS = new Set([
     'handleModalConfirm',
     'openAiedueKoreanDistributeShopItem',
     'openAiedueKoreanShopItemEditor',
+    'openAiedueCraftShop',
     'openKoreanStudentReport',
+    'purchaseAiedueCraftAccess',
     'purchaseAiedueKoreanShopItem',
     'saveAiedueKoreanShopItem',
     'selectDrawingTemplate',
@@ -2656,10 +2658,24 @@ window.closeAiedueKoreanModal = function() {
 }
 
 function renderAiedueKoreanShopItems(displayItems = []) {
-    if (!displayItems.length) {
-        return `<div class="text-center py-10 text-gray-500 font-bold">아직 선생님이 배부한 상점 물품이 없어요.</div>`;
-    }
     return `<div class="korean-shop-grid custom-scrollbar">
+        <div class="aiedu-craft-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col">
+            <div class="aiedu-craft-card-hero">
+                <div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div>
+                <div class="min-w-0">
+                    <div class="text-xs font-black text-amber-200 tracking-widest">ALWAYS FIRST</div>
+                    <div class="text-2xl font-black">에이두 크래프트</div>
+                    <div class="text-sm text-white/80 mt-1">내 에이두 계정으로 바로 연결되는 실시간 3D 크래프트 월드</div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between gap-3 mt-4">
+                <div><div class="text-xs font-bold text-gray-500">고정 가격</div><div class="text-xl font-black text-amber-600">1,000점</div></div>
+                <div class="aiedu-craft-card-actions flex-1 max-w-md">
+                    <button type="button" class="btn-outline aiedu-craft-shop-link px-4 py-2 text-sm" onclick="openAiedueCraftShop()">상점</button>
+                    <button type="button" class="btn-primary px-4 py-2 text-sm" onclick="purchaseAiedueCraftAccess()">구매</button>
+                </div>
+            </div>
+        </div>
         ${displayItems.map(({ assignment, item }) => {
             const pricing = calculateKoreanShopPrice(item);
             const assignedAt = assignment.assignedAt && typeof assignment.assignedAt.toDate === 'function'
@@ -2685,6 +2701,7 @@ function renderAiedueKoreanShopItems(displayItems = []) {
                 </div>
             </div>`;
         }).join('')}
+        ${displayItems.length ? '' : '<div class="text-center py-8 text-gray-500 font-bold md:col-span-2 xl:col-span-3">아직 선생님이 배부한 다른 상점 물품이 없어요.</div>'}
     </div>`;
 }
 
@@ -2769,6 +2786,408 @@ window.openAiedueKoreanShop = async function() {
         showModal('상점 물품을 불러오지 못했어요. 잠시 후 다시 눌러주세요.');
     }
 }
+
+// =========================================================================
+// --- AIEDUE CRAFT ACCOUNT LINK + NATIVE SHOP (ported from y5496694/aiedue) ---
+// =========================================================================
+const AIEDUE_CRAFT_ACCESS_PRICE = 1000;
+const AIEDUE_CRAFT_URL = 'https://aiedue.netlify.app/Aiedue_Craft.html';
+const AIEDUE_CRAFT_API_BASE = 'https://aiedue.ddns.net/craft-api';
+const AIEDUE_CRAFT_FIXED_KEYS = new Set(['coal', 'iron_ingot', 'gold_ingot', 'diamond']);
+
+function getAiedueCraftTeacherUsername(email = '') {
+    return String(email || '').trim().split('@')[0];
+}
+
+function getAiedueCraftStudentCode(profile = currentUserProfileSnapshot) {
+    const explicitCode = profile?.userCode ?? profile?.code ?? profile?.studentCode ?? '';
+    if (String(explicitCode ?? '').trim()) return String(explicitCode).trim();
+    const email = String(profile?.email || auth.currentUser?.email || '').trim();
+    return email.endsWith('@abc.com') ? email.split('@')[0] : '';
+}
+
+function getAiedueCraftPlayerName() {
+    if (currentUserRole === 'teacher') {
+        return getAiedueCraftTeacherUsername(currentUserProfileSnapshot?.email || auth.currentUser?.email || '');
+    }
+    const code = getAiedueCraftStudentCode();
+    return code ? `aiedue${code}` : '';
+}
+
+function buildAiedueCraftUrl() {
+    const params = new URLSearchParams();
+    const player = getAiedueCraftPlayerName();
+    if (player) params.set('craftUser', player);
+    if (currentUserRole === 'teacher') {
+        const email = currentUserProfileSnapshot?.email || auth.currentUser?.email || '';
+        params.set('craftRole', 'teacher');
+        if (email) params.set('teacherEmail', email);
+    } else {
+        params.set('craftRole', 'student');
+        const code = getAiedueCraftStudentCode();
+        if (code) params.set('studentCode', code);
+    }
+    return `${AIEDUE_CRAFT_URL}?${params.toString()}`;
+}
+
+async function callAiedueCraftApi(path, options = {}) {
+    const user = auth.currentUser;
+    if (!user || typeof user.getIdToken !== 'function') throw new Error('에이두 국어에 먼저 로그인해 주세요.');
+    const token = await user.getIdToken();
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    const response = await fetch(`${AIEDUE_CRAFT_API_BASE}${path}`, { ...options, headers });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) throw new Error(data.error || `크래프트 서버 응답 오류 (${response.status})`);
+    return data;
+}
+
+async function grantAiedueCraftTeacherOp(player) {
+    if (currentUserRole !== 'teacher' || !player) return null;
+    return callAiedueCraftApi('/op', { method: 'POST', body: JSON.stringify({ player }) });
+}
+
+function syncAiedueCraftWallet(nextBalance) {
+    currentUserBalance = nextBalance;
+    currentUserCoins = nextBalance;
+    currentUserAeduTokens = nextBalance;
+    currentUserProfileSnapshot = { ...currentUserProfileSnapshot, balance: nextBalance, coins: nextBalance, aeduTokens: nextBalance };
+    updateSyncedActivityHeaders({ name: currentUserName, coins: nextBalance, icon: currentUserIcon });
+    const dashboardCoins = document.getElementById('dashboard-coins');
+    const headerCoins = document.getElementById('dashboard-coins-header');
+    if (dashboardCoins) dashboardCoins.innerText = nextBalance;
+    if (headerCoins) headerCoins.innerText = nextBalance;
+}
+
+async function updateAiedueCraftBalance(delta, reason, targetOverride = null) {
+    const targetId = targetOverride?.id || currentUserId;
+    if (!targetId) throw new Error('로그인 정보를 찾을 수 없습니다.');
+    const userRef = doc(db, 'users', targetId);
+    let previousBalance = 0;
+    let nextBalance = 0;
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(userRef);
+        if (!snap.exists()) throw new Error('사용자 정보를 찾을 수 없습니다.');
+        const data = snap.data() || {};
+        previousBalance = asNumber(data.balance ?? data.coins ?? data.aeduTokens, 0);
+        nextBalance = previousBalance + asNumber(delta, 0);
+        if (nextBalance < 0) throw new Error('포인트가 부족합니다.');
+        transaction.update(userRef, { balance: nextBalance, coins: nextBalance, aeduTokens: nextBalance, updatedAt: serverTimestamp() });
+    });
+    if (targetId === currentUserId) syncAiedueCraftWallet(nextBalance);
+    addDoc(collection(db, 'transferLog'), {
+        userId: targetId,
+        userName: targetOverride?.name || (targetId === currentUserId ? currentUserName : ''),
+        kind: 'money',
+        delta,
+        previousBalance,
+        nextBalance,
+        reason,
+        source: 'aiedue-craft',
+        createdAt: serverTimestamp()
+    }).catch((error) => console.warn('craft wallet log failed', error));
+    return nextBalance;
+}
+
+window.purchaseAiedueCraftAccess = async function purchaseAiedueCraftAccess() {
+    if (!loginSuccess || !currentUserId) return showModal('먼저 로그인하면 에이두 크래프트를 구매할 수 있어요.');
+    if (!getAiedueCraftPlayerName()) return showModal('크래프트 계정으로 연결할 학생 코드 또는 교사 이메일을 찾지 못했어요.');
+    if (!confirm('에이두 크래프트를 1,000점에 구매하고 접속할까요?')) return;
+    try {
+        await updateAiedueCraftBalance(-AIEDUE_CRAFT_ACCESS_PRICE, '에이두 크래프트 접속 구매');
+        await addDoc(collection(db, 'purchaseLog'), {
+            studentId: currentUserId,
+            studentName: currentUserName,
+            userCode: currentUserProfileSnapshot.userCode || null,
+            itemId: 'aiedue-craft-access',
+            itemName: '에이두 크래프트',
+            price: AIEDUE_CRAFT_ACCESS_PRICE,
+            source: 'aiedue-korean',
+            craftPlayer: getAiedueCraftPlayerName(),
+            purchasedAt: serverTimestamp()
+        }).catch((error) => console.warn('Aiedue Craft purchase log failed', error));
+        await grantAiedueCraftTeacherOp(getAiedueCraftPlayerName()).catch((error) => console.warn('Teacher OP grant failed', error));
+        closeAiedueKoreanModal();
+        window.location.href = buildAiedueCraftUrl();
+    } catch (error) {
+        console.error('Aiedue Craft access purchase failed', error);
+        showModal(`에이두 크래프트 구매 실패: ${escapeKoreanShopHtml(error.message || '알 수 없는 오류')}`);
+    }
+}
+
+const craftShopModal = document.getElementById('aiedu-craft-shop-modal');
+const craftShopStatus = document.getElementById('aiedu-craft-shop-status');
+const craftInventoryList = document.getElementById('aiedu-craft-inventory-list');
+const craftAuctionList = document.getElementById('aiedu-craft-auction-list');
+const craftRandomList = document.getElementById('aiedu-craft-random-list');
+const craftRandomTimer = document.getElementById('aiedu-craft-random-timer');
+const craftTargetPlayerSelect = document.getElementById('aiedu-craft-target-player-select');
+let craftShopLastTrigger = null;
+
+function setAiedueCraftShopStatus(message, tone = 'info') {
+    if (!craftShopStatus) return;
+    craftShopStatus.textContent = message;
+    craftShopStatus.dataset.tone = tone;
+}
+
+function getAiedueCraftCount(button, selector, fallback = 1, max = 64) {
+    const input = button?.closest('.aiedu-craft-row, .aiedu-craft-product')?.querySelector(selector) || button?.parentElement?.querySelector(selector);
+    const raw = Math.floor(Number(input?.value || fallback));
+    return Number.isFinite(raw) ? Math.max(1, Math.min(max, raw)) : 1;
+}
+
+function renderAiedueCraftInventory(items = []) {
+    if (!craftInventoryList) return;
+    if (!items.length) {
+        craftInventoryList.innerHTML = '<p class="text-gray-400 text-center py-8">인벤토리에 표시할 물품이 없어요.</p>';
+        return;
+    }
+    craftInventoryList.innerHTML = items.map((item) => {
+        const maxCount = Math.max(0, Math.floor(Number(item.count || 0)));
+        const unitPrice = Math.max(0, Number(item.unitPrice || 0));
+        const itemName = String(item.nameKo || item.name || item.key || item.id || '아이템');
+        const fixedSell = AIEDUE_CRAFT_FIXED_KEYS.has(String(item.key || ''));
+        const safeId = escapeHtml(String(item.id ?? ''));
+        const safeName = escapeKoreanShopHtml(itemName);
+        const disabled = fixedSell && item.sellable && maxCount > 0 ? '' : 'disabled';
+        const action = fixedSell
+            ? `<div class="aiedu-craft-row-actions"><input type="number" min="1" max="${maxCount}" value="${Math.max(1, maxCount)}" class="aiedu-craft-number-input aiedu-craft-sell-count" ${maxCount ? '' : 'disabled'}><button type="button" class="btn-primary px-3 py-2 text-xs aiedu-craft-sell-btn" data-id="${safeId}" data-damage="${Number(item.damage || 0)}" data-count="${maxCount}" data-name="${safeName}" ${disabled}>판매</button></div>`
+            : `<div class="grid grid-cols-3 gap-2 items-end mt-2"><label class="text-xs text-gray-500">개수<input type="number" min="1" max="${maxCount}" value="${Math.max(1, maxCount)}" class="aiedu-craft-number-input aiedu-craft-auction-count w-full mt-1"></label><label class="text-xs text-gray-500">개당 가격<input type="number" min="1" value="100" class="aiedu-craft-number-input aiedu-craft-auction-price w-full mt-1"></label><button type="button" class="btn-primary px-2 py-2 text-xs aiedu-craft-auction-create-btn" data-id="${safeId}" data-command-id="${escapeHtml(String(item.commandId || ''))}" data-key="${escapeHtml(String(item.key || ''))}" data-damage="${Number(item.damage || 0)}" data-count="${maxCount}" data-name="${safeName}" ${maxCount ? '' : 'disabled'}>경매 등록</button></div>`;
+        return `<div class="aiedu-craft-row"><div class="flex justify-between gap-2"><div><p class="font-black text-[#2c3e50]">${safeName}</p><p class="text-xs text-gray-500">보유 ${maxCount}개 · ${fixedSell ? `개당 ${unitPrice.toLocaleString()}점` : '가격 직접 지정'}</p></div><span class="text-xs font-black ${fixedSell ? 'text-emerald-700' : 'text-violet-700'}">${fixedSell ? '즉시 판매' : '경매 등록'}</span></div>${action}</div>`;
+    }).join('');
+}
+
+async function refreshAiedueCraftInventory() {
+    const player = getAiedueCraftPlayerName();
+    if (!player) throw new Error('연동할 크래프트 계정을 찾지 못했어요.');
+    setAiedueCraftShopStatus(`${player} 인벤토리를 조회하는 중...`);
+    if (craftInventoryList) craftInventoryList.innerHTML = '<p class="text-gray-400 text-center py-8">조회 중...</p>';
+    const data = await callAiedueCraftApi(`/inventory?player=${encodeURIComponent(player)}`);
+    renderAiedueCraftInventory(data.items || []);
+    setAiedueCraftShopStatus(`${player} 인벤토리 조회 완료`, 'ok');
+}
+
+async function sellAiedueCraftItem(button) {
+    const row = button.closest('.aiedu-craft-row');
+    const maxCount = Number(button.dataset.count || 0);
+    const requested = Math.floor(Number(row?.querySelector('.aiedu-craft-sell-count')?.value || maxCount));
+    if (!Number.isFinite(requested) || requested < 1 || requested > maxCount) return showModal(`판매 개수는 1개부터 보유 수량 ${maxCount}개까지 입력해 주세요.`);
+    button.disabled = true;
+    try {
+        const result = await callAiedueCraftApi('/sell', { method: 'POST', body: JSON.stringify({ player: getAiedueCraftPlayerName(), id: Number(button.dataset.id), damage: Number(button.dataset.damage || 0), count: requested }) });
+        const soldCount = Number(result.count || result.removedCount || requested);
+        const amount = Number(result.amount || soldCount * Number(result.unitPrice || 0));
+        await updateAiedueCraftBalance(amount, `에이두 크래프트 판매: ${result.itemName || button.dataset.name} ${soldCount}개`);
+        setAiedueCraftShopStatus(`${result.itemName || button.dataset.name} ${soldCount}개 판매 완료: ${amount.toLocaleString()}점 지급`, 'ok');
+        await refreshAiedueCraftInventory();
+    } finally { button.disabled = false; }
+}
+
+async function buyAiedueCraftItem(button) {
+    const item = button.dataset.item || 'diamond';
+    const itemName = button.dataset.name || '다이아몬드';
+    const count = getAiedueCraftCount(button, '.aiedu-craft-buy-count');
+    const price = Number(button.dataset.price || 1000) * count;
+    button.disabled = true;
+    await updateAiedueCraftBalance(-price, `에이두 크래프트 ${itemName} ${count}개 구매`);
+    try {
+        await callAiedueCraftApi('/buy', { method: 'POST', body: JSON.stringify({ player: getAiedueCraftPlayerName(), item, count }) });
+        setAiedueCraftShopStatus(`${itemName} ${count}개 구매 완료! 게임 인벤토리를 확인해 주세요.`, 'ok');
+        await refreshAiedueCraftInventory().catch(() => {});
+    } catch (error) {
+        await updateAiedueCraftBalance(price, `에이두 크래프트 ${itemName} 구매 실패 환불`).catch(() => {});
+        throw error;
+    } finally { button.disabled = false; }
+}
+
+async function createAiedueCraftAuction(button) {
+    const row = button.closest('.aiedu-craft-row');
+    const maxCount = Number(button.dataset.count || 0);
+    const count = Math.floor(Number(row?.querySelector('.aiedu-craft-auction-count')?.value || 1));
+    const unitPrice = Math.floor(Number(row?.querySelector('.aiedu-craft-auction-price')?.value || 1));
+    if (!Number.isFinite(count) || count < 1 || count > maxCount || !Number.isFinite(unitPrice) || unitPrice < 1) return showModal('경매 수량과 가격을 다시 확인해 주세요.');
+    button.disabled = true;
+    try {
+        const payload = { player: getAiedueCraftPlayerName(), id: button.dataset.id, commandId: button.dataset.commandId, key: button.dataset.key, damage: Number(button.dataset.damage || 0), count, unitPrice, itemName: button.dataset.name };
+        const result = await callAiedueCraftApi('/auction/create', { method: 'POST', body: JSON.stringify(payload) });
+        setAiedueCraftShopStatus(`${result.itemName || payload.itemName} ${count}개 경매 등록 완료`, 'ok');
+        await Promise.allSettled([refreshAiedueCraftInventory(), refreshAiedueCraftAuction()]);
+    } finally { button.disabled = false; }
+}
+
+function renderAiedueCraftAuction(listings = []) {
+    if (!craftAuctionList) return;
+    if (!listings.length) {
+        craftAuctionList.innerHTML = '<p class="text-gray-400 text-center py-6">등록된 경매 물품이 없어요.</p>';
+        return;
+    }
+    craftAuctionList.innerHTML = listings.map((listing) => {
+        const own = listing.sellerUid === currentUserId;
+        const count = Math.max(1, Number(listing.count || 1));
+        const unitPrice = Math.max(1, Number(listing.unitPrice || 1));
+        const name = escapeKoreanShopHtml(listing.itemName || listing.key || '아이템');
+        const action = own
+            ? `<button type="button" class="btn-outline px-3 py-2 text-xs aiedu-craft-auction-cancel-btn" data-id="${escapeHtml(String(listing.id || ''))}">내 물품 취소</button>`
+            : `<div class="aiedu-craft-row-actions"><input type="number" min="1" max="${count}" value="1" class="aiedu-craft-number-input aiedu-craft-auction-buy-count"><button type="button" class="btn-primary px-3 py-2 text-xs aiedu-craft-auction-buy-btn" data-id="${escapeHtml(String(listing.id || ''))}" data-unit-price="${unitPrice}" data-max-count="${count}" data-name="${name}">구매</button></div>`;
+        return `<div class="aiedu-craft-row"><div class="flex justify-between gap-2"><div><p class="font-black">${name}</p><p class="text-xs text-gray-500">판매자 ${escapeKoreanShopHtml(listing.sellerName || listing.sellerPlayer || '')} · ${count}개 · 개당 ${unitPrice.toLocaleString()}점</p></div></div>${action}</div>`;
+    }).join('');
+}
+
+async function refreshAiedueCraftAuction() {
+    if (craftAuctionList) craftAuctionList.innerHTML = '<p class="text-gray-400 text-center py-6">경매장을 불러오는 중...</p>';
+    const data = await callAiedueCraftApi('/auction/list');
+    renderAiedueCraftAuction(data.listings || []);
+}
+
+async function buyAiedueCraftAuction(button) {
+    const row = button.closest('.aiedu-craft-row');
+    const maxCount = Number(button.dataset.maxCount || 1);
+    const count = Math.floor(Number(row?.querySelector('.aiedu-craft-auction-buy-count')?.value || 1));
+    if (!Number.isFinite(count) || count < 1 || count > maxCount) return showModal(`구매 수량은 1개부터 ${maxCount}개까지 입력해 주세요.`);
+    const price = Number(button.dataset.unitPrice || 1) * count;
+    button.disabled = true;
+    await updateAiedueCraftBalance(-price, `에이두 크래프트 경매 구매: ${button.dataset.name} ${count}개`);
+    try {
+        const result = await callAiedueCraftApi('/auction/buy', { method: 'POST', body: JSON.stringify({ id: button.dataset.id, player: getAiedueCraftPlayerName(), count }) });
+        if (result.sellerPayout?.sellerUid) {
+            await updateAiedueCraftBalance(Number(result.sellerPayout.amount || 0), `에이두 크래프트 경매 판매: ${result.itemName || button.dataset.name} ${count}개`, { id: result.sellerPayout.sellerUid, name: result.sellerPayout.sellerName }).catch(console.warn);
+        }
+        setAiedueCraftShopStatus(`${result.itemName || button.dataset.name} ${count}개 경매 구매 완료`, 'ok');
+        await Promise.allSettled([refreshAiedueCraftAuction(), refreshAiedueCraftInventory()]);
+    } catch (error) {
+        await updateAiedueCraftBalance(price, '에이두 크래프트 경매 구매 실패 환불').catch(() => {});
+        throw error;
+    } finally { button.disabled = false; }
+}
+
+async function cancelAiedueCraftAuction(listingId) {
+    const result = await callAiedueCraftApi('/auction/cancel', { method: 'POST', body: JSON.stringify({ id: listingId, player: getAiedueCraftPlayerName() }) });
+    setAiedueCraftShopStatus(`${result.itemName || '경매 물품'} 취소 완료`, 'ok');
+    await Promise.allSettled([refreshAiedueCraftAuction(), refreshAiedueCraftInventory()]);
+}
+
+function renderAiedueCraftRandomMarket(items = [], expiresAt = 0) {
+    if (!craftRandomList) return;
+    if (craftRandomTimer) craftRandomTimer.textContent = expiresAt ? `다음 무료 갱신 ${new Date(expiresAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}` : '';
+    if (!items.length) {
+        craftRandomList.innerHTML = '<p class="text-gray-400 text-center py-6">랜덤 상품이 없어요.</p>';
+        return;
+    }
+    craftRandomList.innerHTML = items.map((item) => {
+        const stock = Math.max(0, Math.min(10, Math.floor(Number(item.stock ?? 10))));
+        const name = escapeKoreanShopHtml(item.name || item.key || '아이템');
+        return `<div class="aiedu-craft-row"><div class="flex justify-between gap-2"><div><p class="font-black">${name}</p><p class="text-xs text-gray-500">개당 100점 · 재고 ${stock}개</p></div><div class="aiedu-craft-row-actions mt-0"><input type="number" min="1" max="${Math.max(1, stock)}" value="${stock ? 1 : 0}" class="aiedu-craft-number-input aiedu-craft-random-count" ${stock ? '' : 'disabled'}><button type="button" class="btn-primary px-3 py-2 text-xs aiedu-craft-random-buy-btn" data-key="${escapeHtml(String(item.key || ''))}" data-name="${name}" data-stock="${stock}" ${stock ? '' : 'disabled'}>${stock ? '구매' : '품절'}</button></div></div></div>`;
+    }).join('');
+}
+
+async function refreshAiedueCraftRandomMarket({ paid = false } = {}) {
+    if (paid) await updateAiedueCraftBalance(-500, '에이두 크래프트 랜덤마켓 수동 새로고침');
+    try {
+        const data = await callAiedueCraftApi(paid ? '/random-market/refresh' : '/random-market', { method: paid ? 'POST' : 'GET' });
+        renderAiedueCraftRandomMarket(data.items || [], data.expiresAt || 0);
+        setAiedueCraftShopStatus(paid ? '랜덤마켓 새로고침 완료' : '랜덤마켓 불러오기 완료', 'ok');
+    } catch (error) {
+        if (paid) await updateAiedueCraftBalance(500, '에이두 크래프트 랜덤마켓 새로고침 실패 환불').catch(() => {});
+        throw error;
+    }
+}
+
+async function buyAiedueCraftRandom(button) {
+    const stock = Math.max(0, Number(button.dataset.stock || 0));
+    const count = getAiedueCraftCount(button, '.aiedu-craft-random-count', 1, stock);
+    const price = count * 100;
+    await updateAiedueCraftBalance(-price, `에이두 크래프트 랜덤마켓 구매: ${button.dataset.name} ${count}개`);
+    try {
+        await callAiedueCraftApi('/random-market/buy', { method: 'POST', body: JSON.stringify({ player: getAiedueCraftPlayerName(), key: button.dataset.key, count }) });
+        setAiedueCraftShopStatus(`${button.dataset.name} ${count}개 랜덤마켓 구매 완료`, 'ok');
+        await Promise.allSettled([refreshAiedueCraftInventory(), refreshAiedueCraftRandomMarket()]);
+    } catch (error) {
+        await updateAiedueCraftBalance(price, '에이두 크래프트 랜덤마켓 구매 실패 환불').catch(() => {});
+        throw error;
+    }
+}
+
+async function loadAiedueCraftOnlinePlayers() {
+    if (!craftTargetPlayerSelect) return;
+    const data = await callAiedueCraftApi('/players/online');
+    const self = getAiedueCraftPlayerName().toLowerCase();
+    const players = (data.players || []).filter((player) => String(player).toLowerCase() !== self);
+    craftTargetPlayerSelect.replaceChildren(...(players.length
+        ? players.map((player) => { const option = document.createElement('option'); option.value = String(player); option.textContent = String(player); return option; })
+        : [Object.assign(document.createElement('option'), { value: '', textContent: '현재 온라인 친구 없음' })]));
+}
+
+async function buyAiedueCraftCommand(kind) {
+    const meta = {
+        home: { price: 500, endpoint: '/command/home', label: '집으로 이동' },
+        teleport: { price: 500, endpoint: '/command/teleport', label: '친구에게 이동' },
+        housewand: { price: 1000, endpoint: '/command/housewand', label: '집 소환기 구매' }
+    }[kind];
+    if (!meta) return;
+    const target = kind === 'teleport' ? String(craftTargetPlayerSelect?.value || '').trim() : '';
+    if (kind === 'teleport' && !target) return showModal('이동할 온라인 친구를 선택해 주세요.');
+    await updateAiedueCraftBalance(-meta.price, `에이두 크래프트 명령 구매: ${target ? `${target}에게 이동` : meta.label}`);
+    try {
+        const result = await callAiedueCraftApi(meta.endpoint, { method: 'POST', body: JSON.stringify({ player: getAiedueCraftPlayerName(), target }) });
+        setAiedueCraftShopStatus(result.itemName ? `${result.itemName} 지급 완료!` : `${target ? `${target}에게 이동` : meta.label} 처리 완료`, 'ok');
+        if (kind === 'housewand') await refreshAiedueCraftInventory().catch(() => {});
+    } catch (error) {
+        await updateAiedueCraftBalance(meta.price, '에이두 크래프트 명령 구매 실패 환불').catch(() => {});
+        throw error;
+    }
+}
+
+function closeAiedueCraftShop() {
+    craftShopModal?.classList.add('hidden');
+    craftShopModal?.classList.remove('flex');
+    document.body.style.overflow = '';
+    craftShopLastTrigger?.focus();
+    craftShopLastTrigger = null;
+}
+
+window.openAiedueCraftShop = function openAiedueCraftShop() {
+    if (!loginSuccess || !currentUserId) return showModal('먼저 로그인하면 크래프트 상점을 볼 수 있어요.');
+    if (!getAiedueCraftPlayerName()) return showModal('크래프트 계정으로 연결할 학생 코드 또는 교사 이메일을 찾지 못했어요.');
+    craftShopLastTrigger = document.activeElement;
+    closeAiedueKoreanModal();
+    craftShopModal?.classList.remove('hidden');
+    craftShopModal?.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    setAiedueCraftShopStatus('인벤토리·경매장·랜덤마켓을 불러오는 중...');
+    Promise.allSettled([refreshAiedueCraftInventory(), refreshAiedueCraftAuction(), refreshAiedueCraftRandomMarket(), loadAiedueCraftOnlinePlayers()]).then((results) => {
+        const failures = results.filter((result) => result.status === 'rejected');
+        if (failures.length) setAiedueCraftShopStatus(failures[0].reason?.message || '일부 정보를 불러오지 못했어요.', 'warn');
+        else setAiedueCraftShopStatus('크래프트 상점 준비 완료', 'ok');
+    });
+}
+
+document.getElementById('close-aiedu-craft-shop-btn')?.addEventListener('click', closeAiedueCraftShop);
+craftShopModal?.addEventListener('click', (event) => { if (event.target === craftShopModal) closeAiedueCraftShop(); });
+document.getElementById('refresh-aiedu-craft-inventory-btn')?.addEventListener('click', () => refreshAiedueCraftInventory().catch((error) => setAiedueCraftShopStatus(error.message, 'error')));
+document.getElementById('refresh-aiedu-craft-auction-btn')?.addEventListener('click', () => refreshAiedueCraftAuction().catch((error) => setAiedueCraftShopStatus(error.message, 'error')));
+document.getElementById('refresh-aiedu-craft-auction-inline-btn')?.addEventListener('click', () => refreshAiedueCraftAuction().catch((error) => setAiedueCraftShopStatus(error.message, 'error')));
+document.getElementById('refresh-aiedu-craft-random-btn')?.addEventListener('click', () => refreshAiedueCraftRandomMarket({ paid: true }).catch((error) => setAiedueCraftShopStatus(error.message, 'error')));
+document.getElementById('buy-aiedu-craft-home-tp-btn')?.addEventListener('click', () => buyAiedueCraftCommand('home').catch((error) => setAiedueCraftShopStatus(error.message, 'error')));
+document.getElementById('buy-aiedu-craft-housewand-btn')?.addEventListener('click', () => buyAiedueCraftCommand('housewand').catch((error) => setAiedueCraftShopStatus(error.message, 'error')));
+document.getElementById('buy-aiedu-craft-target-tp-btn')?.addEventListener('click', () => buyAiedueCraftCommand('teleport').catch((error) => setAiedueCraftShopStatus(error.message, 'error')));
+document.querySelectorAll('.buy-aiedu-craft-item-btn').forEach((button) => button.addEventListener('click', () => buyAiedueCraftItem(button).catch((error) => setAiedueCraftShopStatus(error.message, 'error'))));
+craftInventoryList?.addEventListener('click', (event) => {
+    const sellButton = event.target.closest('.aiedu-craft-sell-btn');
+    const auctionButton = event.target.closest('.aiedu-craft-auction-create-btn');
+    if (sellButton && !sellButton.disabled) sellAiedueCraftItem(sellButton).catch((error) => setAiedueCraftShopStatus(error.message, 'error'));
+    if (auctionButton && !auctionButton.disabled) createAiedueCraftAuction(auctionButton).catch((error) => setAiedueCraftShopStatus(error.message, 'error'));
+});
+craftAuctionList?.addEventListener('click', (event) => {
+    const buyButton = event.target.closest('.aiedu-craft-auction-buy-btn');
+    const cancelButton = event.target.closest('.aiedu-craft-auction-cancel-btn');
+    if (buyButton && !buyButton.disabled) buyAiedueCraftAuction(buyButton).catch((error) => setAiedueCraftShopStatus(error.message, 'error'));
+    if (cancelButton) cancelAiedueCraftAuction(cancelButton.dataset.id).catch((error) => setAiedueCraftShopStatus(error.message, 'error'));
+});
+craftRandomList?.addEventListener('click', (event) => {
+    const button = event.target.closest('.aiedu-craft-random-buy-btn');
+    if (button && !button.disabled) buyAiedueCraftRandom(button).catch((error) => setAiedueCraftShopStatus(error.message, 'error'));
+});
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && craftShopModal && !craftShopModal.classList.contains('hidden')) closeAiedueCraftShop(); });
 
 // =========================================================================
 // --- AIEDUE KOREAN NATIVE CLOUD (no school redirect/iframe) ---
@@ -3538,9 +3957,7 @@ function clearReadingSpeechState() {
         clearTimeout(readingSlowTimer);
         readingSlowTimer = null;
     }
-    if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-    }
+    cancelSpeech();
     if (readingActiveCard) {
         readingActiveCard.querySelectorAll('.reading-card-char').forEach((span) => {
             span.classList.remove('active');
@@ -3559,16 +3976,7 @@ function speakReadingPhrase(card, phrase) {
     }
     const chars = card.querySelectorAll('.reading-card-char');
     chars.forEach((span) => span.classList.add('active'));
-    if (window.speechSynthesis) {
-        const utterance = new SpeechSynthesisUtterance(phrase);
-        utterance.lang = 'ko-KR';
-        utterance.pitch = 1.08;
-        utterance.rate = 0.96;
-        utterance.onend = utterance.onerror = () => chars.forEach((span) => span.classList.remove('active'));
-        window.speechSynthesis.speak(utterance);
-    } else {
-        window.setTimeout(() => chars.forEach((span) => span.classList.remove('active')), 1000);
-    }
+    speakTextKo(phrase, () => chars.forEach((span) => span.classList.remove('active')), { playbackRate: 0.96 });
 }
 
 function speakReadingPhraseSlowly(card, phrase) {
@@ -3594,17 +4002,7 @@ function speakReadingPhraseSlowly(card, phrase) {
             index += 1;
             readingSlowTimer = window.setTimeout(speakNext, 180);
         };
-        if (window.speechSynthesis) {
-            const utterance = new SpeechSynthesisUtterance(char);
-            utterance.lang = 'ko-KR';
-            utterance.pitch = 1.1;
-            utterance.rate = 0.82;
-            utterance.onend = finishChar;
-            utterance.onerror = finishChar;
-            window.speechSynthesis.speak(utterance);
-        } else {
-            readingSlowTimer = window.setTimeout(finishChar, 420);
-        }
+        speakTextKo(char, finishChar, { playbackRate: 0.82 });
     };
     speakNext();
 }
@@ -4800,18 +5198,13 @@ const consonantSoundMap = {
     'ㅍ':'프', 'ㅎ':'흐', 'ㄲ':'끄', 'ㄸ':'뜨', 'ㅃ':'쁘', 'ㅆ':'쓰', 'ㅉ':'쯔'
 };
 
-// 브라우저 음소 목록 사전 로드 (특히 iOS/스마트패드 대응)
-if (typeof speechSynthesis !== 'undefined') {
-    speechSynthesis.getVoices();
-    if (speechSynthesis.addEventListener) {
-        speechSynthesis.addEventListener('voiceschanged', () => {
-            speechSynthesis.getVoices();
-        });
-    }
-}
-
 let globalTtsAudio = null;
 let isAudioUnlocked = false;
+let activeTtsRequestId = 0;
+let activeTtsAbortController = null;
+let activeTtsObjectUrl = '';
+const AIEDUE_SCHOOL_TTS_ENDPOINT = '/.netlify/functions/tts-handler';
+const AIEDUE_TTS_CHUNK_LIMIT = 180;
 
 function unlockAudioAndSpeech() {
     // 1. HTML5 Audio Unlock
@@ -4830,18 +5223,6 @@ function unlockAudioAndSpeech() {
         });
     }
 
-    // 2. SpeechSynthesis Unlock
-    if (typeof speechSynthesis !== 'undefined') {
-        try {
-            const utt = new SpeechSynthesisUtterance('');
-            utt.volume = 0;
-            speechSynthesis.speak(utt);
-            console.log("SpeechSynthesis unlocked.");
-        } catch (e) {
-            console.log("SpeechSynthesis unlock error:", e);
-        }
-    }
-
     // If HTML5 Audio is unlocked, we can remove the listeners
     if (isAudioUnlocked) {
         window.removeEventListener('click', unlockAudioAndSpeech);
@@ -4852,120 +5233,107 @@ window.addEventListener('click', unlockAudioAndSpeech);
 window.addEventListener('touchstart', unlockAudioAndSpeech);
 
 function cancelSpeech() {
+    activeTtsRequestId += 1;
+    activeTtsAbortController?.abort();
+    activeTtsAbortController = null;
     if (globalTtsAudio) {
         globalTtsAudio.pause();
         globalTtsAudio.currentTime = 0;
+        globalTtsAudio.onended = null;
+        globalTtsAudio.onerror = null;
     }
-    if (typeof speechSynthesis !== 'undefined') {
-        try {
-            speechSynthesis.cancel();
-        } catch (e) {}
+    if (activeTtsObjectUrl) {
+        URL.revokeObjectURL(activeTtsObjectUrl);
+        activeTtsObjectUrl = '';
     }
 }
 window.cancelSpeech = cancelSpeech;
 
-function speakTextKo(text, onEndCallback) {
+function splitAiedueTtsText(text) {
+    const normalized = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!normalized) return [];
+    const chunks = [];
+    let remaining = normalized;
+    while (remaining.length > AIEDUE_TTS_CHUNK_LIMIT) {
+        const windowText = remaining.slice(0, AIEDUE_TTS_CHUNK_LIMIT + 1);
+        const sentenceBreak = Math.max(windowText.lastIndexOf('. '), windowText.lastIndexOf('? '), windowText.lastIndexOf('! '), windowText.lastIndexOf(', '), windowText.lastIndexOf(' '));
+        const splitAt = sentenceBreak > 40 ? sentenceBreak + 1 : AIEDUE_TTS_CHUNK_LIMIT;
+        chunks.push(remaining.slice(0, splitAt).trim());
+        remaining = remaining.slice(splitAt).trim();
+    }
+    if (remaining) chunks.push(remaining);
+    return chunks;
+}
+
+function waitForAiedueTtsAudio(audio, requestId) {
+    return new Promise((resolve, reject) => {
+        audio.onended = () => requestId === activeTtsRequestId ? resolve() : reject(new DOMException('재생이 취소됐습니다.', 'AbortError'));
+        audio.onerror = () => reject(new Error('TTS 오디오를 재생하지 못했습니다.'));
+        const playPromise = audio.play();
+        if (playPromise) playPromise.catch(reject);
+    });
+}
+
+async function playAiedueSchoolTtsChunk(text, playbackRate, requestId, signal) {
+    const response = await fetch(AIEDUE_SCHOOL_TTS_ENDPOINT, {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+        signal
+    });
+    if (!response.ok) throw new Error(`에이두 스쿨 TTS 응답 오류 (${response.status})`);
+    const audioBlob = await response.blob();
+    if (requestId !== activeTtsRequestId) throw new DOMException('재생이 취소됐습니다.', 'AbortError');
+    activeTtsObjectUrl = URL.createObjectURL(audioBlob);
+    globalTtsAudio.src = activeTtsObjectUrl;
+    globalTtsAudio.playbackRate = playbackRate;
+    try {
+        await waitForAiedueTtsAudio(globalTtsAudio, requestId);
+    } finally {
+        if (activeTtsObjectUrl) {
+            URL.revokeObjectURL(activeTtsObjectUrl);
+            activeTtsObjectUrl = '';
+        }
+    }
+}
+
+async function playGoogleTtsFallback(text, playbackRate, requestId) {
+    if (requestId !== activeTtsRequestId) throw new DOMException('재생이 취소됐습니다.', 'AbortError');
+    globalTtsAudio.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ko&total=1&idx=0&textlen=${text.length}&client=tw-ob&prev=input`;
+    globalTtsAudio.playbackRate = playbackRate;
+    await waitForAiedueTtsAudio(globalTtsAudio, requestId);
+}
+
+async function playAiedueSchoolTts(text, { playbackRate = 0.85 } = {}) {
+    cancelSpeech();
+    const requestId = activeTtsRequestId;
+    activeTtsAbortController = new AbortController();
+    if (!globalTtsAudio) globalTtsAudio = new Audio();
+    const chunks = splitAiedueTtsText(text);
+    for (const chunk of chunks) {
+        try {
+            await playAiedueSchoolTtsChunk(chunk, playbackRate, requestId, activeTtsAbortController.signal);
+        } catch (error) {
+            if (error?.name === 'AbortError' || requestId !== activeTtsRequestId) throw error;
+            console.warn('에이두 스쿨 TTS 호출 실패, Google 음원 경로로 재시도합니다.', error);
+            await playGoogleTtsFallback(chunk, playbackRate, requestId);
+        }
+    }
+}
+
+function speakTextKo(text, onEndCallback, options = {}) {
     let processedText = text;
     if (typeof text === 'string' && text.length === 1) {
         if (consonantSoundMap[text]) {
             processedText = consonantSoundMap[text];
         }
     }
-
-    try {
-        if (!globalTtsAudio) {
-            globalTtsAudio = new Audio();
-        }
-        globalTtsAudio.pause();
-
-        // 1. 온라인 Google Translate TTS 시도 (google-tts-api 패키지 규격의 MP3 오디오 스트림)
-        const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(processedText) + "&tl=ko&total=1&idx=0&textlen=" + processedText.length + "&client=tw-ob&prev=input";
-        globalTtsAudio.src = ttsUrl;
-        globalTtsAudio.playbackRate = 0.85; // 약간 천천히 읽기 (교육용)
-
-        let fallbackTriggered = false;
-        const triggerFallback = () => {
-            if (fallbackTriggered) return;
-            fallbackTriggered = true;
-            speakTextKoNative(processedText, onEndCallback);
-        };
-
-        globalTtsAudio.onerror = triggerFallback;
-
-        const playPromise = globalTtsAudio.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                if (onEndCallback) {
-                    globalTtsAudio.onended = () => {
-                        onEndCallback();
-                        globalTtsAudio.onended = null;
-                    };
-                }
-            }).catch(err => {
-                console.log("Online TTS blocked/failed, using native fallback:", err);
-                triggerFallback();
-            });
-        } else {
-            if (onEndCallback) {
-                globalTtsAudio.onended = () => {
-                    onEndCallback();
-                    globalTtsAudio.onended = null;
-                };
-            }
-        }
-    } catch (e) {
-        console.log("Online TTS initialization failed, using native fallback:", e);
-        speakTextKoNative(processedText, onEndCallback);
-    }
-}
-
-// 로컬 브라우저 SpeechSynthesis 백업 엔진
-function speakTextKoNative(text, onEndCallback) {
-    if (typeof speechSynthesis === 'undefined') {
-        if (onEndCallback) onEndCallback();
-        return;
-    }
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'ko-KR';
-    utt.rate = 0.82;
-    utt.pitch = 0.82; // 왜곡 방지 및 자연스러운 피치
-
-    const voices = speechSynthesis.getVoices();
-    const koVoices = voices.filter(v => v.lang.startsWith('ko') || v.lang.startsWith('KO'));
-    if (koVoices.length > 0) {
-        // yunjin -> google -> siri -> heami -> narae -> male 순 매칭, 없으면 기기 기본 한국어
-        const voiceKeywords = ['yunjin', 'google', 'siri', 'heami', 'narae', 'male'];
-        let bestVoice = null;
-        for (const kw of voiceKeywords) {
-            bestVoice = koVoices.find(v => v.name.toLowerCase().includes(kw));
-            if (bestVoice) break;
-        }
-        if (bestVoice) {
-            utt.voice = bestVoice;
-        } else {
-            utt.voice = koVoices[0];
-        }
-    }
-
-    if (onEndCallback) {
-        utt.onend = () => {
-            onEndCallback();
-            utt.onend = null;
-        };
-    }
-
-    // 안드로이드 크롬의 대표적인 버그(cancel 후 바로 speak 호출 시 묵음 현상) 방지를 위해 100ms 지연 후 재생
-    try {
-        speechSynthesis.cancel();
-    } catch (e) {}
-
-    setTimeout(() => {
-        try {
-            speechSynthesis.speak(utt);
-        } catch (e) {
-            console.log("speechSynthesis.speak failed:", e);
-        }
-    }, 100);
+    playAiedueSchoolTts(processedText, options)
+        .then(() => onEndCallback?.())
+        .catch((error) => {
+            if (error?.name === 'AbortError') return;
+            console.error('에이두 국어 TTS 재생 실패:', error);
+            onEndCallback?.();
+        });
 }
 
 window.speakTextKo = speakTextKo;
@@ -10692,41 +11060,13 @@ function playLessonMouthAudioFallback(char, slow = false) {
 }
 
 function playLessonMouthOnlineFallback(text, slow = false, char = '') {
-    try {
-        if (!globalTtsAudio) {
-            globalTtsAudio = new Audio();
-        }
-        globalTtsAudio.pause();
-        const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(text) + "&tl=ko&total=1&idx=0&textlen=" + text.length + "&client=tw-ob&prev=input";
-        globalTtsAudio.src = ttsUrl;
-        const profile = getLessonMouthAudioProfile(char);
-        globalTtsAudio.playbackRate = profile?.[slow ? 'slowRate' : 'normalRate'] || (slow ? 0.82 : 1);
-        globalTtsAudio.play().catch(() => playLessonMouthNativeFallback(text, slow, char));
-    } catch {
-        playLessonMouthNativeFallback(text, slow, char);
-    }
+    const profile = getLessonMouthAudioProfile(char);
+    const playbackRate = profile?.[slow ? 'slowRate' : 'normalRate'] || (slow ? 0.82 : 1);
+    speakTextKo(text, null, { playbackRate });
 }
 
 function playLessonMouthNativeFallback(text, slow = false, char = '') {
-    if (typeof speechSynthesis === 'undefined') {
-        playLessonMouthOnlineFallback(text, slow, char);
-        return;
-    }
-    try {
-        speechSynthesis.cancel();
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.lang = 'ko-KR';
-        const profile = getLessonMouthAudioProfile(char);
-        utt.rate = profile?.[slow ? 'slowRate' : 'normalRate'] || (slow ? 0.68 : 0.95);
-        utt.pitch = 1;
-        const voices = speechSynthesis.getVoices();
-        const koVoices = voices.filter(v => v.lang?.toLowerCase().startsWith('ko'));
-        const koVoice = koVoices.find(v => /yunjin|siri|google|heami|narae|female/i.test(v.name)) || koVoices[0];
-        if (koVoice) utt.voice = koVoice;
-        speechSynthesis.speak(utt);
-    } catch {
-        playLessonMouthOnlineFallback(text, slow, char);
-    }
+    playLessonMouthOnlineFallback(text, slow, char);
 }
 
 function getLessonMouthPlaybackState() {
