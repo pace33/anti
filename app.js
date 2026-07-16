@@ -2172,9 +2172,9 @@ function calculateAiedueLevel(experience) {
 }
 
 function buildAiedueSchoolProfileSnapshot(userData = {}) {
-    const coins = asNumber(userData?.coins ?? userData?.balance ?? userData?.aeduTokens ?? currentUserCoins, 0);
-    const balance = asNumber(userData?.balance ?? coins ?? currentUserBalance, 0);
-    const aeduTokens = asNumber(userData?.aeduTokens ?? userData?.aeduToken ?? balance ?? currentUserAeduTokens, 0);
+    const balance = asNumber(userData?.balance ?? userData?.coins ?? userData?.aeduTokens ?? currentUserBalance ?? currentUserCoins, 0);
+    const coins = balance;
+    const aeduTokens = asNumber(userData?.aeduTokens ?? userData?.aeduToken ?? balance ?? currentUserAeduTokens, balance);
     const warningTokens = asNumber(userData?.warningTokens ?? currentUserWarningTokens, 0);
     const aeduExperience = asNumber(userData?.aeduExperience ?? currentUserAeduExperience, 0);
     const aeduLevel = asNumber(userData?.aeduLevel ?? calculateAiedueLevel(aeduExperience), 1);
@@ -2203,9 +2203,10 @@ function buildAiedueSchoolProfileSnapshot(userData = {}) {
 }
 
 function setCurrentAiedueSchoolWalletFromSnapshot(snapshot = {}) {
-    currentUserCoins = asNumber(snapshot.coins, currentUserCoins);
-    currentUserBalance = asNumber(snapshot.balance, currentUserCoins);
-    currentUserAeduTokens = asNumber(snapshot.aeduTokens, currentUserBalance);
+    const syncedBalance = asNumber(snapshot.balance ?? snapshot.coins ?? snapshot.aeduTokens, currentUserBalance ?? currentUserCoins);
+    currentUserBalance = syncedBalance;
+    currentUserCoins = syncedBalance;
+    currentUserAeduTokens = asNumber(snapshot.aeduTokens, syncedBalance);
     currentUserWarningTokens = asNumber(snapshot.warningTokens, currentUserWarningTokens);
     const rawExperience = Math.max(0, asNumber(snapshot.aeduExperience, currentUserAeduExperience));
     const hasStoredLevel = Number.isFinite(Number(snapshot.aeduLevel));
