@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260716-m-word-writing">
+    <link rel="stylesheet" href="app.css?v=20260716-m-word-hangul-unit-ui">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -805,6 +805,7 @@
                 <div class="pointer-events-auto cursor-pointer" onclick="goHangulDashboard()">
                     <img src="aiedu_korean_logo.webp" width="1024" height="768" alt="에이두 국어" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
                 </div>
+                <nav class="my-korean-unit-bar pointer-events-auto" id="my-korean-tabs" aria-label="한글 해득 단원 선택"></nav>
                 <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
                     <div class="text-right">
                         <div class="flex items-center justify-end gap-2">
@@ -837,15 +838,12 @@
                 </button>
             </div>
 
-            <div class="flex flex-wrap gap-3 mb-8 mt-28" id="my-korean-tabs"></div>
-
-            <div class="stitched p-8 bg-white">
+            <div class="stitched p-8 bg-white mt-28">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-[#46b3a5] text-white rounded-2xl flex items-center justify-center text-2xl font-bold">📚</div>
                         <h3 id="my-korean-unit-title" class="text-3xl font-black text-[#2c3e50]">모음</h3>
                     </div>
-                    <button type="button" class="btn-outline px-6 py-2 text-sm" onclick="closeMyKoreanSection()">한글 해득으로</button>
                 </div>
                 <div class="max-h-[500px] overflow-y-auto pr-2 space-y-4" id="my-korean-list"></div>
             </div>
@@ -997,56 +995,35 @@
         <!-- [글자 쓰기 연습 섹션] -->
         <div id="letter-writing-section" class="view-section fade-in hidden bg-white">
             <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
-                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 한글 해득 대시보드로 돌아가기">
-                    <span aria-hidden="true">←</span>
-                    <span>에이두 한글 해득</span>
+                <button type="button" class="activity-logo-button pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 국어로 돌아가기">
+                    <img src="aiedu_korean_logo.webp" width="1024" height="768" alt="에이두 국어" class="login-mini-logo">
                 </button>
-                <div class="activity-profile-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfoDrawer();}" role="button" tabindex="0" aria-label="내 정보 열기">
-                    <div class="text-right">
-                        <div class="flex items-center justify-end gap-2">
-                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
-                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
-                        </div>
-                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
-                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
-                            <div class="activity-exp-track w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
-                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
-                            </div>
-                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
-                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
-                        </div>
-                    </div>
-                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
-                </div>
-            </div>
-            <div class="writing-compact-toolbar">
-                <div class="writing-mode-quick-card">
+                <div class="writing-mode-quick-card pointer-events-auto">
                     <div class="writing-mode-buttons" id="letter-top-categories">
                         <button type="button" data-category="letter" class="letter-top-btn nav-tab active">글자 연습</button>
                         <button type="button" data-category="word" class="letter-top-btn nav-tab">낱말 연습</button>
                         <button type="button" data-category="sentence" class="letter-top-btn nav-tab">문장 연습</button>
                     </div>
                 </div>
-                <div class="writing-exp-guide" aria-label="쓰기 연습 경험치 안내">
-                    <span>자음·모음 +1%</span>
-                    <span>낱말 +2%</span>
-                    <span>받침 없는 낱말 +5%</span>
-                    <span>문장 +10%</span>
-                </div>
             </div>
 
             <div class="learning-pane p-8 min-h-[600px]">
                 <div id="letter-practice-panel">
+                    <div class="letter-practice-kind-tabs" role="tablist" aria-label="글자 연습 종류">
+                        <button type="button" class="nav-tab active" data-letter-kind="consonant">자음</button>
+                        <button type="button" class="nav-tab" data-letter-kind="vowel">모음</button>
+                        <button type="button" class="nav-tab" data-letter-kind="practice-word">낱말</button>
+                    </div>
                     <div class="letter-practice-selector-grid">
-                        <div class="korean-embed-card letter-practice-selector-card">
+                        <div class="korean-embed-card letter-practice-selector-card" data-letter-kind-panel="consonant">
                             <div class="letter-practice-selector-title">자음</div>
                             <div id="letter-consonants" class="flex flex-wrap gap-2"></div>
                         </div>
-                        <div class="korean-embed-card letter-practice-selector-card">
+                        <div class="korean-embed-card letter-practice-selector-card hidden" data-letter-kind-panel="vowel">
                             <div class="letter-practice-selector-title">모음</div>
                             <div id="letter-vowels" class="flex flex-wrap gap-2"></div>
                         </div>
-                        <div class="korean-embed-card letter-practice-selector-card letter-practice-word-card">
+                        <div class="korean-embed-card letter-practice-selector-card letter-practice-word-card hidden" data-letter-kind-panel="practice-word">
                             <div class="letter-practice-selector-heading">
                                 <div class="letter-practice-selector-title">낱말</div>
                                 <span id="letter-word-count" class="letter-word-count">0개</span>
@@ -1136,6 +1113,11 @@
                     <div class="aiedu-badge bg-indigo-500 mb-4">읽기 연습</div>
                     <h2 class="text-5xl font-black text-[#2c3e50] mb-3">에이두 국어 카드</h2>
                     <p class="text-xl text-gray-500 font-bold">카드를 클릭하면 읽어줍니다. 느리게 읽기를 켜면 한 글자씩 강조해요.</p>
+                </div>
+                <div id="reading-category-tabs" class="reading-category-tabs" role="tablist" aria-label="읽기 연습 주제">
+                    <button type="button" class="nav-tab active" data-reading-category="greeting">인삿말</button>
+                    <button type="button" class="nav-tab" data-reading-category="animal">동물</button>
+                    <button type="button" class="nav-tab" data-reading-category="food">음식</button>
                 </div>
                 <div id="reading-cards-grid" class="reading-cards-grid w-full" aria-live="polite"></div>
             </div>
@@ -1552,7 +1534,7 @@
 
     </nav>
 
-    <script type="module" src="app.js?v=20260716-m-word-writing"></script>
+    <script type="module" src="app.js?v=20260716-m-word-hangul-unit-ui"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

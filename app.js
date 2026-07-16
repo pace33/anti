@@ -3958,18 +3958,33 @@ window.openReadingPracticeActivity = function openReadingPracticeActivity() {
     });
 }
 
-const readingPracticeCards = [
-    { phrase: '안녕하세요', emoji: '👋' },
-    { phrase: '감사합니다', emoji: '🙏' },
-    { phrase: '죄송합니다', emoji: '😢' },
-    { phrase: '사랑해요', emoji: '💖' },
-    { phrase: '안녕히 가세요', emoji: '👋' },
-    { phrase: '잘 먹겠습니다', emoji: '🍱' },
-    { phrase: '괜찮아요', emoji: '😊' },
-    { phrase: '또 만나요', emoji: '🗓️' },
-    { phrase: '고마워요', emoji: '🤗' },
-    { phrase: '반가워요', emoji: '✨' }
-];
+const readingPracticeCards = {
+    greeting: [
+        { phrase: '안녕하세요', emoji: '👋' },
+        { phrase: '감사합니다', emoji: '🙏' },
+        { phrase: '죄송합니다', emoji: '😢' },
+        { phrase: '반가워요', emoji: '✨' },
+        { phrase: '안녕히 가세요', emoji: '🙋' },
+        { phrase: '또 만나요', emoji: '🤗' }
+    ],
+    animal: [
+        { phrase: '강아지', emoji: '🐶' },
+        { phrase: '고양이', emoji: '🐱' },
+        { phrase: '토끼', emoji: '🐰' },
+        { phrase: '코끼리', emoji: '🐘' },
+        { phrase: '기린', emoji: '🦒' },
+        { phrase: '사자', emoji: '🦁' }
+    ],
+    food: [
+        { phrase: '김밥', emoji: '🍙' },
+        { phrase: '떡볶이', emoji: '🍲' },
+        { phrase: '비빔밥', emoji: '🥗' },
+        { phrase: '라면', emoji: '🍜' },
+        { phrase: '사과', emoji: '🍎' },
+        { phrase: '수박', emoji: '🍉' }
+    ]
+};
+let activeReadingCategory = 'greeting';
 let readingSlowMode = false;
 let readingActiveCard = null;
 let readingSlowTimer = null;
@@ -4044,9 +4059,9 @@ function speakReadingPhraseSlowly(card, phrase) {
 
 function renderReadingPracticeCards() {
     const grid = document.getElementById('reading-cards-grid');
-    if (!grid || grid.dataset.rendered === 'true') return;
-    grid.dataset.rendered = 'true';
-    grid.innerHTML = readingPracticeCards.map((item, index) => {
+    if (!grid) return;
+    const cards = readingPracticeCards[activeReadingCategory] || readingPracticeCards.greeting;
+    grid.innerHTML = cards.map((item, index) => {
         const chars = Array.from(item.phrase).map((char, charIndex) => (
             `<span class="reading-card-char${char === ' ' ? ' space' : ''}" data-index="${charIndex}">${char === ' ' ? '&nbsp;' : char}</span>`
         )).join('');
@@ -4057,11 +4072,20 @@ function renderReadingPracticeCards() {
     }).join('');
     grid.querySelectorAll('.reading-card').forEach((card) => {
         card.addEventListener('click', () => {
-            const item = readingPracticeCards[Number(card.dataset.index)];
+            const item = cards[Number(card.dataset.index)];
             if (item) speakReadingPhrase(card, item.phrase);
         });
     });
 }
+
+document.querySelectorAll('[data-reading-category]').forEach((button) => {
+    button.addEventListener('click', () => {
+        clearReadingSpeechState();
+        activeReadingCategory = button.dataset.readingCategory;
+        document.querySelectorAll('[data-reading-category]').forEach((item) => item.classList.toggle('active', item === button));
+        renderReadingPracticeCards();
+    });
+});
 
 window.openHangulGameActivity = function openHangulGameActivity() {
     showTopLevelSection('hangul-game-section');
@@ -7028,6 +7052,17 @@ function initializeLetterWritingActivity() {
     };
     renderWordButtons();
     document.getElementById('letter-word-filter')?.addEventListener('input', (event) => renderWordButtons(event.target.value));
+    document.querySelectorAll('[data-letter-kind]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const kind = button.dataset.letterKind;
+            document.querySelectorAll('[data-letter-kind]').forEach((item) => item.classList.toggle('active', item === button));
+            document.querySelectorAll('[data-letter-kind-panel]').forEach((panel) => {
+                panel.classList.toggle('hidden', panel.dataset.letterKindPanel !== kind);
+            });
+            const firstButton = document.querySelector(`[data-letter-kind-panel="${kind}"] button[data-char]`);
+            if (firstButton) firstButton.click();
+        });
+    });
     setTraceGuide(currentChar, currentLetterKind);
     window.refreshLetterWritingCanvas = () => setTraceGuide(currentChar, currentLetterKind);
     window.addEventListener('resize', () => drawTraceWritingGuide(canvas));
@@ -7773,13 +7808,12 @@ function renderMyKoreanTabs() {
     const tabsRoot = document.getElementById('my-korean-tabs');
     const tabEntries = Object.entries(unitMeta);
     tabsRoot.innerHTML = tabEntries.map(([key, meta]) => {
-        const isLongLabel = ['noBatchimWord', 'complexVowel', 'complexVowelWord', 'batchimWord', 'complexBatchim', 'complexBatchimWord'].includes(key);
-        const tabTextSizeClass = isLongLabel ? 'text-base md:text-lg' : 'text-lg md:text-xl';
         return `
-        <button type="button" class="nav-tab ${tabTextSizeClass} whitespace-nowrap ${key === activeUnitKey ? 'active' : ''}"
+        <button type="button" class="my-korean-unit-tab ${key === activeUnitKey ? 'active' : ''}"
             style="${key === activeUnitKey ? `background:var(--mint-light); color:var(--mint-primary); border-color:var(--mint-primary);` : ''}"
+            title="${meta.unit}단원 · ${meta.label}" aria-label="${meta.unit}단원 ${meta.label}"
             onclick="selectLearningUnit('${key}')">
-            ${meta.label.replace(' 단원', '')}
+            ${meta.unit}단원
         </button>
     `;
     }).join('');
