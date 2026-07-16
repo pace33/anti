@@ -12231,13 +12231,38 @@ function drawTraceWritingGuide(target) {
         ctx.fillStyle = '#fffdf9';
         ctx.fillRect(0, 0, W, H);
         const isBieupGuide = char === 'ㅂ';
-        ctx.save();
-        ctx.fillStyle = isBieupGuide ? '#e9bd91' : '#f1cfad';
-        ctx.font = `900 ${Math.max(30, H * (isBieupGuide ? 0.8 : 0.72))}px 'Noto Sans KR', sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(char, W / 2, H * 0.54);
-        ctx.restore();
+        if (isBieupGuide) {
+            const left = W * 0.356;
+            const right = W * 0.658;
+            const top = H * 0.248;
+            const middle = H * 0.5;
+            const bottom = H * 0.735;
+            ctx.save();
+            ctx.strokeStyle = '#f2cfad';
+            ctx.lineWidth = Math.max(6, H * 0.07);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(left, top);
+            ctx.lineTo(left, bottom);
+            ctx.moveTo(left, top);
+            ctx.lineTo(right, top);
+            ctx.lineTo(right, bottom);
+            ctx.moveTo(left, middle);
+            ctx.lineTo(right, middle);
+            ctx.moveTo(left, bottom);
+            ctx.lineTo(right, bottom);
+            ctx.stroke();
+            ctx.restore();
+        } else {
+            ctx.save();
+            ctx.fillStyle = '#f1cfad';
+            ctx.font = `900 ${Math.max(30, H * 0.72)}px 'Noto Sans KR', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(char, W / 2, H * 0.54);
+            ctx.restore();
+        }
 
         const strokes = [];
         collectSingleTraceChar(char, { x: W * 0.14, y: H * 0.08, w: W * 0.72, h: H * 0.84 }, strokes);
