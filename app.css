@@ -29,23 +29,18 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 /* 로그인 후 모든 화면에서 유지되는 에이두 스타일 하단 HUD */
 .aiedue-rpg-hud {
     position: fixed;
-    left: 50%;
+    left: max(14px, calc((100vw - 1200px) / 2));
     bottom: 14px;
     z-index: 1050;
-    width: min(calc(100% - 28px), 1180px);
-    min-height: 96px;
+    width: auto;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px 18px;
+    gap: 8px;
+    padding: 0;
     color: #2c3e50;
-    border: 3px solid rgba(255,255,255,.98);
-    border-radius: 30px;
-    background: rgba(255,255,255,.94);
-    box-shadow: 0 18px 48px rgba(50, 91, 69, .2), 0 0 0 2px rgba(183, 228, 161, .72);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    transform: translateX(-50%);
+    border: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 /* 상단의 중복 회원 정보 배너는 하단 HUD로 통합한다. */
@@ -55,21 +50,24 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 
 .rpg-profile-banner {
     position: relative;
-    min-width: 390px;
-    height: 66px;
+    min-width: 420px;
+    height: 84px;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 10px 7px 76px;
-    border: 2px solid #d9efd0;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #f7fcf4, #edf8e8);
+    padding: 7px 10px 18px 76px;
+    border: 2px solid rgba(255,255,255,.98);
+    border-radius: 24px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 14px 36px rgba(50, 91, 69, .18), 0 0 0 2px rgba(183, 228, 161, .5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
 }
 
 .rpg-profile-portrait {
     position: absolute;
     left: 7px;
-    bottom: 5px;
+    bottom: 13px;
     width: 62px;
     height: 62px;
     display: grid;
@@ -124,10 +122,41 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 }
 .rpg-tool-button > span:first-child { font-size: 1rem; }
 .rpg-logout-button { color: #c46b6b; background: #fff8f7; border-color: #f4dddd; }
+.rpg-expand-button { color: #4e9a61; border-color: #d5ead8; background: #f3fbf4; }
+.rpg-expand-button > span:first-child { transition: transform .25s ease; }
+.aiedue-rpg-hud.actions-open .rpg-expand-button > span:first-child { transform: rotate(180deg); }
 
-.rpg-action-tray { flex: 1; height: 58px; display: flex; justify-content: center; gap: 9px; }
+.rpg-action-tray {
+    width: 0;
+    height: 68px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    border: 0 solid rgba(255,255,255,.98);
+    border-radius: 22px;
+    background: rgba(255,255,255,.94);
+    box-shadow: none;
+    transform: translateX(-18px);
+    transition: width .3s cubic-bezier(.2,.8,.25,1), padding .3s ease, opacity .2s ease, transform .3s ease, border-width .3s ease;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+.aiedue-rpg-hud.actions-open .rpg-action-tray {
+    width: 350px;
+    padding-inline: 7px;
+    opacity: 1;
+    pointer-events: auto;
+    border-width: 2px;
+    box-shadow: 0 14px 36px rgba(50, 91, 69, .18);
+    transform: translateX(0);
+}
 .rpg-action-button {
     min-width: 160px;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -147,9 +176,9 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 
 .rpg-experience-track {
     position: absolute;
-    left: 18px;
-    right: 18px;
-    bottom: 7px;
+    left: 76px;
+    right: 64px;
+    bottom: 6px;
     height: 7px;
     overflow: hidden;
     border: 1px solid #cce8c3;
@@ -157,49 +186,50 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     background: #eaf5e6;
 }
 .rpg-experience-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #81cf70, #a9e28b); box-shadow: 0 0 8px rgba(111, 201, 93, .45); transition: width .35s ease; }
-.rpg-experience-label { position: absolute; right: 22px; bottom: 17px; color: #68a95f; font: 900 9px/1 Outfit, sans-serif; }
+.rpg-experience-label { position: absolute; right: 68px; bottom: 16px; color: #68a95f; font: 900 9px/1 Outfit, sans-serif; }
 
 .aiedue-rpg-hud.experience-received .rpg-experience-track { animation: experienceTrackReceive .65s ease; }
 @keyframes experienceTrackReceive { 45% { box-shadow: 0 0 0 6px rgba(129, 207, 112, .18), 0 0 18px rgba(129, 207, 112, .45); } }
 
-body.rpg-hud-active .page-number { bottom: 124px; }
+body.rpg-hud-active .page-number { bottom: 112px; }
 
 @media (max-width: 860px) {
-    .aiedue-rpg-hud { width: calc(100% - 18px); bottom: 9px; gap: 8px; padding-inline: 9px; border-radius: 25px; }
-    .rpg-profile-banner { min-width: 350px; padding-left: 72px; }
+    .aiedue-rpg-hud { left: 9px; bottom: 9px; }
+    .rpg-profile-banner { min-width: 390px; padding-left: 72px; }
     .rpg-profile-copy { min-width: 92px; }
     .rpg-profile-copy strong { max-width: 105px; }
-    .rpg-action-button { min-width: 100px; }
+    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: 280px; }
+    .rpg-action-button { min-width: 126px; }
     .rpg-action-button > span:last-child { font-size: .76rem; }
 }
 
 @media (max-width: 640px) {
-    .aiedue-rpg-hud { min-height: 112px; gap: 6px; padding: 8px 7px 18px; }
-    .rpg-profile-banner { flex: 1 1 64%; min-width: 0; height: 78px; padding: 6px 5px 6px 62px; gap: 4px; }
-    .rpg-profile-portrait { left: 5px; bottom: 9px; width: 56px; height: 56px; }
+    .aiedue-rpg-hud { right: 9px; }
+    .rpg-profile-banner { width: 100%; min-width: 0; height: 82px; padding: 6px 5px 17px 62px; gap: 4px; }
+    .rpg-profile-portrait { left: 5px; bottom: 13px; width: 56px; height: 56px; }
     .rpg-profile-portrait .sync-user-icon { font-size: 1.65rem; }
     .rpg-profile-copy { min-width: 65px; }
-    .rpg-profile-copy strong { max-width: 78px; font-size: .8rem; }
+    .rpg-profile-copy strong { max-width: 92px; font-size: .8rem; }
     .rpg-role-label { font-size: .58rem; }
     .rpg-wallet-line { flex-direction: column; gap: 0; font-size: .58rem; }
     .rpg-profile-tools { gap: 3px; }
     .rpg-tool-button { min-width: 35px; width: 35px; height: 44px; border-radius: 12px; padding: 0; font-size: .54rem; }
-    .rpg-action-tray { flex: 0 1 36%; height: 78px; flex-direction: column; gap: 4px; }
-    .rpg-action-button { min-width: 0; min-height: 36px; gap: 4px; padding: 3px 5px; border-radius: 13px; }
-    .rpg-action-button > span:last-child { font-size: .63rem; }
-    .rpg-action-icon { font-size: .95rem; }
-    .rpg-experience-label { bottom: 17px; }
-    body.rpg-hud-active .page-number { bottom: 132px; }
+    .rpg-action-tray { position: absolute; left: 0; bottom: calc(100% + 8px); height: 58px; }
+    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: min(320px, 100%); }
+    .rpg-action-button { min-width: 130px; gap: 5px; padding: 3px 6px; border-radius: 14px; }
+    .rpg-action-button > span:last-child { font-size: .68rem; }
+    .rpg-action-icon { font-size: 1rem; }
+    .rpg-experience-track { left: 62px; right: 43px; }
+    .rpg-experience-label { right: 47px; }
+    body.rpg-hud-active .page-number { bottom: 110px; }
 }
 
 @media (max-width: 520px) {
-    .aiedue-rpg-hud { min-height: 168px; flex-wrap: wrap; align-content: center; }
-    .rpg-profile-banner { flex-basis: 100%; width: 100%; height: 76px; padding-left: 68px; }
-    .rpg-profile-copy strong { max-width: 110px; }
-    .rpg-wallet-line { flex-direction: row; gap: 7px; }
-    .rpg-action-tray { flex: 1 0 100%; width: 100%; height: 48px; flex-direction: row; }
-    .rpg-action-button { flex: 1; }
-    body.rpg-hud-active .page-number { bottom: 188px; }
+    .rpg-profile-copy { min-width: 54px; }
+    .rpg-profile-copy strong { max-width: 72px; }
+    .rpg-wallet-line { gap: 4px; }
+    .rpg-tool-button { min-width: 32px; width: 32px; }
+    .rpg-tool-button > span:last-child { display: none; }
 }
 
 .skip-link {
