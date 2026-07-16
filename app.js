@@ -9172,6 +9172,92 @@ window.selectLesson25Answer = async function selectLesson25Answer(index, selecte
     }
 };
 
+const LESSON25_READING_LINES = [
+    ['으음 음', '으읍 읍'],
+    ['으은 은', '으읃 읃'],
+    ['으응 응', '으윽 윽'],
+    ['으울 울', '잉잉 인'],
+    ['알알 앙', '언언 엄'],
+    ['옴옴 옹', '응응 을'],
+    ['얼열 언', '암얌 양'],
+    ['임임 입', '잉잉 익'],
+    ['언언 얼', '입입 임'],
+    ['익익 잉', '얼얼 언']
+];
+
+function renderLesson25ReadingPage() {
+    return `
+        <div class="lesson25-reading-page" data-lesson25-reading-page>
+            <div class="lesson25-reading-guide">
+                <strong>읽기</strong>
+                <span>한 줄을 눌러 소리를 듣고, 같은 줄을 천천히 소리 내어 읽어 보세요.</span>
+            </div>
+            <div class="lesson25-reading-progress" role="status" aria-live="polite">
+                <span id="lesson25-reading-progress-text">위에서부터 한 줄씩 읽어 보세요.</span>
+                <strong id="lesson25-reading-progress-count">읽은 줄 0 / 20</strong>
+            </div>
+            <div class="lesson25-reading-table" role="table" aria-label="한 줄씩 소리 내어 읽기">
+                <div class="lesson25-reading-header" role="row">
+                    <span role="columnheader">문제</span><span role="columnheader">확인</span>
+                    <span role="columnheader">문제</span><span role="columnheader">확인</span>
+                </div>
+                ${LESSON25_READING_LINES.map((pair, rowIndex) => `
+                    <div class="lesson25-reading-row" role="row">
+                        ${pair.map((line, sideIndex) => {
+                            const lineIndex = rowIndex * 2 + sideIndex;
+                            return `
+                                <button type="button" class="lesson25-reading-line" onclick="playLesson25ReadingLine(${rowIndex}, ${sideIndex}, this)" aria-label="${line} 소리 듣기">
+                                    <span aria-hidden="true">🔊</span><strong>${line}</strong>
+                                </button>
+                                <button type="button" class="lesson25-reading-check" onclick="confirmLesson25ReadingLine(${lineIndex}, this)" aria-label="${line} 읽기 확인">읽었어요</button>
+                            `;
+                        }).join('')}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+window.playLesson25ReadingLine = function playLesson25ReadingLine(rowIndex, sideIndex, button) {
+    const line = LESSON25_READING_LINES[rowIndex]?.[sideIndex];
+    if (!line || !button) return;
+    document.querySelectorAll('.lesson25-reading-line').forEach((item) => item.classList.toggle('is-playing', item === button));
+    speakTextKo(line, () => button.classList.remove('is-playing'), { playbackRate: 0.82 });
+};
+
+window.confirmLesson25ReadingLine = function confirmLesson25ReadingLine(lineIndex, button) {
+    if (!button || button.classList.contains('is-complete')) return;
+    const page = button.closest('[data-lesson25-reading-page]');
+    const rowIndex = Math.floor(lineIndex / 2);
+    const sideIndex = lineIndex % 2;
+    const line = LESSON25_READING_LINES[rowIndex]?.[sideIndex];
+    if (!page || !line) return;
+
+    button.classList.add('is-complete');
+    button.textContent = '○ 읽었어요';
+    button.disabled = true;
+    button.previousElementSibling?.classList.add('is-complete');
+    const completed = page.querySelectorAll('.lesson25-reading-check.is-complete').length;
+    const count = page.querySelector('#lesson25-reading-progress-count');
+    const text = page.querySelector('#lesson25-reading-progress-text');
+    if (count) count.textContent = `읽은 줄 ${completed} / 20`;
+    if (text) text.textContent = completed === 20
+        ? '참 잘했어요! 20줄을 모두 읽었어요.'
+        : `${completed}줄을 읽었어요. 다음 줄도 천천히 읽어 보세요.`;
+    recordKoreanAttempt({
+        lessonId: 25,
+        lessonTitle: '배움 25: 도전, 받침왕! (1)',
+        unitId: getUnitIdForLesson(25),
+        activityType: 'readThreeTimes',
+        word: line,
+        answer: line,
+        userAnswer: '소리 내어 읽기 완료',
+        isCorrect: true,
+        errorType: null
+    }).catch(() => {});
+};
+
 function setLesson21MFeedback(page, message) {
     const feedback = page?.querySelector('#lesson21-m-feedback');
     if (feedback) feedback.textContent = message;
@@ -12123,6 +12209,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             const localIndex = safeIndex % 5;
             sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 단어 쓰기`, `${batchim} 받침 · 그림 보고 쓰기`, `${batchim} 받침 · 도전하기`][localIndex];
+        } else if (isCustomLesson25 && safeIndex === 2) {
+            sectionTitle = '한 줄씩 소리 내어 읽기';
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -12173,6 +12261,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson21Page(numericStep, batchim, safeIndex % 5);
         } else if (isCustomLesson25 && safeIndex === 0) {
             contentHtml = renderLesson25ListenChoicePage();
+        } else if (isCustomLesson25 && safeIndex === 2) {
+            contentHtml = renderLesson25ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
