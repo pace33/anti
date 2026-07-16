@@ -3709,6 +3709,38 @@ window.toggleRpgHudActions = function toggleRpgHudActions(button) {
     tray.inert = !isOpen;
 };
 
+window.goBackFromRpgHud = function goBackFromRpgHud() {
+    const visibleSectionId = topLevelSectionIds.find((id) => {
+        const section = document.getElementById(id);
+        return section && !section.classList.contains('hidden') && section.style.display !== 'none';
+    });
+    if (!visibleSectionId || visibleSectionId === 'dashboard-section') {
+        openDashboard();
+        return;
+    }
+    if (['drawing-activities-section', 'dictation-activities-section', 'literacy-activities-section', 'hangul-activities-section'].includes(visibleSectionId)) {
+        openDashboard();
+        return;
+    }
+    if (['my-drawing-section', 'drawing-workspace-section'].includes(visibleSectionId)) {
+        goDrawingDashboard();
+        return;
+    }
+    if (['my-dictation-section', 'dictation-workspace-section', 'spelling-quiz-section'].includes(visibleSectionId)) {
+        goDictationDashboard();
+        return;
+    }
+    if (visibleSectionId === 'literacy-workspace-section') {
+        showTopLevelSection('literacy-activities-section');
+        return;
+    }
+    if (['my-korean-section', 'learning-start-section', 'learning-detail-section', 'letter-writing-section', 'word-writing-quiz-section', 'word-listening-quiz-section', 'reading-practice-section', 'hangul-game-section'].includes(visibleSectionId)) {
+        goHangulDashboard();
+        return;
+    }
+    openDashboard();
+};
+
 function refreshDynamicSectionContent(sectionId) {
     requestAnimationFrame(() => {
         if (sectionId === 'my-korean-section') {
@@ -6039,6 +6071,113 @@ ${text}
         return fallbackExtracted;
     }
 }
+
+const LESSON_PHOTO_POINT_REWARD = 500;
+const LESSON_PHOTO_DAILY_REWARD_LIMIT = 3;
+
+function getKoreanDateKey() {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date());
+}
+
+async function awardLessonPhotoPoints() {
+    if (!currentUserId) return { rewarded: 0, count: 0, limit: LESSON_PHOTO_DAILY_REWARD_LIMIT };
+    const userRef = doc(db, 'users', currentUserId);
+    let rewardResult = { rewarded: 0, count: 0, limit: LESSON_PHOTO_DAILY_REWARD_LIMIT };
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(userRef);
+        if (!snap.exists()) throw new Error('사용자 정보를 찾을 수 없습니다.');
+        const data = snap.data() || {};
+        const date = getKoreanDateKey();
+        const stored = data.koreanLessonPhotoReward || {};
+        const count = stored.date === date ? Math.max(0, Number(stored.count || 0)) : 0;
+        const balance = asNumber(data.balance ?? data.coins ?? data.aeduTokens, 0);
+        if (count >= LESSON_PHOTO_DAILY_REWARD_LIMIT) {
+            rewardResult = { rewarded: 0, count, limit: LESSON_PHOTO_DAILY_REWARD_LIMIT, balance };
+            return;
+        }
+        const nextCount = count + 1;
+        const nextBalance = balance + LESSON_PHOTO_POINT_REWARD;
+        transaction.update(userRef, {
+            balance: nextBalance,
+            coins: nextBalance,
+            aeduTokens: nextBalance,
+            koreanLessonPhotoReward: { date, count: nextCount, lastRewardedAt: new Date().toISOString() },
+            updatedAt: serverTimestamp()
+        });
+        rewardResult = { rewarded: LESSON_PHOTO_POINT_REWARD, count: nextCount, limit: LESSON_PHOTO_DAILY_REWARD_LIMIT, balance: nextBalance };
+    });
+    if (Number.isFinite(Number(rewardResult.balance))) syncAiedueCraftWallet(Number(rewardResult.balance));
+    return rewardResult;
+}
+
+function readImageFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('사진을 불러오지 못했습니다.'));
+        reader.readAsDataURL(file);
+    });
+}
+
+window.triggerLessonPhotoCapture = function triggerLessonPhotoCapture() {
+    const input = document.getElementById('lesson-photo-input');
+    if (!input) return;
+    input.value = '';
+    input.click();
+};
+
+window.handleLessonPhotoCapture = async function handleLessonPhotoCapture(input) {
+    const file = input?.files?.[0];
+    if (!file) return;
+    showActivityLoading('사진을 불러오는 중...');
+    try {
+        const dataUrl = await readImageFileAsDataUrl(file);
+        showActivityLoading('사진을 분석하는 중...');
+        const [ocrText, aiText] = await Promise.all([runDictationOcr(file), analyzeDictationImageWithAi(dataUrl)]);
+        const combined = ['[OCR]', ocrText, '[AI 사진 분석]', aiText].filter(Boolean).join('\n');
+        showActivityLoading('단어를 추출하는 중...');
+        const aiExtracted = await extractDictationWordsWithAi(combined);
+        const candidateWords = Array.from(new Set((aiExtracted.words || []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)));
+        if (!candidateWords.length) {
+            hideActivityLoading();
+            showModal('사진에서 저장할 명사 단어를 찾지 못했어요. 글자나 수업 자료가 잘 보이게 다시 찍어주세요.');
+            return;
+        }
+
+        showActivityLoading('단어를 저장하는 중...');
+        const existing = new Set(dictationPortfolio.koreanBank?.words || []);
+        const newWords = candidateWords.filter((word) => !existing.has(word));
+        mergeKoreanBank({ words: newWords });
+        dictationPortfolio.captures = [{
+            source: 'lesson-photo',
+            words: candidateWords,
+            newWords,
+            savedAt: new Date().toISOString()
+        }, ...(dictationPortfolio.captures || [])].slice(0, 20);
+        dictationPortfolio.dictationLocked = false;
+        await persistDictationData();
+        const reward = await awardLessonPhotoPoints();
+        updateDictationDashboardPreview();
+
+        hideActivityLoading();
+        const rewardText = reward.rewarded
+            ? `<div class="mt-5 rounded-2xl bg-yellow-50 px-5 py-4 text-yellow-700 font-black">⭐ ${reward.rewarded}포인트 지급 · 오늘 ${reward.count}/${reward.limit}회</div>`
+            : `<div class="mt-5 rounded-2xl bg-gray-100 px-5 py-4 text-gray-600 font-black">오늘 사진 보상 ${reward.limit}회를 모두 받았어요.</div>`;
+        const savedText = newWords.length ? `새 단어 ${newWords.length}개를 국어 은행에 저장했어요.` : '이미 국어 은행에 있는 단어들이에요.';
+        showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-2">📷 수업 사진 분석 완료</h3><p class="text-gray-500 font-bold mb-4">${savedText}</p><div class="flex flex-wrap gap-2 max-h-64 overflow-y-auto">${candidateWords.map((word) => `<span class="px-3 py-2 rounded-full bg-emerald-50 text-emerald-700 font-black">${escapeHtml(word)}</span>`).join('')}</div>${rewardText}</div>`);
+    } catch (error) {
+        console.error('lesson photo capture failed', error);
+        hideActivityLoading();
+        showModal(`수업 사진을 처리하지 못했어요. 잠시 후 다시 시도해주세요.<br><span class="text-sm text-gray-400">${escapeHtml(error.message || String(error))}</span>`);
+    } finally {
+        if (input) input.value = '';
+    }
+};
 
 async function processDictationPhotoFile(file, previewDataUrl = '') {
     activeDictationPhotoFile = file;
