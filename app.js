@@ -8407,8 +8407,91 @@ const LESSON21_BATCHIM_CONFIGS = {
             { label: '2단계', words: ['수업', '대답', '접다', '집밥', '눈썹'], count: 5 },
             { label: '3단계', words: ['모래톱', '구급차', '푸대접'], count: 3 }
         ]
+    },
+    'ㅇ': {
+        label: 'ㅇ 받침',
+        intro: [
+            { base: '가', result: '강' }, { base: '나', result: '낭' }, { base: '다', result: '당' },
+            { base: '라', result: '랑' }, { base: '마', result: '망' }, { base: '버', result: '벙' },
+            { base: '서', result: '성' }, { base: '저', result: '정' }, { base: '터', result: '텅' },
+            { base: '퍼', result: '펑' }
+        ],
+        challenge: [
+            { label: '1단계', words: ['흥', '공', '방', '강', '왕', '병', '종'], count: 7 },
+            { label: '2단계', words: ['방송', '풍덩', '세상', '동생', '지붕'], count: 5 },
+            { label: '3단계', words: ['강낭콩', '야옹이', '경기장'], count: 3 }
+        ]
+    },
+    'ㄱ': {
+        label: 'ㄱ 받침',
+        intro: [
+            { base: '가', result: '각' }, { base: '나', result: '낙' }, { base: '다', result: '닥' },
+            { base: '라', result: '락' }, { base: '마', result: '막' }, { base: '버', result: '벅' },
+            { base: '서', result: '석' }, { base: '저', result: '적' }, { base: '터', result: '턱' },
+            { base: '퍼', result: '퍽' }
+        ],
+        challenge: [
+            { label: '1단계', words: ['국', '박', '약', '벽', '백', '떡', '학'], count: 7 },
+            { label: '2단계', words: ['약국', '박수', '소식', '학교', '호박'], count: 5 },
+            { label: '3단계', words: ['미역국', '수학책', '행복해'], count: 3 }
+        ]
+    },
+    'ㄴ': {
+        label: 'ㄴ 받침',
+        intro: [
+            { base: '가', result: '간' }, { base: '나', result: '난' }, { base: '다', result: '단' },
+            { base: '라', result: '란' }, { base: '마', result: '만' }, { base: '버', result: '번' },
+            { base: '서', result: '선' }, { base: '저', result: '전' }, { base: '터', result: '턴' },
+            { base: '퍼', result: '펀' }
+        ],
+        challenge: [
+            { label: '1단계', words: ['판', '산', '문', '반', '천', '끈', '팬'], count: 7 },
+            { label: '2단계', words: ['그만', '부분', '소년', '선반', '사촌'], count: 5 },
+            { label: '3단계', words: ['천천히', '건전지', '태권도'], count: 3 }
+        ]
+    },
+    'ㄹ': {
+        label: 'ㄹ 받침',
+        intro: [
+            { base: '가', result: '갈' }, { base: '나', result: '날' }, { base: '다', result: '달' },
+            { base: '라', result: '랄' }, { base: '마', result: '말' }, { base: '버', result: '벌' },
+            { base: '서', result: '설' }, { base: '저', result: '절' }, { base: '터', result: '털' },
+            { base: '퍼', result: '펄' }
+        ],
+        challenge: [
+            { label: '1단계', words: ['물', '돌', '길', '벌', '털', '귤', '쌀'], count: 7 },
+            { label: '2단계', words: ['하늘', '마을', '얼굴', '구슬', '콜라'], count: 5 },
+            { label: '3단계', words: ['다슬기', '가을하늘', '솔방울'], count: 3 }
+        ]
+    },
+    'ㄷ': {
+        label: 'ㄷ 받침',
+        intro: [
+            { base: '가', result: '갇' }, { base: '다', result: '닫' }, { base: '마', result: '맏' },
+            { base: '거', result: '걷' }, { base: '미', result: '믿' }, { base: '바', result: '받' },
+            { base: '어', result: '얻' }, { base: '무', result: '묻' }, { base: '시', result: '싣' },
+            { base: '도', result: '돋' }
+        ],
+        challenge: [
+            { label: '1단계', words: ['곳', '낯', '닫', '맏', '믿', '받', '얻'], count: 7 },
+            { label: '2단계', words: ['곧게', '걷다', '닫다', '돋다', '싣다'], count: 5 },
+            { label: '3단계', words: ['돋보기', '이튿날', '숟가락'], count: 3 }
+        ]
     }
 };
+
+const LESSON_BATCHIM_PAGE_SEQUENCES = {
+    21: ['ㅁ', 'ㅂ'],
+    22: ['ㅇ', 'ㄱ'],
+    23: ['ㄴ', 'ㄹ'],
+    24: ['ㄷ']
+};
+
+const LESSON_BATCHIM_CHARACTERS = new Set(Object.values(LESSON_BATCHIM_PAGE_SEQUENCES).flat());
+
+function normalizeLessonBatchim(batchim) {
+    return LESSON_BATCHIM_CHARACTERS.has(batchim) ? batchim : 'ㅁ';
+}
 
 function getLesson21BatchimConfig(batchim) {
     return LESSON21_BATCHIM_CONFIGS[batchim] || LESSON21_BATCHIM_CONFIGS['ㅁ'];
@@ -8507,7 +8590,7 @@ function renderLesson21WritingCell(lessonId, batchim, word, index, mode) {
 }
 
 function addLesson21FinalBatchim(base, batchim) {
-    const finalIndexMap = { 'ㅁ': 16, 'ㅂ': 17 };
+    const finalIndexMap = { 'ㄱ': 1, 'ㄴ': 4, 'ㄷ': 7, 'ㄹ': 8, 'ㅁ': 16, 'ㅂ': 17, 'ㅇ': 21 };
     const finalIndex = finalIndexMap[batchim];
     const code = base?.charCodeAt?.(0) - 0xAC00;
     if (!finalIndex || code < 0 || code > 11171 || code % 28 !== 0) return base;
@@ -8515,7 +8598,7 @@ function addLesson21FinalBatchim(base, batchim) {
 }
 
 function removeLesson21FinalBatchim(syllable, batchim) {
-    const finalIndexMap = { 'ㅁ': 16, 'ㅂ': 17 };
+    const finalIndexMap = { 'ㄱ': 1, 'ㄴ': 4, 'ㄷ': 7, 'ㄹ': 8, 'ㅁ': 16, 'ㅂ': 17, 'ㅇ': 21 };
     const finalIndex = finalIndexMap[batchim];
     const code = syllable?.charCodeAt?.(0) - 0xAC00;
     if (!finalIndex || code < 0 || code > 11171 || code % 28 !== finalIndex) return syllable;
@@ -8541,7 +8624,7 @@ function shuffleLesson21Items(items) {
 }
 
 function createLesson21MixedPracticeLayout(practiceBatchim = 'ㅁ') {
-    const selectedBatchim = practiceBatchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const selectedBatchim = normalizeLessonBatchim(practiceBatchim);
     const displayedRowIndexes = shuffleLesson21Items([0, 1, 2, 3, 4, 5]).slice(0, 3).sort((a, b) => a - b);
     const rowCounts = shuffleLesson21Items([6, 7, 7]);
     let selectedByRow = null;
@@ -8594,7 +8677,7 @@ function createLesson21MixedPracticeLayout(practiceBatchim = 'ㅁ') {
 }
 
 function renderLesson21MPracticePage(lessonId, practiceBatchim = 'ㅁ') {
-    const selectedBatchim = practiceBatchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const selectedBatchim = normalizeLessonBatchim(practiceBatchim);
     const layout = createLesson21MixedPracticeLayout(selectedBatchim);
     const targets = layout.targets;
     const instruction = `소리를 듣고 빈칸에 ${selectedBatchim} 받침을 써 보세요.`;
@@ -8710,11 +8793,76 @@ const LESSON21_WORD_WRITING_ROWS = {
             { word: '대답', syllables: [{ base: '대' }, { base: '다', result: '답', write: true }] },
             { word: '무섭다', syllables: [{ base: '무' }, { base: '서', result: '섭', write: true }, { base: '다' }] }
         ]
+    ],
+    'ㅇ': [
+        [
+            { word: '흥', syllables: [{ base: '흐', result: '흥', write: true }] },
+            { word: '지붕', syllables: [{ base: '지' }, { base: '부', result: '붕', write: true }] },
+            { word: '동생', syllables: [{ base: '도', result: '동', write: true }, { base: '생' }] },
+            { word: '세상', syllables: [{ base: '세' }, { base: '사', result: '상', write: true }] }
+        ],
+        [
+            { word: '까꿍', syllables: [{ base: '까' }, { base: '꾸', result: '꿍', write: true }] },
+            { word: '강', syllables: [{ base: '가', result: '강', write: true }] },
+            { word: '방', syllables: [{ base: '바', result: '방', write: true }] }
+        ]
+    ],
+    'ㄱ': [
+        [
+            { word: '국', syllables: [{ base: '구', result: '국', write: true }] },
+            { word: '학교', syllables: [{ base: '하', result: '학', write: true }, { base: '교' }] },
+            { word: '소식', syllables: [{ base: '소' }, { base: '시', result: '식', write: true }] },
+            { word: '미역국', syllables: [{ base: '미' }, { base: '여', result: '역', write: true }, { base: '국' }] }
+        ],
+        [
+            { word: '박수', syllables: [{ base: '바', result: '박', write: true }, { base: '수' }] },
+            { word: '떡국', syllables: [{ base: '떠', result: '떡', write: true }, { base: '국' }] },
+            { word: '약국', syllables: [{ base: '야', result: '약', write: true }, { base: '국' }] }
+        ]
+    ],
+    'ㄴ': [
+        [
+            { word: '끈', syllables: [{ base: '끄', result: '끈', write: true }] },
+            { word: '시원', syllables: [{ base: '시' }, { base: '워', result: '원', write: true }] },
+            { word: '선반', syllables: [{ base: '서', result: '선', write: true }, { base: '반' }] },
+            { word: '사촌', syllables: [{ base: '사' }, { base: '초', result: '촌', write: true }] }
+        ],
+        [
+            { word: '화분', syllables: [{ base: '화' }, { base: '부', result: '분', write: true }] },
+            { word: '언니', syllables: [{ base: '어', result: '언', write: true }, { base: '니' }] },
+            { word: '태권도', syllables: [{ base: '태' }, { base: '궈', result: '권', write: true }, { base: '도' }] }
+        ]
+    ],
+    'ㄹ': [
+        [
+            { word: '물', syllables: [{ base: '무', result: '물', write: true }] },
+            { word: '구슬', syllables: [{ base: '구' }, { base: '스', result: '슬', write: true }] },
+            { word: '얼굴', syllables: [{ base: '어', result: '얼', write: true }, { base: '굴' }] },
+            { word: '콜라', syllables: [{ base: '코', result: '콜', write: true }, { base: '라' }] }
+        ],
+        [
+            { word: '하늘', syllables: [{ base: '하' }, { base: '느', result: '늘', write: true }] },
+            { word: '귤', syllables: [{ base: '규', result: '귤', write: true }] },
+            { word: '마을', syllables: [{ base: '마' }, { base: '으', result: '을', write: true }] }
+        ]
+    ],
+    'ㄷ': [
+        [
+            { word: '묻다', syllables: [{ base: '무', result: '묻', write: true }, { base: '다' }] },
+            { word: '듣다', syllables: [{ base: '드', result: '듣', write: true }, { base: '다' }] },
+            { word: '숟가락', syllables: [{ base: '수', result: '숟', write: true }, { base: '가' }, { base: '락' }] },
+            { word: '싣다', syllables: [{ base: '시', result: '싣', write: true }, { base: '다' }] }
+        ],
+        [
+            { word: '걷다', syllables: [{ base: '거', result: '걷', write: true }, { base: '다' }] },
+            { word: '돋보기', syllables: [{ base: '도', result: '돋', write: true }, { base: '보' }, { base: '기' }] },
+            { word: '닫다', syllables: [{ base: '다', result: '닫', write: true }, { base: '다' }] }
+        ]
     ]
 };
 
 function renderLesson21BatchimWordWritingPage(lessonId, batchim = 'ㅁ') {
-    const selectedBatchim = batchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const selectedBatchim = normalizeLessonBatchim(batchim);
     const rows = LESSON21_WORD_WRITING_ROWS[selectedBatchim];
     let writingIndex = 0;
     return `
@@ -8769,12 +8917,57 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
             { word: '집게', icon: '🗜️', parts: [{ text: '집', write: true }, { text: '게' }] },
             { word: '서랍', icon: '🗄️', parts: [{ text: '서' }, { text: '랍', write: true }] }
         ]
+    },
+    'ㅇ': {
+        bank: ['풍', '상', '멍', '망'],
+        items: [
+            { word: '풍선', icon: '🎈', parts: [{ text: '풍', write: true }, { text: '선' }] },
+            { word: '책상', icon: '🪑', parts: [{ text: '책' }, { text: '상', write: true }] },
+            { word: '멍게', icon: '🐚', parts: [{ text: '멍', write: true }, { text: '게' }] },
+            { word: '희망', icon: '⭐', parts: [{ text: '희' }, { text: '망', write: true }] }
+        ]
+    },
+    'ㄱ': {
+        bank: ['족', '박', '축', '학'],
+        items: [
+            { word: '가족', icon: '👪', parts: [{ text: '가' }, { text: '족', write: true }] },
+            { word: '호박', icon: '🎃', parts: [{ text: '호' }, { text: '박', write: true }] },
+            { word: '축구', icon: '⚽', parts: [{ text: '축', write: true }, { text: '구' }] },
+            { word: '학교', icon: '🏫', parts: [{ text: '학', write: true }, { text: '교' }] }
+        ]
+    },
+    'ㄴ': {
+        bank: ['분', '산', '린', '잔'],
+        items: [
+            { word: '분수', icon: '⛲', parts: [{ text: '분', write: true }, { text: '수' }] },
+            { word: '산', icon: '⛰️', parts: [{ text: '산', write: true }] },
+            { word: '기린', icon: '🦒', parts: [{ text: '기' }, { text: '린', write: true }] },
+            { word: '찻잔', icon: '☕', parts: [{ text: '찻' }, { text: '잔', write: true }] }
+        ]
+    },
+    'ㄹ': {
+        bank: ['물', '슬', '굴', '콜'],
+        items: [
+            { word: '물', icon: '💧', parts: [{ text: '물', write: true }] },
+            { word: '구슬', icon: '🔮', parts: [{ text: '구' }, { text: '슬', write: true }] },
+            { word: '얼굴', icon: '🙂', parts: [{ text: '얼' }, { text: '굴', write: true }] },
+            { word: '콜라', icon: '🥤', parts: [{ text: '콜', write: true }, { text: '라' }] }
+        ]
+    },
+    'ㄷ': {
+        bank: ['걷', '닫', '돋'],
+        items: [
+            { word: '걷다', icon: '🚶', parts: [{ text: '걷', write: true }, { text: '다' }] },
+            { word: '닫다', icon: '🚪', parts: [{ text: '닫', write: true }, { text: '다' }] },
+            { word: '돋보기', icon: '🔍', parts: [{ text: '돋', write: true }, { text: '보' }, { text: '기' }] }
+        ]
     }
 };
 
 function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
-    const selectedBatchim = batchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const selectedBatchim = normalizeLessonBatchim(batchim);
     const config = LESSON21_PICTURE_WRITING_CONFIGS[selectedBatchim];
+    const targetCount = config.items.length;
     let writingIndex = 0;
     return `
         <div class="lesson21-page lesson21-m-picture-writing-page" data-lesson21-m-picture-writing="${lessonId}" data-batchim="${selectedBatchim}">
@@ -8807,8 +9000,8 @@ function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
                 `).join('')}
             </div>
             <div class="lesson21-m-picture-progress" role="status" aria-live="polite">
-                <span>하늘색 칸은 네 곳이에요. 보기의 글자를 찾아 천천히 써 보세요.</span>
-                <strong id="lesson21-m-picture-progress-count">글씨 쓰기 0 / 4</strong>
+                <span>하늘색 칸은 ${targetCount}곳이에요. 보기의 글자를 찾아 천천히 써 보세요.</span>
+                <strong id="lesson21-m-picture-progress-count">글씨 쓰기 0 / ${targetCount}</strong>
             </div>
         </div>
     `;
@@ -8899,8 +9092,39 @@ const LESSON21_B_STROKES = [
     { start: [0.24, 0.78], end: [0.76, 0.78], direction: '오른쪽으로' }
 ];
 
+const LESSON_BATCHIM_INTRO_STROKES = {
+    'ㅁ': LESSON21_M_STROKES,
+    'ㅂ': LESSON21_B_STROKES,
+    'ㅇ': [{
+        start: [0.5, 0.16],
+        end: [0.5, 0.16],
+        points: [[0.5, 0.16], [0.68, 0.2], [0.79, 0.34], [0.82, 0.5], [0.78, 0.68], [0.65, 0.8], [0.5, 0.84], [0.35, 0.8], [0.22, 0.68], [0.18, 0.5], [0.21, 0.34], [0.32, 0.2], [0.5, 0.16]],
+        direction: '동그랗게'
+    }],
+    'ㄱ': [
+        { start: [0.22, 0.22], end: [0.78, 0.22], direction: '오른쪽으로' },
+        { start: [0.78, 0.22], end: [0.78, 0.8], direction: '아래로' }
+    ],
+    'ㄴ': [
+        { start: [0.24, 0.18], end: [0.24, 0.78], direction: '아래로' },
+        { start: [0.24, 0.78], end: [0.78, 0.78], direction: '오른쪽으로' }
+    ],
+    'ㄹ': [
+        { start: [0.24, 0.2], end: [0.76, 0.2], direction: '오른쪽으로' },
+        { start: [0.76, 0.2], end: [0.76, 0.46], direction: '아래로' },
+        { start: [0.76, 0.46], end: [0.34, 0.46], direction: '왼쪽으로' },
+        { start: [0.34, 0.46], end: [0.34, 0.76], direction: '아래로' },
+        { start: [0.34, 0.76], end: [0.78, 0.76], direction: '오른쪽으로' }
+    ],
+    'ㄷ': [
+        { start: [0.28, 0.22], end: [0.74, 0.22], direction: '오른쪽으로' },
+        { start: [0.28, 0.22], end: [0.28, 0.78], direction: '아래로' },
+        { start: [0.28, 0.78], end: [0.74, 0.78], direction: '오른쪽으로' }
+    ]
+};
+
 function getLesson21IntroStrokes(canvas) {
-    return canvas?.dataset?.batchim === 'ㅂ' ? LESSON21_B_STROKES : LESSON21_M_STROKES;
+    return LESSON_BATCHIM_INTRO_STROKES[normalizeLessonBatchim(canvas?.dataset?.batchim)] || LESSON21_M_STROKES;
 }
 
 function getLesson21IntroStrokePoints(stroke) {
@@ -9018,6 +9242,24 @@ function getLesson21MStrokeDistance(point, target, width, height) {
     return Math.hypot((point.x - target[0]) * width, (point.y - target[1]) * height);
 }
 
+function getLesson21MPathDistance(point, strokePoints, width, height) {
+    let minimum = Number.POSITIVE_INFINITY;
+    for (let index = 1; index < strokePoints.length; index += 1) {
+        const start = { x: strokePoints[index - 1][0] * width, y: strokePoints[index - 1][1] * height };
+        const end = { x: strokePoints[index][0] * width, y: strokePoints[index][1] * height };
+        const current = { x: point.x * width, y: point.y * height };
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const lengthSquared = dx * dx + dy * dy;
+        const ratio = lengthSquared
+            ? Math.max(0, Math.min(1, ((current.x - start.x) * dx + (current.y - start.y) * dy) / lengthSquared))
+            : 0;
+        const projected = { x: start.x + ratio * dx, y: start.y + ratio * dy };
+        minimum = Math.min(minimum, Math.hypot(current.x - projected.x, current.y - projected.y));
+    }
+    return minimum;
+}
+
 function isLesson21MStrokeStart(canvas, point) {
     const stroke = getLesson21IntroStrokes(canvas)[canvas._lesson21MStrokeIndex || 0];
     if (!stroke) return false;
@@ -9054,13 +9296,7 @@ function isLesson21MCurrentStrokeComplete(canvas, path) {
             pathLength += Math.hypot((point.x - previous.x) * width, (point.y - previous.y) * height);
         }
         if (isBentStroke) {
-            const nearTop = Math.abs(point.y - strokePoints[0][1]) * height <= tolerance
-                && point.x >= strokePoints[0][0] - 0.08
-                && point.x <= strokePoints[1][0] + 0.08;
-            const nearRight = Math.abs(point.x - strokePoints[1][0]) * width <= tolerance
-                && point.y >= strokePoints[1][1] - 0.08
-                && point.y <= strokePoints[2][1] + 0.08;
-            if (nearTop || nearRight) nearStrokePoints += 1;
+            if (getLesson21MPathDistance(point, strokePoints, width, height) <= tolerance) nearStrokePoints += 1;
         } else {
             const axisDistance = isVertical
                 ? Math.abs(point.x - stroke.start[0]) * width
@@ -9310,7 +9546,7 @@ function updateLesson21MPracticeProgress(page) {
     if (!page) return;
     const completed = page.querySelectorAll('.lesson21-m-syllable-cell.is-target.is-complete').length;
     const remaining = 20 - completed;
-    const practiceBatchim = page.dataset.lesson21PracticeBatchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const practiceBatchim = normalizeLessonBatchim(page.dataset.lesson21PracticeBatchim);
     const completionLabel = `${practiceBatchim} 받침`;
     const text = page.querySelector('#lesson21-m-progress-text');
     const count = page.querySelector('#lesson21-m-progress-count');
@@ -9408,8 +9644,9 @@ function completeLesson21MPictureCanvas(canvas) {
     item.classList.add('is-complete');
 
     const completed = page.querySelectorAll('.lesson21-m-picture-canvas[data-lesson21-m-picture-completed="true"]').length;
+    const total = page.querySelectorAll('.lesson21-m-picture-canvas').length;
     const progress = page.querySelector('#lesson21-m-picture-progress-count');
-    if (progress) progress.textContent = `글씨 쓰기 ${completed} / 4`;
+    if (progress) progress.textContent = `글씨 쓰기 ${completed} / ${total}`;
     speakTextKo(item.dataset.word);
 }
 
@@ -9467,7 +9704,8 @@ window.selectLesson21MPracticeTarget = function selectLesson21MPracticeTarget(bu
         panel.querySelector('#lesson21-m-focus-result').textContent = result;
         panel.querySelector('#lesson21-m-result-listen').classList.remove('hidden');
         setLesson21MPracticeCompletedDrawing(canvas);
-        setLesson21MPracticeFeedback(page, `${base}에 ㅁ 받침을 넣으면 ${result}이 돼요. 완성 글자를 눌러 다시 들어 보세요.`);
+        const batchim = normalizeLessonBatchim(page.dataset.lesson21PracticeBatchim);
+        setLesson21MPracticeFeedback(page, `${base}에 ${batchim} 받침을 넣으면 ${result}이 돼요. 완성 글자를 눌러 다시 들어 보세요.`);
     } else {
         window.resetLesson21MPracticeCanvas();
     }
@@ -9496,7 +9734,8 @@ function completeLesson21MPracticeTrace(canvas) {
 
     canvas.dataset.completed = 'true';
     panel.classList.add('is-merging');
-    setLesson21MPracticeFeedback(page, `잘했어요! ${base}와 ㅁ이 만나 ${result}이 돼요.`);
+    const batchim = normalizeLessonBatchim(page.dataset.lesson21PracticeBatchim);
+    setLesson21MPracticeFeedback(page, `잘했어요! ${base}와 ${batchim}이 만나 ${result}이 돼요.`);
     drawLesson21MTraceCanvas(canvas);
 
     window.setTimeout(() => {
@@ -9515,7 +9754,7 @@ function completeLesson21MPracticeTrace(canvas) {
             next?.classList.add('is-next');
         }
         speakTextKo(result);
-        recordLesson21MIntroCompletion(page.dataset.lesson21MPractice, base, result).catch(() => {});
+        recordLesson21MIntroCompletion(page.dataset.lesson21MPractice, base, result, batchim).catch(() => {});
     }, duration);
 }
 
@@ -11711,7 +11950,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isPictureWordLesson = Boolean(PICTURE_WORD_LESSON_CONFIGS[numericStep]);
     const isComplexLineLesson = numericStep >= 15 && numericStep <= 19;
     const isCustomLesson20 = numericStep === 20;
-    const isCustomLesson21 = numericStep === 21;
+    const batchimPageSequence = LESSON_BATCHIM_PAGE_SEQUENCES[numericStep] || [];
+    const isCustomBatchimLesson = batchimPageSequence.length > 0;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
     const practiceFlow = learningPracticeFlows[step];
     const isActivityFlow = visibleActivitySteps.includes(numericStep) && practiceFlow;
@@ -11722,7 +11962,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (numericStep === 14) totalSections = 7;
     if (isComplexLineLesson) totalSections = 4;
     if (isCustomLesson20) totalSections = 5;
-    if (isCustomLesson21) totalSections = 10;
+    if (isCustomBatchimLesson) totalSections = batchimPageSequence.length * 5;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
     window.currentLearningActivityStep = numericStep;
@@ -11762,12 +12002,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
             sectionTitle = detail.sections[1].title;
         } else if (isCustomLesson20) {
             sectionTitle = ['읽기 1·2 · 그림과 단어', '읽기 3 · 무의미 단어', '확인하기 1·2 · 읽고 찾기', '쓰기 1·2 · 완성해 보기', '놀이 · 단어 놀이 해보기'][safeIndex];
-        } else if (isCustomLesson21) {
-            const batchim = safeIndex < 5 ? 'ㅁ' : 'ㅂ';
+        } else if (isCustomBatchimLesson) {
+            const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             const localIndex = safeIndex % 5;
-            sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 단어 쓰기`, `${batchim} 받침 · 단어 찾기`, `${batchim} 받침 · 도전하기`][localIndex];
-            if (safeIndex === 3) sectionTitle = 'ㅁ 받침 · 그림 보고 쓰기';
-            if (safeIndex === 8) sectionTitle = 'ㅂ 받침 · 그림 보고 쓰기';
+            sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 단어 쓰기`, `${batchim} 받침 · 그림 보고 쓰기`, `${batchim} 받침 · 도전하기`][localIndex];
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -11813,8 +12051,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
         const wordChipWrapClass = step === 7 && safeIndex === 0 ? 'word-chip-wrap review-word-chip-wrap' : 'word-chip-wrap';
         const wordChipClass = step === 7 && safeIndex === 0 ? 'word-chip review-word-chip' : 'word-chip';
         let contentHtml = '';
-        if (isCustomLesson21) {
-            const batchim = safeIndex < 5 ? 'ㅁ' : 'ㅂ';
+        if (isCustomBatchimLesson) {
+            const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             contentHtml = renderLesson21Page(numericStep, batchim, safeIndex % 5);
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
@@ -11953,7 +12191,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         }
 
         const chanchanLesson = getChanchanLesson(step);
-        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && !isCustomLesson21 && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
+        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && !isCustomBatchimLesson && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
             ['readThreeTimes', 'fillOneJamo', 'wordPictureMatch', 'nonsenseWordRead', 'batchimFamily', 'finalAssessment'].includes(activity)
         ) ? `<div class="mt-4">${renderLessonDetail(step)}</div>` : '';
 
