@@ -222,6 +222,53 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     font-weight: 700;
 }
 
+.aiedu-craft-wallet-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 2px solid #f1d684;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #fff9df, #f3fff1);
+}
+
+.aiedu-craft-wallet-summary > div {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 7px 11px;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .82);
+}
+
+.aiedu-craft-wallet-label {
+    color: #728073;
+    font-size: .76rem;
+    font-weight: 800;
+}
+
+.aiedu-craft-wallet-summary strong {
+    color: #2c3e50;
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.aiedu-craft-wallet-summary p {
+    flex: 1 1 260px;
+    margin: 0;
+    color: #8c6500;
+    font-size: .8rem;
+    font-weight: 800;
+    text-align: right;
+}
+
+[data-craft-base-price].warning-adjusted {
+    color: #dc2626;
+    font-weight: 900;
+}
+
 .aiedu-craft-status[data-tone='ok'] { color: #177245; background: #eafaf0; border-color: #a9dfbd; }
 .aiedu-craft-status[data-tone='warn'] { color: #9a6200; background: #fff8df; border-color: #f2d985; }
 .aiedu-craft-status[data-tone='error'] { color: #b83232; background: #fff0f0; border-color: #efb2b2; }
@@ -286,6 +333,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     .aiedu-craft-shop-layout > :last-child { grid-column: auto; }
     .aiedu-craft-card-actions { grid-template-columns: 1fr; }
     .aiedu-craft-card-hero { align-items: flex-start; }
+    .aiedu-craft-wallet-summary p { text-align: left; }
 }
 @media (max-width: 900px) { .korean-shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .korean-shop-grid { grid-template-columns: 1fr; } }

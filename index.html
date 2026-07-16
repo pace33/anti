@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260716-aiedue-craft">
+    <link rel="stylesheet" href="app.css?v=20260716-craft-warning-pricing">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1355,8 +1355,13 @@
                 <div class="flex flex-wrap gap-2">
                     <button type="button" id="refresh-aiedu-craft-inventory-btn" class="btn-outline px-3 py-2 text-sm whitespace-nowrap">인벤토리 새로고침</button>
                     <button type="button" id="refresh-aiedu-craft-auction-btn" class="btn-outline px-3 py-2 text-sm whitespace-nowrap">경매장 새로고침</button>
-                    <button type="button" id="refresh-aiedu-craft-random-btn" class="btn-primary px-3 py-2 text-sm whitespace-nowrap">랜덤마켓 새로고침 (500점)</button>
+                    <button type="button" id="refresh-aiedu-craft-random-btn" class="btn-primary px-3 py-2 text-sm whitespace-nowrap">랜덤마켓 새로고침 (<span data-craft-base-price="500">500점</span>)</button>
                 </div>
+            </div>
+            <div class="aiedu-craft-wallet-summary" aria-label="크래프트 상점 내 지갑">
+                <div><span class="aiedu-craft-wallet-label">내 포인트</span><strong id="aiedu-craft-current-balance">0점</strong></div>
+                <div><span class="aiedu-craft-wallet-label">주의토큰</span><strong id="aiedu-craft-current-warnings">0개</strong></div>
+                <p id="aiedu-craft-price-policy">주의토큰이 없어서 기본 가격이 적용돼요.</p>
             </div>
             <div id="aiedu-craft-shop-status" class="aiedu-craft-status" aria-live="polite">크래프트 서버에 접속한 적이 있는 계정만 조회할 수 있어요.</div>
             <div class="aiedu-craft-shop-layout">
@@ -1371,18 +1376,18 @@
                     <div>
                         <h3 class="font-black text-lg text-[#2c3e50] mb-2">구매 목록</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div class="aiedu-craft-product stone"><p class="font-black">⚫ 석탄</p><p class="text-xs text-gray-500">1개 100점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="coal"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="coal" data-name="석탄" data-price="100">구매</button></div></div>
-                            <div class="aiedu-craft-product iron"><p class="font-black">🔩 철</p><p class="text-xs text-gray-500">1개 200점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="iron_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="iron_ingot" data-name="철" data-price="200">구매</button></div></div>
-                            <div class="aiedu-craft-product gold"><p class="font-black">🟡 금</p><p class="text-xs text-gray-500">1개 300점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="gold_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="gold_ingot" data-name="금" data-price="300">구매</button></div></div>
-                            <div class="aiedu-craft-product diamond"><p class="font-black">💎 다이아몬드</p><p class="text-xs text-gray-500">1개 1,000점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="diamond"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="diamond" data-name="다이아몬드" data-price="1000">구매</button></div></div>
+                            <div class="aiedu-craft-product stone"><p class="font-black">⚫ 석탄</p><p class="text-xs text-gray-500">1개 <span data-craft-base-price="100">100점</span></p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="coal"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="coal" data-name="석탄" data-price="100">구매</button></div></div>
+                            <div class="aiedu-craft-product iron"><p class="font-black">🔩 철</p><p class="text-xs text-gray-500">1개 <span data-craft-base-price="200">200점</span></p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="iron_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="iron_ingot" data-name="철" data-price="200">구매</button></div></div>
+                            <div class="aiedu-craft-product gold"><p class="font-black">🟡 금</p><p class="text-xs text-gray-500">1개 <span data-craft-base-price="300">300점</span></p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="gold_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="gold_ingot" data-name="금" data-price="300">구매</button></div></div>
+                            <div class="aiedu-craft-product diamond"><p class="font-black">💎 다이아몬드</p><p class="text-xs text-gray-500">1개 <span data-craft-base-price="1000">1,000점</span></p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="diamond"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="diamond" data-name="다이아몬드" data-price="1000">구매</button></div></div>
                         </div>
                     </div>
                     <div class="border-t pt-4">
                         <h3 class="font-black text-lg text-[#2c3e50] mb-2">명령 구매</h3>
                         <div class="space-y-3 text-sm">
-                            <div class="aiedu-craft-command home"><div><p class="font-black">🏠 집으로 이동하기</p><p class="text-xs text-gray-500">x:-204 y:46 z:-162 · 500점</p></div><button type="button" id="buy-aiedu-craft-home-tp-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div>
-                            <div class="aiedu-craft-command house"><div><p class="font-black">🛏️ 집 소환기</p><p class="text-xs text-gray-500">나무 집 생성기 · 1,000점</p></div><button type="button" id="buy-aiedu-craft-housewand-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div>
-                            <div class="aiedu-craft-command teleport"><p class="font-black">🧭 친구에게 이동하기 · 500점</p><select id="aiedu-craft-target-player-select" class="w-full border rounded-xl px-3 py-2 text-sm bg-white"><option value="">온라인 명단 로딩 전</option></select><button type="button" id="buy-aiedu-craft-target-tp-btn" class="btn-primary px-3 py-2 text-xs w-full">선택한 친구에게 이동</button></div>
+                            <div class="aiedu-craft-command home"><div><p class="font-black">🏠 집으로 이동하기</p><p class="text-xs text-gray-500">x:-204 y:46 z:-162 · <span data-craft-base-price="500">500점</span></p></div><button type="button" id="buy-aiedu-craft-home-tp-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div>
+                            <div class="aiedu-craft-command house"><div><p class="font-black">🛏️ 집 소환기</p><p class="text-xs text-gray-500">나무 집 생성기 · <span data-craft-base-price="1000">1,000점</span></p></div><button type="button" id="buy-aiedu-craft-housewand-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div>
+                            <div class="aiedu-craft-command teleport"><p class="font-black">🧭 친구에게 이동하기 · <span data-craft-base-price="500">500점</span></p><select id="aiedu-craft-target-player-select" class="w-full border rounded-xl px-3 py-2 text-sm bg-white"><option value="">온라인 명단 로딩 전</option></select><button type="button" id="buy-aiedu-craft-target-tp-btn" class="btn-primary px-3 py-2 text-xs w-full">선택한 친구에게 이동</button></div>
                         </div>
                     </div>
                 </section>
@@ -1393,7 +1398,7 @@
                     </div>
                     <div class="border-t pt-4">
                         <div class="flex items-center justify-between gap-2 mb-2"><h3 class="font-black text-lg text-[#2c3e50]">랜덤마켓</h3><span id="aiedu-craft-random-timer" class="text-xs text-gray-500"></span></div>
-                        <p class="text-xs text-gray-500 mb-2">30분마다 무료 갱신 · 수동 갱신 500점 · 개당 100점 · 최대 10개</p>
+                        <p class="text-xs text-gray-500 mb-2">30분마다 무료 갱신 · 수동 갱신 <span data-craft-base-price="500">500점</span> · 개당 <span data-craft-base-price="100">100점</span> · 최대 10개</p>
                         <div id="aiedu-craft-random-list" class="space-y-2 max-h-72 overflow-y-auto text-sm custom-scrollbar"><p class="text-gray-400 text-center py-6">상점을 열면 자동으로 불러와요.</p></div>
                     </div>
                 </section>
@@ -1526,7 +1531,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260716-school-tts"></script>
+    <script type="module" src="app.js?v=20260716-craft-warning-pricing"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

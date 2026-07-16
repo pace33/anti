@@ -2857,6 +2857,44 @@ function syncAiedueCraftWallet(nextBalance) {
     const headerCoins = document.getElementById('dashboard-coins-header');
     if (dashboardCoins) dashboardCoins.innerText = nextBalance;
     if (headerCoins) headerCoins.innerText = nextBalance;
+    updateAiedueCraftShopWallet();
+}
+
+function getAiedueCraftPricing(basePrice) {
+    return calculateKoreanShopPrice({ price: Math.max(0, asNumber(basePrice, 0)) }, currentUserProfileSnapshot);
+}
+
+function formatAiedueCraftAdjustedPrice(basePrice) {
+    const pricing = getAiedueCraftPricing(basePrice);
+    return pricing.multiplier > 1
+        ? `기본 ${formatAiedueShopCurrency(pricing.basePrice)} → ${formatAiedueShopCurrency(pricing.adjustedPrice)}`
+        : formatAiedueShopCurrency(pricing.basePrice);
+}
+
+function renderAiedueCraftAdjustedPrice(basePrice) {
+    const pricing = getAiedueCraftPricing(basePrice);
+    if (pricing.multiplier <= 1) return `<span class="text-gray-500">${formatAiedueShopCurrency(pricing.basePrice)}</span>`;
+    return `<span class="line-through text-gray-400">${formatAiedueShopCurrency(pricing.basePrice)}</span> <span class="font-black text-red-600">${formatAiedueShopCurrency(pricing.adjustedPrice)}</span>`;
+}
+
+function updateAiedueCraftShopWallet() {
+    const pricing = getAiedueCraftPricing(1);
+    const balance = asNumber(currentUserBalance ?? currentUserCoins, 0);
+    const balanceEl = document.getElementById('aiedu-craft-current-balance');
+    const warningsEl = document.getElementById('aiedu-craft-current-warnings');
+    const policyEl = document.getElementById('aiedu-craft-price-policy');
+    if (balanceEl) balanceEl.textContent = formatAiedueShopCurrency(balance);
+    if (warningsEl) warningsEl.textContent = `${pricing.warningTokenCount}개`;
+    if (policyEl) {
+        policyEl.textContent = pricing.multiplier > 1
+            ? `주의토큰 ${pricing.warningTokenCount}개로 모든 구매 가격이 ${pricing.multiplier}배 적용돼요.`
+            : '주의토큰이 없어서 기본 가격이 적용돼요.';
+    }
+    document.querySelectorAll('[data-craft-base-price]').forEach((element) => {
+        const basePrice = asNumber(element.dataset.craftBasePrice, 0);
+        element.textContent = formatAiedueCraftAdjustedPrice(basePrice);
+        element.classList.toggle('warning-adjusted', pricing.multiplier > 1);
+    });
 }
 
 async function updateAiedueCraftBalance(delta, reason, targetOverride = null) {
@@ -2987,12 +3025,14 @@ async function buyAiedueCraftItem(button) {
     const item = button.dataset.item || 'diamond';
     const itemName = button.dataset.name || '다이아몬드';
     const count = getAiedueCraftCount(button, '.aiedu-craft-buy-count');
-    const price = Number(button.dataset.price || 1000) * count;
+    const basePrice = Number(button.dataset.price || 1000) * count;
+    const pricing = getAiedueCraftPricing(basePrice);
+    const price = pricing.adjustedPrice;
     button.disabled = true;
-    await updateAiedueCraftBalance(-price, `에이두 크래프트 ${itemName} ${count}개 구매`);
+    await updateAiedueCraftBalance(-price, `에이두 크래프트 ${itemName} ${count}개 구매${pricing.multiplier > 1 ? ` (주의토큰 ${pricing.multiplier}배)` : ''}`);
     try {
         await callAiedueCraftApi('/buy', { method: 'POST', body: JSON.stringify({ player: getAiedueCraftPlayerName(), item, count }) });
-        setAiedueCraftShopStatus(`${itemName} ${count}개 구매 완료! 게임 인벤토리를 확인해 주세요.`, 'ok');
+        setAiedueCraftShopStatus(`${itemName} ${count}개 구매 완료 · ${formatAiedueShopCurrency(price)} 결제`, 'ok');
         await refreshAiedueCraftInventory().catch(() => {});
     } catch (error) {
         await updateAiedueCraftBalance(price, `에이두 크래프트 ${itemName} 구매 실패 환불`).catch(() => {});
@@ -3025,11 +3065,12 @@ function renderAiedueCraftAuction(listings = []) {
         const own = listing.sellerUid === currentUserId;
         const count = Math.max(1, Number(listing.count || 1));
         const unitPrice = Math.max(1, Number(listing.unitPrice || 1));
+        const unitPricing = getAiedueCraftPricing(unitPrice);
         const name = escapeKoreanShopHtml(listing.itemName || listing.key || '아이템');
         const action = own
             ? `<button type="button" class="btn-outline px-3 py-2 text-xs aiedu-craft-auction-cancel-btn" data-id="${escapeHtml(String(listing.id || ''))}">내 물품 취소</button>`
             : `<div class="aiedu-craft-row-actions"><input type="number" min="1" max="${count}" value="1" class="aiedu-craft-number-input aiedu-craft-auction-buy-count"><button type="button" class="btn-primary px-3 py-2 text-xs aiedu-craft-auction-buy-btn" data-id="${escapeHtml(String(listing.id || ''))}" data-unit-price="${unitPrice}" data-max-count="${count}" data-name="${name}">구매</button></div>`;
-        return `<div class="aiedu-craft-row"><div class="flex justify-between gap-2"><div><p class="font-black">${name}</p><p class="text-xs text-gray-500">판매자 ${escapeKoreanShopHtml(listing.sellerName || listing.sellerPlayer || '')} · ${count}개 · 개당 ${unitPrice.toLocaleString()}점</p></div></div>${action}</div>`;
+        return `<div class="aiedu-craft-row"><div class="flex justify-between gap-2"><div><p class="font-black">${name}</p><p class="text-xs text-gray-500">판매자 ${escapeKoreanShopHtml(listing.sellerName || listing.sellerPlayer || '')} · ${count}개 · 개당 ${renderAiedueCraftAdjustedPrice(unitPrice)}${unitPricing.multiplier > 1 ? ` (${unitPricing.multiplier}배)` : ''}</p></div></div>${action}</div>`;
     }).join('');
 }
 
@@ -3044,15 +3085,17 @@ async function buyAiedueCraftAuction(button) {
     const maxCount = Number(button.dataset.maxCount || 1);
     const count = Math.floor(Number(row?.querySelector('.aiedu-craft-auction-buy-count')?.value || 1));
     if (!Number.isFinite(count) || count < 1 || count > maxCount) return showModal(`구매 수량은 1개부터 ${maxCount}개까지 입력해 주세요.`);
-    const price = Number(button.dataset.unitPrice || 1) * count;
+    const basePrice = Number(button.dataset.unitPrice || 1) * count;
+    const pricing = getAiedueCraftPricing(basePrice);
+    const price = pricing.adjustedPrice;
     button.disabled = true;
-    await updateAiedueCraftBalance(-price, `에이두 크래프트 경매 구매: ${button.dataset.name} ${count}개`);
+    await updateAiedueCraftBalance(-price, `에이두 크래프트 경매 구매: ${button.dataset.name} ${count}개${pricing.multiplier > 1 ? ` (주의토큰 ${pricing.multiplier}배)` : ''}`);
     try {
         const result = await callAiedueCraftApi('/auction/buy', { method: 'POST', body: JSON.stringify({ id: button.dataset.id, player: getAiedueCraftPlayerName(), count }) });
         if (result.sellerPayout?.sellerUid) {
             await updateAiedueCraftBalance(Number(result.sellerPayout.amount || 0), `에이두 크래프트 경매 판매: ${result.itemName || button.dataset.name} ${count}개`, { id: result.sellerPayout.sellerUid, name: result.sellerPayout.sellerName }).catch(console.warn);
         }
-        setAiedueCraftShopStatus(`${result.itemName || button.dataset.name} ${count}개 경매 구매 완료`, 'ok');
+        setAiedueCraftShopStatus(`${result.itemName || button.dataset.name} ${count}개 경매 구매 완료 · ${formatAiedueShopCurrency(price)} 결제`, 'ok');
         await Promise.allSettled([refreshAiedueCraftAuction(), refreshAiedueCraftInventory()]);
     } catch (error) {
         await updateAiedueCraftBalance(price, '에이두 크래프트 경매 구매 실패 환불').catch(() => {});
@@ -3076,18 +3119,20 @@ function renderAiedueCraftRandomMarket(items = [], expiresAt = 0) {
     craftRandomList.innerHTML = items.map((item) => {
         const stock = Math.max(0, Math.min(10, Math.floor(Number(item.stock ?? 10))));
         const name = escapeKoreanShopHtml(item.name || item.key || '아이템');
-        return `<div class="aiedu-craft-row"><div class="flex justify-between gap-2"><div><p class="font-black">${name}</p><p class="text-xs text-gray-500">개당 100점 · 재고 ${stock}개</p></div><div class="aiedu-craft-row-actions mt-0"><input type="number" min="1" max="${Math.max(1, stock)}" value="${stock ? 1 : 0}" class="aiedu-craft-number-input aiedu-craft-random-count" ${stock ? '' : 'disabled'}><button type="button" class="btn-primary px-3 py-2 text-xs aiedu-craft-random-buy-btn" data-key="${escapeHtml(String(item.key || ''))}" data-name="${name}" data-stock="${stock}" ${stock ? '' : 'disabled'}>${stock ? '구매' : '품절'}</button></div></div></div>`;
+        return `<div class="aiedu-craft-row"><div class="flex justify-between gap-2"><div><p class="font-black">${name}</p><p class="text-xs text-gray-500">개당 ${renderAiedueCraftAdjustedPrice(100)} · 재고 ${stock}개</p></div><div class="aiedu-craft-row-actions mt-0"><input type="number" min="1" max="${Math.max(1, stock)}" value="${stock ? 1 : 0}" class="aiedu-craft-number-input aiedu-craft-random-count" ${stock ? '' : 'disabled'}><button type="button" class="btn-primary px-3 py-2 text-xs aiedu-craft-random-buy-btn" data-key="${escapeHtml(String(item.key || ''))}" data-name="${name}" data-stock="${stock}" ${stock ? '' : 'disabled'}>${stock ? '구매' : '품절'}</button></div></div></div>`;
     }).join('');
 }
 
 async function refreshAiedueCraftRandomMarket({ paid = false } = {}) {
-    if (paid) await updateAiedueCraftBalance(-500, '에이두 크래프트 랜덤마켓 수동 새로고침');
+    const refreshPricing = getAiedueCraftPricing(500);
+    const refreshPrice = refreshPricing.adjustedPrice;
+    if (paid) await updateAiedueCraftBalance(-refreshPrice, `에이두 크래프트 랜덤마켓 수동 새로고침${refreshPricing.multiplier > 1 ? ` (주의토큰 ${refreshPricing.multiplier}배)` : ''}`);
     try {
         const data = await callAiedueCraftApi(paid ? '/random-market/refresh' : '/random-market', { method: paid ? 'POST' : 'GET' });
         renderAiedueCraftRandomMarket(data.items || [], data.expiresAt || 0);
         setAiedueCraftShopStatus(paid ? '랜덤마켓 새로고침 완료' : '랜덤마켓 불러오기 완료', 'ok');
     } catch (error) {
-        if (paid) await updateAiedueCraftBalance(500, '에이두 크래프트 랜덤마켓 새로고침 실패 환불').catch(() => {});
+        if (paid) await updateAiedueCraftBalance(refreshPrice, '에이두 크래프트 랜덤마켓 새로고침 실패 환불').catch(() => {});
         throw error;
     }
 }
@@ -3095,11 +3140,12 @@ async function refreshAiedueCraftRandomMarket({ paid = false } = {}) {
 async function buyAiedueCraftRandom(button) {
     const stock = Math.max(0, Number(button.dataset.stock || 0));
     const count = getAiedueCraftCount(button, '.aiedu-craft-random-count', 1, stock);
-    const price = count * 100;
-    await updateAiedueCraftBalance(-price, `에이두 크래프트 랜덤마켓 구매: ${button.dataset.name} ${count}개`);
+    const pricing = getAiedueCraftPricing(count * 100);
+    const price = pricing.adjustedPrice;
+    await updateAiedueCraftBalance(-price, `에이두 크래프트 랜덤마켓 구매: ${button.dataset.name} ${count}개${pricing.multiplier > 1 ? ` (주의토큰 ${pricing.multiplier}배)` : ''}`);
     try {
         await callAiedueCraftApi('/random-market/buy', { method: 'POST', body: JSON.stringify({ player: getAiedueCraftPlayerName(), key: button.dataset.key, count }) });
-        setAiedueCraftShopStatus(`${button.dataset.name} ${count}개 랜덤마켓 구매 완료`, 'ok');
+        setAiedueCraftShopStatus(`${button.dataset.name} ${count}개 랜덤마켓 구매 완료 · ${formatAiedueShopCurrency(price)} 결제`, 'ok');
         await Promise.allSettled([refreshAiedueCraftInventory(), refreshAiedueCraftRandomMarket()]);
     } catch (error) {
         await updateAiedueCraftBalance(price, '에이두 크래프트 랜덤마켓 구매 실패 환불').catch(() => {});
@@ -3126,13 +3172,15 @@ async function buyAiedueCraftCommand(kind) {
     if (!meta) return;
     const target = kind === 'teleport' ? String(craftTargetPlayerSelect?.value || '').trim() : '';
     if (kind === 'teleport' && !target) return showModal('이동할 온라인 친구를 선택해 주세요.');
-    await updateAiedueCraftBalance(-meta.price, `에이두 크래프트 명령 구매: ${target ? `${target}에게 이동` : meta.label}`);
+    const pricing = getAiedueCraftPricing(meta.price);
+    const price = pricing.adjustedPrice;
+    await updateAiedueCraftBalance(-price, `에이두 크래프트 명령 구매: ${target ? `${target}에게 이동` : meta.label}${pricing.multiplier > 1 ? ` (주의토큰 ${pricing.multiplier}배)` : ''}`);
     try {
         const result = await callAiedueCraftApi(meta.endpoint, { method: 'POST', body: JSON.stringify({ player: getAiedueCraftPlayerName(), target }) });
-        setAiedueCraftShopStatus(result.itemName ? `${result.itemName} 지급 완료!` : `${target ? `${target}에게 이동` : meta.label} 처리 완료`, 'ok');
+        setAiedueCraftShopStatus(`${result.itemName ? `${result.itemName} 지급 완료` : `${target ? `${target}에게 이동` : meta.label} 처리 완료`} · ${formatAiedueShopCurrency(price)} 결제`, 'ok');
         if (kind === 'housewand') await refreshAiedueCraftInventory().catch(() => {});
     } catch (error) {
-        await updateAiedueCraftBalance(meta.price, '에이두 크래프트 명령 구매 실패 환불').catch(() => {});
+        await updateAiedueCraftBalance(price, '에이두 크래프트 명령 구매 실패 환불').catch(() => {});
         throw error;
     }
 }
@@ -3153,6 +3201,7 @@ window.openAiedueCraftShop = function openAiedueCraftShop() {
     craftShopModal?.classList.remove('hidden');
     craftShopModal?.classList.add('flex');
     document.body.style.overflow = 'hidden';
+    updateAiedueCraftShopWallet();
     setAiedueCraftShopStatus('인벤토리·경매장·랜덤마켓을 불러오는 중...');
     Promise.allSettled([refreshAiedueCraftInventory(), refreshAiedueCraftAuction(), refreshAiedueCraftRandomMarket(), loadAiedueCraftOnlinePlayers()]).then((results) => {
         const failures = results.filter((result) => result.status === 'rejected');
