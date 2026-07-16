@@ -8343,7 +8343,8 @@ function shuffleLesson21Items(items) {
     return result;
 }
 
-function createLesson21MixedPracticeLayout(practiceBatchim = 'mixed') {
+function createLesson21MixedPracticeLayout(practiceBatchim = 'ㅁ') {
+    const selectedBatchim = practiceBatchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
     const displayedRowIndexes = shuffleLesson21Items([0, 1, 2, 3, 4, 5]).slice(0, 3).sort((a, b) => a - b);
     const rowCounts = shuffleLesson21Items([6, 7, 7]);
     let selectedByRow = null;
@@ -8379,9 +8380,7 @@ function createLesson21MixedPracticeLayout(practiceBatchim = 'mixed') {
     }
 
     if (!selectedByRow) selectedByRow = [[0, 2, 5, 7, 10, 13], [1, 3, 5, 7, 9, 11, 13], [0, 2, 4, 6, 8, 10, 12]];
-    const targetBatchims = practiceBatchim === 'mixed'
-        ? shuffleLesson21Items([...Array(10).fill('ㅁ'), ...Array(10).fill('ㅂ')])
-        : Array(20).fill(practiceBatchim);
+    const targetBatchims = Array(20).fill(selectedBatchim);
     const targets = new Map();
     let targetIndex = 0;
     selectedByRow.forEach((columns, displayRowIndex) => {
@@ -8397,22 +8396,16 @@ function createLesson21MixedPracticeLayout(practiceBatchim = 'mixed') {
     };
 }
 
-function renderLesson21MPracticePage(lessonId, practiceBatchim = 'mixed') {
-    const layout = createLesson21MixedPracticeLayout(practiceBatchim);
+function renderLesson21MPracticePage(lessonId, practiceBatchim = 'ㅁ') {
+    const selectedBatchim = practiceBatchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const layout = createLesson21MixedPracticeLayout(selectedBatchim);
     const targets = layout.targets;
-    const isMixed = practiceBatchim === 'mixed';
-    const instruction = isMixed
-        ? '소리를 잘 듣고 빈칸에 알맞은 받침을 써 보세요.'
-        : `소리를 듣고 빈칸에 ${practiceBatchim} 받침을 써 보세요.`;
-    const detail = isMixed
-        ? 'ㅁ 받침 10칸과 ㅂ 받침 10칸이 숨어 있어요.'
-        : `${practiceBatchim} 받침을 쓰는 칸 20개가 세 줄에 숨어 있어요.`;
-    const boardLabel = isMixed ? 'ㅁ, ㅂ 받침' : `${practiceBatchim} 받침`;
-    const progressInstruction = isMixed
-        ? '색칠된 칸을 눌러 소리를 듣고, 빈칸에 알맞은 받침을 써 보세요.'
-        : `색칠된 칸을 눌러 소리를 듣고, 빈칸에 ${practiceBatchim} 받침을 써 보세요.`;
+    const instruction = `소리를 듣고 빈칸에 ${selectedBatchim} 받침을 써 보세요.`;
+    const detail = `${selectedBatchim} 받침을 쓰는 칸 20개가 세 줄에 숨어 있어요.`;
+    const boardLabel = `${selectedBatchim} 받침`;
+    const progressInstruction = `색칠된 칸을 눌러 소리를 듣고, 빈칸에 ${selectedBatchim} 받침을 써 보세요.`;
     return `
-        <div class="lesson21-page lesson21-follow-page lesson21-m-practice-page" data-lesson21-m-practice="${lessonId}" data-lesson21-practice-batchim="${practiceBatchim}">
+        <div class="lesson21-page lesson21-follow-page lesson21-m-practice-page" data-lesson21-m-practice="${lessonId}" data-lesson21-practice-batchim="${selectedBatchim}">
             <div class="lesson21-m-practice-instruction">
                 <span><strong>${instruction}</strong><small>${detail}</small></span>
                 <button type="button" class="lesson21-m-shuffle-button" onclick="restartLesson21MixedPractice()" aria-label="받침 연습 칸 다시 섞기">↻ <span>다시 섞기</span></button>
@@ -8423,7 +8416,7 @@ function renderLesson21MPracticePage(lessonId, practiceBatchim = 'mixed') {
                     <div class="lesson21-m-syllable-row" role="row" aria-label="${['ㅏ', 'ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'][rowIndex]} 계열">
                         ${row.map((base, colIndex) => {
                             const target = targets.get(`${rowIndex}-${colIndex}`);
-                            const batchim = target?.batchim || (isMixed ? ((rowIndex + colIndex) % 2 === 0 ? 'ㅁ' : 'ㅂ') : practiceBatchim);
+                            const batchim = target?.batchim || selectedBatchim;
                             const result = addLesson21FinalBatchim(base, batchim);
                             if (!target) return `<button type="button" class="lesson21-m-syllable-cell is-reading" role="gridcell" aria-label="${result} 소리 듣기" onclick="speakLesson13Word('${result}', this)"><span class="lesson21-m-cell-letter">${result}</span><span class="lesson21-m-read-label">읽기</span></button>`;
                             return `<div class="lesson21-m-syllable-cell is-target ${target.targetIndex === 0 ? 'is-first-target is-selected' : ''}" role="gridcell" data-target-index="${target.targetIndex}" data-base="${base}" data-batchim="${batchim}" data-result="${result}" aria-current="${target.targetIndex === 0 ? 'true' : 'false'}">
@@ -8649,7 +8642,6 @@ function renderLesson21ChallengePage(lessonId, batchim) {
 
 function renderLesson21Page(lessonId, batchim, pageIndex) {
     if (pageIndex === 0) return renderLesson21MBatchimIntroPage(lessonId, batchim);
-    if (pageIndex === 1 && batchim === 'ㅁ') return renderLesson21MPracticePage(lessonId, 'mixed');
     if (pageIndex === 1) return renderLesson21MPracticePage(lessonId, batchim);
     if (pageIndex === 2) return renderLesson21BWordWritingPage(lessonId);
     if (pageIndex === 3) return renderLesson21MPictureWritingPage(lessonId, batchim);
@@ -9105,8 +9097,8 @@ function updateLesson21MPracticeProgress(page) {
     if (!page) return;
     const completed = page.querySelectorAll('.lesson21-m-syllable-cell.is-target.is-complete').length;
     const remaining = 20 - completed;
-    const practiceBatchim = page.dataset.lesson21PracticeBatchim || 'mixed';
-    const completionLabel = practiceBatchim === 'mixed' ? 'ㅁ, ㅂ 받침' : `${practiceBatchim} 받침`;
+    const practiceBatchim = page.dataset.lesson21PracticeBatchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
+    const completionLabel = `${practiceBatchim} 받침`;
     const text = page.querySelector('#lesson21-m-progress-text');
     const count = page.querySelector('#lesson21-m-progress-count');
     const fill = page.querySelector('#lesson21-m-progress-fill');
@@ -9115,9 +9107,7 @@ function updateLesson21MPracticeProgress(page) {
     if (fill) fill.style.width = `${completed * 5}%`;
     track?.setAttribute('aria-valuenow', String(completed));
     if (text) {
-        if (completed === 0) text.textContent = practiceBatchim === 'mixed'
-            ? '색칠된 칸을 눌러 소리를 듣고, 빈칸에 알맞은 받침을 써 보세요.'
-            : `색칠된 칸을 눌러 소리를 듣고, 빈칸에 ${practiceBatchim} 받침을 써 보세요.`;
+        if (completed === 0) text.textContent = `색칠된 칸을 눌러 소리를 듣고, 빈칸에 ${practiceBatchim} 받침을 써 보세요.`;
         else if (completed === 20) text.textContent = `참 잘했어요! ${completionLabel} 글자 20개를 모두 완성했어요.`;
         else text.textContent = `${completed}개를 완성했어요. ${remaining}개가 남았어요.`;
     }
