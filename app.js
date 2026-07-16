@@ -56,7 +56,13 @@ let currentView = 'student';
 let inputPassword = "";
 let loginSuccess = false;
 let currentLearningStep = -1;
-let unlockedLevels = [1, 2, 3, 4]; // Default all levels for testing
+let unlockedLevels = [1];
+
+function normalizeUnlockedLevels(value, role = currentUserRole) {
+    if (String(role || '').toLowerCase() === 'teacher') return [1, 2, 3, 4];
+    if (!Array.isArray(value)) return [1];
+    return Array.from(new Set(value.map(Number).filter((level) => Number.isInteger(level) && level >= 1 && level <= 4))).sort((a, b) => a - b);
+}
 
 const activityRoutes = {
     drawing: { level: 1, sectionId: 'drawing-activities-section', page: 'drawing.html', label: '에이두 그리기' },
@@ -138,9 +144,10 @@ function openActivityRoute(activityKey, options = {}) {
     if (!route) return false;
     if (!loginSuccess && !options.allowBeforeLogin) return false;
 
-    // 모든 활동은 항상 열리게 둔다. 데이터 서버의 옛 잠금값 때문에 이동을 막지 않는다.
     if (!unlockedLevels.includes(route.level)) {
-        unlockedLevels = [1, 2, 3, 4];
+        pendingActivityRoute = null;
+        showModal(`${route.label}은 선생님이 아직 열어주지 않았어요.`);
+        return false;
     }
 
     showTopLevelSection(route.sectionId);
@@ -2198,7 +2205,7 @@ function buildAiedueSchoolProfileSnapshot(userData = {}) {
         currentLearningStep: asNumber(userData?.currentLearningStep ?? currentLearningStep, -1),
         currentDrawingStep: asNumber(userData?.currentDrawingStep ?? currentUserDrawingStep, -1),
         currentDictationStep: asNumber(userData?.currentDictationStep ?? currentUserDictationStep, -1),
-        unlockedLevels: Array.isArray(userData?.unlockedLevels) ? userData.unlockedLevels.map(Number).filter(Boolean) : [1]
+        unlockedLevels: normalizeUnlockedLevels(userData?.unlockedLevels, userData?.role || currentUserRole)
     };
 }
 
@@ -2225,15 +2232,17 @@ window.koreanExperienceMultipliers = {
 
 // 단계별 경험치 배율 계산 함수 (calculateStageExperienceMultiplier 마커)
 function calculateStageExperienceMultiplier(activityStep) {
-    const userUnlocked = currentUserProfileSnapshot?.unlockedLevels || unlockedLevels || [1];
+    const userUnlocked = normalizeUnlockedLevels(currentUserProfileSnapshot?.unlockedLevels ?? unlockedLevels, currentUserRole);
+    const numericStep = Number(activityStep);
+    if (currentUserRole !== 'teacher' && !userUnlocked.includes(numericStep)) return 0;
     const maxUnlockedStep = Math.max(1, ...userUnlocked.map(Number));
     const m = window.koreanExperienceMultipliers;
     let mapping = m[`max${maxUnlockedStep}`];
     if (!mapping) {
         return Math.min(1.0, activityStep / maxUnlockedStep);
     }
-    const val = mapping[`s${activityStep}`];
-    return typeof val === 'number' ? val : Math.min(1.0, activityStep / maxUnlockedStep);
+    const val = mapping[`s${numericStep}`];
+    return typeof val === 'number' ? val : Math.min(1.0, numericStep / maxUnlockedStep);
 }
 
 async function saveKoreanExperienceMultipliers() {
@@ -2286,11 +2295,13 @@ window.saveKoreanExperienceMultipliers = saveKoreanExperienceMultipliers;
 
 async function loadKoreanExperienceMultipliers(teacherId, classId) {
     let loaded = null;
-    if (classId) {
+    const classIds = Array.from(new Set([classId, teacherId].filter(Boolean)));
+    for (const candidateClassId of classIds) {
         try {
-            const snap = await getDoc(doc(db, 'classes', classId));
+            const snap = await getDoc(doc(db, 'classes', candidateClassId));
             if (snap.exists() && snap.data().koreanExperienceMultipliers) {
                 loaded = snap.data().koreanExperienceMultipliers;
+                break;
             }
         } catch (e) { console.warn('classes multipliers load error', e); }
     }
@@ -2461,12 +2472,14 @@ async function animateExperienceOrb(source, percent, onApproach) {
 }
 
 async function awardKoreanPracticeExperience(percent, source, meta = {}) {
-    const reward = Math.max(0, asNumber(percent, 0));
-    if (!reward) return {};
+    const baseReward = Math.max(0, asNumber(percent, 0));
+    const stageMultiplier = calculateStageExperienceMultiplier(2);
+    const reward = baseReward * stageMultiplier;
+    if (!reward) return { grantedExperience: 0, stageMultiplier };
     let wallet = null;
     const applyReward = () => {
         if (wallet) return;
-        wallet = applyAiedueExperienceReward(reward, meta);
+        wallet = applyAiedueExperienceReward(reward, { ...meta, baseReward, stageMultiplier });
     };
     await animateExperienceOrb(source, reward, applyReward);
     applyReward();
@@ -2477,7 +2490,7 @@ async function awardKoreanPracticeExperience(percent, source, meta = {}) {
             console.warn('한글 연습 경험치 저장 실패', error);
         }
     }
-    return wallet;
+    return { ...wallet, grantedExperience: reward, stageMultiplier };
 }
 
 function isTraceWritingComplete(canvas) {
@@ -3545,10 +3558,8 @@ function updateDashboardExperience(userData = {}) {
     const rawLearningStep = Number(userData?.currentLearningStep);
     currentLearningStep = Number.isFinite(rawLearningStep) ? Math.max(-1, Math.floor(rawLearningStep)) : -1;
 
-    // Level Unlocking Logic
-    // 인호 요청: 에이두 그리기/한글/받아쓰기/문해력 등 모든 상위 활동은 학생도 항상 열림.
-    // 기존 데이터 서버의 unlockedLevels 값이 일부만 들어 있어도 잠금 모달을 띄우지 않는다.
-    unlockedLevels = [1, 2, 3, 4];
+    // 교사가 학생 계정에 저장한 단계만 활성화한다. 교사는 전체 단계를 확인할 수 있다.
+    unlockedLevels = normalizeUnlockedLevels(userData?.unlockedLevels, currentUserRole);
     if (currentUserRole === 'teacher') {
         document.getElementById('teacher-manage-btn').classList.remove('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
@@ -3614,11 +3625,14 @@ function updateDashboardExperience(userData = {}) {
     // Update Level Cards
     for (let i = 1; i <= 4; i++) {
         const card = document.getElementById(`card-level-${i}`);
-        if (unlockedLevels.includes(i)) {
+        const isUnlocked = unlockedLevels.includes(i);
+        if (isUnlocked) {
             card.classList.remove('locked');
         } else {
             card.classList.add('locked');
         }
+        card.disabled = !isUnlocked;
+        card.setAttribute('aria-disabled', String(!isUnlocked));
     }
 
     updateTodayKoreanPreview();
@@ -7239,14 +7253,14 @@ function initializeLetterWritingActivity() {
                 errorType: null,
                 skillTags: attempt.skillTags || []
             });
-            await awardKoreanPracticeExperience(reward, targetCanvas, {
+            const rewardResult = await awardKoreanPracticeExperience(reward, targetCanvas, {
                 source: 'hangul-writing',
                 practiceType: attempt.practiceType,
                 word: attempt.word
             });
             targetCanvas.dataset.rewarded = 'true';
             feedback.className = 'text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600';
-            feedback.textContent = `참 잘했어요! 경험치 +${reward}%`;
+            feedback.textContent = `참 잘했어요! 경험치 +${Number(asNumber(rewardResult.grantedExperience, 0).toFixed(2))}%`;
             return true;
         } catch (error) {
             console.warn('한글 쓰기 채점 실패', error);
@@ -7725,17 +7739,19 @@ function initializeHangulSoundGame() {
         roundEl.textContent = `${totalRounds}/${totalRounds}`;
         const reward = correctCount * 5;
         feedbackEl.className = 'hangul-game-feedback text-2xl font-black text-[#46b3a5]';
-        feedbackEl.textContent = `10문제 중 ${correctCount}문제를 맞혔어요. 경험치 +${reward}%`;
         restartBtn.classList.remove('hidden');
         soundBtn.disabled = true;
         if (!rewardGranted && reward > 0) {
             rewardGranted = true;
-            await awardKoreanPracticeExperience(reward, feedbackEl, {
+            const rewardResult = await awardKoreanPracticeExperience(reward, feedbackEl, {
                 source: 'hangul-sound-game',
                 correctCount,
                 totalRounds,
                 mode
             });
+            feedbackEl.textContent = `10문제 중 ${correctCount}문제를 맞혔어요. 경험치 +${Number(asNumber(rewardResult.grantedExperience, 0).toFixed(2))}%`;
+        } else {
+            feedbackEl.textContent = `10문제 중 ${correctCount}문제를 맞혔어요.`;
         }
     }
 
@@ -13409,7 +13425,7 @@ window.loadStudents = async function() {
             if (!docSnap.exists()) return;
             const student = docSnap.data();
             const sid = docSnap.id;
-            const unlocked = student.unlockedLevels || [2];
+            const unlocked = normalizeUnlockedLevels(student.unlockedLevels, 'student');
             const report = getKoreanStudentReportFromData(sid, student);
             window.teacherKoreanReports = window.teacherKoreanReports || {};
             window.teacherKoreanReports[sid] = report;
@@ -13644,8 +13660,15 @@ onAuthStateChanged(auth, async (user) => {
         // 이미 대시보드/활동 화면이라면 패스, 아니라면 요청된 활동 또는 대시보드 열기
         const visibleActivityRoute = getVisibleActivityRoute();
         if (visibleActivityRoute) {
-            hydrateActivityRouteSection(visibleActivityRoute);
-            if (pendingActivityRoute === visibleActivityRoute) pendingActivityRoute = null;
+            const route = activityRoutes[visibleActivityRoute];
+            if (route && !unlockedLevels.includes(route.level)) {
+                pendingActivityRoute = null;
+                showDashboardOnly();
+                showModal(`${route.label}은 선생님이 아직 열어주지 않았어요.`);
+            } else {
+                hydrateActivityRouteSection(visibleActivityRoute);
+                if (pendingActivityRoute === visibleActivityRoute) pendingActivityRoute = null;
+            }
         } else if (document.getElementById('dashboard-section').classList.contains('hidden')) {
             if (document.getElementById('result-modal').classList.contains('hidden')) {
                 if (!openPendingActivityRoute()) openDashboard();
