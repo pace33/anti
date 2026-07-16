@@ -12603,8 +12603,8 @@ window.completeLearningStartActivity = async function completeLearningStartActiv
         errorType: null,
         durationMs: Date.now() - koreanActivityStartedAt
     });
-    showModal('배움 시작 활동 완료! 이제 배움 1로 넘어갈 수 있어요.');
-    showDashboardOnly();
+    openLearningDetailActivity(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 window.completeLearningDetailActivity = async function completeLearningDetailActivity() {
@@ -12612,7 +12612,9 @@ window.completeLearningDetailActivity = async function completeLearningDetailAct
         showModal('완료할 배움을 먼저 열어주세요.');
         return;
     }
-    currentLearningStep = Math.max(currentLearningStep, currentLearningActivityStep);
+    const completedStep = Number(currentLearningActivityStep);
+    const nextStep = completedStep + 1;
+    currentLearningStep = Math.max(currentLearningStep, completedStep);
     document.getElementById('dashboard-level-label').innerText = `${currentLearningStep + 1}단계`;
     document.getElementById('my-korean-profile-level').innerText = getLearningLevelLabel(currentLearningStep);
     document.getElementById('current-learning-step-label').innerText = getLearningStepBadge(currentLearningStep);
@@ -12627,19 +12629,27 @@ window.completeLearningDetailActivity = async function completeLearningDetailAct
         }
     }
     await recordKoreanAttempt({
-        lessonId: currentLearningActivityStep,
-        lessonTitle: getLessonTitleForReport(currentLearningActivityStep),
-        unitId: getUnitIdForLesson(currentLearningActivityStep),
+        lessonId: completedStep,
+        lessonTitle: getLessonTitleForReport(completedStep),
+        unitId: getUnitIdForLesson(completedStep),
         activityType: 'writeOnCanvas',
         isCorrect: true,
         errorType: null,
         durationMs: Date.now() - koreanActivityStartedAt
     });
 
-    showModal(`${currentLearningActivityStep}단계 배움을 습득했어요!`);
+    if (learningDetailData[nextStep]) {
+        openLearningDetailActivity(nextStep);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+
+    showModal(`${completedStep}단계 배움을 모두 마쳤어요!`);
     showDashboardOnly();
     currentLearningActivityStep = null;
     currentLearningDetailSectionIndex = 0;
+    window.currentLearningActivityStep = null;
+    window.currentLearningDetailSectionIndex = 0;
 }
 
 window.openTodayKoreanActivity = function openTodayKoreanActivity() {
