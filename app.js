@@ -2404,8 +2404,8 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
 }
 
 function getVisibleActivityExperienceTarget() {
-    return Array.from(document.querySelectorAll('.view-section:not(.hidden) .activity-profile-banner'))
-        .find((banner) => banner.offsetParent !== null) || null;
+    const hud = document.getElementById('aiedue-rpg-hud');
+    return hud && !hud.classList.contains('hidden') ? hud : null;
 }
 
 function getExperienceAnimationStart(source) {
@@ -2429,7 +2429,7 @@ function getExperienceAnimationStart(source) {
 async function animateExperienceOrb(source, percent, onApproach) {
     const target = getVisibleActivityExperienceTarget();
     if (!target || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const track = target.querySelector('.activity-exp-track') || target;
+    const track = target.querySelector('.rpg-experience-track, .activity-exp-track') || target;
     const targetRect = track.getBoundingClientRect();
     const start = getExperienceAnimationStart(source);
     const end = { x: targetRect.left + targetRect.width * 0.5, y: targetRect.top + targetRect.height * 0.5 };
@@ -3493,6 +3493,9 @@ function updateSyncedActivityHeaders({ name, coins, icon } = {}) {
     });
     document.querySelectorAll('.sync-user-icon').forEach((el) => {
         el.innerText = icon || '🐻';
+    });
+    document.querySelectorAll('.sync-user-role').forEach((el) => {
+        el.innerText = currentUserRole === 'teacher' ? '선생님' : '학생';
     });
     const level = typeof currentUserAeduLevel !== 'undefined' ? currentUserAeduLevel : 1;
     document.querySelectorAll('.sync-aedu-level').forEach((el) => {
