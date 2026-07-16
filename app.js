@@ -9079,30 +9079,34 @@ const LESSON25_LISTEN_CHOICE_QUESTIONS = [
     { choices: ['윰', '윧'], answer: '윧' }
 ];
 
-function renderLesson25ListenChoicePage() {
+function renderLesson25ListenChoicePage(pageIndex = 0) {
+    const startIndex = pageIndex * 10;
+    const pageQuestions = LESSON25_LISTEN_CHOICE_QUESTIONS.slice(startIndex, startIndex + 10);
     return `
-        <div class="lesson25-listen-page" data-lesson25-listen-page>
+        <div class="lesson25-listen-page" data-lesson25-listen-page data-page-start="${startIndex}" data-page-total="${pageQuestions.length}">
             <div class="lesson25-listen-guide">
                 <strong>듣고 찾기</strong>
                 <span>문제 소리를 듣고 두 글자 중 알맞은 글자를 골라 ○표 해 보세요.</span>
             </div>
             <div class="lesson25-listen-progress" role="status" aria-live="polite">
-                <span id="lesson25-listen-progress-text">1번부터 문제 소리를 들어 보세요.</span>
-                <strong id="lesson25-listen-progress-count">푼 문제 0 / 20</strong>
+                <span id="lesson25-listen-progress-text">${startIndex + 1}번부터 문제 소리를 들어 보세요.</span>
+                <strong id="lesson25-listen-progress-count">푼 문제 0 / ${pageQuestions.length}</strong>
             </div>
-            <div class="lesson25-question-grid" aria-label="받침 소리 듣고 알맞은 글자 고르기 20문제">
-                ${LESSON25_LISTEN_CHOICE_QUESTIONS.map((question, index) => `
-                    <section class="lesson25-question-card ${index === 0 ? 'is-current' : ''}" data-lesson25-question="${index}" data-answer="${question.answer}" aria-label="${index + 1}번 문제">
+            <div class="lesson25-question-grid" aria-label="받침 소리 듣고 알맞은 글자 고르기 ${startIndex + 1}번부터 ${startIndex + pageQuestions.length}번">
+                ${pageQuestions.map((question, localIndex) => {
+                    const questionIndex = startIndex + localIndex;
+                    return `
+                    <section class="lesson25-question-card ${localIndex === 0 ? 'is-current' : ''}" data-lesson25-question="${questionIndex}" data-answer="${question.answer}" aria-label="${questionIndex + 1}번 문제">
                         <div class="lesson25-question-head">
-                            <span class="lesson25-question-number">${index + 1}</span>
-                            <button type="button" class="lesson25-question-sound" onclick="playLesson25QuestionSound(${index}, this)" aria-label="${index + 1}번 문제 소리 듣기">🔊 <span>문제 소리 듣기</span></button>
+                            <span class="lesson25-question-number">${questionIndex + 1}</span>
+                            <button type="button" class="lesson25-question-sound" onclick="playLesson25QuestionSound(${questionIndex}, this)" aria-label="${questionIndex + 1}번 문제 소리 듣기">🔊 <span>문제 소리 듣기</span></button>
                         </div>
-                        <div class="lesson25-choice-pair" role="group" aria-label="${index + 1}번 글자 선택">
-                            ${question.choices.map((choice) => `<button type="button" class="lesson25-choice-button" onclick="selectLesson25Answer(${index}, '${choice}', this)" aria-label="${choice} 선택"><span>${choice}</span><small aria-hidden="true">(　)</small></button>`).join('')}
+                        <div class="lesson25-choice-pair" role="group" aria-label="${questionIndex + 1}번 글자 선택">
+                            ${question.choices.map((choice) => `<button type="button" class="lesson25-choice-button" onclick="selectLesson25Answer(${questionIndex}, '${choice}', this)" aria-label="${choice} 선택"><span>${choice}</span><small aria-hidden="true">(　)</small></button>`).join('')}
                         </div>
                         <p class="lesson25-question-feedback" aria-live="polite">소리를 듣고 골라요.</p>
                     </section>
-                `).join('')}
+                `;}).join('')}
             </div>
         </div>
     `;
@@ -9160,15 +9164,16 @@ window.selectLesson25Answer = async function selectLesson25Answer(index, selecte
 
     const page = card.closest('[data-lesson25-listen-page]');
     const completed = page.querySelectorAll('.lesson25-question-card.is-complete').length;
+    const pageTotal = Number(page.dataset.pageTotal) || 10;
     const count = page.querySelector('#lesson25-listen-progress-count');
     const progressText = page.querySelector('#lesson25-listen-progress-text');
-    if (count) count.textContent = `푼 문제 ${completed} / ${LESSON25_LISTEN_CHOICE_QUESTIONS.length}`;
+    if (count) count.textContent = `푼 문제 ${completed} / ${pageTotal}`;
     const nextCard = page.querySelector('.lesson25-question-card:not(.is-complete)');
     if (nextCard) {
         nextCard.classList.add('is-current');
         if (progressText) progressText.textContent = `${Number(nextCard.dataset.lesson25Question) + 1}번 문제 소리를 들어 보세요.`;
     } else if (progressText) {
-        progressText.textContent = '참 잘했어요! 20문제를 모두 풀었어요.';
+        progressText.textContent = `참 잘했어요! ${pageTotal}문제를 모두 풀었어요.`;
     }
 };
 
@@ -12209,6 +12214,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             const localIndex = safeIndex % 5;
             sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 단어 쓰기`, `${batchim} 받침 · 그림 보고 쓰기`, `${batchim} 받침 · 도전하기`][localIndex];
+        } else if (isCustomLesson25 && safeIndex < 2) {
+            sectionTitle = `들은 낱말에 ○표 하기 ${safeIndex + 1} · ${safeIndex * 10 + 1}~${safeIndex * 10 + 10}번`;
         } else if (isCustomLesson25 && safeIndex === 2) {
             sectionTitle = '한 줄씩 소리 내어 읽기';
         } else if (isComplexLineLesson && safeIndex === 3) {
@@ -12259,8 +12266,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
         if (isCustomBatchimLesson) {
             const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             contentHtml = renderLesson21Page(numericStep, batchim, safeIndex % 5);
-        } else if (isCustomLesson25 && safeIndex === 0) {
-            contentHtml = renderLesson25ListenChoicePage();
+        } else if (isCustomLesson25 && safeIndex < 2) {
+            contentHtml = renderLesson25ListenChoicePage(safeIndex);
         } else if (isCustomLesson25 && safeIndex === 2) {
             contentHtml = renderLesson25ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 0) {
