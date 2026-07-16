@@ -7768,15 +7768,19 @@ function renderMyKoreanList() {
                 ? `onclick="openLearningDetailActivity(${item.step})"`
             : '';
         return `
-            <div class="grid-item p-6 flex items-center justify-between transition-all hover:translate-x-2 ${isOpen ? '' : 'opacity-40 grayscale'}">
+            <button type="button"
+                class="grid-item w-full p-6 flex items-center justify-between gap-4 text-left transition-all hover:translate-x-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#46b3a566] ${isOpen ? 'cursor-pointer' : 'opacity-40 grayscale cursor-not-allowed'}"
+                aria-label="${item.title} ${statusText}"
+                ${isOpen ? '' : 'disabled'}
+                ${openAction}>
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center ${isDone ? 'bg-green-100 text-green-600' : (isOpen ? 'bg-[#46b3a51a] text-[#46b3a5]' : 'bg-gray-100 text-gray-400')}">
                         ${isDone ? '✓' : (isOpen ? '▶' : '🔒')}
                     </div>
                     <div class="text-xl font-bold text-[#2c3e50]">${item.title}</div>
                 </div>
-                <button type="button" class="btn-primary py-2 px-6 text-base ${isDone ? 'bg-gray-100 !text-gray-500 shadow-none' : (isOpen ? '' : 'hidden')}" ${isOpen ? '' : 'disabled'} ${openAction}>${statusText}</button>
-            </div>
+                <span aria-hidden="true" class="btn-primary shrink-0 py-2 px-6 text-base text-center ${isDone ? 'bg-gray-100 !text-gray-500 shadow-none' : (isOpen ? '' : 'hidden')}">${statusText}</span>
+            </button>
         `;
     }).join('');
 }
