@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260716-lessons-22-24-batchim-pages">
+    <link rel="stylesheet" href="app.css?v=20260716-lessons-22-24-short-stage-names">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -216,28 +216,28 @@
                     <span class="stage-badge">STEP 1</span>
                     <span class="stage-emoji" aria-hidden="true">🎨</span>
                     <span class="level-title">1단계</span>
-                    <span class="level-desc">에이두 그리기</span>
+                    <span class="level-desc">그리기</span>
                     <span class="stage-note">그림 미션 · 스케치북 · 도안 해금</span>
                 </button>
                 <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('hangul')" id="card-level-2">
                     <span class="stage-badge">STEP 2</span>
                     <span class="stage-emoji hangul-icon" aria-hidden="true">ㄱㄴㄷ</span>
                     <span class="level-title">2단계</span>
-                    <span class="level-desc">에이두 한글 해득</span>
+                    <span class="level-desc">한글 해득</span>
                     <span class="stage-note">자음 · 모음 · 낱말 익히기</span>
                 </button>
                 <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('dictation')" id="card-level-3">
                     <span class="stage-badge">STEP 3</span>
                     <span class="stage-emoji" aria-hidden="true">✍️</span>
                     <span class="level-title">3단계</span>
-                    <span class="level-desc">에이두 받아쓰기</span>
+                    <span class="level-desc">받아쓰기</span>
                     <span class="stage-note">단어 은행 · 오답 연습 · 받아쓰기</span>
                 </button>
                 <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('literacy')" id="card-level-4">
                     <span class="stage-badge">STEP 4</span>
                     <span class="stage-emoji" aria-hidden="true">📚</span>
                     <span class="level-title">4단계</span>
-                    <span class="level-desc">에이두 문해력</span>
+                    <span class="level-desc">문해력</span>
                     <span class="stage-note">독해 · 어휘 · 문장 만들기</span>
                 </button>
             </div>
@@ -392,7 +392,7 @@
                     <!-- 오늘의 미션 -->
                     <div id="literacy-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-blue-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openTodayLiteracyMission()">
                         <div class="aiedu-badge bg-blue-600 mb-6">오늘의 미션</div>
-                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">에이두 문해력 문제</h3>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">문해력 문제</h3>
                         <p id="literacy-mission-desc" class="text-xl text-blue-600 font-bold">내 문해력 단증에 맞춰 자동으로 문제가 나와요!</p><div id="literacy-dan-dashboard-badge" class="mt-4 px-4 py-2 rounded-2xl bg-white text-blue-700 font-black shadow-sm">문해력 1단</div>
                     </div>
                 </div>
@@ -670,7 +670,7 @@
         <div id="my-dictation-section" class="view-section fade-in hidden bg-white">
             <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between">
                 <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goDictationDashboard()">
-                    <span class="aiedu-badge bg-red-500">에이두 받아쓰기 시리즈</span>
+                    <span class="aiedu-badge bg-red-500">받아쓰기 시리즈</span>
                     <span class="text-4xl font-bold text-red-500 tracking-tight">나의 받아쓰기</span>
                 </button>
                 <div class="text-right">
@@ -1082,9 +1082,9 @@
         <!-- [읽기 연습 섹션: 에이두 국어 카드 이전] -->
         <div id="reading-practice-section" class="view-section fade-in hidden bg-white">
             <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
-                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 한글 해득 대시보드로 돌아가기">
+                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="한글 해득 대시보드로 돌아가기">
                     <span aria-hidden="true">←</span>
-                    <span>에이두 한글 해득</span>
+                    <span>한글 해득</span>
                 </button>
                 <button type="button" id="reading-slow-toggle" class="reading-slow-toggle pointer-events-auto" onclick="toggleReadingSlowMode()" aria-pressed="false">
                     <span aria-hidden="true">🐢</span>
@@ -1205,9 +1205,9 @@
         <!-- [한글 게임 섹션] -->
         <div id="hangul-game-section" class="view-section fade-in hidden bg-white">
             <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
-                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 한글 해득 대시보드로 돌아가기">
+                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="한글 해득 대시보드로 돌아가기">
                     <span aria-hidden="true">←</span>
-                    <span>에이두 한글 해득</span>
+                    <span>한글 해득</span>
                 </button>
                 <div class="activity-profile-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfoDrawer();}" role="button" tabindex="0" aria-label="내 정보 열기">
                     <div class="text-right">
@@ -1525,7 +1525,7 @@
 
     </nav>
 
-    <script type="module" src="app.js?v=20260716-lessons-22-24-batchim-pages"></script>
+    <script type="module" src="app.js?v=20260716-lessons-22-24-short-stage-names"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

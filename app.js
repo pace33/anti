@@ -65,10 +65,10 @@ function normalizeUnlockedLevels(value, role = currentUserRole) {
 }
 
 const activityRoutes = {
-    drawing: { level: 1, sectionId: 'drawing-activities-section', page: 'drawing.html', label: '에이두 그리기' },
-    hangul: { level: 2, sectionId: 'hangul-activities-section', page: 'hangul.html', label: '에이두 한글 해득' },
-    dictation: { level: 3, sectionId: 'dictation-activities-section', page: 'dictation.html', label: '에이두 받아쓰기' },
-    literacy: { level: 4, sectionId: 'literacy-activities-section', page: 'literacy.html', label: '에이두 문해력' }
+    drawing: { level: 1, sectionId: 'drawing-activities-section', page: 'drawing.html', label: '그리기' },
+    hangul: { level: 2, sectionId: 'hangul-activities-section', page: 'hangul.html', label: '한글 해득' },
+    dictation: { level: 3, sectionId: 'dictation-activities-section', page: 'dictation.html', label: '받아쓰기' },
+    literacy: { level: 4, sectionId: 'literacy-activities-section', page: 'literacy.html', label: '문해력' }
 };
 
 function getActivityRouteFromLocation() {
