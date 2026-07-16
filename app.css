@@ -3058,10 +3058,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     background: #dbe8f5;
 }
 .lesson21-m-picture-write-cell.is-whole-syllable {
-    grid-template-rows: minmax(118px, 1fr) 25px;
+    min-height: 170px;
+    grid-template-rows: minmax(132px, 1fr) 25px;
 }
 .lesson21-m-picture-write-cell.is-whole-syllable .lesson21-m-picture-canvas {
-    height: 118px;
+    height: 132px;
 }
 .lesson21-m-picture-write-base {
     display: grid;
@@ -3168,10 +3169,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
         height: 76px;
     }
     .lesson21-m-picture-write-cell.is-whole-syllable {
-        grid-template-rows: minmax(104px, 1fr) 25px;
+        min-height: 150px;
+        grid-template-rows: minmax(112px, 1fr) 25px;
     }
     .lesson21-m-picture-write-cell.is-whole-syllable .lesson21-m-picture-canvas {
-        height: 104px;
+        height: 112px;
     }
     .lesson21-m-picture-write-base {
         font-size: 2.55rem;

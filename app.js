@@ -8645,7 +8645,7 @@ function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
                                 const index = writingIndex++;
                                 if (writesWholeSyllable) {
                                     return `<span class="lesson21-m-picture-write-cell is-whole-syllable" data-letter="${part.text}">
-                                        <canvas class="trace-writing-canvas lesson21-m-picture-canvas" data-guide="${part.text}" data-lesson21-m-picture-target="${index}" data-word="${item.word}" data-letter="${part.text}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="하늘색 칸에 ${part.text} 전체 글자 쓰기"></canvas>
+                                        <canvas class="trace-writing-canvas lesson21-m-picture-canvas" data-guide="${part.text}" data-trace-hide-label data-lesson21-m-picture-target="${index}" data-word="${item.word}" data-letter="${part.text}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="하늘색 칸에 ${part.text} 전체 글자 쓰기"></canvas>
                                         <span class="lesson21-m-picture-write-status" aria-live="polite">${part.text} 쓰기</span>
                                     </span>`;
                                 }
@@ -12174,17 +12174,21 @@ function collectTraceStrokeOrder(text, bx, by, boxW, boxH) {
     return out;
 }
 
-function drawTraceStrokeOrder(ctx, text, bx, by, boxW, boxH, completedCount = 0) {
-    const labelSize = Math.max(22, Math.min(boxW, boxH) * 0.18);
-    ctx.save();
-    ctx.fillStyle = '#c2410c';
-    ctx.font = `900 ${labelSize}px 'Noto Sans KR', sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(text, bx + 12, by + 10);
-    ctx.restore();
+function drawTraceStrokeOrder(ctx, text, bx, by, boxW, boxH, completedCount = 0, hideLabel = false) {
+    if (!hideLabel) {
+        const labelSize = Math.max(22, Math.min(boxW, boxH) * 0.18);
+        ctx.save();
+        ctx.fillStyle = '#c2410c';
+        ctx.font = `900 ${labelSize}px 'Noto Sans KR', sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(text, bx + 12, by + 10);
+        ctx.restore();
+    }
 
-    const strokes = collectTraceStrokeOrder(text, bx, by, boxW, boxH);
+    const guideY = hideLabel ? by - boxH * 0.04 : by;
+    const guideH = hideLabel ? boxH * 1.08 : boxH;
+    const strokes = collectTraceStrokeOrder(text, bx, guideY, boxW, guideH);
     strokes.forEach((item, idx) => {
         if (idx < completedCount) {
             drawTraceStroke(ctx, item.stroke, item.box, idx + 1, { completed: true, alpha: 0.45, color: '#fb923c' });
@@ -12392,7 +12396,16 @@ function drawTraceWritingGuide(target) {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        const strokes = drawTraceStrokeOrder(ctx, char, bx, by, boxW, boxH, completedMap[i] || 0);
+        const strokes = drawTraceStrokeOrder(
+            ctx,
+            char,
+            bx,
+            by,
+            boxW,
+            boxH,
+            completedMap[i] || 0,
+            canvas.dataset.traceHideLabel !== undefined
+        );
         cells.push({ index: i, char, bx, by, boxW, boxH, strokes });
     });
     canvas._traceCells = cells;
