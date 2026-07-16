@@ -12230,9 +12230,10 @@ function drawTraceWritingGuide(target) {
         const completedCount = canvas._traceCompleted?.[0] || 0;
         ctx.fillStyle = '#fffdf9';
         ctx.fillRect(0, 0, W, H);
+        const isBieupGuide = char === 'ㅂ';
         ctx.save();
-        ctx.fillStyle = '#f1cfad';
-        ctx.font = `900 ${Math.max(30, H * 0.72)}px 'Noto Sans KR', sans-serif`;
+        ctx.fillStyle = isBieupGuide ? '#e9bd91' : '#f1cfad';
+        ctx.font = `900 ${Math.max(30, H * (isBieupGuide ? 0.8 : 0.72))}px 'Noto Sans KR', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(char, W / 2, H * 0.54);
@@ -12246,9 +12247,11 @@ function drawTraceWritingGuide(target) {
             ctx.save();
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.strokeStyle = strokeIndex < completedCount ? '#59b9a8' : (strokeIndex === completedCount ? '#f28a3c' : '#e8b67f');
-            ctx.lineWidth = strokeIndex === completedCount ? 3 : 1.8;
-            ctx.setLineDash(strokeIndex > completedCount ? [3, 3] : []);
+            ctx.strokeStyle = strokeIndex < completedCount
+                ? '#59b9a8'
+                : (strokeIndex === completedCount ? '#f28a3c' : (isBieupGuide ? '#d98c45' : '#e8b67f'));
+            ctx.lineWidth = strokeIndex === completedCount ? 3 : (isBieupGuide ? 2.5 : 1.8);
+            ctx.setLineDash(strokeIndex > completedCount ? (isBieupGuide ? [5, 3] : [3, 3]) : []);
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
             points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
