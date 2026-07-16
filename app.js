@@ -12242,6 +12242,7 @@ function drawTraceWritingGuide(target) {
             ctx.lineWidth = Math.max(6, H * 0.075);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
+            ctx.setLineDash([]);
             ctx.beginPath();
             ctx.moveTo(left, top);
             ctx.lineTo(left, bottom);
