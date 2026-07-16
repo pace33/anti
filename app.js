@@ -3552,9 +3552,11 @@ function updateDashboardExperience(userData = {}) {
     if (currentUserRole === 'teacher') {
         document.getElementById('teacher-manage-btn').classList.remove('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
+        document.getElementById('rpg-student-shop-btn')?.classList.add('hidden');
     } else {
         document.getElementById('teacher-manage-btn').classList.add('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.add('hidden');
+        document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     }
 
     // Profile UI Upgrade
@@ -5238,6 +5240,7 @@ let activeTtsAbortController = null;
 let activeTtsObjectUrl = '';
 const AIEDUE_SCHOOL_TTS_ENDPOINT = 'https://us-central1-mansungcoin-c6e06.cloudfunctions.net/ttsHandler';
 const AIEDUE_TTS_CHUNK_LIMIT = 180;
+const AIEDUE_TTS_RATE_MULTIPLIER = 1.2;
 
 function unlockAudioAndSpeech() {
     // 1. HTML5 Audio Unlock
@@ -5310,7 +5313,7 @@ function waitForAiedueTtsAudio(audio, requestId) {
 async function playAiedueSchoolTtsChunk(text, playbackRate, requestId, signal) {
     const response = await fetch(AIEDUE_SCHOOL_TTS_ENDPOINT, {
         method: 'POST',
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, voice: 'female' }),
         signal
     });
     if (!response.ok) throw new Error(`에이두 스쿨 TTS 응답 오류 (${response.status})`);
@@ -5361,7 +5364,9 @@ function speakTextKo(text, onEndCallback, options = {}) {
             processedText = consonantSoundMap[text];
         }
     }
-    playAiedueSchoolTts(processedText, options)
+    const requestedRate = Number(options.playbackRate ?? 0.85);
+    const playbackRate = Math.min(2, Math.max(0.5, requestedRate * AIEDUE_TTS_RATE_MULTIPLIER));
+    playAiedueSchoolTts(processedText, { ...options, playbackRate })
         .then(() => onEndCallback?.())
         .catch((error) => {
             if (error?.name === 'AbortError') return;
@@ -12672,6 +12677,7 @@ window.handleLogout = async function handleLogout() {
         document.getElementById('drawer-overlay')?.classList.remove('open', 'visible');
         document.getElementById('teacher-manage-btn')?.classList.add('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.add('hidden');
+        document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
         setRpgHudVisible(false);
         showTopLevelSection('login-section');
         document.getElementById('main-container').style.maxWidth = '1000px';

@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260716-next-lesson">
+    <link rel="stylesheet" href="app.css?v=20260716-next-lesson-female-tts-hud-align">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1528,6 +1528,7 @@
             </button>
             <div class="rpg-profile-tools" aria-label="계정 메뉴">
                 <button type="button" class="rpg-tool-button" onclick="openSettingsModal()" aria-label="환경 설정"><span aria-hidden="true">⚙️</span><span>설정</span></button>
+                <button type="button" id="rpg-student-shop-btn" class="rpg-tool-button rpg-student-shop-button" onclick="openAiedueKoreanShop()" aria-label="상점"><span aria-hidden="true">🛒</span><span>상점</span></button>
                 <button type="button" id="rpg-teacher-manage-btn" class="rpg-tool-button hidden" onclick="openClassManagement()" aria-label="학급 관리"><span aria-hidden="true">🏫</span><span>학급</span></button>
                 <button type="button" class="rpg-tool-button rpg-logout-button" onclick="handleLogout()" aria-label="로그아웃"><span aria-hidden="true">🚪</span><span>나가기</span></button>
                 <button type="button" class="rpg-tool-button rpg-expand-button" onclick="toggleRpgHudActions(this)" aria-label="하단 메뉴 펼치기" aria-expanded="false" aria-controls="rpg-action-tray"><span aria-hidden="true">→</span><span>메뉴</span></button>
@@ -1551,7 +1552,7 @@
 
     </nav>
 
-    <script type="module" src="app.js?v=20260716-next-lesson"></script>
+    <script type="module" src="app.js?v=20260716-next-lesson-female-tts-hud-align"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
