@@ -8620,6 +8620,7 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
 function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
     const selectedBatchim = batchim === 'ㅂ' ? 'ㅂ' : 'ㅁ';
     const config = LESSON21_PICTURE_WRITING_CONFIGS[selectedBatchim];
+    const writesWholeSyllable = selectedBatchim === 'ㅁ';
     let writingIndex = 0;
     return `
         <div class="lesson21-page lesson21-m-picture-writing-page" data-lesson21-m-picture-writing="${lessonId}" data-batchim="${selectedBatchim}">
@@ -8642,6 +8643,12 @@ function renderLesson21MPictureWritingPage(lessonId, batchim = 'ㅁ') {
                             ${item.parts.map((part) => {
                                 if (!part.write) return `<span class="lesson21-m-picture-printed">${part.text}</span>`;
                                 const index = writingIndex++;
+                                if (writesWholeSyllable) {
+                                    return `<span class="lesson21-m-picture-write-cell is-whole-syllable" data-letter="${part.text}">
+                                        <canvas class="trace-writing-canvas lesson21-m-picture-canvas" data-guide="${part.text}" data-lesson21-m-picture-target="${index}" data-word="${item.word}" data-letter="${part.text}" data-fill-lesson="${lessonId}" data-fill-index="${index}" tabindex="0" aria-label="하늘색 칸에 ${part.text} 전체 글자 쓰기"></canvas>
+                                        <span class="lesson21-m-picture-write-status" aria-live="polite">${part.text} 쓰기</span>
+                                    </span>`;
+                                }
                                 const base = removeLesson21FinalBatchim(part.text, selectedBatchim);
                                 return `<span class="lesson21-m-picture-write-cell" data-letter="${part.text}">
                                     <span class="lesson21-m-picture-write-base" aria-hidden="true">${base}</span>
