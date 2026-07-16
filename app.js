@@ -3505,6 +3505,7 @@ function updateSyncedActivityHeaders({ name, coins, icon } = {}) {
     document.querySelectorAll('.sync-aedu-exp-bar').forEach((el) => {
         el.style.width = `${Math.min(100, Math.max(0, exp))}%`;
     });
+    document.getElementById('aiedue-rpg-hud')?.querySelector('[role="progressbar"]')?.setAttribute('aria-valuenow', String(Math.min(100, Math.max(0, Math.floor(exp)))));
     const warnings = typeof currentUserWarningTokens !== 'undefined' ? currentUserWarningTokens : 0;
     document.querySelectorAll('.sync-warning-tokens').forEach((el) => {
         el.innerText = Math.max(0, Math.floor(asNumber(warnings, 0)));
@@ -3547,8 +3548,10 @@ function updateDashboardExperience(userData = {}) {
     unlockedLevels = [1, 2, 3, 4];
     if (currentUserRole === 'teacher') {
         document.getElementById('teacher-manage-btn').classList.remove('hidden');
+        document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
     } else {
         document.getElementById('teacher-manage-btn').classList.add('hidden');
+        document.getElementById('rpg-teacher-manage-btn')?.classList.add('hidden');
     }
 
     // Profile UI Upgrade
@@ -3668,11 +3671,17 @@ function showTopLevelSection(sectionId) {
     topLevelSectionIds.forEach((id) => {
         setTopLevelSectionVisible(id, id === sectionId);
     });
+    setRpgHudVisible(Boolean(currentUserId) && !['start-screen', 'login-section'].includes(sectionId));
 
     // 일부 진입 경로(브라우저 뒤로가기/직접 섹션 표시/외부 라우트)에서는
     // openMyKoreanSection() 또는 openMyDrawingFromDashboard()를 거치지 않아
     // 동적으로 채우는 단계 목록이 빈 화면으로 남을 수 있다.
     refreshDynamicSectionContent(sectionId);
+}
+
+function setRpgHudVisible(isVisible) {
+    document.getElementById('aiedue-rpg-hud')?.classList.toggle('hidden', !isVisible);
+    document.body.classList.toggle('rpg-hud-active', isVisible);
 }
 
 function refreshDynamicSectionContent(sectionId) {
@@ -12614,6 +12623,8 @@ window.handleLogout = async function handleLogout() {
         document.getElementById('info-drawer')?.classList.remove('open');
         document.getElementById('drawer-overlay')?.classList.remove('open', 'visible');
         document.getElementById('teacher-manage-btn')?.classList.add('hidden');
+        document.getElementById('rpg-teacher-manage-btn')?.classList.add('hidden');
+        setRpgHudVisible(false);
         showTopLevelSection('login-section');
         document.getElementById('main-container').style.maxWidth = '1000px';
         inputPassword = '';
@@ -13291,6 +13302,7 @@ onAuthStateChanged(auth, async (user) => {
     if (!user) {
         loginSuccess = false;
         currentUserId = null;
+        setRpgHudVisible(false);
         return;
     }
 
@@ -13337,6 +13349,7 @@ onAuthStateChanged(auth, async (user) => {
             showLiteracyPromotionNotice(recoveredLiteracyPromotion);
         }
         loginSuccess = true;
+        setRpgHudVisible(true);
 
         // 이미 대시보드/활동 화면이라면 패스, 아니라면 요청된 활동 또는 대시보드 열기
         const visibleActivityRoute = getVisibleActivityRoute();
