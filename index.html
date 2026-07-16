@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260716-rpg-hud">
+    <link rel="stylesheet" href="app.css?v=20260716-rpg-hud-refine">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1523,6 +1523,7 @@
             </button>
             <button type="button" class="rpg-profile-copy" onclick="toggleInfoDrawer()" aria-label="내 정보 열기">
                 <strong class="sync-account-name">이름 없음</strong>
+                <span class="rpg-role-label sync-user-role">학생</span>
                 <span class="rpg-wallet-line"><span>⭐ <span class="sync-coins">0</span></span><span>⚠️ <span class="sync-warning-tokens">0</span></span></span>
             </button>
             <div class="rpg-profile-tools" aria-label="계정 메뉴">
@@ -1549,7 +1550,7 @@
         <span class="rpg-experience-label"><span class="sync-aedu-exp-percent">0%</span> EXP</span>
     </nav>
 
-    <script type="module" src="app.js?v=20260716-rpg-hud-tts-fix"></script>
+    <script type="module" src="app.js?v=20260716-rpg-hud-refine-tts-fix"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
