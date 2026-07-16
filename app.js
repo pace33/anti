@@ -3683,9 +3683,29 @@ function showTopLevelSection(sectionId) {
 }
 
 function setRpgHudVisible(isVisible) {
-    document.getElementById('aiedue-rpg-hud')?.classList.toggle('hidden', !isVisible);
+    const hud = document.getElementById('aiedue-rpg-hud');
+    hud?.classList.toggle('hidden', !isVisible);
+    if (!isVisible && hud) {
+        hud.classList.remove('actions-open');
+        hud.querySelector('.rpg-expand-button')?.setAttribute('aria-expanded', 'false');
+        hud.querySelector('.rpg-expand-button')?.setAttribute('aria-label', '하단 메뉴 펼치기');
+        const tray = hud.querySelector('.rpg-action-tray');
+        tray?.setAttribute('aria-hidden', 'true');
+        if (tray) tray.inert = true;
+    }
     document.body.classList.toggle('rpg-hud-active', isVisible);
 }
+
+window.toggleRpgHudActions = function toggleRpgHudActions(button) {
+    const hud = document.getElementById('aiedue-rpg-hud');
+    const tray = document.getElementById('rpg-action-tray');
+    if (!hud || !tray) return;
+    const isOpen = hud.classList.toggle('actions-open');
+    button?.setAttribute('aria-expanded', String(isOpen));
+    button?.setAttribute('aria-label', isOpen ? '하단 메뉴 접기' : '하단 메뉴 펼치기');
+    tray.setAttribute('aria-hidden', String(!isOpen));
+    tray.inert = !isOpen;
+};
 
 function refreshDynamicSectionContent(sectionId) {
     requestAnimationFrame(() => {
