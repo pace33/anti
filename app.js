@@ -31,7 +31,8 @@ import {
     runTransaction,
     serverTimestamp,
     arrayUnion,
-    arrayRemove
+    arrayRemove,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import {
     getStorage,
@@ -192,6 +193,8 @@ let currentUserWarningTokens = 0;
 let currentUserAeduExperience = 0;
 let currentUserAeduLevel = 1;
 let currentUserProfileSnapshot = {};
+let currentUserProfileUnsubscribe = null;
+let lastSyncedProfileUid = null;
 const aiedueKoreanShopItemsCache = new Map();
 let currentUnderstandingStep = 1;
 let currentLearningActivityStep = null;
@@ -3639,6 +3642,47 @@ function updateDashboardExperience(userData = {}) {
     updateDrawingDashboardPreview();
     updateDictationDashboardPreview();
     updateLiteracyDashboardPreview();
+}
+
+function stopAiedueSchoolProfileSync() {
+    if (typeof currentUserProfileUnsubscribe === 'function') {
+        try { currentUserProfileUnsubscribe(); } catch (error) { console.warn('Aiedue school profile sync unsubscribe failed', error); }
+    }
+    currentUserProfileUnsubscribe = null;
+    lastSyncedProfileUid = null;
+}
+
+function startAiedueSchoolProfileSync(uid) {
+    if (!uid || lastSyncedProfileUid === uid) return;
+    stopAiedueSchoolProfileSync();
+    lastSyncedProfileUid = uid;
+    const userRef = doc(db, 'users', uid);
+    currentUserProfileUnsubscribe = onSnapshot(userRef, async (snapshot) => {
+        if (!snapshot.exists()) return;
+        const userData = snapshot.data() || {};
+        try {
+            const teacherId = userData.teacherId || null;
+            const classId = userData.classId || userData.classCode || null;
+            await loadKoreanExperienceMultipliers(teacherId, classId);
+            updateDashboardExperience(userData);
+            updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
+            const visibleActivityRoute = getVisibleActivityRoute();
+            if (visibleActivityRoute) hydrateActivityRouteSection(visibleActivityRoute);
+            console.info('[AiedueSchoolSync] profile synced', {
+                uid,
+                balance: currentUserBalance,
+                coins: currentUserCoins,
+                aeduTokens: currentUserAeduTokens,
+                aeduExperience: currentUserAeduExperience,
+                aeduLevel: currentUserAeduLevel,
+                warningTokens: currentUserWarningTokens
+            });
+        } catch (error) {
+            console.warn('Aiedue school profile sync update failed', error);
+        }
+    }, (error) => {
+        console.warn('Aiedue school profile sync listener failed', error);
+    });
 }
 
 const topLevelSectionIds = [
@@ -14060,6 +14104,7 @@ document.getElementById('class-management-modal').addEventListener('click', (e) 
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
+        stopAiedueSchoolProfileSync();
         loginSuccess = false;
         currentUserId = null;
         setRpgHudVisible(false);
@@ -14068,6 +14113,7 @@ onAuthStateChanged(auth, async (user) => {
 
     try {
         currentUserId = user.uid;
+        startAiedueSchoolProfileSync(user.uid);
         let userRef = doc(db, 'users', user.uid);
         let userSnap = await getDoc(userRef);
 
