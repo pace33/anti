@@ -2181,15 +2181,26 @@ function calculateAiedueLevel(experience) {
     return Math.max(1, Math.floor(asNumber(experience, 0) / 100) + 1);
 }
 
+function normalizeAiedueLevelExperience(userData = {}) {
+    const rawExperience = Math.max(0, asNumber(userData?.aeduExperience ?? userData?.experience ?? userData?.exp ?? currentUserAeduExperience, 0));
+    const explicitLevelRaw = userData?.aeduLevel ?? userData?.level ?? userData?.schoolLevel ?? currentUserAeduLevel;
+    const explicitLevel = Number.isFinite(Number(explicitLevelRaw)) ? Math.max(1, Math.floor(Number(explicitLevelRaw))) : 1;
+    const derivedLevel = calculateAiedueLevel(rawExperience);
+    // 에이두 스쿨 구버전은 aeduExperience를 누적 EXP로 저장했고, 일부 계정은 level 필드만 수십 레벨로 갖고 있다.
+    // 에이두 국어 UI/보상은 레벨 내부 0~99% 게이지를 쓰되, 저장된 학교 레벨을 절대 Lv.1로 낮추지 않는다.
+    const aeduLevel = Math.max(explicitLevel, derivedLevel);
+    const aeduExperience = rawExperience >= 100 ? (rawExperience % 100) : rawExperience;
+    return { aeduLevel, aeduExperience };
+}
+
 function buildAiedueSchoolProfileSnapshot(userData = {}) {
     const balance = asNumber(userData?.balance ?? userData?.coins ?? userData?.aeduTokens ?? currentUserBalance ?? currentUserCoins, 0);
     const coins = balance;
     const aeduTokens = asNumber(userData?.aeduTokens ?? userData?.aeduToken ?? balance ?? currentUserAeduTokens, balance);
     const warningTokens = asNumber(userData?.warningTokens ?? currentUserWarningTokens, 0);
-    const aeduExperience = asNumber(userData?.aeduExperience ?? currentUserAeduExperience, 0);
-    const aeduLevel = asNumber(userData?.aeduLevel ?? calculateAiedueLevel(aeduExperience), 1);
+    const { aeduExperience, aeduLevel } = normalizeAiedueLevelExperience(userData);
     return {
-        userId: currentUserId || userData?.uid || null,
+        userId: userData?.uid || currentUserId || null,
         userCode: userData?.userCode ?? userData?.code ?? userData?.studentCode ?? null,
         userName: userData?.name || currentUserName || '이름 없음',
         userIcon: userData?.icon || currentUserIcon || '🐻',
@@ -2218,11 +2229,9 @@ function setCurrentAiedueSchoolWalletFromSnapshot(snapshot = {}) {
     currentUserCoins = syncedBalance;
     currentUserAeduTokens = asNumber(snapshot.aeduTokens, syncedBalance);
     currentUserWarningTokens = asNumber(snapshot.warningTokens, currentUserWarningTokens);
-    const rawExperience = Math.max(0, asNumber(snapshot.aeduExperience, currentUserAeduExperience));
-    const hasStoredLevel = Number.isFinite(Number(snapshot.aeduLevel));
-    currentUserAeduLevel = hasStoredLevel ? Math.max(1, Math.floor(Number(snapshot.aeduLevel))) : calculateAiedueLevel(rawExperience);
-    // New 에이두 국어 uses aeduExperience as the in-level percent gauge. Older school records may have total EXP.
-    currentUserAeduExperience = rawExperience >= 100 ? (rawExperience % 100) : rawExperience;
+    const normalizedLevel = normalizeAiedueLevelExperience(snapshot);
+    currentUserAeduLevel = normalizedLevel.aeduLevel;
+    currentUserAeduExperience = normalizedLevel.aeduExperience;
 }
 
 // 전역 단계별 경험치 배율 데이터 (koreanExperienceMultipliers 마커)
@@ -3590,7 +3599,7 @@ function updateDashboardExperience(userData = {}) {
     currentUserAeduTokens = asNumber(currentUserProfileSnapshot.aeduTokens, currentUserBalance);
     currentUserWarningTokens = asNumber(currentUserProfileSnapshot.warningTokens, 0);
     currentUserAeduExperience = asNumber(currentUserProfileSnapshot.aeduExperience, currentUserAeduExperience);
-    currentUserAeduLevel = asNumber(currentUserProfileSnapshot.aeduLevel, calculateAiedueLevel(currentUserAeduExperience));
+    currentUserAeduLevel = asNumber(currentUserProfileSnapshot.aeduLevel, currentUserAeduLevel);
     drawingPortfolio = {
         missions: userData?.drawingPortfolio?.missions || {},
         free: Array.isArray(userData?.drawingPortfolio?.free) ? userData.drawingPortfolio.free : [],
@@ -4421,10 +4430,11 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
         progress.innerText = text;
         progress.classList.toggle('hidden', !text);
     }
-    document.getElementById('drawing-template-panel').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
-    document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !(missionStep || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing));
+    const completionModeActive = Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing || mode === 'sketchbook';
+    document.getElementById('drawing-template-panel').classList.toggle('hidden', completionModeActive);
+    document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !completionModeActive);
     document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
-    document.getElementById('drawing-save-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
+    document.getElementById('drawing-save-btn').classList.toggle('hidden', completionModeActive);
     updateDrawingCompleteButtonCooldown();
     showTopLevelSection('drawing-workspace-section');
     requestAnimationFrame(() => {
@@ -4929,6 +4939,15 @@ function buildDrawingRecord({ image, kind, missionStep = null, savedAt, accuracy
     };
 }
 
+function addDrawingRecordToPortfolioGallery(record) {
+    if (!record?.image) return;
+    ensureDrawingPortfolioShapeFields();
+    const keyFor = (item) => [item?.kind, item?.missionStep ?? '', item?.template ?? '', item?.savedAt ?? ''].join('|');
+    const recordKey = keyFor(record);
+    const currentFree = Array.isArray(drawingPortfolio.free) ? drawingPortfolio.free : [];
+    drawingPortfolio.free = [record, ...currentFree.filter((item) => keyFor(item) !== recordKey)].slice(0, 60);
+}
+
 // Firestore 저장용 대형 이미지를 최대 640px 크기의 jpeg 썸네일로 압축하는 헬퍼 함수
 function compressDrawingImage(dataUrl, maxDim = 640) {
     return new Promise((resolve) => {
@@ -5128,7 +5147,7 @@ window.saveCurrentDrawing = async function() {
     const record = buildDrawingRecord({ image, kind, missionStep: drawingWorkspaceMissionStep, savedAt: now });
     // 저장은 현재 활동 화면에 그대로 머물며 작품만 보관한다.
     // 그림 미션 단계 완료/해금/이어하기 변경은 완료하기 버튼에서만 처리한다.
-    drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
+    addDrawingRecordToPortfolioGallery(record);
     await persistDrawingData();
     await saveDrawingRecordToFirebase(record);
     updateDrawingDashboardPreview();
@@ -5230,17 +5249,19 @@ window.completeTodayDrawingMission = async function() {
                 }
             }
             record.rewardedPoints = rewardPoints;
+            addDrawingRecordToPortfolioGallery(record);
             await saveDrawingRecordToFirebase(record);
             message = `${drawingWorkspaceMissionStep}단계 정확도 ${result.accuracy}%. ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardPoints ? ` 에이두 포인트 ${rewardPoints}점을 받았어요.` : ' 50% 미만이라 포인트는 없어요.'}`;
         }
 
         if (!drawingWorkspaceMissionStep) {
-            let kind = 'shape-mission';
-            if (drawingWorkspaceAiQuiz) kind = 'ai-drawing';
+            let kind = 'sketchbook';
+            if (drawingWorkspaceMode === 'shape-mission') kind = 'shape-mission';
+            else if (drawingWorkspaceAiQuiz) kind = 'ai-drawing';
             else if (drawingWorkspaceMode === 'infinite-drawing') kind = 'infinite-drawing';
 
             const record = buildDrawingRecord({ image, kind, savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
-            drawingPortfolio.free = [record, ...(drawingPortfolio.free || [])].slice(0, 24);
+            addDrawingRecordToPortfolioGallery(record);
             await saveDrawingRecordToFirebase(record);
         }
 
@@ -6989,7 +7010,7 @@ async function showLiteracyResult(isCorrect, details) {
     explanation.innerText = `💡 해설:\n${activeLiteracyQuestion.explanation || '지문을 다시 읽고 이해해 보세요.'}`;
 
     if (isCorrect) {
-        currentUserCoins += 5;
+        applyAieduePointReward(5);
 
         // --- 문해력 경험치 공식 (literacyExperienceMultiplier 마커) ---
         const baseExp = 1; // 1%
@@ -7007,7 +7028,7 @@ async function showLiteracyResult(isCorrect, details) {
         else if (typeLower === 'essay' || typeLower === '서술형') typeMult = 10;
 
         const modeMult = (isLiteracyLimitBreakMode) ? 2 : 1;
-        const stageMultiplier = calculateStageExperienceMultiplier(4);
+        const stageMultiplier = Math.max(calculateStageExperienceMultiplier(4), 1);
 
         const finalExp = baseExp * diffMult * typeMult * modeMult * stageMultiplier;
         if (finalExp > 0) {
@@ -7089,7 +7110,7 @@ async function showLiteracyResult(isCorrect, details) {
 window.claimLiteracyWrongReviewReward = async function(claimId) {
     if (!activeLiteracyQuestion || activeLiteracyQuestion.pendingReviewRewardId !== claimId || activeLiteracyQuestion.reviewRewardClaimed) return;
     activeLiteracyQuestion.reviewRewardClaimed = true;
-    const stageMultiplier = calculateStageExperienceMultiplier(4);
+    const stageMultiplier = Math.max(calculateStageExperienceMultiplier(4), 1);
     const finalExp = 2 * stageMultiplier;
     if (finalExp > 0) applyAiedueExperienceReward(finalExp, { source: 'literacy-wrong-review', claimId });
     await persistLiteracyData();
