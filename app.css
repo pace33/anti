@@ -6610,7 +6610,7 @@ body {
 .lesson26-picture-card:hover,.lesson26-picture-card:focus-visible {border-color:#3ca88f;background:#f1fbf7;transform:translateY(-1px);}
 .lesson26-picture-icon {grid-column:2;grid-row:1 / 4;display:grid;place-items:center;height:100%;background:#f3f8fb;font-size:3.4rem;}
 .lesson26-picture-word {grid-column:1;grid-row:1 / 3;align-self:end;padding:12px 8px 2px;font-size:2rem;font-weight:1000;}
-.lesson26-batchim-highlight {display:inline-block;color:#152f49;background:linear-gradient(to bottom,#152f49 0 64%,#e25224 64% 100%);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.lesson26-batchim-highlight {display:inline-block;line-height:1;color:#152f49;background:linear-gradient(to bottom,#152f49 0 59%,#e25224 59% 100%);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;vertical-align:-.04em;}
 @media (forced-colors:active) {
     .lesson26-batchim-highlight {color:Highlight;background:none;-webkit-text-fill-color:currentColor;}
 }
