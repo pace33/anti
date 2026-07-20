@@ -9344,6 +9344,113 @@ window.confirmLesson25ReadingLine = function confirmLesson25ReadingLine(lineInde
     }).catch(() => {});
 };
 
+const LESSON25_PATH_GAME_STAGES = [
+    { icon: '🏔️', label: '산 그림', choices: ['산', '상'], answer: '산' },
+    { icon: '🪢', label: '줄 그림', choices: ['준', '줄'], answer: '줄' },
+    { icon: '🍚', label: '밥 그림', choices: ['밤', '밥'], answer: '밥' },
+    { icon: '🥛', label: '물 그림', choices: ['물', '문'], answer: '물' },
+    { icon: '⭐', label: '별 그림', choices: ['별', '변'], answer: '별' },
+    { icon: '✋', label: '손 그림', choices: ['손', '솔'], answer: '손' },
+    { icon: '💃', label: '춤 그림', choices: ['춘', '춤'], answer: '춤' },
+    { icon: '🍊', label: '귤 그림', choices: ['귤', '균'], answer: '귤' },
+    { icon: '📕', label: '책 그림', choices: ['책', '챔'], answer: '책' },
+    { icon: '🤴', label: '왕 그림', choices: ['왐', '왕'], answer: '왕' }
+];
+
+function renderLesson25PathGame() {
+    return `
+        <div class="lesson25-path-game" data-lesson25-path-game>
+            <div class="lesson25-path-guide">
+                <span class="lesson25-path-start">출발</span>
+                <strong>그림에 알맞은 글자를 골라 길을 따라가요.</strong>
+                <button type="button" class="lesson25-path-reset" onclick="resetLesson25PathGame()" aria-label="받침왕 길 찾기 다시 시작">↻ 다시 시작</button>
+            </div>
+            <div class="lesson25-path-progress" role="status" aria-live="polite">
+                <span id="lesson25-path-message">첫 번째 그림을 보고 알맞은 글자를 골라 보세요.</span>
+                <strong id="lesson25-path-count">도착까지 0 / 10</strong>
+            </div>
+            <div class="lesson25-path-board" aria-label="그림 글자 길 찾기 10단계">
+                ${LESSON25_PATH_GAME_STAGES.map((stage, index) => `
+                    <section class="lesson25-path-stage ${index === 0 ? 'is-current' : 'is-locked'}" data-path-stage="${index}" aria-label="${index + 1}단계 ${stage.label}" aria-disabled="${index === 0 ? 'false' : 'true'}">
+                        <span class="lesson25-path-step">${index + 1}</span>
+                        <span class="lesson25-path-token" aria-hidden="true">★</span>
+                        <div class="lesson25-path-picture" role="img" aria-label="${stage.label}">${stage.icon}</div>
+                        <div class="lesson25-path-choices" role="group" aria-label="${stage.label}에 알맞은 글자 선택">
+                            ${stage.choices.map((choice) => `<button type="button" onclick="selectLesson25PathAnswer(${index}, '${choice}', this)" ${index === 0 ? '' : 'disabled'}>${choice}</button>`).join('')}
+                        </div>
+                        <p class="lesson25-path-stage-feedback">${index === 0 ? '글자를 골라요.' : '앞의 길을 먼저 통과해요.'}</p>
+                    </section>
+                `).join('')}
+            </div>
+            <div class="lesson25-path-finish" aria-live="polite"><span>🏁</span><strong>도착</strong></div>
+        </div>
+    `;
+}
+
+window.selectLesson25PathAnswer = function selectLesson25PathAnswer(stageIndex, selected, button) {
+    const stageData = LESSON25_PATH_GAME_STAGES[stageIndex];
+    const stage = button?.closest('.lesson25-path-stage');
+    const game = stage?.closest('[data-lesson25-path-game]');
+    if (!stageData || !stage || !game || stage.classList.contains('is-locked') || stage.classList.contains('is-complete')) return;
+    const feedback = stage.querySelector('.lesson25-path-stage-feedback');
+    stage.querySelectorAll('.lesson25-path-choices button').forEach((choice) => choice.classList.remove('is-try-again'));
+    const isCorrect = selected === stageData.answer;
+
+    recordKoreanAttempt({
+        lessonId: 25,
+        lessonTitle: '배움 25: 도전, 받침왕! (1)',
+        unitId: getUnitIdForLesson(25),
+        activityType: 'wordPictureMatch',
+        word: stageData.answer,
+        answer: stageData.answer,
+        userAnswer: selected,
+        isCorrect,
+        retryIndex: isCorrect ? 0 : nextKoreanRetryIndex({ lessonId: 25, activityType: 'wordPictureMatch', answer: stageData.answer }),
+        errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH
+    }).catch(() => {});
+
+    if (!isCorrect) {
+        button.classList.add('is-try-again');
+        if (feedback) feedback.textContent = '그림을 다시 보고 골라 보세요.';
+        speakTextKo('다시 골라 보아요.');
+        return;
+    }
+
+    resetKoreanRetryIndex({ lessonId: 25, activityType: 'wordPictureMatch', answer: stageData.answer });
+    stage.classList.remove('is-current');
+    stage.classList.add('is-complete');
+    stage.setAttribute('aria-disabled', 'false');
+    stage.querySelectorAll('.lesson25-path-choices button').forEach((choice) => {
+        choice.disabled = true;
+        choice.classList.toggle('is-correct', choice === button);
+    });
+    if (feedback) feedback.textContent = `○ ${stageData.answer}, 맞았어요!`;
+    speakTextKo(`${stageData.answer}. 맞았어요.`);
+
+    const completed = game.querySelectorAll('.lesson25-path-stage.is-complete').length;
+    const count = game.querySelector('#lesson25-path-count');
+    const message = game.querySelector('#lesson25-path-message');
+    if (count) count.textContent = `도착까지 ${completed} / ${LESSON25_PATH_GAME_STAGES.length}`;
+    const nextStage = game.querySelector(`.lesson25-path-stage[data-path-stage="${stageIndex + 1}"]`);
+    if (nextStage) {
+        nextStage.classList.remove('is-locked');
+        nextStage.classList.add('is-current');
+        nextStage.setAttribute('aria-disabled', 'false');
+        nextStage.querySelectorAll('.lesson25-path-choices button').forEach((choice) => { choice.disabled = false; });
+        const nextFeedback = nextStage.querySelector('.lesson25-path-stage-feedback');
+        if (nextFeedback) nextFeedback.textContent = '글자를 골라요.';
+        if (message) message.textContent = `${stageIndex + 2}번째 그림으로 이동했어요.`;
+    } else {
+        game.classList.add('is-finished');
+        if (message) message.textContent = '참 잘했어요! 받침왕 길을 모두 통과했어요.';
+        speakTextKo('도착! 받침왕 길을 모두 통과했어요.');
+    }
+};
+
+window.resetLesson25PathGame = function resetLesson25PathGame() {
+    renderLearningDetail(25, 3);
+};
+
 function setLesson21MFeedback(page, message) {
     const feedback = page?.querySelector('#lesson21-m-feedback');
     if (feedback) feedback.textContent = message;
@@ -12251,6 +12358,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (numericStep === 14) totalSections = 7;
     if (isComplexLineLesson) totalSections = 4;
     if (isCustomLesson20) totalSections = 5;
+    if (isCustomLesson25) totalSections = 4;
     if (isCustomBatchimLesson) totalSections = batchimPageSequence.length * 5;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
@@ -12299,6 +12407,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             sectionTitle = `들은 낱말에 ○표 하기 ${safeIndex + 1} · ${safeIndex * 10 + 1}~${safeIndex * 10 + 10}번`;
         } else if (isCustomLesson25 && safeIndex === 2) {
             sectionTitle = '한 줄씩 소리 내어 읽기';
+        } else if (isCustomLesson25 && safeIndex === 3) {
+            sectionTitle = '도전하기 · 그림 글자 길 찾기';
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -12351,6 +12461,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson25ListenChoicePage(safeIndex);
         } else if (isCustomLesson25 && safeIndex === 2) {
             contentHtml = renderLesson25ReadingPage();
+        } else if (isCustomLesson25 && safeIndex === 3) {
+            contentHtml = renderLesson25PathGame();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
