@@ -389,12 +389,12 @@ const CHANCHAN_LESSONS = [
     },
     {
         id: 27,
-        unit: 8,
-        title: "ㅂ 받침가족",
-        focus: ["ㅂ", "ㅍ"],
-        activities: ["batchimFamily", "readThreeTimes"],
-        words: ["입", "앞", "옆", "숲", "잎", "톱"],
-        rule: "소리는 비슷하지만 글자는 달라요. 쓰기보다 읽기 중심으로 학습해요."
+        unit: 7,
+        title: "대표받침 단어 읽기",
+        focus: ["ㅁ", "ㅂ", "ㅇ", "ㄱ", "ㄴ", "ㄹ", "ㄷ"],
+        activities: ["readThreeTimes", "listenAndFind", "fillOneJamo", "wordGame"],
+        words: ["염소", "감자", "구름", "수첩", "집게", "서랍", "강가", "야구공", "늑대", "국자", "축구공", "책상", "기린", "분수", "고릴라", "갈매기", "돋보기", "걷다"],
+        rule: "그림과 소리를 함께 확인하고 7가지 대표받침이 들어간 단어를 정확하게 읽어요."
     },
     {
         id: 28,
@@ -1703,39 +1703,39 @@ const learningDetailData = {
         ]
     },
     27: {
-        title: '배움 27: ㅂ 받침가족',
-        subtitle: '이해하기→연습하기→읽기→도전하기를 활동별 페이지로 진행해요.',
+        title: '배움 27: 대표받침 단어 읽기',
+        subtitle: '그림 단어 읽기→읽고 찾기→완성하기→단어 놀이 순서로 진행해요.',
         sections: [
             {
-                label: '이해하기',
-                title: 'ㅂ, ㅍ 받침 소리 익히기',
-                cards: [
-                    'ㅂ(비읍)과 ㅍ(피읖)은 받침에서 모두 /ㅂ/ 소리로 나는 점을 익혀요.',
-                    '입 모양과 손 동작을 보며 받침 소리가 같다는 규칙을 확인해요.'
-                ]
-            },
-            {
-                label: '연습하기',
-                title: '들리는 대로 받침쓰기',
-                cards: [
-                    '이ㅍ→이, 이ㅂ→이, 여ㅍ→여, 수ㅍ→수, 지ㅂ→지, 아ㅍ→아처럼 받침을 빼고 읽는 연습을 해요.',
-                    '저시ㅂ→저시, 무르ㅍ→무르, 더바ㅍ→더바, 노다ㅍ→노다 카드로 /ㅂ/ 소리를 반복해요.'
-                ]
-            },
-            {
                 label: '읽기',
-                title: '받침소리를 생각하며 단어 읽기',
+                title: '그림과 함께 대표받침 단어 읽기',
                 cards: [
-                    '지ㅂ, 아ㅍ, 바ㅂ, 사ㅂ, 여ㅍ, 수ㅍ / 토ㅂ, 노다, 저다, 추다를 소리 내어 읽어요.',
-                    '무르, 저시, 뒤더다, 가다, 이체, 이사귀, 아치마, 보고시다 카드도 받침 소리를 생각하며 읽어요.'
+                    '염소, 감자, 구름, 수첩, 집게, 서랍처럼 대표받침이 들어간 단어를 그림과 함께 읽어요.',
+                    '그림과 단어를 누르면 소리를 들을 수 있어요.'
                 ]
             },
             {
-                label: '도전하기',
-                title: '스스로 정확하게 읽기',
+                label: '읽고 찾기',
+                title: '그림에 알맞은 단어 찾기',
                 cards: [
-                    '1단계~3단계 묶음(입, 앞, 옆, 톱, 숲, 법, 잎 / 답답, 쉽다, 깊다, 덮밥 / 눕지대, 구급차, 앞치마)을 읽어요.',
-                    '마지막 페이지에서 완료하기 버튼을 눌러 배움 28로 이동해요.'
+                    '그림 이름을 듣고 두 단어 중 그림에 알맞은 단어를 골라요.',
+                    '틀리면 정답을 보여 주지 않고 다시 선택해요.'
+                ]
+            },
+            {
+                label: '완성하기',
+                title: '하늘색 칸에 빠진 받침 쓰기',
+                cards: [
+                    '그림을 보고 하늘색 칸에 빠진 받침만 직접 써서 단어를 완성해요.',
+                    '마우스, 손가락, 터치펜으로 쓸 수 있어요.'
+                ]
+            },
+            {
+                label: '놀이',
+                title: '대표받침 단어 놀이',
+                cards: [
+                    '가위바위보에서 이긴 친구의 말을 한 칸 움직이고 도착한 칸의 단어를 읽어요.',
+                    '마지막 페이지에서 완료하기 버튼을 눌러 다음 배움으로 이동해요.'
                 ]
             }
         ]
@@ -2130,10 +2130,10 @@ const learningUnits = {
         { step: 25, title: '배움 25: 도전, 받침왕! (1)', page: 146 }
     ],
     batchimWord: [
-        { step: 26, title: '배움 26: ‘7가지’ 대표받침 단어 공부하기', page: 153 }
+        { step: 26, title: '배움 26: ‘7가지’ 대표받침 단어 공부하기', page: 153 },
+        { step: 27, title: '배움 27: 대표받침 단어 읽기', page: 153 }
     ],
     complexBatchim: [
-        { step: 27, title: '배움 27: ㅂ 받침가족', page: 165 },
         { step: 28, title: '배움 28: ㄱ 받침가족', page: 168 },
         { step: 29, title: '배움 29: ㄷ 받침가족', page: 171 },
         { step: 30, title: '배움 30: 도전, 받침왕! (2)', page: 175 }
@@ -9451,6 +9451,188 @@ window.resetLesson25PathGame = function resetLesson25PathGame() {
     renderLearningDetail(25, 3);
 };
 
+const LESSON27_READING_GROUPS = [
+    {
+        id: 'batchim-mb',
+        title: 'ㅁ·ㅂ 받침 단어',
+        pictureItems: [
+            { word: '염소', icon: '🐐' }, { word: '감자', icon: '🥔' },
+            { word: '구름', icon: '☁️' }, { word: '수첩', icon: '🗒️' },
+            { word: '집게', icon: '🥢' }, { word: '서랍', icon: '🗄️' }
+        ],
+        wordRows: [
+            ['김치', '봄비', '잠수'], ['감기', '소금', '잠자리'],
+            ['입구', '춥다', '줍다'], ['밥집', '몸집', '종이접기']
+        ]
+    },
+    {
+        id: 'batchim-ngk',
+        title: 'ㅇ·ㄱ 받침 단어',
+        pictureItems: [
+            { word: '강가', icon: '🏞️' }, { word: '야구공', icon: '⚾' },
+            { word: '늑대', icon: '🐺' }, { word: '국자', icon: '🥄' },
+            { word: '축구공', icon: '⚽' }, { word: '책상', icon: '🪑' }
+        ],
+        wordRows: [
+            ['석가탑', '박수', '악어'], ['행복', '막대기', '떡국'],
+            ['사랑', '호박', '옥수수'], ['태극기', '독수리', '백조']
+        ]
+    },
+    {
+        id: 'batchim-nld',
+        title: 'ㄴ·ㄹ·ㄷ 받침 단어',
+        pictureItems: [
+            { word: '기린', icon: '🦒' }, { word: '분수', icon: '⛲' },
+            { word: '고릴라', icon: '🦍' }, { word: '갈매기', icon: '🕊️' },
+            { word: '돋보기', icon: '🔍' }, { word: '걷다', icon: '🚶‍♀️' }
+        ],
+        wordRows: [
+            ['버선', '변기', '만두'], ['눈사람', '원숭이', '병원'],
+            ['겨울', '마을', '솔방울'], ['뜯다', '쏟다', '받침']
+        ]
+    }
+];
+
+const LESSON27_NONSENSE_ROWS = [
+    ['섬씨', '곰버', '무섭'], ['봄비', '서집', '구그앱'],
+    ['럽스터', '소래질', '루답'], ['카럼', '경낭이', '당지'],
+    ['경주', '보벅주', '수소톡'], ['빽지', '석자집', '손지'],
+    ['아반', '안시리', '소플'], ['아가틸', '아르빌', '소자컬']
+];
+
+const LESSON27_FIND_GROUPS = [
+    [
+        { word: '염소', icon: '🐐', choices: ['염소', '영소'] },
+        { word: '감자', icon: '🥔', choices: ['갑자', '감자'] },
+        { word: '구름', icon: '☁️', choices: ['구름', '구릉'] },
+        { word: '수첩', icon: '🗒️', choices: ['수철', '수첩'] },
+        { word: '집게', icon: '🥢', choices: ['집게', '깁게'] },
+        { word: '서랍', icon: '🗄️', choices: ['서랑', '서랍'] }
+    ],
+    [
+        { word: '늑대', icon: '🐺', choices: ['늑대', '늗대'] },
+        { word: '국자', icon: '🥄', choices: ['굴자', '국자'] },
+        { word: '책상', icon: '🪑', choices: ['책상', '챙상'] },
+        { word: '기린', icon: '🦒', choices: ['기링', '기린'] },
+        { word: '분수', icon: '⛲', choices: ['분수', '불수'] },
+        { word: '걷다', icon: '🚶‍♀️', choices: ['걸다', '걷다'] }
+    ]
+];
+
+const LESSON27_WRITING_GROUPS = [
+    [
+        { word: '염소', icon: '🐐', prefix: '', open: '여', target: 'ㅁ', suffix: '소' },
+        { word: '감자', icon: '🥔', prefix: '', open: '가', target: 'ㅁ', suffix: '자' },
+        { word: '구름', icon: '☁️', prefix: '구', open: '르', target: 'ㅁ', suffix: '' },
+        { word: '수첩', icon: '🗒️', prefix: '수', open: '처', target: 'ㅂ', suffix: '' },
+        { word: '집게', icon: '🥢', prefix: '', open: '지', target: 'ㅂ', suffix: '게' },
+        { word: '서랍', icon: '🗄️', prefix: '서', open: '라', target: 'ㅂ', suffix: '' }
+    ],
+    [
+        { word: '늑대', icon: '🐺', prefix: '', open: '느', target: 'ㄱ', suffix: '대' },
+        { word: '국자', icon: '🥄', prefix: '', open: '구', target: 'ㄱ', suffix: '자' },
+        { word: '책상', icon: '🪑', prefix: '', open: '채', target: 'ㄱ', suffix: '상' },
+        { word: '기린', icon: '🦒', prefix: '기', open: '리', target: 'ㄴ', suffix: '' },
+        { word: '분수', icon: '⛲', prefix: '', open: '부', target: 'ㄴ', suffix: '수' },
+        { word: '걷다', icon: '🚶‍♀️', prefix: '', open: '거', target: 'ㄷ', suffix: '다' }
+    ]
+];
+
+function renderLesson27ReadingPage(groupIndex) {
+    const group = LESSON27_READING_GROUPS[groupIndex];
+    if (!group) return '';
+    return `
+        <div class="lesson27-page lesson27-reading-page">
+            <div class="lesson27-guide"><strong>읽기 ${groupIndex + 1}</strong><span>그림을 누르고 소리를 들은 뒤, 단어를 큰 소리로 읽어 보세요.</span></div>
+            <div class="lesson27-picture-grid">
+                ${group.pictureItems.map((item) => `<button type="button" class="lesson27-picture-card" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기"><span class="lesson27-picture-icon" aria-hidden="true">${item.icon}</span><span class="lesson27-picture-word">${item.word}</span><small>🔊 눌러서 들어요</small></button>`).join('')}
+            </div>
+            <div class="lesson27-word-board">
+                <h3>한 줄씩 소리 내어 읽어요</h3>
+                ${group.wordRows.map((row) => `<div class="lesson27-word-row">${row.map((word) => `<button type="button" onclick="speakLesson13Word('${word}', this)">${word}</button>`).join('')}</div>`).join('')}
+            </div>
+            ${renderLesson13ReadChecks(27, group.id, group.title)}
+        </div>`;
+}
+
+function renderLesson27NonsensePage() {
+    return `
+        <div class="lesson27-page">
+            <div class="lesson27-guide"><strong>읽기 4</strong><span>뜻이 없는 낱말도 받침 소리를 생각하며 천천히 읽어 보세요.</span></div>
+            <div class="lesson27-nonsense-grid">
+                ${LESSON27_NONSENSE_ROWS.flat().map((word) => `<button type="button" onclick="speakLesson13Word('${word}', this)" aria-label="${word} 소리 듣기">${word}<small>🔊</small></button>`).join('')}
+            </div>
+            ${renderLesson13ReadChecks(27, 'nonsense', '대표받침 무의미 단어')}
+        </div>`;
+}
+
+function renderLesson27FindPage(groupIndex) {
+    const items = LESSON27_FIND_GROUPS[groupIndex] || [];
+    return `
+        <div class="lesson27-page lesson27-find-page" data-lesson27-find-page="${groupIndex}">
+            <div class="lesson27-guide"><strong>읽고 찾기 ${groupIndex + 1}</strong><span>그림을 눌러 이름을 듣고, 알맞은 단어를 골라 보세요.</span></div>
+            <div class="lesson27-find-progress" role="status" aria-live="polite"><span>그림과 단어를 하나씩 살펴보세요.</span><strong>완성 0 / ${items.length}</strong></div>
+            <div class="lesson27-find-grid">
+                ${items.map((item, index) => `<article class="lesson27-find-card" data-find-index="${index}"><button type="button" class="lesson27-find-picture" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 그림 이름 듣기">${item.icon}<small>🔊 그림 듣기</small></button><div class="lesson27-find-choices" role="group" aria-label="${item.word}에 알맞은 단어 선택">${item.choices.map((choice) => `<button type="button" onclick="selectLesson27Find(${groupIndex}, ${index}, '${choice}', this)">${choice}</button>`).join('')}</div><p>소리를 듣고 골라요.</p></article>`).join('')}
+            </div>
+        </div>`;
+}
+
+window.selectLesson27Find = function selectLesson27Find(groupIndex, itemIndex, selected, button) {
+    const item = LESSON27_FIND_GROUPS[groupIndex]?.[itemIndex];
+    const card = button?.closest('.lesson27-find-card');
+    if (!item || !card || card.classList.contains('is-complete')) return;
+    const isCorrect = selected === item.word;
+    const feedback = card.querySelector('p');
+    card.querySelectorAll('.lesson27-find-choices button').forEach((choice) => choice.classList.remove('is-try-again'));
+    recordKoreanAttempt({ lessonId: 27, lessonTitle: '배움 27: 대표받침 단어 읽기', unitId: 7, activityType: 'wordPictureMatch', word: item.word, answer: item.word, userAnswer: selected, isCorrect, retryIndex: isCorrect ? 0 : nextKoreanRetryIndex({ lessonId: 27, activityType: 'wordPictureMatch', answer: item.word }), errorType: isCorrect ? null : KOREAN_ERROR_TYPES.BATCHIM }).catch(() => {});
+    if (!isCorrect) {
+        button.classList.add('is-try-again');
+        if (feedback) feedback.textContent = '받침을 살펴보고 다시 골라 보세요.';
+        speakTextKo('다시 골라 보아요.');
+        return;
+    }
+    resetKoreanRetryIndex({ lessonId: 27, activityType: 'wordPictureMatch', answer: item.word });
+    card.classList.add('is-complete');
+    card.querySelectorAll('.lesson27-find-choices button').forEach((choice) => { choice.disabled = true; choice.classList.toggle('is-correct', choice === button); });
+    if (feedback) feedback.textContent = `○ ${item.word}, 맞았어요!`;
+    speakChar(item.word);
+    const page = card.closest('[data-lesson27-find-page]');
+    const done = page?.querySelectorAll('.lesson27-find-card.is-complete').length || 0;
+    const progress = page?.querySelector('.lesson27-find-progress');
+    if (progress) progress.innerHTML = `<span>${done === LESSON27_FIND_GROUPS[groupIndex].length ? '참 잘했어요! 모두 찾았어요.' : '맞는 단어를 잘 찾았어요.'}</span><strong>완성 ${done} / ${LESSON27_FIND_GROUPS[groupIndex].length}</strong>`;
+};
+
+function renderLesson27WritingPage(groupIndex) {
+    const items = LESSON27_WRITING_GROUPS[groupIndex] || [];
+    return `
+        <div class="lesson27-page lesson27-writing-page">
+            <div class="lesson27-guide"><strong>완성하기 ${groupIndex + 1}</strong><span>그림을 듣고 하늘색 칸에 빠진 받침만 직접 써 보세요.</span></div>
+            <div class="lesson27-writing-grid">
+                ${items.map((item, index) => `<article class="lesson27-write-card lesson-complete-card"><button type="button" class="lesson27-write-picture" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">${item.icon}<small>🔊 ${item.word} 듣기</small></button><div class="lesson27-word-builder" aria-label="${item.word} 받침 완성하기"><span>${item.prefix}</span><span class="lesson27-target-syllable"><b>${item.open}</b><span class="lesson27-write-canvas-slot"><span aria-hidden="true">받침 쓰기</span><canvas class="lesson-complete-writing-canvas" data-target="${item.target}" data-word="${item.word}" data-lesson-id="27" aria-label="${item.word}의 ${item.target} 받침 쓰기"></canvas></span></span><span>${item.suffix}</span></div><div class="lesson27-write-actions"><button type="button" class="btn-outline" onclick="clearLesson13WordWriting(this)">다시 쓰기</button><button type="button" class="trace-clear-button" onclick="completeLesson27Writing(${groupIndex}, ${index}, this)">썼어요</button></div><p class="lesson27-write-feedback" aria-live="polite"></p></article>`).join('')}
+            </div>
+        </div>`;
+}
+
+window.completeLesson27Writing = async function completeLesson27Writing(groupIndex, itemIndex, button) {
+    const item = LESSON27_WRITING_GROUPS[groupIndex]?.[itemIndex];
+    const card = button?.closest('.lesson27-write-card');
+    const canvas = card?.querySelector('canvas');
+    const feedback = card?.querySelector('.lesson27-write-feedback');
+    if (!item || !canvas || !card) return;
+    if (canvas.dataset.hasWriting !== 'true') {
+        if (feedback) feedback.textContent = `하늘색 칸에 ${item.target} 받침을 먼저 써 보세요.`;
+        speakTextKo(`${item.target} 받침을 먼저 써 보세요.`);
+        return;
+    }
+    card.classList.add('is-complete');
+    button.disabled = true;
+    button.textContent = '✓ 완성';
+    if (feedback) feedback.textContent = `${item.word} 완성! 단어를 다시 읽어 보세요.`;
+    speakChar(item.word);
+    await recordKoreanAttempt({ lessonId: 27, lessonTitle: '배움 27: 대표받침 단어 읽기', unitId: 7, activityType: 'fillOneJamo', word: item.word, answer: item.target, userAnswer: `${item.target} 직접 쓰기 완료`, isCorrect: true, retryIndex: 1, errorType: null });
+};
+
 function setLesson21MFeedback(page, message) {
     const feedback = page?.querySelector('#lesson21-m-feedback');
     if (feedback) feedback.textContent = message;
@@ -10601,10 +10783,18 @@ const LESSON20_BOARD_WORDS = [
     '왜가리', '과자', '거위', '바퀴', '야구', '소녀', '해', '여우', '야채', '오후', '새', '도착'
 ];
 
+const LESSON27_BOARD_WORDS = [
+    '출발', '염소', '봄비', '카럼', '수첩', '김치', '집게', '입구', '서랍', '섬씨',
+    '감자', '감기', '소금', '잠수', '잠자리', '줍다', '종이접기', '늑대', '국자', '분수',
+    '기린', '갈매기', '고릴라', '만두', '솔방울', '걷다', '돋보기', '변기', '겨울', '마을',
+    '독수리', '행복', '책상', '도착'
+];
+
 const LESSON_BOARD_WORDS_BY_ID = {
     13: LESSON13_BOARD_WORDS,
     14: LESSON14_BOARD_WORDS,
-    20: LESSON20_BOARD_WORDS
+    20: LESSON20_BOARD_WORDS,
+    27: LESSON27_BOARD_WORDS
 };
 
 window.lesson13ReadChecks = window.lesson13ReadChecks || {};
@@ -12346,6 +12536,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isComplexLineLesson = numericStep >= 15 && numericStep <= 19;
     const isCustomLesson20 = numericStep === 20;
     const isCustomLesson25 = numericStep === 25;
+    const isCustomLesson27 = numericStep === 27;
     const batchimPageSequence = LESSON_BATCHIM_PAGE_SEQUENCES[numericStep] || [];
     const isCustomBatchimLesson = batchimPageSequence.length > 0;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
@@ -12359,6 +12550,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (isComplexLineLesson) totalSections = 4;
     if (isCustomLesson20) totalSections = 5;
     if (isCustomLesson25) totalSections = 4;
+    if (isCustomLesson27) totalSections = 9;
     if (isCustomBatchimLesson) totalSections = batchimPageSequence.length * 5;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
@@ -12409,6 +12601,18 @@ function renderLearningDetail(step, sectionIndex = 0) {
             sectionTitle = '한 줄씩 소리 내어 읽기';
         } else if (isCustomLesson25 && safeIndex === 3) {
             sectionTitle = '도전하기 · 그림 글자 길 찾기';
+        } else if (isCustomLesson27) {
+            sectionTitle = [
+                '읽기 1 · ㅁ·ㅂ 받침 단어',
+                '읽기 2 · ㅇ·ㄱ 받침 단어',
+                '읽기 3 · ㄴ·ㄹ·ㄷ 받침 단어',
+                '읽기 4 · 대표받침 무의미 단어',
+                '읽고 찾기 1',
+                '읽고 찾기 2',
+                '완성해 보기 1',
+                '완성해 보기 2',
+                '단어 놀이 해보기'
+            ][safeIndex];
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -12463,6 +12667,16 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson25ReadingPage();
         } else if (isCustomLesson25 && safeIndex === 3) {
             contentHtml = renderLesson25PathGame();
+        } else if (isCustomLesson27 && safeIndex < 3) {
+            contentHtml = renderLesson27ReadingPage(safeIndex);
+        } else if (isCustomLesson27 && safeIndex === 3) {
+            contentHtml = renderLesson27NonsensePage();
+        } else if (isCustomLesson27 && safeIndex >= 4 && safeIndex <= 5) {
+            contentHtml = renderLesson27FindPage(safeIndex - 4);
+        } else if (isCustomLesson27 && safeIndex >= 6 && safeIndex <= 7) {
+            contentHtml = renderLesson27WritingPage(safeIndex - 6);
+        } else if (isCustomLesson27 && safeIndex === 8) {
+            contentHtml = renderLesson13WordGame(27);
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
