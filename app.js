@@ -5022,32 +5022,228 @@ function getDrawingTimestampValue(item) {
     return 0;
 }
 
-async function saveDrawingRecordToFirebase(record) {
-    if (!currentUserId) return false;
-    try {
-        const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
-        const recordRef = doc(collectionRef);
+function normalizeDrawingPortfolioForPersistence(value = {}) {
+    return {
+        missions: value?.missions && typeof value.missions === 'object' ? { ...value.missions } : {},
+        free: Array.isArray(value?.free) ? [...value.free] : [],
+        unlockedTemplates: Array.isArray(value?.unlockedTemplates) ? [...value.unlockedTemplates] : [],
+        rewardedMilestones: Array.isArray(value?.rewardedMilestones) ? [...value.rewardedMilestones] : [],
+        shapeStats: value?.shapeStats && typeof value.shapeStats === 'object' ? { ...value.shapeStats } : {},
+        unpaidCooldownUntil: Number(value?.unpaidCooldownUntil || 0)
+    };
+}
 
-        let compressedImage = record.image;
-        if (record.image) {
-            compressedImage = await compressDrawingImage(record.image, 640);
-        }
+function fitDrawingPortfolioToFirestore(value, maxSerializedChars = 320000) {
+    const next = normalizeDrawingPortfolioForPersistence(value);
+    const serializedSize = () => JSON.stringify(next).length;
+    if (serializedSize() <= maxSerializedChars) return next;
 
-        // 원본 record 객체를 변형시키지 않고 복제하여 Firestore에 저장
-        const firebaseRecord = {
-            ...record,
-            image: compressedImage,
-            drawingId: recordRef.id,
-            ownerRef: `users/${currentUserId}`,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+    const freeIds = new Set(next.free.map((item) => item?.drawingId).filter(Boolean));
+    Object.keys(next.missions)
+        .sort((a, b) => Number(a) - Number(b))
+        .forEach((step) => {
+            const mission = next.missions[step];
+            if (serializedSize() <= maxSerializedChars || !mission?.image || !freeIds.has(mission.drawingId)) return;
+            next.missions[step] = { ...mission };
+            delete next.missions[step].image;
+        });
+
+    while (serializedSize() > maxSerializedChars && next.free.length > 1) {
+        next.free.pop();
+    }
+
+    Object.keys(next.missions)
+        .sort((a, b) => Number(a) - Number(b))
+        .forEach((step) => {
+            const mission = next.missions[step];
+            if (serializedSize() <= maxSerializedChars || !mission?.image) return;
+            next.missions[step] = { ...mission };
+            delete next.missions[step].image;
+        });
+    return next;
+}
+
+function mergeDrawingShapeStats(currentStats, result, updatedAt) {
+    const nextStats = { ...(currentStats || {}) };
+    Object.entries(result?.byShape || {}).forEach(([shapeKey, stat]) => {
+        const previous = nextStats[shapeKey] || {};
+        const accuracy = stat.instanceCount
+            ? Math.round(Number(stat.accuracySum || 0) / Number(stat.instanceCount || 1))
+            : (stat.total ? Math.round((Number(stat.hit || 0) / Number(stat.total)) * 100) : 0);
+        const attempts = Number(previous.attempts || 0) + 1;
+        const accuracySum = Number(previous.accuracySum || 0) + accuracy;
+        nextStats[shapeKey] = {
+            attempts,
+            bestAccuracy: Math.max(Number(previous.bestAccuracy || 0), accuracy),
+            accuracySum,
+            accuracy: Math.round(accuracySum / attempts),
+            pointsHit: Number(previous.pointsHit || 0) + Number(stat.hit || 0),
+            pointsTotal: Number(previous.pointsTotal || 0) + Number(stat.total || 0),
+            instanceCount: Number(previous.instanceCount || 0) + Number(stat.instanceCount || 0),
+            lastAccuracy: accuracy,
+            updatedAt
         };
+    });
+    return nextStats;
+}
 
-        await setDoc(recordRef, firebaseRecord, { merge: true });
-        return true;
+function applyCommittedDrawingState(committed) {
+    drawingPortfolio = committed.drawingPortfolio;
+    currentUserDrawingStep = committed.currentDrawingStep;
+    currentUserCoins = committed.coins;
+    currentUserBalance = committed.balance;
+    currentUserAeduTokens = committed.aeduTokens;
+    currentUserWarningTokens = committed.warningTokens;
+    currentUserAeduExperience = committed.aeduExperience;
+    currentUserAeduLevel = committed.aeduLevel;
+    currentUserProfileSnapshot = {
+        ...currentUserProfileSnapshot,
+        coins: currentUserCoins,
+        balance: currentUserBalance,
+        aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
+        aeduExperience: currentUserAeduExperience,
+        aeduLevel: currentUserAeduLevel
+    };
+}
+
+async function persistDrawingRecord(record, operation = {}) {
+    if (!currentUserId) throw new Error('로그인 정보를 확인할 수 없습니다.');
+    if (!record?.image) throw new Error('저장할 그림이 없습니다.');
+
+    const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
+    const recordRef = record.drawingId ? doc(collectionRef, record.drawingId) : doc(collectionRef);
+    const userRef = doc(db, 'users', currentUserId);
+    const previousPortfolio = JSON.parse(JSON.stringify(drawingPortfolio));
+    record.drawingId = recordRef.id;
+    addDrawingRecordToPortfolioGallery(record);
+
+    try {
+        const [compressedImage, portfolioThumbnail] = await Promise.all([
+            compressDrawingImage(record.image, 640),
+            compressDrawingImage(record.image, 120)
+        ]);
+        const committed = await runTransaction(db, async (transaction) => {
+            const userSnap = await transaction.get(userRef);
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            const serverPortfolio = normalizeDrawingPortfolioForPersistence(userData.drawingPortfolio);
+            const existingRecord = serverPortfolio.free.find((item) => item?.drawingId === recordRef.id);
+            const isNewRecord = !existingRecord;
+            const missionStepKey = record.kind === 'mission' && record.missionStep != null ? String(record.missionStep) : '';
+            const existingMission = missionStepKey ? Boolean(serverPortfolio.missions[missionStepKey]) : false;
+            const nextMissions = { ...serverPortfolio.missions };
+            const nextRewardedMilestones = [...serverPortfolio.rewardedMilestones];
+
+            if (missionStepKey) nextMissions[missionStepKey] = { ...record, image: portfolioThumbnail };
+
+            let newDrawingReward = 0;
+            if (isNewRecord) {
+                newDrawingReward = missionStepKey
+                    ? (!existingMission ? Math.max(0, Number(operation.missionBaseReward || 0)) : 0)
+                    : Math.max(0, Number(operation.pointReward || 0));
+                if (missionStepKey && !existingMission) {
+                    const completedMissionCount = Object.values(nextMissions).filter(Boolean).length;
+                    const unlockedMilestoneCount = Math.floor(completedMissionCount / 5);
+                    for (let milestone = 1; milestone <= unlockedMilestoneCount; milestone += 1) {
+                        const milestoneId = `drawing-5x-${milestone}`;
+                        if (!nextRewardedMilestones.includes(milestoneId)) {
+                            nextRewardedMilestones.push(milestoneId);
+                            newDrawingReward += 10;
+                        }
+                    }
+                }
+            }
+            const awardedDrawingPoints = isNewRecord
+                ? newDrawingReward
+                : Math.max(0, Number(existingRecord?.rewardedPoints || 0));
+            const portfolioRecord = { ...record, image: portfolioThumbnail, rewardedPoints: awardedDrawingPoints };
+            if (missionStepKey) nextMissions[missionStepKey] = portfolioRecord;
+
+            const nextPortfolio = fitDrawingPortfolioToFirestore({
+                missions: nextMissions,
+                free: [portfolioRecord, ...serverPortfolio.free.filter((item) => item?.drawingId !== recordRef.id)].slice(0, 60),
+                unlockedTemplates: Array.from(new Set([
+                    ...serverPortfolio.unlockedTemplates,
+                    operation.unlockedTemplate,
+                    missionStepKey ? record.template : null
+                ].filter(Boolean))),
+                rewardedMilestones: nextRewardedMilestones,
+                shapeStats: isNewRecord
+                    ? mergeDrawingShapeStats(serverPortfolio.shapeStats, operation.shapeResult, new Date().toISOString())
+                    : serverPortfolio.shapeStats,
+                unpaidCooldownUntil: isNewRecord && Object.prototype.hasOwnProperty.call(operation, 'unpaidCooldownUntil')
+                    ? Number(operation.unpaidCooldownUntil || 0)
+                    : serverPortfolio.unpaidCooldownUntil
+            });
+
+            let nextExperience = asNumber(userData.aeduExperience, currentUserAeduExperience);
+            let nextLevel = asNumber(userData.aeduLevel, currentUserAeduLevel || 1);
+            let nextWarningTokens = Math.max(0, Math.floor(asNumber(userData.warningTokens, currentUserWarningTokens)));
+            let levelUpCount = 0;
+            const shouldGrantExperience = isNewRecord && (!missionStepKey || !existingMission);
+            if (shouldGrantExperience) {
+                nextExperience += Math.max(0, Number(operation.experienceReward || 0));
+                while (nextExperience >= 100) {
+                    nextExperience -= 100;
+                    levelUpCount += 1;
+                }
+            }
+            nextExperience = Math.min(99.999, Math.max(0, parseFloat(nextExperience.toFixed(3))));
+            nextLevel += levelUpCount;
+            const removedWarningTokens = Math.min(nextWarningTokens, levelUpCount);
+            nextWarningTokens -= removedWarningTokens;
+            const levelUpPoints = levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD;
+            const totalPointReward = newDrawingReward + levelUpPoints;
+            const serverCoins = asNumber(userData.coins, currentUserCoins);
+            const serverBalance = asNumber(userData.balance, serverCoins);
+            const serverAeduTokens = asNumber(userData.aeduTokens, serverBalance);
+            const committedState = {
+                drawingPortfolio: nextPortfolio,
+                currentDrawingStep: Math.max(
+                    Number.isFinite(Number(userData.currentDrawingStep)) ? Number(userData.currentDrawingStep) : -1,
+                    Number.isFinite(Number(operation.currentDrawingStep)) ? Number(operation.currentDrawingStep) : -1
+                ),
+                coins: serverCoins + totalPointReward,
+                balance: serverBalance + totalPointReward,
+                aeduTokens: serverAeduTokens + totalPointReward,
+                warningTokens: nextWarningTokens,
+                aeduExperience: nextExperience,
+                aeduLevel: nextLevel,
+                awardedDrawingPoints,
+                levelUpCount,
+                levelUpPoints,
+                removedWarningTokens
+            };
+            const firebaseRecord = {
+                ...portfolioRecord,
+                image: compressedImage,
+                drawingId: recordRef.id,
+                ownerRef: `users/${currentUserId}`,
+                ...(isNewRecord ? { createdAt: serverTimestamp() } : {}),
+                updatedAt: serverTimestamp()
+            };
+            const userRecord = {
+                currentDrawingStep: committedState.currentDrawingStep,
+                drawingPortfolio: nextPortfolio,
+                coins: committedState.coins,
+                balance: committedState.balance,
+                aeduTokens: committedState.aeduTokens,
+                warningTokens: committedState.warningTokens,
+                aeduExperience: committedState.aeduExperience,
+                aeduLevel: committedState.aeduLevel,
+                updatedAt: serverTimestamp()
+            };
+            transaction.set(recordRef, firebaseRecord, { merge: true });
+            transaction.set(userRef, userRecord, { merge: true });
+            return committedState;
+        });
+        record.rewardedPoints = committed.awardedDrawingPoints;
+        applyCommittedDrawingState(committed);
+        return committed;
     } catch (error) {
-        console.warn('Firebase drawing save failed', error);
-        return false;
+        drawingPortfolio = previousPortfolio;
+        console.warn('Atomic drawing save failed', error);
+        throw new Error('내 그림과 친구들 그림을 함께 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
 }
 
@@ -5142,11 +5338,15 @@ window.saveCurrentDrawing = async function() {
     const record = buildDrawingRecord({ image, kind, missionStep: drawingWorkspaceMissionStep, savedAt: now });
     // 저장은 현재 활동 화면에 그대로 머물며 작품만 보관한다.
     // 그림 미션 단계 완료/해금/이어하기 변경은 완료하기 버튼에서만 처리한다.
-    addDrawingRecordToPortfolioGallery(record);
-    await persistDrawingData();
-    await saveDrawingRecordToFirebase(record);
-    updateDrawingDashboardPreview();
-    showModal(drawingWorkspaceMissionStep ? '현재 그림 미션 작품을 저장했어요. 계속 그릴 수 있어요!' : '그림을 저장했어요!');
+    try {
+        await persistDrawingRecord(record);
+        updateDrawingDashboardPreview();
+        showModal(drawingWorkspaceMissionStep ? '현재 그림 미션 작품을 저장했어요. 계속 그릴 수 있어요!' : '그림을 저장했어요!');
+    } catch (error) {
+        console.error('Failed to save drawing', error);
+        updateDrawingDashboardPreview();
+        showModal(escapeHtml(error.message || '그림 저장 중 오류가 발생했습니다.'));
+    }
 }
 
 function showAiedueAutoToast(title, sub = '', duration = 1250) {
@@ -5187,6 +5387,18 @@ window.completeTodayDrawingMission = async function() {
         return;
     }
 
+    const completionSnapshot = {
+        currentUserCoins,
+        currentUserBalance,
+        currentUserAeduTokens,
+        currentUserWarningTokens,
+        currentUserAeduExperience,
+        currentUserAeduLevel,
+        currentUserDrawingStep,
+        currentUserProfileSnapshot: JSON.parse(JSON.stringify(currentUserProfileSnapshot || {})),
+        drawingPortfolio: JSON.parse(JSON.stringify(drawingPortfolio))
+    };
+    let drawingPersisted = false;
     setDrawingEvaluationState(true);
 
     try {
@@ -5195,7 +5407,7 @@ window.completeTodayDrawingMission = async function() {
         const image = captureDrawingImage();
         const now = new Date().toISOString();
         const mission = drawingMissions.find((item) => item.step === drawingWorkspaceMissionStep);
-        const wasAlreadyDone = Boolean(drawingWorkspaceMissionStep && drawingPortfolio.missions?.[drawingWorkspaceMissionStep]);
+        let completedRecord = null;
         let rewardPoints = 0;
         let message = '';
         if (drawingWorkspaceAiQuiz) {
@@ -5205,12 +5417,10 @@ window.completeTodayDrawingMission = async function() {
             const shapeReward = targetShapeAccuracy >= 50 ? 1 : 0;
             const designReward = result.accuracy >= 50 ? 5 : 0;
             rewardPoints = shapeReward + designReward;
-            if (rewardPoints > 0) applyAieduePointReward(rewardPoints);
             message = `AI 그림 정확도 ${result.accuracy}%. ${rewardPoints ? `에이두 포인트 ${rewardPoints}점을 받았어요.` : '50% 미만이라 포인트는 없어요.'}`;
         } else if (drawingWorkspaceMode === 'shape-mission') {
             rewardPoints = result.accuracy >= 50 ? 1 : 0;
             if (rewardPoints > 0) {
-                applyAieduePointReward(1);
                 drawingPortfolio.unpaidCooldownUntil = 0;
                 message = `도형 정확도 ${result.accuracy}%! 에이두 포인트 1점을 받았어요.`;
             } else {
@@ -5226,26 +5436,8 @@ window.completeTodayDrawingMission = async function() {
             drawingPortfolio.missions = { ...drawingPortfolio.missions, [drawingWorkspaceMissionStep]: record };
             drawingPortfolio.unlockedTemplates = Array.from(new Set([...(drawingPortfolio.unlockedTemplates || []), mission?.template].filter(Boolean)));
             currentUserDrawingStep = Math.max(currentUserDrawingStep, drawingWorkspaceMissionStep);
-            if (!wasAlreadyDone && rewardPoints > 0) applyAieduePointReward(rewardPoints);
-            if (!wasAlreadyDone) {
-                const completedMissionCount = Object.keys(drawingPortfolio.missions || {}).length;
-                const unlockedMilestoneCount = Math.floor(completedMissionCount / 5);
-                let milestoneReward = 0;
-                for (let milestone = 1; milestone <= unlockedMilestoneCount; milestone += 1) {
-                    const milestoneId = `drawing-5x-${milestone}`;
-                    if (!drawingPortfolio.rewardedMilestones.includes(milestoneId)) {
-                        drawingPortfolio.rewardedMilestones.push(milestoneId);
-                        milestoneReward += 10;
-                    }
-                }
-                if (milestoneReward > 0) {
-                    applyAieduePointReward(milestoneReward);
-                    rewardPoints += milestoneReward;
-                }
-            }
             record.rewardedPoints = rewardPoints;
-            addDrawingRecordToPortfolioGallery(record);
-            await saveDrawingRecordToFirebase(record);
+            completedRecord = record;
             message = `${drawingWorkspaceMissionStep}단계 정확도 ${result.accuracy}%. ${mission?.template ? `${drawingTemplates[mission.template]} 도안이 해금됐어요!` : ''}${rewardPoints ? ` 에이두 포인트 ${rewardPoints}점을 받았어요.` : ' 50% 미만이라 포인트는 없어요.'}`;
         }
 
@@ -5256,8 +5448,7 @@ window.completeTodayDrawingMission = async function() {
             else if (drawingWorkspaceMode === 'infinite-drawing') kind = 'infinite-drawing';
 
             const record = buildDrawingRecord({ image, kind, savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });
-            addDrawingRecordToPortfolioGallery(record);
-            await saveDrawingRecordToFirebase(record);
+            completedRecord = record;
         }
 
         // --- 그리기 경험치 지급 처리 (applyAiedueExperienceReward 마커) ---
@@ -5298,12 +5489,27 @@ window.completeTodayDrawingMission = async function() {
         const drawingStageMultiplier = calculateStageExperienceMultiplier(1);
         const finalDrawingExp = baseExp * drawingStageMultiplier;
 
-        if (finalDrawingExp > 0) {
-            applyAiedueExperienceReward(finalDrawingExp, { source: 'drawing', isTemplate: isDrawingTemplate, baseExp });
-        }
+        // 경험치와 레벨업은 아래 Firestore 트랜잭션에서 서버 최신값을 기준으로 반영한다.
         // ------------------------------------------------------------------
 
-        await persistDrawingData({ coins: currentUserCoins });
+        if (!completedRecord) throw new Error('완료한 그림 기록을 만들지 못했습니다.');
+        const drawingOperation = {
+            pointReward: rewardPoints,
+            missionBaseReward: completedRecord.kind === 'mission' ? rewardPoints : 0,
+            experienceReward: finalDrawingExp,
+            currentDrawingStep: currentUserDrawingStep,
+            unlockedTemplate: completedRecord.kind === 'mission' ? mission?.template : null,
+            shapeResult: result,
+            ...(drawingWorkspaceMode === 'shape-mission'
+                ? { unpaidCooldownUntil: drawingPortfolio.unpaidCooldownUntil }
+                : {})
+        };
+        const committed = await persistDrawingRecord(completedRecord, drawingOperation);
+        rewardPoints = committed.awardedDrawingPoints;
+        drawingPersisted = true;
+        if (committed.levelUpCount > 0) {
+            showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${committed.aeduLevel} (보상 ${committed.levelUpPoints}포인트${committed.removedWarningTokens ? ` · 주의토큰 ${committed.removedWarningTokens}개 차감` : ''})`);
+        }
         updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
         updateDrawingDashboardPreview();
         updateDrawingCompleteButtonCooldown();
@@ -5320,7 +5526,20 @@ window.completeTodayDrawingMission = async function() {
         }
     } catch (error) {
         console.error('Failed to complete drawing mission', error);
-        showModal('저장 중 오류가 발생했습니다.');
+        if (!drawingPersisted) {
+            currentUserCoins = completionSnapshot.currentUserCoins;
+            currentUserBalance = completionSnapshot.currentUserBalance;
+            currentUserAeduTokens = completionSnapshot.currentUserAeduTokens;
+            currentUserWarningTokens = completionSnapshot.currentUserWarningTokens;
+            currentUserAeduExperience = completionSnapshot.currentUserAeduExperience;
+            currentUserAeduLevel = completionSnapshot.currentUserAeduLevel;
+            currentUserDrawingStep = completionSnapshot.currentUserDrawingStep;
+            currentUserProfileSnapshot = completionSnapshot.currentUserProfileSnapshot;
+            drawingPortfolio = completionSnapshot.drawingPortfolio;
+            updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
+            updateDrawingDashboardPreview();
+        }
+        showModal(escapeHtml(error.message || '저장 중 오류가 발생했습니다.'));
     } finally {
         setDrawingEvaluationState(false);
     }
@@ -6611,92 +6830,79 @@ function updateLiteracyDashboardPreview() {
     updateLiteracyDanBadges();
 }
 
-function generateQuestionHash(passage, question) {
-    let hash = 0;
-    const str = (passage || '') + (question || '');
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-    }
-    return 'q_' + Math.abs(hash);
+const SHARED_LITERACY_DOC_ID = Symbol('sharedLiteracyWrongBankDocId');
+
+async function getSharedLiteracyQuestionId(questionData) {
+    if (questionData?.[SHARED_LITERACY_DOC_ID]) return String(questionData[SHARED_LITERACY_DOC_ID]);
+    if (!globalThis.crypto?.subtle) throw new Error('보안 해시 기능을 사용할 수 없습니다.');
+    const source = `${String(questionData?.passage || '')}\u0000${String(questionData?.question || '')}`;
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(source));
+    const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    return `q2_${hex}`;
 }
 
-async function addWrongToSharedBank(questionData) {
-    const id = generateQuestionHash(questionData.passage, questionData.question);
-    const docRef = doc(db, 'sharedLiteracyWrongBank', id);
-    try {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            await updateDoc(docRef, {
-                attempts: (data.attempts || 0) + 1,
-                wrongs: (data.wrongs || 0) + 1
-            });
-        } else {
-            await setDoc(docRef, {
-                ...questionData,
-                attempts: 1,
-                corrects: 0,
-                wrongs: 1,
-                createdAt: new Date().toISOString()
-            });
+async function upsertWrongToSharedBank(questionData) {
+    const publicQuestion = {};
+    ['passage', 'question', 'difficulty', 'type', 'answer', 'sampleAnswer', 'explanation'].forEach((key) => {
+        if (questionData[key] !== undefined && questionData[key] !== null) {
+            publicQuestion[key] = String(questionData[key]);
         }
+    });
+    if (Array.isArray(questionData.options)) {
+        publicQuestion.options = questionData.options.map((option) => String(option));
+    }
+    if (questionData.answerIndex !== undefined && questionData.answerIndex !== null && Number.isInteger(Number(questionData.answerIndex))) {
+        publicQuestion.answerIndex = Number(questionData.answerIndex);
+    }
+    try {
+        const id = await getSharedLiteracyQuestionId(questionData);
+        const docRef = doc(db, 'sharedLiteracyWrongBank', id);
+        const now = new Date().toISOString();
+        await runTransaction(db, async (transaction) => {
+            const docSnap = await transaction.get(docRef);
+            const previous = docSnap.exists() ? docSnap.data() : {};
+            const next = {
+                ...publicQuestion,
+                attempts: Math.max(0, Number(previous.attempts) || 0) + 1,
+                corrects: Math.max(0, Number(previous.corrects) || 0),
+                wrongs: Math.max(0, Number(previous.wrongs) || 0) + 1,
+                updatedAt: now
+            };
+            if (!docSnap.exists()) next.createdAt = now;
+            else next.createdAt = previous.createdAt || now;
+            transaction.set(docRef, next);
+        });
+        return true;
     } catch (e) {
-        console.error('Firestore shared bank write failed', e);
+        console.error('Firestore shared wrong-bank transaction failed', e);
+        return false;
     }
 }
 
 async function updateSharedBankCorrect(questionData) {
-    const id = generateQuestionHash(questionData.passage, questionData.question);
-    const docRef = doc(db, 'sharedLiteracyWrongBank', id);
     try {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
+        const id = await getSharedLiteracyQuestionId(questionData);
+        const docRef = doc(db, 'sharedLiteracyWrongBank', id);
+        await runTransaction(db, async (transaction) => {
+            const docSnap = await transaction.get(docRef);
+            if (!docSnap.exists()) return;
             const data = docSnap.data();
-            const attempts = (data.attempts || 0) + 1;
-            const corrects = (data.corrects || 0) + 1;
-            const wrongs = data.wrongs || 0;
+            const attempts = Math.max(0, Number(data.attempts) || 0) + 1;
+            const corrects = Math.max(0, Number(data.corrects) || 0) + 1;
             const correctRate = corrects / attempts;
 
             if (attempts >= 20 && correctRate >= 0.5) {
-                await deleteDoc(docRef);
-                console.log("Shared bank problem removed due to high correctness");
+                transaction.delete(docRef);
             } else {
-                await updateDoc(docRef, {
-                    attempts: attempts,
-                    corrects: corrects
+                transaction.update(docRef, {
+                    attempts,
+                    corrects,
+                    updatedAt: new Date().toISOString()
                 });
             }
-        }
+        });
     } catch (e) {
-        console.error('Firestore shared bank correct-count update failed', e);
-    }
-}
-
-async function updateSharedBankWrong(questionData) {
-    const id = generateQuestionHash(questionData.passage, questionData.question);
-    const docRef = doc(db, 'sharedLiteracyWrongBank', id);
-    try {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const attempts = (data.attempts || 0) + 1;
-            const wrongs = (data.wrongs || 0) + 1;
-            const corrects = data.corrects || 0;
-            const correctRate = corrects / attempts;
-
-            if (attempts >= 20 && correctRate >= 0.5) {
-                await deleteDoc(docRef);
-            } else {
-                await updateDoc(docRef, {
-                    attempts: attempts,
-                    wrongs: wrongs
-                });
-            }
-        }
-    } catch (e) {
-        console.error('Firestore shared bank wrong-count update failed', e);
+        console.error('Firestore shared bank correct-count transaction failed', e);
     }
 }
 
@@ -6706,7 +6912,9 @@ async function getSharedBankProblems(difficulty) {
         const querySnapshot = await getDocs(q);
         const list = [];
         querySnapshot.forEach((doc) => {
-            list.push({ id: doc.id, ...doc.data() });
+            const question = { ...doc.data(), id: doc.id };
+            Object.defineProperty(question, SHARED_LITERACY_DOC_ID, { value: doc.id });
+            list.push(question);
         });
         return list;
     } catch (e) {
@@ -7000,6 +7208,15 @@ window.submitLiteracyEssayAnswer = async function() {
 };
 
 async function showLiteracyResult(isCorrect, details) {
+    if (!isCorrect) {
+        const savedToSharedBank = await upsertWrongToSharedBank(activeLiteracyQuestion);
+        if (!savedToSharedBank) {
+            userLiteracyAnswerChecked = false;
+            showModal('공용 오답 은행 저장에 실패해 나의 기록에도 오답을 추가하지 않았어요. 잠시 후 다시 풀어 주세요.');
+            return;
+        }
+    }
+
     const feedbackContainer = document.getElementById('literacy-feedback-container');
     const title = document.getElementById('literacy-feedback-title');
     const detail = document.getElementById('literacy-feedback-detail');
@@ -7098,16 +7315,8 @@ async function showLiteracyResult(isCorrect, details) {
         ...literacyPortfolio.history
     ].slice(0, 50);
 
-    if (isLiteracyLimitBreakMode) {
-        if (isCorrect) {
-            await updateSharedBankCorrect(activeLiteracyQuestion);
-        } else {
-            await updateSharedBankWrong(activeLiteracyQuestion);
-        }
-    } else {
-        if (!isCorrect) {
-            await addWrongToSharedBank(activeLiteracyQuestion);
-        }
+    if (isLiteracyLimitBreakMode && isCorrect) {
+        await updateSharedBankCorrect(activeLiteracyQuestion);
     }
 
     await persistLiteracyData({
