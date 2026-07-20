@@ -9620,9 +9620,12 @@ function renderLesson26WritingPage(groupIndex) {
     const items = LESSON26_WRITING_GROUPS[groupIndex] || [];
     return `
         <div class="lesson26-page lesson26-writing-page">
-            <div class="lesson26-guide"><strong>완성하기 ${groupIndex + 1}</strong><span>그림을 듣고 하늘색 칸에 빠진 받침만 직접 써 보세요.</span></div>
+            <div class="lesson26-guide"><strong>완성하기 ${groupIndex + 1}</strong><span>그림을 듣고 하늘색 칸에 받침이 들어간 한 글자를 모두 써 보세요.</span></div>
             <div class="lesson26-writing-grid">
-                ${items.map((item, index) => `<article class="lesson26-write-card lesson-complete-card"><button type="button" class="lesson26-write-picture" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">${item.icon}<small>🔊 ${item.word} 듣기</small></button><div class="lesson26-word-builder" aria-label="${item.word} 받침 완성하기"><span>${item.prefix}</span><span class="lesson26-target-syllable"><b>${item.open}</b><span class="lesson26-write-canvas-slot"><span aria-hidden="true">받침 쓰기</span><canvas class="lesson-complete-writing-canvas" data-target="${item.target}" data-word="${item.word}" data-lesson-id="26" aria-label="${item.word}의 ${item.target} 받침 쓰기"></canvas></span></span><span>${item.suffix}</span></div><div class="lesson26-write-actions"><button type="button" class="btn-outline" onclick="clearLesson13WordWriting(this)">다시 쓰기</button><button type="button" class="trace-clear-button" onclick="completeLesson26Writing(${groupIndex}, ${index}, this)">썼어요</button></div><p class="lesson26-write-feedback" aria-live="polite"></p></article>`).join('')}
+                ${items.map((item, index) => {
+                    const targetSyllable = Array.from(item.word).slice(Array.from(item.prefix).length, Array.from(item.word).length - Array.from(item.suffix).length)[0] || item.word;
+                    return `<article class="lesson26-write-card lesson-complete-card"><button type="button" class="lesson26-write-picture" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">${item.icon}<small>🔊 ${item.word} 듣기</small></button><div class="lesson26-word-builder" aria-label="${item.word}의 ${targetSyllable} 글자 쓰기"><span>${item.prefix}</span><span class="lesson26-target-syllable"><span class="lesson26-write-canvas-slot"><span aria-hidden="true">${targetSyllable} 쓰기</span><canvas class="lesson-complete-writing-canvas" data-target="${targetSyllable}" data-word="${item.word}" data-lesson-id="26" aria-label="${item.word}의 ${targetSyllable} 글자 전체 쓰기"></canvas></span></span><span>${item.suffix}</span></div><div class="lesson26-write-actions"><button type="button" class="btn-outline" onclick="clearLesson13WordWriting(this)">다시 쓰기</button><button type="button" class="trace-clear-button" onclick="completeLesson26Writing(${groupIndex}, ${index}, this)">썼어요</button></div><p class="lesson26-write-feedback" aria-live="polite"></p></article>`;
+                }).join('')}
             </div>
         </div>`;
 }
@@ -9633,9 +9636,10 @@ window.completeLesson26Writing = async function completeLesson26Writing(groupInd
     const canvas = card?.querySelector('canvas');
     const feedback = card?.querySelector('.lesson26-write-feedback');
     if (!item || !canvas || !card) return;
+    const targetSyllable = canvas.dataset.target || item.word;
     if (canvas.dataset.hasWriting !== 'true') {
-        if (feedback) feedback.textContent = `하늘색 칸에 ${item.target} 받침을 먼저 써 보세요.`;
-        speakTextKo(`${item.target} 받침을 먼저 써 보세요.`);
+        if (feedback) feedback.textContent = `하늘색 칸에 ${targetSyllable} 글자를 모두 써 보세요.`;
+        speakTextKo(`${targetSyllable} 글자를 모두 써 보세요.`);
         return;
     }
     card.classList.add('is-complete');
@@ -9643,7 +9647,7 @@ window.completeLesson26Writing = async function completeLesson26Writing(groupInd
     button.textContent = '✓ 완성';
     if (feedback) feedback.textContent = `${item.word} 완성! 단어를 다시 읽어 보세요.`;
     speakChar(item.word);
-    await recordKoreanAttempt({ lessonId: 26, lessonTitle: '배움 26: 대표받침 단어 읽기', unitId: 7, activityType: 'fillOneJamo', word: item.word, answer: item.target, userAnswer: `${item.target} 직접 쓰기 완료`, isCorrect: true, retryIndex: 1, errorType: null });
+    await recordKoreanAttempt({ lessonId: 26, lessonTitle: '배움 26: 대표받침 단어 읽기', unitId: 7, activityType: 'fillOneJamo', word: item.word, answer: targetSyllable, userAnswer: `${targetSyllable} 전체 글자 직접 쓰기 완료`, isCorrect: true, retryIndex: 1, errorType: null });
 };
 
 function setLesson21MFeedback(page, message) {
