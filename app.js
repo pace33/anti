@@ -9497,11 +9497,10 @@ function renderLesson26BatchimWord(word, batchims) {
     const targets = new Set(batchims || []);
     return Array.from(word).map((syllable) => {
         const code = syllable.charCodeAt(0);
-        const jongseong = code >= 0xac00 && code <= 0xd7a3
-            ? LESSON26_JONGSEONG[(code - 0xac00) % 28]
-            : '';
+        const jongseongIndex = code >= 0xac00 && code <= 0xd7a3 ? (code - 0xac00) % 28 : 0;
+        const jongseong = LESSON26_JONGSEONG[jongseongIndex] || '';
         return targets.has(jongseong)
-            ? `<span class="lesson26-batchim-highlight">${syllable}</span>`
+            ? `<span class="lesson26-batchim-syllable" aria-hidden="true"><span class="lesson26-composed-syllable">${syllable}</span><span class="lesson26-batchim-highlight">${jongseong}</span></span>`
             : syllable;
     }).join('');
 }
