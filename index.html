@@ -158,7 +158,7 @@
                 </div>
                 <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
                     <span class="lesson-photo-icon" aria-hidden="true">📷</span>
-                    <span><strong>오늘의 노트 사진 찍기</strong><small>AI 사진 분석 + OCR → 명사만 단어 은행 저장</small></span>
+                    <span><strong>오늘의 노트 사진 찍기</strong><small>단어 은행에 단어를 모아봐요</small></span>
                 </button>
                 <input id="lesson-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleLessonPhotoCapture(this)" aria-label="오늘의 노트 사진 선택">
             </div>
@@ -1482,7 +1482,7 @@
 
     <nav id="aiedue-rpg-hud" class="aiedue-rpg-hud hidden" aria-label="에이두 국어 하단 메뉴">
         <section class="rpg-profile-banner" aria-label="내 정보">
-            <button type="button" class="rpg-profile-portrait" onclick="toggleInfoDrawer()" aria-label="내 정보 열기">
+            <button type="button" class="rpg-profile-portrait" onclick="openIconModal()" aria-label="프로필 아이콘 변경">
                 <span class="sync-user-icon" aria-hidden="true">🐻</span>
                 <span class="rpg-level-badge">LV.<span class="sync-aedu-level">1</span></span>
             </button>
