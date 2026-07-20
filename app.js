@@ -9450,6 +9450,7 @@ const LESSON26_READING_GROUPS = [
     {
         id: 'batchim-mb',
         title: 'ㅁ·ㅂ 받침 단어',
+        batchims: ['ㅁ', 'ㅂ'],
         pictureItems: [
             { word: '염소', icon: '🐐' }, { word: '감자', icon: '🥔' },
             { word: '구름', icon: '☁️' }, { word: '수첩', icon: '🗒️' },
@@ -9463,6 +9464,7 @@ const LESSON26_READING_GROUPS = [
     {
         id: 'batchim-ngk',
         title: 'ㅇ·ㄱ 받침 단어',
+        batchims: ['ㅇ', 'ㄱ'],
         pictureItems: [
             { word: '강가', icon: '🏞️' }, { word: '야구공', icon: '⚾' },
             { word: '늑대', icon: '🐺' }, { word: '국자', icon: '🥄' },
@@ -9476,6 +9478,7 @@ const LESSON26_READING_GROUPS = [
     {
         id: 'batchim-nld',
         title: 'ㄴ·ㄹ·ㄷ 받침 단어',
+        batchims: ['ㄴ', 'ㄹ', 'ㄷ'],
         pictureItems: [
             { word: '기린', icon: '🦒' }, { word: '분수', icon: '⛲' },
             { word: '고릴라', icon: '🦍' }, { word: '갈매기', icon: '🕊️' },
@@ -9487,6 +9490,21 @@ const LESSON26_READING_GROUPS = [
         ]
     }
 ];
+
+const LESSON26_JONGSEONG = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+function renderLesson26BatchimWord(word, batchims) {
+    const targets = new Set(batchims || []);
+    return Array.from(word).map((syllable) => {
+        const code = syllable.charCodeAt(0);
+        const jongseong = code >= 0xac00 && code <= 0xd7a3
+            ? LESSON26_JONGSEONG[(code - 0xac00) % 28]
+            : '';
+        return targets.has(jongseong)
+            ? `<span class="lesson26-batchim-highlight">${syllable}</span>`
+            : syllable;
+    }).join('');
+}
 
 const LESSON26_NONSENSE_ROWS = [
     ['섬씨', '곰버', '무섭'], ['봄비', '서집', '구그앱'],
@@ -9540,11 +9558,11 @@ function renderLesson26ReadingPage(groupIndex) {
         <div class="lesson26-page lesson26-reading-page">
             <div class="lesson26-guide"><strong>읽기 ${groupIndex + 1}</strong><span>그림을 누르고 소리를 들은 뒤, 단어를 큰 소리로 읽어 보세요.</span></div>
             <div class="lesson26-picture-grid">
-                ${group.pictureItems.map((item) => `<button type="button" class="lesson26-picture-card" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기"><span class="lesson26-picture-icon" aria-hidden="true">${item.icon}</span><span class="lesson26-picture-word">${item.word}</span><small>🔊 눌러서 들어요</small></button>`).join('')}
+                ${group.pictureItems.map((item) => `<button type="button" class="lesson26-picture-card" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기"><span class="lesson26-picture-icon" aria-hidden="true">${item.icon}</span><span class="lesson26-picture-word">${renderLesson26BatchimWord(item.word, group.batchims)}</span><small>🔊 눌러서 들어요</small></button>`).join('')}
             </div>
             <div class="lesson26-word-board">
                 <h3>한 줄씩 소리 내어 읽어요</h3>
-                ${group.wordRows.map((row) => `<div class="lesson26-word-row">${row.map((word) => `<button type="button" onclick="speakLesson13Word('${word}', this)">${word}</button>`).join('')}</div>`).join('')}
+                ${group.wordRows.map((row) => `<div class="lesson26-word-row">${row.map((word) => `<button type="button" onclick="speakLesson13Word('${word}', this)" aria-label="${word} 소리 듣기">${renderLesson26BatchimWord(word, group.batchims)}</button>`).join('')}</div>`).join('')}
             </div>
             ${renderLesson13ReadChecks(26, group.id, group.title)}
         </div>`;
