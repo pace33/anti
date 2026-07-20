@@ -9497,12 +9497,76 @@ function renderLesson26BatchimWord(word, batchims) {
     const targets = new Set(batchims || []);
     return Array.from(word).map((syllable) => {
         const code = syllable.charCodeAt(0);
-        const jongseongIndex = code >= 0xac00 && code <= 0xd7a3 ? (code - 0xac00) % 28 : 0;
+        const offset = code >= 0xac00 && code <= 0xd7a3 ? code - 0xac00 : -1;
+        const jongseongIndex = offset >= 0 ? offset % 28 : 0;
         const jongseong = LESSON26_JONGSEONG[jongseongIndex] || '';
         return targets.has(jongseong)
-            ? `<span class="lesson26-batchim-syllable" aria-hidden="true"><span class="lesson26-composed-syllable">${syllable}</span><span class="lesson26-batchim-highlight">${jongseong}</span></span>`
+            ? `<canvas class="lesson26-batchim-glyph" data-syllable="${syllable}" aria-hidden="true"></canvas>`
             : syllable;
     }).join('');
+}
+
+function initializeLesson26BatchimGlyphs() {
+    document.querySelectorAll('.view-section:not(.hidden) .lesson26-batchim-glyph').forEach((canvas) => {
+        const syllable = canvas.dataset.syllable || '';
+        const rect = canvas.getBoundingClientRect();
+        if (!syllable || rect.width < 4 || rect.height < 4) return;
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const width = Math.max(32, Math.round(rect.width * dpr));
+        const height = Math.max(32, Math.round(rect.height * dpr));
+        canvas.width = width;
+        canvas.height = height;
+
+        const style = getComputedStyle(canvas);
+        const fontSize = Number.parseFloat(style.fontSize) || rect.height;
+        const fontWeight = style.fontWeight || '900';
+        const fontFamily = style.fontFamily || "'Noto Sans KR', sans-serif";
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#152f49';
+        ctx.fillText(syllable, rect.width / 2, rect.height * 0.51);
+
+        const pixels = ctx.getImageData(0, 0, width, height).data;
+        const rowHasInk = new Array(height).fill(false);
+        for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+                if (pixels[(y * width + x) * 4 + 3] > 28) {
+                    rowHasInk[y] = true;
+                    break;
+                }
+            }
+        }
+
+        let bottomInk = height - 1;
+        while (bottomInk > 0 && !rowHasInk[bottomInk]) bottomInk -= 1;
+        const minGap = Math.max(2, Math.round(dpr * 1.3));
+        let gap = 0;
+        let splitRow = Math.round(height * 0.62);
+        for (let y = bottomInk; y >= Math.round(height * 0.38); y -= 1) {
+            if (rowHasInk[y]) {
+                gap = 0;
+            } else {
+                gap += 1;
+                if (gap >= minGap) {
+                    splitRow = y + gap;
+                    break;
+                }
+            }
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, splitRow / dpr, rect.width, rect.height - splitRow / dpr);
+        ctx.clip();
+        ctx.fillStyle = '#e25224';
+        ctx.fillText(syllable, rect.width / 2, rect.height * 0.51);
+        ctx.restore();
+        canvas.dataset.ready = 'true';
+    });
 }
 
 const LESSON26_NONSENSE_ROWS = [
@@ -12869,6 +12933,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeLesson21MPracticePage();
         initializeVisibleTraceWritingCanvases();
         initializeLessonCompletionCanvases();
+        initializeLesson26BatchimGlyphs();
         initializeLesson13BoardGames();
         redrawLessonLineMatchLines();
         document.querySelectorAll('.combine-card').forEach((card, cardIndex) => {

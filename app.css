@@ -6610,11 +6610,9 @@ body {
 .lesson26-picture-card:hover,.lesson26-picture-card:focus-visible {border-color:#3ca88f;background:#f1fbf7;transform:translateY(-1px);}
 .lesson26-picture-icon {grid-column:2;grid-row:1 / 4;display:grid;place-items:center;height:100%;background:#f3f8fb;font-size:3.4rem;}
 .lesson26-picture-word {grid-column:1;grid-row:1 / 3;align-self:end;padding:12px 8px 2px;font-size:2rem;font-weight:1000;}
-.lesson26-batchim-syllable {position:relative;display:inline-block;width:1em;height:1em;line-height:1;vertical-align:-.04em;}
-.lesson26-composed-syllable {position:absolute;inset:0;display:grid;place-items:center;color:#152f49;font-size:1em;line-height:1;}
-.lesson26-batchim-highlight {position:absolute;z-index:1;left:50%;bottom:-.025em;color:#e25224;font-size:.68em;font-weight:1000;line-height:1;transform:translateX(-50%) scaleY(.68);transform-origin:center bottom;-webkit-text-stroke:.025em #e25224;}
+.lesson26-batchim-glyph {display:inline-block;width:1em;height:1em;vertical-align:-.09em;}
 @media (forced-colors:active) {
-    .lesson26-batchim-highlight {color:Highlight;}
+    .lesson26-batchim-glyph {filter:none;}
 }
 .lesson26-picture-card small {grid-column:1;grid-row:3;padding:3px 8px 12px;color:#39738e;font-size:.82rem;font-weight:800;}
 .lesson26-word-board {display:grid;gap:7px;padding:16px;border:2px solid #b8c5ce;border-radius:8px;background:#fff;}
