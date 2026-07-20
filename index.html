@@ -156,11 +156,11 @@
                     </div>
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
                 </div>
-                <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 수업 사진 찍기">
+                <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
                     <span class="lesson-photo-icon" aria-hidden="true">📷</span>
-                    <span><strong>오늘의 수업 사진 찍기</strong><small>사진 1장당 500포인트 · 하루 최대 3회</small></span>
+                    <span><strong>오늘의 노트 사진 찍기</strong><small>AI 사진 분석 + OCR → 명사만 단어 은행 저장</small></span>
                 </button>
-                <input id="lesson-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleLessonPhotoCapture(this)" aria-label="오늘의 수업 사진 선택">
+                <input id="lesson-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleLessonPhotoCapture(this)" aria-label="오늘의 노트 사진 선택">
             </div>
 
             <!-- Information Drawer (Right Side) -->
@@ -1525,7 +1525,7 @@
 
     </nav>
 
-    <script type="module" src="app.js?v=20260720-drawing-level-sync"></script>
+    <script type="module" src="app.js?v=20260720-note-photo-ai-bank"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
