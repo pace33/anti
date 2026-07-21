@@ -12822,8 +12822,18 @@ const lesson27FamilyState = {
     activeKey: null
 };
 
-function renderLesson27HandFigure() {
-    return '<img class="lesson27-hand-illustration" src="lesson27_batchim_hand.jpg" alt="" draggable="false">';
+function renderLesson27HandMotion() {
+    return `
+        <span class="lesson27-hand-stage">
+            <img class="lesson27-hand-lower" src="lesson27_hand_lower.png" alt="" draggable="false">
+            <svg class="lesson27-hand-motion-lines" viewBox="0 0 46 90" aria-hidden="true">
+                <path d="M12 8C4 30 5 52 13 78" />
+                <path d="M30 4c-8 24-7 48 2 76" />
+            </svg>
+            <span class="lesson27-hand-contact" aria-hidden="true"></span>
+            <img class="lesson27-hand-upper" src="lesson27_hand_upper.png" alt="" draggable="false">
+        </span>
+    `;
 }
 
 function renderLesson27BatchimFamilyIntro() {
@@ -12861,8 +12871,8 @@ function renderLesson27BatchimFamilyIntro() {
                             <span class="lesson27-ending-block">읍</span>
                         </span>
                         <span class="lesson27-hand-scene" aria-hidden="true">
-                            <span class="lesson27-hand-track">${renderLesson27HandFigure()}</span>
-                            <span class="lesson27-stage-caption">손동작과 소리</span>
+                            <span class="lesson27-hand-track">${renderLesson27HandMotion()}</span>
+                            <span class="lesson27-stage-caption">손동작과 소리를 살펴보세요.</span>
                         </span>
                         <span class="lesson27-card-copy">
                             <strong>${item.name}</strong>
@@ -12924,31 +12934,35 @@ function syncLesson27FamilyPage() {
 }
 
 function setLesson27CardAnimationState(card, state, config) {
-    const stateClasses = ['state-idle', 'state-first', 'state-moving', 'state-final', 'state-done'];
+    const stateClasses = ['state-idle', 'state-first-sound', 'state-hand-moving', 'state-final-sound', 'state-completed'];
     card.classList.remove(...stateClasses);
-    card.classList.add(`state-${state}`);
-    card.classList.toggle('is-playing', !['idle', 'done'].includes(state));
+    const stateClass = state.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    card.classList.add(`state-${stateClass}`);
+    const hasCompleted = state === 'completed' && lesson27FamilyState.heard.has(config.key);
+    card.classList.toggle('is-playing', state !== 'idle' && !hasCompleted);
     card.dataset.animationState = state;
     const captions = {
-        idle: '손동작과 소리',
-        first: `${config.first} 소리를 들어요`,
-        moving: '두 손의 움직임을 따라 봐요',
-        final: '끝부분 소리를 들어요',
-        done: `${config.name} 확인 완료`
+        idle: '손동작과 소리를 살펴보세요.',
+        firstSound: `${config.first} 소리를 들어요.`,
+        handMoving: '위 손이 아래 손을 향해 내려와요.',
+        finalSound: '손이 닿을 때 끝부분 ‘읍’을 들어요.',
+        completed: config.key === 'pieup'
+            ? '‘피읖’의 끝부분도 ‘읍’처럼 들려요.'
+            : '‘비’ 다음에 끝부분 ‘읍’을 들어요.'
     };
     const caption = card.querySelector('.lesson27-stage-caption');
     if (caption) caption.textContent = captions[state];
     const playButton = card.querySelector('[data-family-play]');
     if (playButton) {
-        playButton.disabled = !['idle', 'done'].includes(state);
-        playButton.querySelector('.lesson27-play-label').textContent = !['idle', 'done'].includes(state)
-            ? '보고 있어요'
+        playButton.disabled = state !== 'idle' && !hasCompleted;
+        playButton.querySelector('.lesson27-play-label').textContent = state !== 'idle' && !hasCompleted
+            ? '손동작을 보고 있어요'
             : lesson27FamilyState.heard.has(config.key) ? '한 번 더 보기' : '손동작과 소리 보기';
     }
 }
 
 function waitForLesson27HandMovement(card, playbackToken, onComplete) {
-    const hand = card.querySelector('.lesson27-hand-illustration');
+    const hand = card.querySelector('.lesson27-hand-upper');
     if (!hand) {
         onComplete();
         return;
@@ -12962,15 +12976,36 @@ function waitForLesson27HandMovement(card, playbackToken, onComplete) {
         onComplete();
     };
     if (!reducedMotion) hand.addEventListener('transitionend', finish, { once: true });
-    lesson27FamilyState.movementTimer = window.setTimeout(finish, reducedMotion ? 320 : 850);
+    lesson27FamilyState.movementTimer = window.setTimeout(finish, reducedMotion ? 180 : 820);
+}
+
+function waitForLesson27ContactHold(playbackToken, onComplete) {
+    window.clearTimeout(lesson27FamilyState.movementTimer);
+    lesson27FamilyState.movementTimer = window.setTimeout(() => {
+        if (playbackToken === lesson27FamilyState.playbackToken) onComplete();
+    }, 560);
+}
+
+function waitForLesson27HandReturn(card, playbackToken, onComplete) {
+    const hand = card.querySelector('.lesson27-hand-upper');
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let finished = false;
+    const finish = () => {
+        if (finished || playbackToken !== lesson27FamilyState.playbackToken) return;
+        finished = true;
+        window.clearTimeout(lesson27FamilyState.movementTimer);
+        onComplete();
+    };
+    if (hand && !reducedMotion) hand.addEventListener('transitionend', finish, { once: true });
+    lesson27FamilyState.movementTimer = window.setTimeout(finish, reducedMotion ? 180 : 680);
 }
 
 window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
     const card = document.querySelector(`[data-family-card="${kind}"]`);
     if (!card) return;
     const config = kind === 'pieup'
-        ? { key: 'pieup', name: '피읖', first: '피', ending: '읖의 끝소리는 읍처럼 들려요.', rule: '피읖의 받침 소리도 ㅂ이에요.' }
-        : { key: 'bieup', name: '비읍', first: '비', ending: '읍', rule: '비읍의 받침 소리는 ㅂ이에요.' };
+        ? { key: 'pieup', name: '피읖', first: '피', ending: '읍' }
+        : { key: 'bieup', name: '비읍', first: '비', ending: '읍' };
     lesson27FamilyState.playbackToken += 1;
     const playbackToken = lesson27FamilyState.playbackToken;
     lesson27FamilyState.activeKey = kind;
@@ -12981,7 +13016,7 @@ window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
         const itemConfig = itemKey === 'pieup'
             ? { key: 'pieup', name: '피읖', first: '피' }
             : { key: 'bieup', name: '비읍', first: '비' };
-        setLesson27CardAnimationState(item, lesson27FamilyState.heard.has(itemKey) ? 'done' : 'idle', itemConfig);
+        setLesson27CardAnimationState(item, lesson27FamilyState.heard.has(itemKey) ? 'completed' : 'idle', itemConfig);
     });
     const firstListen = !lesson27FamilyState.heard.has(kind);
     const isCurrent = () => playbackToken === lesson27FamilyState.playbackToken;
@@ -12989,31 +13024,34 @@ window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
         if (isCurrent()) next();
     }, { playbackRate: 0.78 });
 
-    setLesson27CardAnimationState(card, 'first', config);
+    setLesson27CardAnimationState(card, 'firstSound', config);
     speakStep(config.first, () => {
-        setLesson27CardAnimationState(card, 'moving', config);
+        setLesson27CardAnimationState(card, 'handMoving', config);
         waitForLesson27HandMovement(card, playbackToken, () => {
-            setLesson27CardAnimationState(card, 'final', config);
+            setLesson27CardAnimationState(card, 'finalSound', config);
             speakStep(config.ending, () => {
-                speakStep(config.name, () => {
-                    speakStep(config.rule, () => {
-                        lesson27FamilyState.heard.add(kind);
-                        lesson27FamilyState.activeKey = null;
-                        setLesson27CardAnimationState(card, 'done', config);
-                        syncLesson27FamilyPage();
-                        if (firstListen) {
-                            recordKoreanAttempt({
-                                lessonId: 27,
-                                lessonTitle: '배움 27: ㅂ 받침가족',
-                                unitId: 8,
-                                activityType: 'batchimFamily',
-                                word: config.name,
-                                answer: '[ㅂ]',
-                                userAnswer: `${config.name} 손동작과 받침 소리 확인 완료`,
-                                isCorrect: true,
-                                errorType: null
-                            }).catch(() => {});
-                        }
+                waitForLesson27ContactHold(playbackToken, () => {
+                    speakStep(config.name, () => {
+                        setLesson27CardAnimationState(card, 'completed', config);
+                        waitForLesson27HandReturn(card, playbackToken, () => {
+                            lesson27FamilyState.heard.add(kind);
+                            lesson27FamilyState.activeKey = null;
+                            setLesson27CardAnimationState(card, 'completed', config);
+                            syncLesson27FamilyPage();
+                            if (firstListen) {
+                                recordKoreanAttempt({
+                                    lessonId: 27,
+                                    lessonTitle: '배움 27: ㅂ 받침가족',
+                                    unitId: 8,
+                                    activityType: 'batchimFamily',
+                                    word: config.name,
+                                    answer: '[ㅂ]',
+                                    userAnswer: `${config.name} 손동작과 받침 소리 확인 완료`,
+                                    isCorrect: true,
+                                    errorType: null
+                                }).catch(() => {});
+                            }
+                        });
                     });
                 });
             });
