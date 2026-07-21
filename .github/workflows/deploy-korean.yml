@@ -160,9 +160,9 @@ jobs:
 
           $app = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
           $adapter = (Invoke-WebRequest -UseBasicParsing -Uri "$base/korean-data-adapter.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          if ($app -notmatch 'aiedueKoreanDrawings') { throw 'Public app.js did not include Firebase drawing storage.' }
+          if ($app -notmatch 'aiedueKoreanDrawingsV2') { throw 'Public app.js did not include protected drawing persistence.' }
           if ($app -notmatch 'adjustStudentKoreanWallet') { throw 'Public app.js did not include teacher warning-token wallet controls.' }
           if ($app -notmatch 'warningTokens') { throw 'Public app.js did not include warning-token persistence.' }
           if ($app -match 'korean-db/db-api') { throw 'Public app.js still references the retired Korean DB mirror.' }
           if ($adapter -notmatch '/db-api/korean/v2') { throw 'Public Korean data adapter did not include the self-hosted endpoint.' }
-          Write-Host 'Smoke test passed: modular page, warning tokens, and Firebase drawing storage are reachable.'
+          Write-Host 'Smoke test passed: modular page, warning tokens, and self-hosted drawing persistence are reachable.'

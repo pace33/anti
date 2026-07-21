@@ -33,8 +33,8 @@ $requiredAppMarkers = @(
   'evaluateDrawingAccuracy',
   'openFriendsDrawingGallery',
   'completeTodayDrawingMission',
-  'aiedueKoreanDrawings',
-  'saveDrawingRecordToFirebase',
+  'aiedueKoreanDrawingsV2',
+  'persistDrawingRecord',
   'sanitizeModalHtml',
   'enhanceInteractiveSemantics'
 )
@@ -73,4 +73,4 @@ if (Test-Path (Join-Path $root 'aidu')) {
   throw 'The duplicate aidu directory must not be deployed.'
 }
 
-Write-Host 'Verified modular Korean app, drawing missions, Firebase-only drawing storage, XSS safeguards, and accessibility styles.'
+Write-Host 'Verified modular Korean app, drawing missions, self-hosted drawing persistence, XSS safeguards, and accessibility styles.'
