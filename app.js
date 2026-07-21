@@ -13014,9 +13014,6 @@ window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
                                 errorType: null
                             }).catch(() => {});
                         }
-                        if (lesson27FamilyState.heard.size === 2) {
-                            speakTextKo('비읍과 피읖은 이름은 다르지만, 받침에서는 모두 ㅂ 소리가 나요.', null, { playbackRate: 0.8 });
-                        }
                     });
                 });
             });
