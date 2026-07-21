@@ -33,7 +33,7 @@ import {
     arrayUnion,
     arrayRemove,
     onSnapshot
-} from "./korean-data-adapter.js";
+} from "./korean-data-adapter.js?v=20260722-auth-ready-v1";
 import {
     getStorage,
     ref as storageRef,
@@ -42,7 +42,7 @@ import {
     getMetadata,
     getDownloadURL,
     deleteObject
-} from "./korean-data-adapter.js";
+} from "./korean-data-adapter.js?v=20260722-auth-ready-v1";
 import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm";
 import { PDFDocument } from "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm";
 

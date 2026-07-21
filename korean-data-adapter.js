@@ -166,6 +166,39 @@ class AdapterError extends Error {
     }
 }
 
+async function resolveFirebaseAuth(app) {
+    if (!app || typeof window === 'undefined') return null;
+
+    // Prefer the Auth instance already attached by the page. During the migration,
+    // some pages can initialize the same Firebase app through another SDK version;
+    // calling getAuth(app) from this adapter first can otherwise throw or briefly
+    // expose currentUser as null while persisted authentication is being restored.
+    let auth = null;
+    try {
+        auth = app?._container?.getProvider?.('auth')?.getImmediate?.({ optional: true }) || null;
+    } catch {
+        auth = null;
+    }
+
+    if (!auth) {
+        firebaseAuthPromise ||= import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-auth.js`).catch(() => null);
+        const authModule = await firebaseAuthPromise;
+        try {
+            auth = authModule?.getAuth?.(app) || null;
+        } catch {
+            auth = null;
+        }
+    }
+
+    // Wait for IndexedDB-backed login restoration before the first private API
+    // request. Anonymous/public reads still proceed immediately when no Auth
+    // instance is available, and readiness failures remain non-fatal.
+    if (typeof auth?.authStateReady === 'function') {
+        await auth.authStateReady().catch(() => undefined);
+    }
+    return auth;
+}
+
 async function authHeaders(dbOrStorage) {
     const headers = {};
     const apiKey = adapterConfig().apiKey;
@@ -177,9 +210,8 @@ async function authHeaders(dbOrStorage) {
     // Firebase Auth remains the temporary identity provider even after every
     // Firestore/Storage bridge read and write has been disabled.
     } else if (app && typeof window !== 'undefined') {
-        firebaseAuthPromise ||= import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-auth.js`).catch(() => null);
-        const authModule = await firebaseAuthPromise;
-        token = await authModule?.getAuth(app)?.currentUser?.getIdToken?.().catch(() => null);
+        const auth = await resolveFirebaseAuth(app);
+        token = await auth?.currentUser?.getIdToken?.().catch(() => null);
     }
     if (token) headers.authorization = `Bearer ${token}`;
     return headers;
