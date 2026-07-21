@@ -459,6 +459,7 @@
                         <div id="literacy-question-content" class="text-2xl font-black text-gray-800 mb-6">
                             지문을 읽고 문제를 풀어보세요.
                         </div>
+                        <div id="literacy-keywords-container" class="hidden mb-6 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4"></div>
 
                         <div id="literacy-options-container" class="space-y-3 hidden"></div>
 
@@ -468,7 +469,7 @@
                         </div>
 
                         <div id="literacy-essay-container" class="hidden">
-                            <textarea id="literacy-essay-input" class="w-full p-4 border-4 border-gray-200 rounded-2xl font-bold text-lg focus:border-blue-400 focus:outline-none mb-4 min-h-[150px]" placeholder="생각을 서술형으로 자세히 적어주세요. AI가 채점합니다."></textarea>
+                            <textarea id="literacy-essay-input" class="w-full p-4 border-4 border-gray-200 rounded-2xl font-bold text-lg focus:border-blue-400 focus:outline-none mb-4 min-h-[120px]" placeholder="핵심어를 참고해 답해 보세요. AI가 채점합니다."></textarea>
                             <button type="button" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all" onclick="window.submitLiteracyEssayAnswer()">AI 채점 받기</button>
                         </div>
 
@@ -1522,7 +1523,7 @@
 
     </nav>
 
-    <script type="module" src="app.js?v=20260722-auth-ready-v13"></script>
+    <script type="module" src="app.js?v=20260722-literacy-easy-essay-v14"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

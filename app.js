@@ -6929,6 +6929,29 @@ function updateLiteracyDashboardPreview() {
 const SHARED_LITERACY_COLLECTION = 'sharedLiteracyWrongBankV2';
 const SHARED_LITERACY_DOC_ID = Symbol('sharedLiteracyWrongBankDocId');
 const SHARED_LITERACY_PUBLIC_STRING_FIELDS = ['passage', 'question', 'difficulty', 'type', 'answer', 'sampleAnswer', 'explanation'];
+const LITERACY_KEYWORD_STOP_WORDS = new Set([
+    '그리고', '그러나', '그래서', '때문에', '것이다', '있다', '없다', '하는', '한다', '했다',
+    '대한', '통해', '위해', '우리', '학생', '사람', '생각', '내용', '이야기', '문장'
+]);
+
+function normalizeLiteracyKeywords(primary = {}, fallback = {}) {
+    const supplied = Array.isArray(primary.keywords) && primary.keywords.length
+        ? primary.keywords
+        : (Array.isArray(fallback.keywords) ? fallback.keywords : []);
+    let candidates = supplied;
+    if (!candidates.length) {
+        const sampleAnswer = String(primary.sampleAnswer ?? fallback.sampleAnswer ?? '');
+        candidates = sampleAnswer
+            .replace(/[^0-9A-Za-z가-힣\s]/g, ' ')
+            .split(/\s+/)
+            .map((word) => word.trim())
+            .filter((word) => word.length >= 2 && !LITERACY_KEYWORD_STOP_WORDS.has(word));
+    }
+    return Array.from(new Set(candidates
+        .map((keyword) => String(keyword).trim())
+        .filter((keyword) => keyword.length >= 1 && keyword.length <= 30)))
+        .slice(0, 5);
+}
 
 async function getSharedLiteracyQuestionId(questionData) {
     if (questionData?.[SHARED_LITERACY_DOC_ID]) return String(questionData[SHARED_LITERACY_DOC_ID]);
@@ -6951,6 +6974,8 @@ function buildSharedLiteracyPublicQuestion(primary = {}, fallback = {}) {
     if (answerIndex !== undefined && answerIndex !== null && Number.isInteger(Number(answerIndex))) {
         publicQuestion.answerIndex = Number(answerIndex);
     }
+    const keywords = normalizeLiteracyKeywords(primary, fallback);
+    if (keywords.length) publicQuestion.keywords = keywords;
     return publicQuestion;
 }
 
@@ -7189,8 +7214,14 @@ function generateLiteracyPrompt(difficulty, type, bankWords) {
         typeGuide = `지문을 바탕으로 풀 수 있는 단답형(정답이 한 단어 또는 5글자 이내의 짧은 어구인 문제) 1문제를 출제해 주세요.
 포맷: {"passage": "지문 내용", "question": "문제 내용", "answer": "단답형 정답", "explanation": "친절한 해설"}`;
     } else if (type === 'essay') {
-        typeGuide = `지문을 바탕으로 자신의 생각이나 논리적 근거를 서술하는 서술형(생각해볼 만한 질문) 1문제를 출제해 주세요.
-포맷: {"passage": "지문 내용", "question": "문제 내용", "sampleAnswer": "이상적이고 구체적인 모범 답안", "explanation": "채점 기준 및 해설"}`;
+        const easyEssayGuide = difficulty === 'easy'
+            ? '지문에서 바로 찾을 수 있거나 친숙하게 생각할 수 있는 아주 쉬운 질문으로 만들고, 학생이 쉬운 낱말을 사용한 한 문장으로 충분히 답할 수 있게 하세요. 모범 답안도 반드시 짧고 쉬운 한 문장으로 작성하세요.'
+            : difficulty === 'normal'
+                ? '지문의 핵심 내용이나 이유 한 가지만 묻는 쉬운 질문으로 만들고, 학생이 근거 하나를 담은 한 문장으로 충분히 답할 수 있게 하세요. 모범 답안도 반드시 한 문장으로 작성하세요.'
+                : '지문을 바탕으로 자신의 생각이나 논리적 근거를 서술하는 생각해볼 만한 질문으로 만드세요.';
+        typeGuide = `서술형 1문제를 출제해 주세요. ${easyEssayGuide}
+모든 난이도에서 학생에게 미리 보여 줄 핵심어를 3~5개 제공하세요. keywords의 모든 항목은 sampleAnswer에 실제로 들어 있거나 그 의미에 직접 대응하는 핵심 낱말/짧은 어구여야 합니다.
+포맷: {"passage": "지문 내용", "question": "문제 내용", "sampleAnswer": "난이도 지시에 맞는 모범 답안", "keywords": ["핵심어1", "핵심어2", "핵심어3"], "explanation": "채점 기준 및 해설"}`;
     }
 
     return `당신은 초등/중등 국어 문해력 전문 교사입니다.
@@ -7227,6 +7258,11 @@ function setupLiteracyWorkspace(questionData, isLimitBreak = false) {
     document.getElementById('literacy-passage-difficulty').innerText = questionData.difficulty.toUpperCase();
     document.getElementById('literacy-passage-content').innerText = questionData.passage;
     document.getElementById('literacy-question-content').innerText = questionData.question;
+    const keywordContainer = document.getElementById('literacy-keywords-container');
+    if (keywordContainer) {
+        keywordContainer.classList.add('hidden');
+        keywordContainer.innerHTML = '';
+    }
     updateLiteracyDanBadges();
 
     const typeLabel = document.getElementById('literacy-question-type');
@@ -7254,6 +7290,18 @@ function setupLiteracyWorkspace(questionData, isLimitBreak = false) {
         document.getElementById('literacy-short-answer-container').classList.remove('hidden');
     } else if (questionData.type === 'essay') {
         document.getElementById('literacy-essay-container').classList.remove('hidden');
+        const keywords = normalizeLiteracyKeywords(questionData);
+        questionData.keywords = keywords;
+        if (keywordContainer && keywords.length) {
+            keywordContainer.classList.remove('hidden');
+            keywordContainer.innerHTML = `<div class="text-sm font-black text-amber-700 mb-2">💡 답변에 넣어 보면 좋은 핵심어</div><div class="flex flex-wrap gap-2">${keywords.map((keyword) => `<span class="px-3 py-1.5 rounded-full bg-white border-2 border-amber-200 text-amber-800 font-black">${escapeHtml(keyword)}</span>`).join('')}</div>`;
+        }
+        const essayInput = document.getElementById('literacy-essay-input');
+        if (essayInput) {
+            essayInput.placeholder = ['easy', 'normal'].includes(String(questionData.difficulty).toLowerCase())
+                ? '핵심어를 참고해 한 문장으로 답해 보세요.'
+                : '핵심어와 근거를 활용해 답해 보세요. AI가 채점합니다.';
+        }
     }
 }
 
@@ -7294,12 +7342,19 @@ window.submitLiteracyEssayAnswer = async function() {
     userLiteracyAnswerChecked = true;
     showActivityLoading();
     try {
-        const prompt = `질문: ${activeLiteracyQuestion.question}
+        const essayDifficulty = String(activeLiteracyQuestion.difficulty || 'easy').toLowerCase();
+        const essayKeywords = normalizeLiteracyKeywords(activeLiteracyQuestion);
+        const prompt = `지문: ${activeLiteracyQuestion.passage}
+난이도: ${essayDifficulty}
+질문: ${activeLiteracyQuestion.question}
 예시답안: ${activeLiteracyQuestion.sampleAnswer}
+학생에게 제공된 핵심어: ${essayKeywords.join(', ')}
 학생답안: ${input}
 
 위 학생답안을 예시답안을 기준으로 100점 만점으로 정밀하게 채점해 주세요.
 지문 내용과 부합하는지, 그리고 핵심 의도를 파악하고 작성했는지 평가하세요.
+핵심어는 문자 그대로 같지 않아도 동의어나 같은 뜻의 표현이면 인정하세요.
+${['easy', 'normal'].includes(essayDifficulty) ? '이 문제는 한 문장 답변용입니다. 한 문장 안에 핵심 의미가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : '근거와 논리적 연결을 충분히 갖추었는지 평가하세요.'}
 반드시 백틱이나 다른 군더더기 없이 다음 JSON 형식만 반환하세요: {"score": 85, "feedback": "여기에 채점 총평 및 친절한 피드백을 적으세요."}`;
 
         const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });

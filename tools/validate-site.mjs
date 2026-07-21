@@ -83,6 +83,7 @@ const drawingComplete = section(app, 'window.completeTodayDrawingMission', 'wind
 const literacyId = section(app, 'const SHARED_LITERACY_COLLECTION', 'function writeWrongToSharedBankTransaction');
 const sharedBankWrites = section(app, 'function writeWrongToSharedBankTransaction', 'async function getSharedBankProblems');
 const sharedBankLoad = section(app, 'async function getSharedBankProblems', 'window.openLiteracyLimitBreak');
+const literacyPrompt = section(app, 'function generateLiteracyPrompt', 'function parseAiQuestionResponse');
 const literacyAttemptMerge = section(app, 'function createLiteracyAttemptPayload', 'async function persistLiteracyAttemptAtomic');
 const literacyScoreHelper = section(app, 'function normalizeLiteracyScore', 'function createLiteracyAttemptPayload');
 const literacyAtomicPersist = section(app, 'async function persistLiteracyAttemptAtomic', 'function applyCommittedLiteracyAttempt');
@@ -128,6 +129,10 @@ assert(sharedBankLoad.includes('queryLimit(200)'), '한계돌파 공용 오답 �
 const essaySubmit = section(app, 'window.submitLiteracyEssayAnswer', 'function cloneLiteracyValue');
 assert(essaySubmit.indexOf('userLiteracyAnswerChecked = true;') < essaySubmit.indexOf('callKoreanAiGenerate'), '서술형 AI 채점 요청 전에 중복 제출 잠금이 설정되지 않습니다.');
 assert(essaySubmit.includes('await showLiteracyResult') && essaySubmit.includes('userLiteracyAnswerChecked = false;'), '서술형 결과 저장 대기 또는 채점 실패 시 제출 잠금 해제가 없습니다.');
+assert(essaySubmit.includes('학생에게 제공된 핵심어') && essaySubmit.includes('답이 짧다는 이유만으로 감점하지 마세요'), '서술형 채점이 공개 핵심어 및 easy/normal 한 문장 기준을 사용하지 않습니다.');
+assert(literacyPrompt.includes('학생이 쉬운 낱말을 사용한 한 문장') && literacyPrompt.includes('학생이 근거 하나를 담은 한 문장'), 'easy/normal 서술형이 한 문장 저난도 답변으로 제한되지 않습니다.');
+assert(literacyPrompt.includes('"keywords": ["핵심어1"') && literacyPrompt.includes('모든 난이도에서 학생에게 미리 보여 줄 핵심어'), '모든 서술형 난이도에서 핵심어 생성을 요구하지 않습니다.');
+assert(index.includes('id="literacy-keywords-container"'), '서술형 핵심어 표시 영역이 없습니다.');
 assert(literacyAttemptMerge.includes('serverData.literacyPortfolio ?? fallback.literacyPortfolio') && literacyAttemptMerge.includes('advanceLiteracyDanIfReady(portfolio)'), '사용자 최신 문해력 기록에 이번 답안 변화량을 병합하지 않습니다.');
 assert(literacyAttemptMerge.includes('serverData.coins') && literacyAttemptMerge.includes('serverData.aeduExperience'), '트랜잭션에서 최신 서버 보상 상태를 기준으로 계산하지 않습니다.');
 const literacyScoreApi = new Function(`${literacyScoreHelper}\nreturn { normalizeLiteracyScore };`)();
@@ -181,6 +186,7 @@ const normalizedLegacyQuestion = literacyIdApi.buildSharedLiteracyPublicQuestion
 }, { sampleAnswer: '모범 답안', explanation: '해설' });
 assert(normalizedLegacyQuestion.sampleAnswer === '모범 답안' && normalizedLegacyQuestion.explanation === '해설', '기존 공용 오답 문서 정규화 때 누락된 공개 필드가 보충되지 않습니다.');
 assert(!('literacyDan' in normalizedLegacyQuestion) && !('pendingReviewRewardId' in normalizedLegacyQuestion) && !('id' in normalizedLegacyQuestion), '기존 공용 오답 문서 정규화 뒤 비공개/임시 필드가 남습니다.');
+assert(Array.isArray(normalizedLegacyQuestion.keywords) && normalizedLegacyQuestion.keywords.length > 0, '기존 서술형 문제의 예시답안에서 핵심어를 보충하지 못합니다.');
 
 [
     'anti-db/db-api',
