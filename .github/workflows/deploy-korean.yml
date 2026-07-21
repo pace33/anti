@@ -68,47 +68,20 @@ jobs:
           $ErrorActionPreference = 'Stop'
           .\tools\verify-korean-sketchbook.ps1
 
-      - name: Prepare and deploy approved static files
+      - name: Sync canonical Pi /korean deployment
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $source = (Get-Location).Path
-          $staging = Join-Path $env:RUNNER_TEMP 'aiedue-korean-deploy'
-          $destination = 'C:\Users\y5496\Desktop\Aiedue_Korean'
-          $approvedFiles = @(
-            'index.html',
-            'app.js',
-            'korean-data-adapter.js',
-            'app.css',
-            'style.css',
-            'firebase-config.js',
-            'drawing.html',
-            'hangul.html',
-            'dictation.html',
-            'literacy.html',
-            'aiedu_bgm.mp3',
-            'aiedu_click.mp3',
-            'aiedu_korean_logo.webp',
-            'aiedu_korean_nature_bg.webp',
-            'aiedu_korean_dashboard_nature_bg.webp',
-            'baby_giyeok.webp',
-            'mom_ah.webp'
-          )
-
-          Remove-Item -Recurse -Force $staging -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path $staging | Out-Null
-          foreach ($relativePath in $approvedFiles) {
-            $from = Join-Path $source $relativePath
-            if (!(Test-Path $from)) { throw "Approved deploy file is missing: $relativePath" }
-            Copy-Item -Force $from (Join-Path $staging $relativePath)
-          }
-
-          New-Item -ItemType Directory -Force -Path $destination | Out-Null
-          robocopy $staging $destination /MIR
-          $code = $LASTEXITCODE
-          if ($code -ge 8) { throw "robocopy failed with exit code $code" }
-          $global:LASTEXITCODE = 0
-          Write-Host "Deployed approved Korean site files to $destination"
+          $ssh = (Get-Command 'ssh.exe' -ErrorAction Stop).Source
+          $key = 'C:\Users\y5496\.ssh\aiedue_pi_hermes'
+          if (!(Test-Path $key)) { throw "Pi deployment key not found: $key" }
+          $expected = $env:GITHUB_SHA.Substring(0, 7)
+          $remoteCommand = "systemctl --user start aiedue-anti-sync.service && test `"`$(tr -d '\r\n' < /home/aiedue/sites/korean/.anti-sync-commit)`" = '$expected' && tr -d '\r\n' < /home/aiedue/sites/korean/.anti-sync-commit"
+          $output = & $ssh -o BatchMode=yes -o ConnectTimeout=10 -i $key 'aiedue@192.168.219.108' $remoteCommand 2>&1
+          $exitCode = $LASTEXITCODE
+          if ($output) { Write-Host ($output -join "`n") }
+          if ($exitCode -ne 0) { throw "Pi Korean sync failed with exit code $exitCode" }
+          Write-Host "Pi /korean synchronized to $expected"
 
       - name: Validate and reload Caddy
         shell: powershell
@@ -149,11 +122,8 @@ jobs:
 
           Invoke-CaddyBounded @('validate', '--config', $config) 25 $false
 
-          # Static /korean deploys only copy files, but keep reload best-effort for route changes.
-          # On the self-hosted Windows runner, `caddy reload` can occasionally hang even after
-          # the config is valid and the existing route is serving the copied files. Bound it so
-          # the following public smoke test can prove the deployment instead of leaving the run
-          # stuck until GitHub cancels it.
+          # The canonical /korean files are synchronized on the Pi. Keep the Windows
+          # public-entrypoint Caddy reload best-effort so routing changes are picked up.
           Invoke-CaddyBounded @('reload', '--config', $config) 20 $false
 
       - name: Smoke test public /korean site
