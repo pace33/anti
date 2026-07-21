@@ -12825,13 +12825,13 @@ const lesson27FamilyState = {
 function renderLesson27HandMotion() {
     return `
         <span class="lesson27-hand-stage">
-            <img class="lesson27-hand-lower" src="lesson27_hand_lower.png" alt="" draggable="false">
+            <img class="lesson27-hand-lower" src="lesson27_hand_lower.png?v=20260721-v9" alt="" draggable="false">
             <svg class="lesson27-hand-motion-lines" viewBox="0 0 46 90" aria-hidden="true">
                 <path d="M12 8C4 30 5 52 13 78" />
                 <path d="M30 4c-8 24-7 48 2 76" />
             </svg>
             <span class="lesson27-hand-contact" aria-hidden="true"></span>
-            <img class="lesson27-hand-upper" src="lesson27_hand_upper.png" alt="" draggable="false">
+            <img class="lesson27-hand-upper" src="lesson27_hand_upper.png?v=20260721-v9" alt="" draggable="false">
         </span>
     `;
 }
