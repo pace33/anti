@@ -12822,26 +12822,8 @@ const lesson27FamilyState = {
     activeKey: null
 };
 
-function renderLesson27HandSvg() {
-    return `
-        <svg class="lesson27-hand-illustration" viewBox="0 0 150 150" role="img" aria-label="펼친 손 일러스트">
-            <g class="lesson27-hand-art">
-                <path class="lesson27-hand-cuff" d="M53 111h51v29H53z" />
-                <rect class="lesson27-hand-palm" x="48" y="55" width="62" height="70" rx="25" />
-                <rect class="lesson27-hand-finger" x="48" y="17" width="15" height="58" rx="8" transform="rotate(-5 55 46)" />
-                <rect class="lesson27-hand-finger" x="65" y="9" width="16" height="65" rx="8" />
-                <rect class="lesson27-hand-finger" x="83" y="14" width="16" height="61" rx="8" transform="rotate(3 91 44)" />
-                <rect class="lesson27-hand-finger" x="101" y="25" width="15" height="54" rx="8" transform="rotate(8 108 52)" />
-                <path class="lesson27-hand-thumb" d="M52 73c-10-13-21-21-28-14-7 8 2 18 13 30 8 9 12 20 17 27l18-20c-6-8-13-16-20-23z" />
-                <path class="lesson27-hand-detail" d="M59 91c12 6 27 7 41 2M63 106c11 5 23 5 34 1" />
-            </g>
-            <g class="lesson27-motion-lines">
-                <path d="M21 46c-8 6-11 14-9 23" />
-                <path d="M129 47c8 6 11 14 9 23" />
-                <path d="M23 91c-6 5-8 11-7 18" />
-            </g>
-        </svg>
-    `;
+function renderLesson27HandFigure() {
+    return '<img class="lesson27-hand-illustration" src="lesson27_batchim_hand.jpg" alt="" draggable="false">';
 }
 
 function renderLesson27BatchimFamilyIntro() {
@@ -12879,11 +12861,8 @@ function renderLesson27BatchimFamilyIntro() {
                             <span class="lesson27-ending-block">읍</span>
                         </span>
                         <span class="lesson27-hand-scene" aria-hidden="true">
-                            <span class="lesson27-hand-route">
-                                <b>${item.first}</b><i>↓</i><b>읍</b>
-                            </span>
-                            <span class="lesson27-hand-track">${renderLesson27HandSvg()}</span>
-                            <span class="lesson27-stage-caption">멈춰 있어요</span>
+                            <span class="lesson27-hand-track">${renderLesson27HandFigure()}</span>
+                            <span class="lesson27-stage-caption">손동작과 소리</span>
                         </span>
                         <span class="lesson27-card-copy">
                             <strong>${item.name}</strong>
@@ -12951,9 +12930,9 @@ function setLesson27CardAnimationState(card, state, config) {
     card.classList.toggle('is-playing', !['idle', 'done'].includes(state));
     card.dataset.animationState = state;
     const captions = {
-        idle: '멈춰 있어요',
+        idle: '손동작과 소리',
         first: `${config.first} 소리를 들어요`,
-        moving: '끝부분으로 내려가요',
+        moving: '두 손의 움직임을 따라 봐요',
         final: '끝부분 소리를 들어요',
         done: `${config.name} 확인 완료`
     };
