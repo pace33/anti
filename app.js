@@ -9967,14 +9967,18 @@ const LESSON_BATCHIM_INTRO_STROKES = {
         points: [[0.5, 0.16], [0.68, 0.2], [0.79, 0.34], [0.82, 0.5], [0.78, 0.68], [0.65, 0.8], [0.5, 0.84], [0.35, 0.8], [0.22, 0.68], [0.18, 0.5], [0.21, 0.34], [0.32, 0.2], [0.5, 0.16]],
         direction: '동그랗게'
     }],
-    'ㄱ': [
-        { start: [0.22, 0.22], end: [0.78, 0.22], direction: '오른쪽으로' },
-        { start: [0.78, 0.22], end: [0.78, 0.8], direction: '아래로' }
-    ],
-    'ㄴ': [
-        { start: [0.24, 0.18], end: [0.24, 0.78], direction: '아래로' },
-        { start: [0.24, 0.78], end: [0.78, 0.78], direction: '오른쪽으로' }
-    ],
+    'ㄱ': [{
+        start: [0.22, 0.22],
+        end: [0.78, 0.8],
+        points: [[0.22, 0.22], [0.78, 0.22], [0.78, 0.8]],
+        direction: '오른쪽으로 쓰고 아래로 꺽어서'
+    }],
+    'ㄴ': [{
+        start: [0.24, 0.18],
+        end: [0.78, 0.78],
+        points: [[0.24, 0.18], [0.24, 0.78], [0.78, 0.78]],
+        direction: '아래로 쓰고 오른쪽으로 꺽어서'
+    }],
     'ㄹ': [
         { start: [0.24, 0.2], end: [0.76, 0.2], direction: '오른쪽으로' },
         { start: [0.76, 0.2], end: [0.76, 0.46], direction: '아래로' },
@@ -13508,8 +13512,8 @@ const traceStrokeMap = {
     'ㅔ': [{ points: [[0.62, 0.5], [0.32, 0.5]] }, { points: [[0.62, 0.18], [0.62, 0.82]] }, { points: [[0.78, 0.18], [0.78, 0.82]] }],
     'ㅒ': [{ points: [[0.34, 0.16], [0.34, 0.84]] }, { points: [[0.34, 0.4], [0.56, 0.4]] }, { points: [[0.34, 0.62], [0.56, 0.62]] }, { points: [[0.72, 0.16], [0.72, 0.84]] }],
     'ㅖ': [{ points: [[0.58, 0.4], [0.28, 0.4]] }, { points: [[0.58, 0.62], [0.28, 0.62]] }, { points: [[0.58, 0.16], [0.58, 0.84]] }, { points: [[0.78, 0.16], [0.78, 0.84]] }],
-    'ㄱ': [{ points: [[0.22, 0.24], [0.78, 0.24]] }, { points: [[0.78, 0.24], [0.78, 0.78]] }],
-    'ㄴ': [{ points: [[0.24, 0.2], [0.24, 0.76]] }, { points: [[0.24, 0.76], [0.78, 0.76]] }],
+    'ㄱ': [{ points: [[0.22, 0.24], [0.78, 0.24], [0.78, 0.78]] }],
+    'ㄴ': [{ points: [[0.24, 0.2], [0.24, 0.76], [0.78, 0.76]] }],
     'ㄷ': [{ points: [[0.28, 0.24], [0.74, 0.24]] }, { points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
     'ㅌ': [{ points: [[0.28, 0.22], [0.74, 0.22]] }, { points: [[0.28, 0.22], [0.28, 0.78]] }, { points: [[0.28, 0.5], [0.68, 0.5]] }, { points: [[0.28, 0.78], [0.74, 0.78]] }],
     'ㅁ': [{ points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.24], [0.74, 0.24]] }, { points: [[0.74, 0.24], [0.74, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
@@ -14045,7 +14049,17 @@ function traceDidCompleteStroke(path, strokeItem) {
     const endTolerance = strokeItem.lesson21Easy
         ? Math.max(18, scale * 0.42)
         : strokeItem.lesson21Compact ? Math.max(11, scale * 0.3) : Math.max(40, scale * 0.38);
-    return tracePathLength(path) >= minimumLength && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= endTolerance;
+    const guidePoints = strokeItem.stroke.points || [];
+    const cornerTolerance = strokeItem.lesson21Easy
+        ? Math.max(18, scale * 0.38)
+        : strokeItem.lesson21Compact ? Math.max(11, scale * 0.28) : Math.max(32, scale * 0.3);
+    const passedCorners = guidePoints.slice(1, -1).every((guidePoint) => {
+        const corner = tracePointForStroke(strokeItem, guidePoint);
+        return path.some((point) => traceDistance(point, corner) <= cornerTolerance);
+    });
+    return tracePathLength(path) >= minimumLength
+        && traceDistance(last, traceStrokeEndPoint(strokeItem)) <= endTolerance
+        && passedCorners;
 }
 
 function initializeTraceWritingCanvas(target) {
