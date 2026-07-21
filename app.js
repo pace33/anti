@@ -12823,16 +12823,29 @@ const lesson27FamilyState = {
     heard: new Set(),
     playbackToken: 0,
     movementTimer: null,
-    activeKey: null
+    activeKey: null,
+    activeAnimation: null,
+    pendingAudioResolve: null,
+    resizeObserver: null
+};
+
+const LESSON27_HAND_GEOMETRY = {
+    upperFingerTip: { xRatio: 0.10, yRatio: 0.96 },
+    lowerTargets: {
+        first: { xRatio: 0.37, yRatio: 0.55 },
+        final: { xRatio: 0.03, yRatio: 0.63 }
+    }
 };
 
 function renderLesson27HandMotion() {
     return `
         <span class="lesson27-hand-stage">
             <img class="lesson27-hand-lower" src="lesson27_hand_lower.png?v=20260721-v9" alt="" draggable="false">
-            <svg class="lesson27-hand-motion-lines" viewBox="0 0 46 90" aria-hidden="true">
-                <path d="M12 8C4 30 5 52 13 78" />
-                <path d="M30 4c-8 24-7 48 2 76" />
+            <span class="lesson27-sound-anchor lesson27-sound-anchor-first" aria-hidden="true"></span>
+            <span class="lesson27-sound-anchor lesson27-sound-anchor-final" aria-hidden="true"></span>
+            <svg class="lesson27-hand-motion-lines" viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M94 10C70 2 36 5 6 16" />
+                <path d="M92 25C65 16 34 19 5 29" />
             </svg>
             <span class="lesson27-hand-contact" aria-hidden="true"></span>
             <img class="lesson27-hand-upper" src="lesson27_hand_upper.png?v=20260721-v9" alt="" draggable="false">
@@ -13004,7 +13017,7 @@ function waitForLesson27HandReturn(card, playbackToken, onComplete) {
     lesson27FamilyState.movementTimer = window.setTimeout(finish, reducedMotion ? 180 : 680);
 }
 
-window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
+window.playLesson27FamilyCardLegacy = function playLesson27FamilyCardLegacy(kind) {
     const card = document.querySelector(`[data-family-card="${kind}"]`);
     if (!card) return;
     const config = kind === 'pieup'
@@ -13061,6 +13074,224 @@ window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
             });
         });
     });
+};
+
+function positionLesson27HandAnchors(card) {
+    const stage = card?.querySelector('.lesson27-hand-stage');
+    const lowerHand = card?.querySelector('.lesson27-hand-lower');
+    const firstAnchor = card?.querySelector('.lesson27-sound-anchor-first');
+    const finalAnchor = card?.querySelector('.lesson27-sound-anchor-final');
+    if (!stage || !lowerHand || !firstAnchor || !finalAnchor) return;
+    const stageRect = stage.getBoundingClientRect();
+    const lowerRect = lowerHand.getBoundingClientRect();
+    const placeAnchor = (anchor, target) => {
+        anchor.style.left = `${lowerRect.left - stageRect.left + lowerRect.width * target.xRatio}px`;
+        anchor.style.top = `${lowerRect.top - stageRect.top + lowerRect.height * target.yRatio}px`;
+    };
+    placeAnchor(firstAnchor, LESSON27_HAND_GEOMETRY.lowerTargets.first);
+    placeAnchor(finalAnchor, LESSON27_HAND_GEOMETRY.lowerTargets.final);
+    const contact = card.querySelector('.lesson27-hand-contact');
+    if (contact) {
+        contact.style.left = `${finalAnchor.offsetLeft}px`;
+        contact.style.top = `${finalAnchor.offsetTop}px`;
+    }
+    const motionLines = card.querySelector('.lesson27-hand-motion-lines');
+    if (motionLines) {
+        const left = Math.min(firstAnchor.offsetLeft, finalAnchor.offsetLeft);
+        const width = Math.abs(firstAnchor.offsetLeft - finalAnchor.offsetLeft);
+        motionLines.style.left = `${left}px`;
+        motionLines.style.top = `${Math.min(firstAnchor.offsetTop, finalAnchor.offsetTop) - 28}px`;
+        motionLines.style.width = `${Math.max(42, width)}px`;
+    }
+}
+
+function calculateLesson27FingerTransforms(card) {
+    positionLesson27HandAnchors(card);
+    const hand = card.querySelector('.lesson27-hand-upper');
+    const firstAnchor = card.querySelector('.lesson27-sound-anchor-first');
+    const finalAnchor = card.querySelector('.lesson27-sound-anchor-final');
+    if (!hand || !firstAnchor || !finalAnchor) return null;
+    const fingerX = hand.offsetLeft + hand.offsetWidth * LESSON27_HAND_GEOMETRY.upperFingerTip.xRatio;
+    const fingerY = hand.offsetTop + hand.offsetHeight * LESSON27_HAND_GEOMETRY.upperFingerTip.yRatio;
+    const pointFor = (anchor, lift = 0, rotation = 0) => ({
+        x: anchor.offsetLeft - fingerX,
+        y: anchor.offsetTop - fingerY - lift,
+        rotation
+    });
+    const first = pointFor(firstAnchor, 0, -1);
+    const final = pointFor(finalAnchor, 0, 0);
+    return {
+        start: { x: first.x + 18, y: first.y - 54, rotation: -2 },
+        first,
+        middle: {
+            x: first.x + (final.x - first.x) * 0.52,
+            y: first.y + (final.y - first.y) * 0.52 - 7,
+            rotation: 1
+        },
+        final
+    };
+}
+
+function lesson27Transform(point, extraY = 0) {
+    return `translate3d(${point.x}px, ${point.y + extraY}px, 0) rotate(${point.rotation}deg)`;
+}
+
+function cancelLesson27FamilyPlayback() {
+    lesson27FamilyState.playbackToken += 1;
+    lesson27FamilyState.activeAnimation?.cancel();
+    lesson27FamilyState.activeAnimation = null;
+    window.clearTimeout(lesson27FamilyState.movementTimer);
+    if (lesson27FamilyState.pendingAudioResolve) {
+        const resolve = lesson27FamilyState.pendingAudioResolve;
+        lesson27FamilyState.pendingAudioResolve = null;
+        resolve();
+    }
+    window.cancelSpeech?.();
+}
+
+async function animateLesson27UpperHand(hand, keyframes, options, playbackToken) {
+    if (playbackToken !== lesson27FamilyState.playbackToken) throw new Error('lesson27-playback-cancelled');
+    const finalTransform = keyframes[keyframes.length - 1].transform;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        hand.style.transform = finalTransform;
+        return;
+    }
+    lesson27FamilyState.activeAnimation?.cancel();
+    const animation = hand.animate(keyframes, { fill: 'forwards', ...options });
+    lesson27FamilyState.activeAnimation = animation;
+    try {
+        await animation.finished;
+    } catch (error) {
+        if (playbackToken !== lesson27FamilyState.playbackToken) throw new Error('lesson27-playback-cancelled');
+        throw error;
+    }
+    if (playbackToken !== lesson27FamilyState.playbackToken) throw new Error('lesson27-playback-cancelled');
+    hand.style.transform = finalTransform;
+    animation.cancel();
+    if (lesson27FamilyState.activeAnimation === animation) lesson27FamilyState.activeAnimation = null;
+}
+
+function speakLesson27Step(text, playbackToken) {
+    return new Promise((resolve) => {
+        if (playbackToken !== lesson27FamilyState.playbackToken) return resolve();
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            if (lesson27FamilyState.pendingAudioResolve === finish) lesson27FamilyState.pendingAudioResolve = null;
+            resolve();
+        };
+        lesson27FamilyState.pendingAudioResolve = finish;
+        speakTextKo(text, finish, { playbackRate: 0.78 });
+    });
+}
+
+function initializeLesson27HandMotionCards() {
+    lesson27FamilyState.resizeObserver?.disconnect();
+    const cards = [...document.querySelectorAll('[data-family-card]')];
+    const positionAll = () => cards.forEach((card) => {
+        positionLesson27HandAnchors(card);
+        if (!card.classList.contains('is-playing')) {
+            const hand = card.querySelector('.lesson27-hand-upper');
+            const points = calculateLesson27FingerTransforms(card);
+            if (hand && points) hand.style.transform = lesson27Transform(points.start);
+        }
+    });
+    cards.forEach((card) => card.querySelectorAll('.lesson27-hand-lower,.lesson27-hand-upper').forEach((image) => {
+        if (!image.complete) image.addEventListener('load', positionAll, { once: true });
+    }));
+    if (window.ResizeObserver) {
+        lesson27FamilyState.resizeObserver = new ResizeObserver(positionAll);
+        cards.forEach((card) => lesson27FamilyState.resizeObserver.observe(card.querySelector('.lesson27-hand-stage')));
+    }
+    requestAnimationFrame(positionAll);
+}
+
+window.playLesson27FamilyCard = async function playLesson27FamilyCard(kind) {
+    const card = document.querySelector(`[data-family-card="${kind}"]`);
+    if (!card) return;
+    const config = kind === 'pieup'
+        ? { key: 'pieup', name: '피읖', first: '피', ending: '읍' }
+        : { key: 'bieup', name: '비읍', first: '비', ending: '읍' };
+    cancelLesson27FamilyPlayback();
+    const playbackToken = lesson27FamilyState.playbackToken;
+    lesson27FamilyState.activeKey = kind;
+    document.querySelectorAll('[data-family-card]').forEach((item) => {
+        if (item === card) return;
+        const itemKey = item.dataset.familyCard;
+        const itemConfig = itemKey === 'pieup'
+            ? { key: 'pieup', name: '피읖', first: '피' }
+            : { key: 'bieup', name: '비읍', first: '비' };
+        setLesson27CardAnimationState(item, lesson27FamilyState.heard.has(itemKey) ? 'completed' : 'idle', itemConfig);
+        const otherHand = item.querySelector('.lesson27-hand-upper');
+        const otherPoints = calculateLesson27FingerTransforms(item);
+        if (otherHand && otherPoints) otherHand.style.transform = lesson27Transform(otherPoints.start);
+    });
+    const firstListen = !lesson27FamilyState.heard.has(kind);
+    const hand = card.querySelector('.lesson27-hand-upper');
+    const points = calculateLesson27FingerTransforms(card);
+    if (!hand || !points) return;
+    hand.style.transform = lesson27Transform(points.start);
+
+    try {
+        setLesson27CardAnimationState(card, 'firstSound', config);
+        await animateLesson27UpperHand(hand, [
+            { transform: lesson27Transform(points.start) },
+            { transform: lesson27Transform(points.first) }
+        ], { duration: 420, easing: 'cubic-bezier(.22,.72,.28,1)' }, playbackToken);
+        await Promise.all([
+            animateLesson27UpperHand(hand, [
+                { transform: lesson27Transform(points.first) },
+                { transform: lesson27Transform(points.first, 3), offset: 0.45 },
+                { transform: lesson27Transform(points.first) }
+            ], { duration: 230, easing: 'ease-in-out' }, playbackToken),
+            speakLesson27Step(config.first, playbackToken)
+        ]);
+
+        setLesson27CardAnimationState(card, 'handMoving', config);
+        await animateLesson27UpperHand(hand, [
+            { transform: lesson27Transform(points.first), offset: 0 },
+            { transform: lesson27Transform(points.middle), offset: 0.52 },
+            { transform: lesson27Transform(points.final), offset: 1 }
+        ], { duration: 720, easing: 'cubic-bezier(.42,0,.3,1)' }, playbackToken);
+
+        setLesson27CardAnimationState(card, 'finalSound', config);
+        await Promise.all([
+            animateLesson27UpperHand(hand, [
+                { transform: lesson27Transform(points.final) },
+                { transform: lesson27Transform(points.final, 3), offset: 0.42 },
+                { transform: lesson27Transform(points.final) }
+            ], { duration: 280, easing: 'ease-in-out' }, playbackToken),
+            speakLesson27Step(config.ending, playbackToken)
+        ]);
+        await speakLesson27Step(config.name, playbackToken);
+
+        setLesson27CardAnimationState(card, 'handMoving', config);
+        await animateLesson27UpperHand(hand, [
+            { transform: lesson27Transform(points.final) },
+            { transform: lesson27Transform(points.start) }
+        ], { duration: 500, easing: 'cubic-bezier(.4,0,.6,1)' }, playbackToken);
+
+        lesson27FamilyState.heard.add(kind);
+        lesson27FamilyState.activeKey = null;
+        setLesson27CardAnimationState(card, 'completed', config);
+        syncLesson27FamilyPage();
+        if (firstListen) {
+            recordKoreanAttempt({
+                lessonId: 27,
+                lessonTitle: '배움 27: ㅂ 받침가족',
+                unitId: 8,
+                activityType: 'batchimFamily',
+                word: config.name,
+                answer: '[ㅂ]',
+                userAnswer: `${config.name} 손동작과 받침 소리 확인 완료`,
+                isCorrect: true,
+                errorType: null
+            }).catch(() => {});
+        }
+    } catch (error) {
+        if (error?.message !== 'lesson27-playback-cancelled') console.error(error);
+    }
 };
 
 function renderLearningDetail(step, sectionIndex = 0) {
@@ -13401,7 +13632,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeLesson26BatchimGlyphs();
         initializeLesson13BoardGames();
         redrawLessonLineMatchLines();
-        if (isCustomLesson27 && safeIndex === 0) syncLesson27FamilyPage();
+        if (isCustomLesson27 && safeIndex === 0) {
+            initializeLesson27HandMotionCards();
+            syncLesson27FamilyPage();
+        }
         document.querySelectorAll('.combine-card').forEach((card, cardIndex) => {
             if (!card.dataset.combineAutoplayed) {
                 card.dataset.combineAutoplayed = 'true';
@@ -13427,9 +13661,8 @@ window.openLearningDetailActivity = function openLearningDetailActivity(step) {
     currentLearningDetailSectionIndex = 0;
     if (Number(step) === 27) {
         lesson27FamilyState.heard.clear();
-        lesson27FamilyState.playbackToken += 1;
+        cancelLesson27FamilyPlayback();
         lesson27FamilyState.activeKey = null;
-        window.clearTimeout(lesson27FamilyState.movementTimer);
     }
     window.currentLearningActivityStep = step;
     window.currentLearningDetailSectionIndex = 0;
