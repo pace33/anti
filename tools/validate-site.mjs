@@ -14,6 +14,7 @@ const assert = (condition, message) => {
 const requiredFiles = [
     'index.html',
     'app.js',
+    'korean-data-adapter.js',
     'app.css',
     'style.css',
     'firebase-config.js',
@@ -34,15 +35,20 @@ requiredFiles.forEach((path) => assert(existsSync(resolve(root, path)), `필수 
 
 const index = read('index.html');
 const app = read('app.js');
+const dataAdapter = read('korean-data-adapter.js');
 const appCss = read('app.css');
 const styleCss = read('style.css');
 
 assert(/<script\s+type=["']module["']\s+src=["']app\.js(?:\?[^"']*)?["']\s*>/i.test(index), 'index.html이 app.js 모듈을 불러오지 않습니다.');
 assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.test(index), 'index.html이 app.css를 불러오지 않습니다.');
 assert(!/<script\s+type=["']module["']\s*>/i.test(index), 'index.html에 인라인 모듈 스크립트가 다시 들어왔습니다.');
+assert(app.split('from "./korean-data-adapter.js"').length - 1 === 2, 'app.js의 Firestore/Storage import가 로컬 데이터 어댑터를 사용하지 않습니다.');
+assert(dataAdapter.includes("const DEFAULT_ENDPOINT = '/db-api/korean/v2';"), '국어 데이터 어댑터의 자체 서버 endpoint가 올바르지 않습니다.');
+assert(dataAdapter.includes('firebaseBridge: config.firebaseBridge === true'), 'Firebase 데이터 bridge가 명시적 opt-in 방식이 아닙니다.');
+assert(!dataAdapter.includes('config.firebaseBridge !== false'), 'Firebase 데이터 bridge가 기본 활성화되어 있습니다.');
 
 [
-    'aiedueKoreanDrawings',
+    'aiedueKoreanDrawingsV2',
     'persistDrawingRecord',
     'getSharedLiteracyQuestionId',
     'upsertWrongToSharedBank',
@@ -68,16 +74,21 @@ const section = (source, startMarker, endMarker) => {
 };
 const occurrenceCount = (source, marker) => source.split(marker).length - 1;
 const drawingHelpers = section(app, 'function normalizeDrawingPortfolioForPersistence', 'function applyCommittedDrawingState');
+const drawingSharedRecord = section(app, 'function buildSharedDrawingGalleryRecord', 'async function persistDrawingRecord');
 const drawingPersist = section(app, 'async function persistDrawingRecord', 'function normalizeFirebaseDrawingDoc');
 const drawingSave = section(app, 'window.saveCurrentDrawing', 'function showAiedueAutoToast');
 const drawingComplete = section(app, 'window.completeTodayDrawingMission', 'window.openFriendsDrawingGallery');
-const literacyId = section(app, 'const SHARED_LITERACY_DOC_ID', 'async function upsertWrongToSharedBank');
-const wrongUpsert = section(app, 'async function upsertWrongToSharedBank', 'async function updateSharedBankCorrect');
-const correctUpdate = section(app, 'async function updateSharedBankCorrect', 'async function getSharedBankProblems');
+const literacyId = section(app, 'const SHARED_LITERACY_COLLECTION', 'function writeWrongToSharedBankTransaction');
+const sharedBankWrites = section(app, 'function writeWrongToSharedBankTransaction', 'async function getSharedBankProblems');
 const sharedBankLoad = section(app, 'async function getSharedBankProblems', 'window.openLiteracyLimitBreak');
+const literacyAttemptMerge = section(app, 'function createLiteracyAttemptPayload', 'async function persistLiteracyAttemptAtomic');
+const literacyScoreHelper = section(app, 'function normalizeLiteracyScore', 'function createLiteracyAttemptPayload');
+const literacyAtomicPersist = section(app, 'async function persistLiteracyAttemptAtomic', 'function applyCommittedLiteracyAttempt');
 const literacyResult = section(app, 'async function showLiteracyResult', 'window.claimLiteracyWrongReviewReward');
+const literacyReviewClaim = section(app, 'window.claimLiteracyWrongReviewReward', 'window.openMyLiteracyRecord');
 
 assert(drawingPersist.includes('runTransaction'), '그림 저장이 Firestore 트랜잭션을 사용하지 않습니다.');
+assert(drawingPersist.includes('transaction.get(recordRef)') && drawingPersist.indexOf('transaction.get(recordRef)') < drawingPersist.indexOf('transaction.get(userRef)'), '친구들 그림과 사용자 문서를 쓰기 전에 모두 읽지 않습니다.');
 assert(drawingPersist.includes('transaction.get(userRef)'), '그림 저장이 서버의 최신 사용자 문서를 먼저 읽지 않습니다.');
 assert(drawingPersist.includes('transaction.set(recordRef'), '친구들 그림 문서가 트랜잭션에 없습니다.');
 assert(drawingPersist.includes('transaction.set(userRef'), '사용자 그림 문서가 트랜잭션에 없습니다.');
@@ -86,23 +97,55 @@ assert(drawingPersist.includes('newDrawingReward') && drawingPersist.includes('i
 assert(drawingPersist.includes('const shouldGrantExperience = isNewRecord && (!missionStepKey || !existingMission);'), '동일 미션 재완료 시 경험치/레벨업 중복 보상이 차단되지 않습니다.');
 assert(drawingPersist.includes('mergeDrawingShapeStats(serverPortfolio.shapeStats'), '서버 최신 도형 통계 병합이 없습니다.');
 assert(drawingPersist.includes('compressDrawingImage(record.image, 120)') && drawingPersist.includes('fitDrawingPortfolioToFirestore({'), '사용자 그림 문서에 소형 썸네일/용량 예산이 적용되지 않습니다.');
+assert(drawingPersist.includes('buildSharedDrawingGalleryRecord('), '친구들 그림이 공개 필드 전용 payload를 사용하지 않습니다.');
+assert(drawingPersist.includes('const serverClassId = String(userData.teacherId') && /buildSharedDrawingGalleryRecord\([\s\S]*?serverClassId\s*\)/.test(drawingPersist), '친구들 그림 학급 키가 트랜잭션에서 읽은 최신 사용자 문서를 사용하지 않습니다.');
+['email', 'shapeAccuracy', 'coins', 'balance', 'aeduTokens', 'warningTokens', 'userCode', 'role', 'teacherId', 'classCode', 'className'].forEach((field) => {
+    assert(!drawingSharedRecord.includes(`${field}:`), `친구들 그림 공유 payload에 개인/불필요 필드가 포함됐습니다: ${field}`);
+});
+assert(drawingSharedRecord.includes('if (classId) sharedRecord.classId = classId;'), '친구들 그림의 최소 학급 구분 키가 없습니다.');
+assert(drawingPersist.includes('transaction.set(recordRef, firebaseRecord);') && !drawingPersist.includes('transaction.set(recordRef, firebaseRecord, { merge: true })'), '기존 친구들 그림의 비공개 필드를 제거하는 전체 교체 저장이 아닙니다.');
 assert(occurrenceCount(drawingSave, 'persistDrawingRecord(') === 1, '저장하기가 공통 그림 저장 함수를 정확히 한 번 호출하지 않습니다.');
 assert(occurrenceCount(drawingComplete, 'persistDrawingRecord(') === 1, '완료하기가 공통 그림 저장 함수를 정확히 한 번 호출하지 않습니다.');
 assert(!drawingSave.includes('addDrawingRecordToPortfolioGallery('), '저장하기에 중복 포트폴리오 저장이 남아 있습니다.');
 assert(!drawingComplete.includes('addDrawingRecordToPortfolioGallery('), '완료하기에 중복 포트폴리오 저장이 남아 있습니다.');
 assert(drawingComplete.includes('drawingPersisted = true;') && drawingComplete.includes('completionSnapshot'), '완료 실패 시 진행/보상 복구 장치가 없습니다.');
 assert(!drawingComplete.includes('applyAieduePointReward(') && !drawingComplete.includes('applyAiedueExperienceReward('), '완료 보상이 트랜잭션 전에 로컬 확정됩니다.');
+assert(literacyId.includes("'sharedLiteracyWrongBankV2'") && !literacyId.includes("'sharedLiteracyWrongBank'"), '앱이 비정규 V1 컬렉션 대신 검증된 V2 공용 오답 컬렉션을 사용하지 않습니다.');
 assert(literacyId.includes("digest('SHA-256'") && literacyId.includes('SHARED_LITERACY_DOC_ID'), '공용 오답 문서 ID가 SHA-256/Firestore 원본 ID 표식을 사용하지 않습니다.');
 assert(!literacyId.includes('questionData?.id'), 'AI가 제공한 일반 id 필드가 공용 오답 문서 ID로 사용됩니다.');
 assert(sharedBankLoad.includes('{ ...doc.data(), id: doc.id }') && sharedBankLoad.includes('Object.defineProperty(question, SHARED_LITERACY_DOC_ID'), '실제 Firestore 문서 ID가 우선 보존되지 않습니다.');
-assert(wrongUpsert.includes("['passage', 'question', 'difficulty', 'type', 'answer', 'sampleAnswer', 'explanation']"), '공용 오답 저장의 공개 필드 허용목록이 없습니다.');
-assert(!wrongUpsert.includes('...questionData'), '공용 오답 저장이 질문 객체 전체를 펼쳐 씁니다.');
+assert(literacyId.includes("['passage', 'question', 'difficulty', 'type', 'answer', 'sampleAnswer', 'explanation']"), '공용 오답 저장의 공개 필드 허용목록이 없습니다.');
+assert(literacyId.includes('function buildSharedLiteracyPublicQuestion'), '공용 오답 문서 공개 필드 정규화 함수가 없습니다.');
+assert(sharedBankWrites.includes('...buildSharedLiteracyPublicQuestion(questionData)') && !sharedBankWrites.includes('...questionData'), '신규 공용 오답 저장이 공개 필드 허용목록을 사용하지 않습니다.');
 ['userAnswer', 'userId', 'pendingReviewRewardId', 'reviewRewardClaimed'].forEach((field) => {
-    assert(!wrongUpsert.includes(field), `공용 오답 저장에 개인/임시 필드가 포함됐습니다: ${field}`);
+    assert(!sharedBankWrites.includes(field), `공용 오답 저장에 개인/임시 필드가 포함됐습니다: ${field}`);
 });
-assert(correctUpdate.includes('runTransaction') && correctUpdate.includes('transaction.get(docRef)') && correctUpdate.includes('transaction.delete(docRef)'), '한계돌파 정답 횟수/졸업 판정이 트랜잭션이 아닙니다.');
-const sharedWrongIndex = literacyResult.indexOf('await upsertWrongToSharedBank');
-assert(sharedWrongIndex >= 0 && sharedWrongIndex < literacyResult.indexOf('literacyPortfolio.stats') && sharedWrongIndex < literacyResult.indexOf('literacyPortfolio.history'), '공용 오답 저장이 개인 통계/기록보다 먼저 실행되지 않습니다.');
+assert(sharedBankWrites.includes('transaction.update(docRef') && sharedBankWrites.includes('transaction.delete(docRef)'), '공용 카운터 갱신/졸업 처리가 트랜잭션 쓰기가 아닙니다.');
+assert(sharedBankWrites.includes('return false;'), '독립 공용 은행 저장 함수가 실패 여부를 호출자에게 반환하지 않습니다.');
+assert(sharedBankLoad.includes('queryLimit(200)'), '한계돌파 공용 오답 조회 개수 제한이 없습니다.');
+const essaySubmit = section(app, 'window.submitLiteracyEssayAnswer', 'function cloneLiteracyValue');
+assert(essaySubmit.indexOf('userLiteracyAnswerChecked = true;') < essaySubmit.indexOf('callKoreanAiGenerate'), '서술형 AI 채점 요청 전에 중복 제출 잠금이 설정되지 않습니다.');
+assert(essaySubmit.includes('await showLiteracyResult') && essaySubmit.includes('userLiteracyAnswerChecked = false;'), '서술형 결과 저장 대기 또는 채점 실패 시 제출 잠금 해제가 없습니다.');
+assert(literacyAttemptMerge.includes('serverData.literacyPortfolio ?? fallback.literacyPortfolio') && literacyAttemptMerge.includes('advanceLiteracyDanIfReady(portfolio)'), '사용자 최신 문해력 기록에 이번 답안 변화량을 병합하지 않습니다.');
+assert(literacyAttemptMerge.includes('serverData.coins') && literacyAttemptMerge.includes('serverData.aeduExperience'), '트랜잭션에서 최신 서버 보상 상태를 기준으로 계산하지 않습니다.');
+const literacyScoreApi = new Function(`${literacyScoreHelper}\nreturn { normalizeLiteracyScore };`)();
+assert(literacyScoreApi.normalizeLiteracyScore(null) === null && literacyScoreApi.normalizeLiteracyScore(undefined) === null && literacyScoreApi.normalizeLiteracyScore('') === null, '점수 없는 객관식/단답형이 AI 0점으로 변환됩니다.');
+assert(literacyScoreApi.normalizeLiteracyScore(0) === 0 && literacyScoreApi.normalizeLiteracyScore('85') === 85, '실제 AI 채점 점수가 보존되지 않습니다.');
+assert(literacyAtomicPersist.includes('runTransaction') && literacyAtomicPersist.includes('writeWrongToSharedBankTransaction') && literacyAtomicPersist.includes('writeCorrectToSharedBankTransaction'), '공용 오답 카운터가 사용자 기록과 같은 트랜잭션에서 처리되지 않습니다.');
+assert(literacyAtomicPersist.includes('transaction.get(userRef)') && literacyAtomicPersist.indexOf('transaction.get(userRef)') < literacyAtomicPersist.indexOf('transaction.set(userRef'), '최신 사용자 문서를 모든 쓰기 전에 읽지 않습니다.');
+assert(literacyAtomicPersist.includes('const sharedSnap = sharedRef ? await transaction.get(sharedRef) : null;') && literacyAtomicPersist.indexOf('transaction.get(sharedRef)') < literacyAtomicPersist.indexOf('transaction.get(userRef)'), '공용 문서와 사용자 문서를 쓰기 전에 함께 읽지 않습니다.');
+assert(literacyAtomicPersist.includes('transaction.set(userRef') && !literacyAtomicPersist.includes('activeLiteracyQuestion') && !literacyAtomicPersist.includes('isLiteracyLimitBreakMode'), '원자적 저장이 사용자 문서에 없거나 재시도 중 변경 가능한 전역 상태를 참조합니다.');
+assert(!literacyResult.includes('applyAieduePointReward(') && !literacyResult.includes('applyAiedueExperienceReward('), '트랜잭션 전에 로컬 보상 상태를 확정합니다.');
+assert(literacyResult.includes('attempt = createLiteracyAttemptPayload') && literacyResult.includes('await persistLiteracyAttemptAtomic(attempt)') && literacyResult.includes('userLiteracyAnswerChecked = false;'), '불변 답안 payload 원자 저장 또는 안전한 재시도 잠금 해제가 없습니다.');
+assert(literacyResult.includes('score: normalizeLiteracyScore(details.score)'), '0점 또는 무점수 값이 결과 화면 payload에서 손실됩니다.');
+assert(literacyResult.includes("console.error('문해력 결과 저장 후 화면 갱신 실패'") && literacyResult.includes('결과 저장은 완료했지만 화면 갱신 중 오류'), '커밋 후 UI 오류를 저장 실패와 분리하지 않습니다.');
+assert(literacyAtomicPersist.includes("'literacyAttemptReceipts'") && literacyAtomicPersist.includes("'literacyReviewReceipts'"), '답안/복습 보상의 영구 중복 방지 영수증이 없습니다.');
+assert(literacyAtomicPersist.includes('transaction.get(receiptRef)') && literacyAtomicPersist.includes('transaction.set(receiptRef'), '답안/복습 영수증을 보상과 같은 트랜잭션에서 읽고 쓰지 않습니다.');
+assert(literacyAtomicPersist.includes('isCorrect: attempt.isCorrect') && literacyAtomicPersist.includes('userAnswerText: attempt.userAnswerText') && literacyAtomicPersist.includes('canonicalAttempt'), '답안 영수증이 최초 채점 결과를 보존하거나 중복 응답에 반환하지 않습니다.');
+assert(!literacyAtomicPersist.includes('literacyProcessedAttemptIds') && !literacyAtomicPersist.includes('literacyProcessedReviewRewardIds'), '최근 100개 배열 기반 중복 방지가 남아 있습니다.');
+assert(literacyResult.includes('const renderedAttempt = committed.canonicalAttempt || attempt;') && literacyResult.includes('const claimId = `review-${renderedAttempt.attemptId}`;'), '중복 답안 화면/복습 보상이 최초 저장된 답안 결과를 사용하지 않습니다.');
+assert(literacyReviewClaim.includes('await persistLiteracyReviewRewardAtomic') && literacyReviewClaim.includes('reviewRewardClaimed = false'), '복습 경험치 저장 대기 또는 실패 후 재시도 복구가 없습니다.');
+assert(!literacyReviewClaim.includes('persistLiteracyData()') && !literacyReviewClaim.includes('applyAiedueExperienceReward('), '복습 경험치가 최신 서버값 트랜잭션 밖에서 저장됩니다.');
 
 const drawingHelperApi = new Function(`${drawingHelpers}\nreturn { fitDrawingPortfolioToFirestore, mergeDrawingShapeStats };`)();
 const oversizedPortfolio = {
@@ -124,12 +167,18 @@ const mergedShapeStats = drawingHelperApi.mergeDrawingShapeStats(
 );
 assert(mergedShapeStats.circle.attempts === 3 && mergedShapeStats.circle.accuracySum === 180 && mergedShapeStats.circle.accuracy === 60 && mergedShapeStats.circle.bestAccuracy === 80, '서버 도형 통계 변화량 병합 결과가 올바르지 않습니다.');
 
-const literacyIdApi = new Function(`${literacyId}\nreturn { SHARED_LITERACY_DOC_ID, getSharedLiteracyQuestionId };`)();
+const literacyIdApi = new Function(`${literacyId}\nreturn { SHARED_LITERACY_DOC_ID, getSharedLiteracyQuestionId, buildSharedLiteracyPublicQuestion };`)();
 const generatedId = await literacyIdApi.getSharedLiteracyQuestionId({ id: 'ai-controlled-id', passage: '가', question: '나' });
 assert(/^q2_[0-9a-f]{64}$/.test(generatedId), 'AI 일반 id가 SHA-256 문서 ID 생성을 우회했습니다.');
 const loadedQuestion = { id: 'stored-field-id', passage: '가', question: '나' };
 loadedQuestion[literacyIdApi.SHARED_LITERACY_DOC_ID] = 'actual-firestore-id';
 assert(await literacyIdApi.getSharedLiteracyQuestionId(loadedQuestion) === 'actual-firestore-id', '실제 Firestore 문서 ID 표식이 재사용되지 않습니다.');
+const normalizedLegacyQuestion = literacyIdApi.buildSharedLiteracyPublicQuestion({
+    passage: '기존 지문', question: '기존 질문', difficulty: 'easy', type: 'essay',
+    literacyDan: 3, pendingReviewRewardId: 'private', id: 'legacy-id'
+}, { sampleAnswer: '모범 답안', explanation: '해설' });
+assert(normalizedLegacyQuestion.sampleAnswer === '모범 답안' && normalizedLegacyQuestion.explanation === '해설', '기존 공용 오답 문서 정규화 때 누락된 공개 필드가 보충되지 않습니다.');
+assert(!('literacyDan' in normalizedLegacyQuestion) && !('pendingReviewRewardId' in normalizedLegacyQuestion) && !('id' in normalizedLegacyQuestion), '기존 공용 오답 문서 정규화 뒤 비공개/임시 필드가 남습니다.');
 
 [
     'anti-db/db-api',

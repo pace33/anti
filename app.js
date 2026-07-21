@@ -33,7 +33,7 @@ import {
     arrayUnion,
     arrayRemove,
     onSnapshot
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+} from "./korean-data-adapter.js";
 import {
     getStorage,
     ref as storageRef,
@@ -42,7 +42,7 @@ import {
     getMetadata,
     getDownloadURL,
     deleteObject
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+} from "./korean-data-adapter.js";
 import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm";
 import { PDFDocument } from "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm";
 
@@ -2165,7 +2165,7 @@ function ensureInfoDrawerPortal() {
     }
 }
 
-const FIREBASE_DRAWING_COLLECTION = 'aiedueKoreanDrawings';
+const FIREBASE_DRAWING_COLLECTION = 'aiedueKoreanDrawingsV2';
 
 function asNumber(value, fallback = 0) {
     const num = Number(value);
@@ -2373,8 +2373,12 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
     const addedExp = Math.max(0, asNumber(percent, 0));
     if (!addedExp) return {};
 
+    const beforeLevel = Math.max(1, asNumber(currentUserAeduLevel, 1));
+    const beforeWarningTokens = Math.max(0, Math.floor(asNumber(currentUserWarningTokens, 0)));
     let newExp = asNumber(currentUserAeduExperience, 0) + addedExp;
     let levelUpCount = 0;
+    let removedWarningTokens = 0;
+    let levelUpPoints = 0;
     while (newExp >= 100) {
         newExp -= 100;
         levelUpCount++;
@@ -2384,18 +2388,43 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
     currentUserAeduExperience = newExp;
 
     if (levelUpCount > 0) {
-        currentUserAeduLevel = asNumber(currentUserAeduLevel, 1) + levelUpCount;
-        const beforeWarningTokens = Math.max(0, Math.floor(asNumber(currentUserWarningTokens, 0)));
-        const removedWarningTokens = Math.min(beforeWarningTokens, levelUpCount);
+        currentUserAeduLevel = beforeLevel + levelUpCount;
+        removedWarningTokens = Math.min(beforeWarningTokens, levelUpCount);
         currentUserWarningTokens = beforeWarningTokens - removedWarningTokens;
-        // 기존 보상 로직과 겹치지 않게, 레벨업에 따른 보상만 지급
-        const levelUpPoints = levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD;
+        levelUpPoints = levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD;
         applyAieduePointReward(levelUpPoints);
 
-        if (typeof showModal === 'function') {
+        if (typeof showModal === 'function' && !meta.deferLevelUpNotice) {
             showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${currentUserAeduLevel} (보상 ${levelUpPoints}포인트${removedWarningTokens ? ` · 주의토큰 ${removedWarningTokens}개 차감` : ''})`);
         }
     }
+
+    const source = String(meta.activityLabel || meta.source || activityRoutes[getVisibleActivityRoute()]?.label || '에이두 국어 활동').slice(0, 80);
+    const stageMultiplier = Math.max(0, asNumber(meta.stageMultiplier, 1));
+    const baseReward = Math.max(0, asNumber(meta.baseReward, stageMultiplier ? addedExp / stageMultiplier : addedExp));
+    const multiplierRate = Math.round(stageMultiplier * 100);
+    const studentName = String(currentUserProfileSnapshot?.name || currentUserName || '학생').slice(0, 40);
+    let activityMessage = `${studentName}이 ${source}을 통해 기본 경험치 ${baseReward.toFixed(1)}%의 ${multiplierRate}%인 ${addedExp.toFixed(1)}%를 받았다.`;
+    if (levelUpCount > 0) {
+        activityMessage += ` 레벨 ${beforeLevel}에서 ${currentUserAeduLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${removedWarningTokens}개가 감소되었다.`;
+    }
+    const activity = {
+        id: `experience_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        type: 'experience',
+        source,
+        baseExperience: baseReward,
+        multiplier: stageMultiplier,
+        grantedExperience: addedExp,
+        levelBefore: beforeLevel,
+        levelAfter: currentUserAeduLevel,
+        levelUpPoints,
+        warningTokensReduced: removedWarningTokens,
+        createdAtMs: Date.now(),
+        message: activityMessage
+    };
+    const koreanActivityLog = currentUserRole === 'student'
+        ? [activity, ...(Array.isArray(currentUserProfileSnapshot?.koreanActivityLog) ? currentUserProfileSnapshot.koreanActivityLog : [])].slice(0, 200)
+        : (Array.isArray(currentUserProfileSnapshot?.koreanActivityLog) ? currentUserProfileSnapshot.koreanActivityLog : []);
 
     currentUserProfileSnapshot = {
         ...currentUserProfileSnapshot,
@@ -2404,10 +2433,10 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
         aeduTokens: currentUserAeduTokens,
         warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
-        aeduLevel: currentUserAeduLevel
+        aeduLevel: currentUserAeduLevel,
+        koreanActivityLog
     };
 
-    // 배너 동기화 갱신
     updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
 
     return {
@@ -2417,6 +2446,7 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
         warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
         aeduLevel: currentUserAeduLevel,
+        koreanActivityLog,
         updatedAt: serverTimestamp()
     };
 }
@@ -2486,7 +2516,7 @@ async function awardKoreanPracticeExperience(percent, source, meta = {}) {
     let wallet = null;
     const applyReward = () => {
         if (wallet) return;
-        wallet = applyAiedueExperienceReward(reward, { ...meta, baseReward, stageMultiplier });
+        wallet = applyAiedueExperienceReward(reward, { ...meta, source: meta.source || source, baseReward, stageMultiplier });
     };
     await animateExperienceOrb(source, reward, applyReward);
     applyReward();
@@ -2767,7 +2797,10 @@ function renderAiedueKoreanTeacherShop(items = []) {
                 <button type="button" class="btn-outline px-3 py-2 text-sm text-red-500" onclick="deleteAiedueKoreanShopItem('${escapeInlineJsString(item.id)}')">삭제</button>
             </div>
         </div>`).join('') : '<div class="text-center py-10 text-gray-500 font-bold">등록한 상점 물품이 없어요. 추가 버튼으로 만들어보세요.</div>';
-    return `<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 pr-10"><div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 교사 상점 관리</h3><p class="text-sm text-gray-500 font-bold">에이두 스쿨과 같은 shopItems / assignedShopItems를 관리해요.</p></div><div class="flex gap-2 flex-wrap"><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">내 학급 전체 배부</button></div></div><div class="space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div>`;
+    return `<div class="aiedu-craft-shop-card korean-embed-card p-5 rounded-3xl shadow-sm mb-5">
+        <div class="aiedu-craft-card-hero"><div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div><div><div class="text-xs font-black text-amber-200 tracking-widest">TEACHER CRAFT</div><div class="text-2xl font-black">에이두 크래프트</div><div class="text-sm text-white/80 mt-1">교사 계정으로 크래프트에 접속하고 상점을 이용할 수 있어요.</div></div></div>
+        <div class="flex flex-wrap justify-end gap-2 mt-4"><button type="button" class="btn-outline px-4 py-2" onclick="enterAiedueCraftAsTeacher()">크래프트 접속</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueCraftShop()">크래프트 상점 이용</button></div>
+    </div><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 pr-10"><div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 교사 상점 관리</h3><p class="text-sm text-gray-500 font-bold">에이두 스쿨과 같은 shopItems / assignedShopItems를 관리해요.</p></div><div class="flex gap-2 flex-wrap"><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">내 학급 전체 배부</button></div></div><div class="space-y-3 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div>`;
 }
 
 async function openAiedueKoreanTeacherShop() {
@@ -2866,6 +2899,20 @@ async function callAiedueCraftApi(path, options = {}) {
 async function grantAiedueCraftTeacherOp(player) {
     if (currentUserRole !== 'teacher' || !player) return null;
     return callAiedueCraftApi('/op', { method: 'POST', body: JSON.stringify({ player }) });
+}
+
+window.enterAiedueCraftAsTeacher = async function enterAiedueCraftAsTeacher() {
+    if (!loginSuccess || !currentUserId || currentUserRole !== 'teacher') return showModal('교사 계정으로 로그인해 주세요.');
+    const player = getAiedueCraftPlayerName();
+    if (!player) return showModal('교사 이메일에서 크래프트 계정명을 만들지 못했어요.');
+    try {
+        await grantAiedueCraftTeacherOp(player);
+        closeAiedueKoreanModal();
+        window.location.href = buildAiedueCraftUrl();
+    } catch (error) {
+        console.error('Teacher Craft access failed', error);
+        showModal(`에이두 크래프트 접속 준비 실패: ${escapeKoreanShopHtml(error.message || '알 수 없는 오류')}`);
+    }
 }
 
 function syncAiedueCraftWallet(nextBalance) {
@@ -3065,19 +3112,17 @@ async function buyAiedueCraftAuction(button) {
     const maxCount = Number(button.dataset.maxCount || 1);
     const count = Math.floor(Number(row?.querySelector('.aiedu-craft-auction-buy-count')?.value || 1));
     if (!Number.isFinite(count) || count < 1 || count > maxCount) return showModal(`구매 수량은 1개부터 ${maxCount}개까지 입력해 주세요.`);
-    const price = Number(button.dataset.unitPrice || 1) * count;
+    const purchaseId = globalThis.crypto?.randomUUID?.() || `auction_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
     button.disabled = true;
-    await updateAiedueCraftBalance(-price, `에이두 크래프트 경매 구매: ${button.dataset.name} ${count}개`);
     try {
-        const result = await callAiedueCraftApi('/auction/buy', { method: 'POST', body: JSON.stringify({ id: button.dataset.id, player: getAiedueCraftPlayerName(), count }) });
-        if (result.sellerPayout?.sellerUid) {
-            await updateAiedueCraftBalance(Number(result.sellerPayout.amount || 0), `에이두 크래프트 경매 판매: ${result.itemName || button.dataset.name} ${count}개`, { id: result.sellerPayout.sellerUid, name: result.sellerPayout.sellerName }).catch(console.warn);
-        }
-        setAiedueCraftShopStatus(`${result.itemName || button.dataset.name} ${count}개 경매 구매 완료`, 'ok');
+        const result = await callAiedueCraftApi('/auction/buy', {
+            method: 'POST',
+            body: JSON.stringify({ id: button.dataset.id, player: getAiedueCraftPlayerName(), count, purchaseId })
+        });
+        if (!result.sellerPayout?.settled) throw new Error('판매자 대금 정산이 확인되지 않았습니다.');
+        if (Number.isFinite(Number(result.buyerBalance))) syncAiedueCraftWallet(Number(result.buyerBalance));
+        setAiedueCraftShopStatus(`${result.itemName || button.dataset.name} ${count}개 경매 구매 완료 · 판매자에게 ${Number(result.sellerPayout.amount || result.totalPrice || 0).toLocaleString()}점 지급`, 'ok');
         await Promise.allSettled([refreshAiedueCraftAuction(), refreshAiedueCraftInventory()]);
-    } catch (error) {
-        await updateAiedueCraftBalance(price, '에이두 크래프트 경매 구매 실패 환불').catch(() => {});
-        throw error;
     } finally { button.disabled = false; }
 }
 
@@ -3570,7 +3615,7 @@ function updateDashboardExperience(userData = {}) {
     if (currentUserRole === 'teacher') {
         document.getElementById('teacher-manage-btn').classList.remove('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
-        document.getElementById('rpg-student-shop-btn')?.classList.add('hidden');
+        document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     } else {
         document.getElementById('teacher-manage-btn').classList.add('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.add('hidden');
@@ -5103,8 +5148,35 @@ function applyCommittedDrawingState(committed) {
         aeduTokens: currentUserAeduTokens,
         warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
-        aeduLevel: currentUserAeduLevel
+        aeduLevel: currentUserAeduLevel,
+        koreanActivityLog: committed.koreanActivityLog || currentUserProfileSnapshot?.koreanActivityLog || []
     };
+}
+
+function buildSharedDrawingGalleryRecord(portfolioRecord, compressedImage, drawingId, existingCreatedAt = null, serverClassId = '') {
+    const sharedRecord = {
+        drawingId,
+        image: compressedImage,
+        kind: String(portfolioRecord.kind || 'sketchbook'),
+        mode: String(portfolioRecord.mode || 'free'),
+        template: String(portfolioRecord.template || 'blank'),
+        templateLabel: String(portfolioRecord.templateLabel || '스케치북'),
+        savedAt: String(portfolioRecord.savedAt || new Date().toISOString()),
+        userId: String(currentUserId),
+        userName: String(portfolioRecord.userName || currentUserName || '이름 없음'),
+        userIcon: String(portfolioRecord.userIcon || currentUserIcon || '🐻'),
+        ownerRef: `users/${currentUserId}`,
+        createdAt: existingCreatedAt || serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+    const classId = String(serverClassId || '').trim();
+    if (classId) sharedRecord.classId = classId;
+    if (portfolioRecord.missionStep !== undefined && portfolioRecord.missionStep !== null) {
+        sharedRecord.missionStep = Number(portfolioRecord.missionStep);
+    }
+    if (Number.isFinite(Number(portfolioRecord.accuracy))) sharedRecord.accuracy = Number(portfolioRecord.accuracy);
+    if (Number.isFinite(Number(portfolioRecord.rewardedPoints))) sharedRecord.rewardedPoints = Number(portfolioRecord.rewardedPoints);
+    return sharedRecord;
 }
 
 async function persistDrawingRecord(record, operation = {}) {
@@ -5124,11 +5196,13 @@ async function persistDrawingRecord(record, operation = {}) {
             compressDrawingImage(record.image, 120)
         ]);
         const committed = await runTransaction(db, async (transaction) => {
+            const recordSnap = await transaction.get(recordRef);
             const userSnap = await transaction.get(userRef);
             const userData = userSnap.exists() ? userSnap.data() : {};
+            const serverClassId = String(userData.teacherId || userData.classId || '').trim();
             const serverPortfolio = normalizeDrawingPortfolioForPersistence(userData.drawingPortfolio);
             const existingRecord = serverPortfolio.free.find((item) => item?.drawingId === recordRef.id);
-            const isNewRecord = !existingRecord;
+            const isNewRecord = !existingRecord && !recordSnap.exists();
             const missionStepKey = record.kind === 'mission' && record.missionStep != null ? String(record.missionStep) : '';
             const existingMission = missionStepKey ? Boolean(serverPortfolio.missions[missionStepKey]) : false;
             const nextMissions = { ...serverPortfolio.missions };
@@ -5155,7 +5229,7 @@ async function persistDrawingRecord(record, operation = {}) {
             }
             const awardedDrawingPoints = isNewRecord
                 ? newDrawingReward
-                : Math.max(0, Number(existingRecord?.rewardedPoints || 0));
+                : Math.max(0, Number(existingRecord?.rewardedPoints ?? recordSnap.data()?.rewardedPoints ?? 0));
             const portfolioRecord = { ...record, image: portfolioThumbnail, rewardedPoints: awardedDrawingPoints };
             if (missionStepKey) nextMissions[missionStepKey] = portfolioRecord;
 
@@ -5177,7 +5251,8 @@ async function persistDrawingRecord(record, operation = {}) {
             });
 
             let nextExperience = asNumber(userData.aeduExperience, currentUserAeduExperience);
-            let nextLevel = asNumber(userData.aeduLevel, currentUserAeduLevel || 1);
+            const beforeLevel = Math.max(1, asNumber(userData.aeduLevel, currentUserAeduLevel || 1));
+            let nextLevel = beforeLevel;
             let nextWarningTokens = Math.max(0, Math.floor(asNumber(userData.warningTokens, currentUserWarningTokens)));
             let levelUpCount = 0;
             const shouldGrantExperience = isNewRecord && (!missionStepKey || !existingMission);
@@ -5197,6 +5272,13 @@ async function persistDrawingRecord(record, operation = {}) {
             const serverCoins = asNumber(userData.coins, currentUserCoins);
             const serverBalance = asNumber(userData.balance, serverCoins);
             const serverAeduTokens = asNumber(userData.aeduTokens, serverBalance);
+            const grantedExperience = shouldGrantExperience ? Math.max(0, Number(operation.experienceReward || 0)) : 0;
+            const baseExperience = Math.max(0, Number(operation.baseExperience ?? grantedExperience));
+            const experienceMultiplier = Math.max(0, Number(operation.experienceMultiplier ?? 1));
+            const activityMessage = `${String(userData.name || currentUserName || '학생').slice(0, 40)}이 ${String(operation.experienceSource || '그리기 활동').slice(0, 80)}을 통해 기본 경험치 ${baseExperience.toFixed(1)}%의 ${Math.round(experienceMultiplier * 100)}%인 ${grantedExperience.toFixed(1)}%를 받았다.${levelUpCount > 0 ? ` 레벨 ${beforeLevel}에서 ${nextLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${removedWarningTokens}개가 감소되었다.` : ''}`;
+            const koreanActivityLog = grantedExperience > 0
+                ? [{ id: `drawing_${recordRef.id}`, type: 'experience', source: operation.experienceSource || '그리기 활동', baseExperience, multiplier: experienceMultiplier, grantedExperience, levelBefore: beforeLevel, levelAfter: nextLevel, levelUpPoints, warningTokensReduced: removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...(Array.isArray(userData.koreanActivityLog) ? userData.koreanActivityLog : [])].slice(0, 200)
+                : (Array.isArray(userData.koreanActivityLog) ? userData.koreanActivityLog : []);
             const committedState = {
                 drawingPortfolio: nextPortfolio,
                 currentDrawingStep: Math.max(
@@ -5209,19 +5291,19 @@ async function persistDrawingRecord(record, operation = {}) {
                 warningTokens: nextWarningTokens,
                 aeduExperience: nextExperience,
                 aeduLevel: nextLevel,
+                koreanActivityLog,
                 awardedDrawingPoints,
                 levelUpCount,
                 levelUpPoints,
                 removedWarningTokens
             };
-            const firebaseRecord = {
-                ...portfolioRecord,
-                image: compressedImage,
-                drawingId: recordRef.id,
-                ownerRef: `users/${currentUserId}`,
-                ...(isNewRecord ? { createdAt: serverTimestamp() } : {}),
-                updatedAt: serverTimestamp()
-            };
+            const firebaseRecord = buildSharedDrawingGalleryRecord(
+                portfolioRecord,
+                compressedImage,
+                recordRef.id,
+                recordSnap.exists() ? recordSnap.data()?.createdAt : null,
+                serverClassId
+            );
             const userRecord = {
                 currentDrawingStep: committedState.currentDrawingStep,
                 drawingPortfolio: nextPortfolio,
@@ -5231,9 +5313,10 @@ async function persistDrawingRecord(record, operation = {}) {
                 warningTokens: committedState.warningTokens,
                 aeduExperience: committedState.aeduExperience,
                 aeduLevel: committedState.aeduLevel,
+                koreanActivityLog: committedState.koreanActivityLog,
                 updatedAt: serverTimestamp()
             };
-            transaction.set(recordRef, firebaseRecord, { merge: true });
+            transaction.set(recordRef, firebaseRecord);
             transaction.set(userRef, userRecord, { merge: true });
             return committedState;
         });
@@ -5309,9 +5392,9 @@ async function loadFriendsDrawingsFromFirebase() {
     const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
     const profile = buildAiedueSchoolProfileSnapshot(currentUserProfileSnapshot);
     const queryPlans = [];
-    if (profile.classId) queryPlans.push(query(collectionRef, where('classId', '==', profile.classId), queryLimit(80)));
-    if (profile.teacherId) queryPlans.push(query(collectionRef, where('teacherId', '==', profile.teacherId), queryLimit(80)));
-    queryPlans.push(query(collectionRef, queryLimit(80)));
+    const classId = String(profile.teacherId || profile.classId || '').trim();
+    if (classId) queryPlans.push(query(collectionRef, where('classId', '==', classId), queryLimit(80)));
+    queryPlans.push(query(collectionRef, where('userId', '==', currentUserId), queryLimit(80)));
     const merged = new Map();
     for (const q of queryPlans) {
         try {
@@ -5497,6 +5580,9 @@ window.completeTodayDrawingMission = async function() {
             pointReward: rewardPoints,
             missionBaseReward: completedRecord.kind === 'mission' ? rewardPoints : 0,
             experienceReward: finalDrawingExp,
+            baseExperience: baseExp,
+            experienceMultiplier: drawingStageMultiplier,
+            experienceSource: drawingWorkspaceMissionStep ? '그리기 도형·그림 미션' : (drawingWorkspaceAiQuiz ? '그리기 AI 퀴즈' : '자유 그리기'),
             currentDrawingStep: currentUserDrawingStep,
             unlockedTemplate: completedRecord.kind === 'mission' ? mission?.template : null,
             shapeResult: result,
@@ -6130,7 +6216,8 @@ async function persistDictationData(extra = {}) {
         aeduTokens: currentUserAeduTokens,
         warningTokens: currentUserWarningTokens,
         aeduExperience: currentUserAeduExperience,
-        aeduLevel: currentUserAeduLevel
+        aeduLevel: currentUserAeduLevel,
+        koreanActivityLog: currentUserProfileSnapshot?.koreanActivityLog || []
     };
     if (currentUserId) await setDoc(doc(db, 'users', currentUserId), { currentDictationStep: currentUserDictationStep, dictationPortfolio, ...walletExtra, ...extra, updatedAt: serverTimestamp() }, { merge: true });
     updateDashboardExperience({ name: currentUserName, icon: currentUserIcon, coins: currentUserCoins, role: currentUserRole, currentLearningStep, currentDrawingStep: currentUserDrawingStep, drawingPortfolio, currentDictationStep: currentUserDictationStep, dictationPortfolio });
@@ -6601,7 +6688,7 @@ async function saveMissionGradingResult() {
             const multiplier = calculateStageExperienceMultiplier(3);
             const finalExp = baseExp * multiplier;
             if (finalExp > 0) {
-                applyAiedueExperienceReward(finalExp, { source: 'dictation-ai-analysis', sessionId, accuracy });
+                applyAiedueExperienceReward(finalExp, { source: '받아쓰기 AI 분석', sessionId, accuracy, baseReward: baseExp, stageMultiplier: multiplier });
             }
         }
         dictationPortfolio.rewardedDictationSessions.push(sessionId);
@@ -6710,8 +6797,20 @@ async function persistLiteracyData(extra = {}) {
     });
 }
 
+function getLiteracyStatFromPortfolio(portfolio, difficulty, type) {
+    return portfolio?.stats?.[`${difficulty}-${type}`] || { attempts: 0, corrects: 0, wrongs: 0 };
+}
+
+function isLiteracyMasteredInPortfolio(portfolio, difficulty, type) {
+    const stat = getLiteracyStatFromPortfolio(portfolio, difficulty, type);
+    const threshold = type === 'multipleChoice' ? 0.2 : 0.3;
+    const minAttempts = type === 'multipleChoice' ? 10 : 1;
+    const wrongRate = stat.attempts ? (stat.wrongs || 0) / stat.attempts : 1;
+    return stat.attempts >= minAttempts && wrongRate <= threshold;
+}
+
 function getLiteracyStat(difficulty, type) {
-    return literacyPortfolio?.stats?.[`${difficulty}-${type}`] || { attempts: 0, corrects: 0, wrongs: 0 };
+    return getLiteracyStatFromPortfolio(literacyPortfolio, difficulty, type);
 }
 
 function getLiteracyWrongRate(difficulty, type) {
@@ -6721,10 +6820,7 @@ function getLiteracyWrongRate(difficulty, type) {
 }
 
 function isLiteracyMastered(difficulty, type) {
-    const stat = getLiteracyStat(difficulty, type);
-    const threshold = type === 'multipleChoice' ? 0.2 : 0.3;
-    const minAttempts = type === 'multipleChoice' ? 10 : 1;
-    return stat.attempts >= minAttempts && getLiteracyWrongRate(difficulty, type) <= threshold;
+    return isLiteracyMasteredInPortfolio(literacyPortfolio, difficulty, type);
 }
 
 function isLiteracyUnlocked(difficulty, type) {
@@ -6756,18 +6852,18 @@ function getLiteracyDanPlan(dan = null) {
     return { dan: level, difficulty, types, type: types[Math.floor(Math.random() * types.length)] };
 }
 
-function advanceLiteracyDanIfReady() {
-    const previousDan = getLiteracyDanPlan().dan;
+function advanceLiteracyDanIfReady(targetPortfolio = literacyPortfolio) {
+    const previousDan = getLiteracyDanPlan(targetPortfolio?.dan).dan;
     let nextDan = previousDan;
 
     while (nextDan < 12) {
         const plan = getLiteracyDanPlan(nextDan);
         const requiredType = ['multipleChoice', 'shortAnswer', 'essay'][(nextDan - 1) % 3];
-        if (!isLiteracyMastered(plan.difficulty, requiredType)) break;
+        if (!isLiteracyMasteredInPortfolio(targetPortfolio, plan.difficulty, requiredType)) break;
         nextDan += 1;
     }
 
-    literacyPortfolio.dan = nextDan;
+    targetPortfolio.dan = nextDan;
     if (nextDan === previousDan) return null;
     return { previousDan, nextDan, nextPlan: getLiteracyDanPlan(nextDan) };
 }
@@ -6830,7 +6926,9 @@ function updateLiteracyDashboardPreview() {
     updateLiteracyDanBadges();
 }
 
+const SHARED_LITERACY_COLLECTION = 'sharedLiteracyWrongBankV2';
 const SHARED_LITERACY_DOC_ID = Symbol('sharedLiteracyWrongBankDocId');
+const SHARED_LITERACY_PUBLIC_STRING_FIELDS = ['passage', 'question', 'difficulty', 'type', 'answer', 'sampleAnswer', 'explanation'];
 
 async function getSharedLiteracyQuestionId(questionData) {
     if (questionData?.[SHARED_LITERACY_DOC_ID]) return String(questionData[SHARED_LITERACY_DOC_ID]);
@@ -6841,36 +6939,49 @@ async function getSharedLiteracyQuestionId(questionData) {
     return `q2_${hex}`;
 }
 
-async function upsertWrongToSharedBank(questionData) {
+function buildSharedLiteracyPublicQuestion(primary = {}, fallback = {}) {
     const publicQuestion = {};
-    ['passage', 'question', 'difficulty', 'type', 'answer', 'sampleAnswer', 'explanation'].forEach((key) => {
-        if (questionData[key] !== undefined && questionData[key] !== null) {
-            publicQuestion[key] = String(questionData[key]);
-        }
+    SHARED_LITERACY_PUBLIC_STRING_FIELDS.forEach((key) => {
+        const value = primary[key] ?? fallback[key];
+        if (value !== undefined && value !== null) publicQuestion[key] = String(value);
     });
-    if (Array.isArray(questionData.options)) {
-        publicQuestion.options = questionData.options.map((option) => String(option));
+    const options = Array.isArray(primary.options) ? primary.options : fallback.options;
+    if (Array.isArray(options)) publicQuestion.options = options.map((option) => String(option));
+    const answerIndex = primary.answerIndex ?? fallback.answerIndex;
+    if (answerIndex !== undefined && answerIndex !== null && Number.isInteger(Number(answerIndex))) {
+        publicQuestion.answerIndex = Number(answerIndex);
     }
-    if (questionData.answerIndex !== undefined && questionData.answerIndex !== null && Number.isInteger(Number(questionData.answerIndex))) {
-        publicQuestion.answerIndex = Number(questionData.answerIndex);
+    return publicQuestion;
+}
+
+function writeWrongToSharedBankTransaction(transaction, questionData, now, docRef, docSnap) {
+    if (!docSnap.exists()) {
+        transaction.set(docRef, {
+            ...buildSharedLiteracyPublicQuestion(questionData),
+            attempts: 1,
+            corrects: 0,
+            wrongs: 1,
+            createdAt: now,
+            updatedAt: now
+        });
+        return;
     }
+    const previous = docSnap.data();
+    transaction.update(docRef, {
+        attempts: Math.max(0, Number(previous.attempts) || 0) + 1,
+        corrects: Math.max(0, Number(previous.corrects) || 0),
+        wrongs: Math.max(0, Number(previous.wrongs) || 0) + 1,
+        updatedAt: now
+    });
+}
+
+async function upsertWrongToSharedBank(questionData) {
     try {
         const id = await getSharedLiteracyQuestionId(questionData);
-        const docRef = doc(db, 'sharedLiteracyWrongBank', id);
-        const now = new Date().toISOString();
+        const docRef = doc(db, SHARED_LITERACY_COLLECTION, id);
         await runTransaction(db, async (transaction) => {
             const docSnap = await transaction.get(docRef);
-            const previous = docSnap.exists() ? docSnap.data() : {};
-            const next = {
-                ...publicQuestion,
-                attempts: Math.max(0, Number(previous.attempts) || 0) + 1,
-                corrects: Math.max(0, Number(previous.corrects) || 0),
-                wrongs: Math.max(0, Number(previous.wrongs) || 0) + 1,
-                updatedAt: now
-            };
-            if (!docSnap.exists()) next.createdAt = now;
-            else next.createdAt = previous.createdAt || now;
-            transaction.set(docRef, next);
+            writeWrongToSharedBankTransaction(transaction, questionData, new Date().toISOString(), docRef, docSnap);
         });
         return true;
     } catch (e) {
@@ -6879,36 +6990,41 @@ async function upsertWrongToSharedBank(questionData) {
     }
 }
 
+function writeCorrectToSharedBankTransaction(transaction, now, docRef, docSnap) {
+    if (!docSnap.exists()) return;
+    const data = docSnap.data();
+    const attempts = Math.max(0, Number(data.attempts) || 0) + 1;
+    const corrects = Math.max(0, Number(data.corrects) || 0) + 1;
+    if (attempts >= 20 && corrects / attempts >= 0.5) {
+        transaction.delete(docRef);
+        return;
+    }
+    transaction.update(docRef, {
+        attempts,
+        corrects,
+        wrongs: Math.max(0, Number(data.wrongs) || 0),
+        updatedAt: now
+    });
+}
+
 async function updateSharedBankCorrect(questionData) {
     try {
         const id = await getSharedLiteracyQuestionId(questionData);
-        const docRef = doc(db, 'sharedLiteracyWrongBank', id);
+        const docRef = doc(db, SHARED_LITERACY_COLLECTION, id);
         await runTransaction(db, async (transaction) => {
             const docSnap = await transaction.get(docRef);
-            if (!docSnap.exists()) return;
-            const data = docSnap.data();
-            const attempts = Math.max(0, Number(data.attempts) || 0) + 1;
-            const corrects = Math.max(0, Number(data.corrects) || 0) + 1;
-            const correctRate = corrects / attempts;
-
-            if (attempts >= 20 && correctRate >= 0.5) {
-                transaction.delete(docRef);
-            } else {
-                transaction.update(docRef, {
-                    attempts,
-                    corrects,
-                    updatedAt: new Date().toISOString()
-                });
-            }
+            writeCorrectToSharedBankTransaction(transaction, new Date().toISOString(), docRef, docSnap);
         });
+        return true;
     } catch (e) {
         console.error('Firestore shared bank correct-count transaction failed', e);
+        return false;
     }
 }
 
 async function getSharedBankProblems(difficulty) {
     try {
-        const q = query(collection(db, 'sharedLiteracyWrongBank'), where('difficulty', '==', difficulty));
+        const q = query(collection(db, SHARED_LITERACY_COLLECTION), where('difficulty', '==', difficulty), queryLimit(200));
         const querySnapshot = await getDocs(q);
         const list = [];
         querySnapshot.forEach((doc) => {
@@ -6954,7 +7070,7 @@ window.openLiteracyLimitBreak = async function() {
                 </div>
 
                 <div class="mb-6 bg-purple-50 p-6 rounded-2xl border-4 border-purple-100">
-                    <label class="block font-black text-purple-700 mb-3">2. 유형별 누적 오답 개수</label>
+                    <label class="block font-black text-purple-700 mb-3">2. 현재 불러온 오답 개수 (최대 200개)</label>
                     <div class="grid grid-cols-3 gap-4 text-center">
                         <div class="bg-white p-3 rounded-xl shadow-sm">
                             <div class="text-xs text-gray-400 font-bold">객관식 (4지선다)</div>
@@ -7175,6 +7291,7 @@ window.submitLiteracyEssayAnswer = async function() {
         showModal('생각을 적어주세요!');
         return;
     }
+    userLiteracyAnswerChecked = true;
     showActivityLoading();
     try {
         const prompt = `질문: ${activeLiteracyQuestion.question}
@@ -7191,151 +7308,434 @@ window.submitLiteracyEssayAnswer = async function() {
         const parsed = JSON.parse(match ? match[0] : cleaned);
         const score = Number(parsed.score) || 0;
         const feedback = parsed.feedback || '채점을 완료했습니다.';
-        userLiteracyAnswerChecked = true;
         hideActivityLoading();
         const isCorrect = score >= 80;
-        showLiteracyResult(isCorrect, {
+        await showLiteracyResult(isCorrect, {
             score: score,
             feedback: feedback,
             correctAnswerText: activeLiteracyQuestion.sampleAnswer,
             userAnswerText: input
         });
     } catch (e) {
+        userLiteracyAnswerChecked = false;
         hideActivityLoading();
         console.error(e);
-        showModal(`AI 서술형 채점 중 오류가 발생했습니다: ${escapeHtml(e.message || e)}. 다시 시도해 주세요.`);
+        showModal(`서술형 채점 또는 결과 저장 중 오류가 발생했습니다: ${escapeHtml(e.message || e)}. 다시 시도해 주세요.`);
     }
 };
 
-async function showLiteracyResult(isCorrect, details) {
-    if (!isCorrect) {
-        const savedToSharedBank = await upsertWrongToSharedBank(activeLiteracyQuestion);
-        if (!savedToSharedBank) {
-            userLiteracyAnswerChecked = false;
-            showModal('공용 오답 은행 저장에 실패해 나의 기록에도 오답을 추가하지 않았어요. 잠시 후 다시 풀어 주세요.');
-            return;
+function cloneLiteracyValue(value) {
+    return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeLiteracyScore(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const score = Number(value);
+    return Number.isFinite(score) ? score : null;
+}
+
+function createLiteracyAttemptPayload(isCorrect, details) {
+    if (!activeLiteracyQuestion.pendingLiteracyAttemptId) {
+        const randomId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        activeLiteracyQuestion.pendingLiteracyAttemptId = `literacy-attempt-${randomId}`;
+    }
+    const question = buildSharedLiteracyPublicQuestion(activeLiteracyQuestion);
+    if (activeLiteracyQuestion?.[SHARED_LITERACY_DOC_ID]) {
+        Object.defineProperty(question, SHARED_LITERACY_DOC_ID, { value: String(activeLiteracyQuestion[SHARED_LITERACY_DOC_ID]) });
+    }
+    const difficulty = String(question.difficulty || 'easy');
+    const type = String(question.type || 'multipleChoice');
+    const difficultyKey = difficulty.toLowerCase();
+    const typeKey = type.toLowerCase();
+    const diffMult = difficultyKey === 'easy' || difficultyKey === '쉬움' ? 2
+        : difficultyKey === 'hard' || difficultyKey === '어려움' ? 4
+            : difficultyKey === 'expert' || difficultyKey === '매우 어려움' || difficultyKey === '매우어려움' ? 5 : 3;
+    const typeMult = typeKey === 'shortanswer' || typeKey === '단답형' ? 7
+        : typeKey === 'essay' || typeKey === '서술형' ? 10 : 5;
+    const stageMultiplier = Math.max(calculateStageExperienceMultiplier(4), 1);
+    const limitBreak = Boolean(isLiteracyLimitBreakMode);
+    return Object.freeze({
+        attemptId: String(activeLiteracyQuestion.pendingLiteracyAttemptId),
+        userId: String(currentUserId || ''),
+        question,
+        isCorrect: Boolean(isCorrect),
+        isLimitBreakMode: limitBreak,
+        difficulty,
+        type,
+        solvedAt: new Date().toISOString(),
+        userAnswerText: String(details.userAnswerText ?? ''),
+        score: normalizeLiteracyScore(details.score),
+        feedback: String(details.feedback || ''),
+        correctAnswerText: String(details.correctAnswerText ?? ''),
+        pointReward: isCorrect ? 5 : 0,
+        baseExperience: isCorrect ? diffMult * typeMult * (limitBreak ? 2 : 1) : 0,
+        stageMultiplier,
+        experienceReward: isCorrect ? diffMult * typeMult * (limitBreak ? 2 : 1) * stageMultiplier : 0,
+        fallback: {
+            literacyPortfolio: cloneLiteracyValue(literacyPortfolio),
+            literacyDan: literacyPortfolio?.dan,
+            studentName: currentUserProfileSnapshot?.name || currentUserName || '학생',
+            koreanActivityLog: cloneLiteracyValue(currentUserProfileSnapshot?.koreanActivityLog || []),
+            coins: currentUserCoins,
+            balance: currentUserBalance,
+            aeduTokens: currentUserAeduTokens,
+            warningTokens: currentUserWarningTokens,
+            aeduExperience: currentUserAeduExperience,
+            aeduLevel: currentUserAeduLevel
         }
-    }
-
-    const feedbackContainer = document.getElementById('literacy-feedback-container');
-    const title = document.getElementById('literacy-feedback-title');
-    const detail = document.getElementById('literacy-feedback-detail');
-    const explanation = document.getElementById('literacy-feedback-explanation');
-
-    feedbackContainer.classList.remove('hidden');
-    if (isCorrect) {
-        title.innerText = details.score ? `⭕ 정답 (AI 채점: ${details.score}점)` : '⭕ 정답입니다!';
-        title.className = 'text-2xl font-black text-green-600';
-        detail.innerText = details.feedback ? `${details.feedback}` : `답안: ${details.userAnswerText}`;
-    } else {
-        title.innerText = details.score ? `❌ 아쉬워요 (AI 채점: ${details.score}점)` : '❌ 아쉬워요';
-        title.className = 'text-2xl font-black text-red-500';
-        detail.innerText = details.feedback ? `${details.feedback}\n\n[모범 답안]: ${details.correctAnswerText}` : `작성 답안: ${details.userAnswerText}\n[올바른 정답]: ${details.correctAnswerText}`;
-    }
-
-    feedbackContainer.style.borderColor = isCorrect ? '#bbf7d0' : '#fecaca';
-    feedbackContainer.style.backgroundColor = isCorrect ? '#f0fdf4' : '#fef2f2';
-    explanation.innerText = `💡 해설:\n${activeLiteracyQuestion.explanation || '지문을 다시 읽고 이해해 보세요.'}`;
-
-    if (isCorrect) {
-        applyAieduePointReward(5);
-
-        // --- 문해력 경험치 공식 (literacyExperienceMultiplier 마커) ---
-        const baseExp = 1; // 1%
-        let diffMult = 3;
-        const diffLower = String(activeLiteracyQuestion.difficulty || '').toLowerCase();
-        if (diffLower === 'easy' || diffLower === '쉬움') diffMult = 2;
-        else if (diffLower === 'normal' || diffLower === '보통') diffMult = 3;
-        else if (diffLower === 'hard' || diffLower === '어려움') diffMult = 4;
-        else if (diffLower === 'expert' || diffLower === '매우 어려움' || diffLower === '매우어려움') diffMult = 5;
-
-        let typeMult = 5;
-        const typeLower = String(activeLiteracyQuestion.type || '').toLowerCase();
-        if (typeLower === 'multiplechoice' || typeLower === '객관식') typeMult = 5;
-        else if (typeLower === 'shortanswer' || typeLower === '단답형') typeMult = 7;
-        else if (typeLower === 'essay' || typeLower === '서술형') typeMult = 10;
-
-        const modeMult = (isLiteracyLimitBreakMode) ? 2 : 1;
-        const stageMultiplier = Math.max(calculateStageExperienceMultiplier(4), 1);
-
-        const finalExp = baseExp * diffMult * typeMult * modeMult * stageMultiplier;
-        if (finalExp > 0) {
-            applyAiedueExperienceReward(finalExp, {
-                source: 'literacy',
-                difficulty: activeLiteracyQuestion.difficulty,
-                type: activeLiteracyQuestion.type,
-                mode: isLiteracyLimitBreakMode ? 'limit-break' : 'normal',
-                stageMultiplier
-            });
-        }
-    } else {
-        const claimId = `litwrong-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        activeLiteracyQuestion.pendingReviewRewardId = claimId;
-        let left = 60;
-        const renderClaim = () => {
-            const extra = document.getElementById('literacy-wrong-review-reward');
-            if (!extra) return;
-            extra.innerHTML = left > 0
-                ? `<button type="button" class="mt-4 w-full py-3 bg-gray-200 text-gray-500 font-black rounded-2xl" disabled>예시 답안 확인 후 경험치 받기 (${left}초)</button>`
-                : `<button type="button" class="mt-4 w-full py-3 bg-orange-500 text-white font-black rounded-2xl" onclick="claimLiteracyWrongReviewReward('${claimId}')">예시 답안을 따라 확인하고 경험치 받기</button>`;
-        };
-        explanation.insertAdjacentHTML('beforeend', '<div id="literacy-wrong-review-reward"></div>');
-        renderClaim();
-        const timer = window.setInterval(() => { left -= 1; renderClaim(); if (left <= 0) window.clearInterval(timer); }, 1000);
-    }
-
-    const diff = activeLiteracyQuestion.difficulty;
-    const type = activeLiteracyQuestion.type;
-    const statKey = `${diff}-${type}`;
-
-    if (!literacyPortfolio.stats[statKey]) {
-        literacyPortfolio.stats[statKey] = { attempts: 0, corrects: 0, wrongs: 0 };
-    }
-
-    literacyPortfolio.stats[statKey].attempts++;
-    if (isCorrect) {
-        literacyPortfolio.stats[statKey].corrects++;
-    } else {
-        literacyPortfolio.stats[statKey].wrongs++;
-    }
-
-    const literacyPromotion = advanceLiteracyDanIfReady();
-
-    literacyPortfolio.history = [
-        {
-            passage: activeLiteracyQuestion.passage,
-            question: activeLiteracyQuestion.question,
-            difficulty: diff,
-            type: type,
-            isCorrect,
-            userAnswer: details.userAnswerText,
-            score: details.score || null,
-            solvedAt: new Date().toISOString()
-        },
-        ...literacyPortfolio.history
-    ].slice(0, 50);
-
-    if (isLiteracyLimitBreakMode && isCorrect) {
-        await updateSharedBankCorrect(activeLiteracyQuestion);
-    }
-
-    await persistLiteracyData({
-        coins: currentUserCoins,
-        literacyDan: literacyPortfolio.dan
     });
+}
+
+function buildLiteracyServerState(serverData, fallback) {
+    const rawPortfolio = serverData.literacyPortfolio ?? fallback.literacyPortfolio;
+    const literacyPortfolio = normalizeLiteracyPortfolio(
+        cloneLiteracyValue(rawPortfolio || {}),
+        serverData.literacyDan ?? fallback.literacyDan
+    );
+    const balance = asNumber(
+        serverData.balance ?? serverData.coins ?? serverData.aeduTokens ?? fallback.balance ?? fallback.coins,
+        0
+    );
+    const aeduTokens = asNumber(serverData.aeduTokens ?? serverData.aeduToken ?? balance, balance);
+    const warningTokens = Math.max(0, Math.floor(asNumber(serverData.warningTokens, fallback.warningTokens)));
+    const normalizedLevel = normalizeAiedueLevelExperience({
+        aeduExperience: serverData.aeduExperience ?? serverData.experience ?? serverData.exp ?? fallback.aeduExperience,
+        aeduLevel: serverData.aeduLevel ?? serverData.level ?? serverData.schoolLevel ?? fallback.aeduLevel
+    });
+    return {
+        literacyPortfolio,
+        literacyDan: literacyPortfolio.dan,
+        coins: balance,
+        balance,
+        aeduTokens,
+        warningTokens,
+        aeduExperience: normalizedLevel.aeduExperience,
+        aeduLevel: normalizedLevel.aeduLevel,
+        studentName: String(serverData.name || fallback.studentName || currentUserName || '학생'),
+        koreanActivityLog: cloneLiteracyValue(Array.isArray(serverData.koreanActivityLog) ? serverData.koreanActivityLog : (fallback.koreanActivityLog || []))
+    };
+}
+
+function applyLiteracyWalletReward(base, pointReward, experienceReward) {
+    let balance = base.balance + pointReward;
+    let coins = balance;
+    let aeduTokens = base.aeduTokens + pointReward;
+    let warningTokens = base.warningTokens;
+    let aeduExperience = base.aeduExperience + Math.max(0, experienceReward);
+    let aeduLevel = base.aeduLevel;
+    let levelUpCount = 0;
+    while (aeduExperience >= 100) {
+        aeduExperience -= 100;
+        levelUpCount += 1;
+    }
+    aeduExperience = Math.min(99.999, Math.max(0, parseFloat(aeduExperience.toFixed(3))));
+    const removedWarningTokens = Math.min(warningTokens, levelUpCount);
+    warningTokens -= removedWarningTokens;
+    aeduLevel += levelUpCount;
+    const levelUpPoints = levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD;
+    balance += levelUpPoints;
+    coins = balance;
+    aeduTokens += levelUpPoints;
+    return {
+        ...base,
+        coins,
+        balance,
+        aeduTokens,
+        warningTokens,
+        aeduExperience,
+        aeduLevel,
+        levelUpCount,
+        removedWarningTokens
+    };
+}
+
+function mergeLiteracyAttemptWithServer(serverData, attempt) {
+    const base = buildLiteracyServerState(serverData, attempt.fallback);
+    const portfolio = base.literacyPortfolio;
+    const statKey = `${attempt.difficulty}-${attempt.type}`;
+    if (!portfolio.stats[statKey]) portfolio.stats[statKey] = { attempts: 0, corrects: 0, wrongs: 0 };
+    portfolio.stats[statKey].attempts = Math.max(0, Number(portfolio.stats[statKey].attempts) || 0) + 1;
+    if (attempt.isCorrect) {
+        portfolio.stats[statKey].corrects = Math.max(0, Number(portfolio.stats[statKey].corrects) || 0) + 1;
+    } else {
+        portfolio.stats[statKey].wrongs = Math.max(0, Number(portfolio.stats[statKey].wrongs) || 0) + 1;
+    }
+    portfolio.history = [
+        {
+            passage: attempt.question.passage,
+            question: attempt.question.question,
+            difficulty: attempt.difficulty,
+            type: attempt.type,
+            isCorrect: attempt.isCorrect,
+            userAnswer: attempt.userAnswerText,
+            score: attempt.score,
+            solvedAt: attempt.solvedAt
+        },
+        ...portfolio.history
+    ].slice(0, 50);
+    const promotion = advanceLiteracyDanIfReady(portfolio);
+    const rewarded = applyLiteracyWalletReward(base, attempt.pointReward, attempt.experienceReward);
+    const levelUpPoints = Math.max(0, rewarded.aeduLevel - base.aeduLevel) * AIEDUE_LEVEL_UP_POINT_REWARD;
+    const activityMessage = `${base.studentName}이 문해력 ${attempt.difficulty} ${attempt.type} 활동을 통해 기본 경험치 ${asNumber(attempt.baseExperience, 0).toFixed(1)}%의 ${Math.round(asNumber(attempt.stageMultiplier, 1) * 100)}%인 ${asNumber(attempt.experienceReward, 0).toFixed(1)}%를 받았다.${rewarded.levelUpCount > 0 ? ` 레벨 ${base.aeduLevel}에서 ${rewarded.aeduLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${rewarded.removedWarningTokens}개가 감소되었다.` : ''}`;
+    const koreanActivityLog = attempt.experienceReward > 0
+        ? [{ id: `literacy_${attempt.attemptId}`, type: 'experience', source: '문해력 활동', baseExperience: attempt.baseExperience, multiplier: attempt.stageMultiplier, grantedExperience: attempt.experienceReward, levelBefore: base.aeduLevel, levelAfter: rewarded.aeduLevel, levelUpPoints, warningTokensReduced: rewarded.removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...base.koreanActivityLog].slice(0, 200)
+        : base.koreanActivityLog;
+    return {
+        ...rewarded,
+        koreanActivityLog,
+        literacyPortfolio: portfolio,
+        literacyDan: portfolio.dan,
+        promotion,
+        duplicate: false
+    };
+}
+
+async function persistLiteracyAttemptAtomic(attempt) {
+    if (!attempt.userId) throw new Error('로그인 정보를 확인할 수 없습니다.');
+    const userRef = doc(db, 'users', attempt.userId);
+    const receiptRef = doc(db, 'users', attempt.userId, 'literacyAttemptReceipts', attempt.attemptId);
+    const needsSharedBank = !attempt.isCorrect || attempt.isLimitBreakMode;
+    const sharedRef = needsSharedBank
+        ? doc(db, SHARED_LITERACY_COLLECTION, await getSharedLiteracyQuestionId(attempt.question))
+        : null;
+    const now = attempt.solvedAt;
+
+    return runTransaction(db, async (transaction) => {
+        const sharedSnap = sharedRef ? await transaction.get(sharedRef) : null;
+        const receiptSnap = await transaction.get(receiptRef);
+        const userSnap = await transaction.get(userRef);
+        if (receiptSnap.exists()) {
+            const base = buildLiteracyServerState(userSnap.exists() ? userSnap.data() : {}, attempt.fallback);
+            const receipt = receiptSnap.data() || {};
+            const canonicalAttempt = Object.freeze({
+                ...attempt,
+                isCorrect: Boolean(receipt.isCorrect),
+                solvedAt: String(receipt.solvedAt || attempt.solvedAt),
+                userAnswerText: String(receipt.userAnswerText ?? ''),
+                score: Number(receipt.score) >= 0 ? Number(receipt.score) : null,
+                feedback: String(receipt.feedback || ''),
+                correctAnswerText: String(receipt.correctAnswerText ?? '')
+            });
+            return { ...base, promotion: null, levelUpCount: 0, removedWarningTokens: 0, duplicate: true, canonicalAttempt };
+        }
+        const committed = mergeLiteracyAttemptWithServer(userSnap.exists() ? userSnap.data() : {}, attempt);
+
+        if (!attempt.isCorrect) {
+            writeWrongToSharedBankTransaction(transaction, attempt.question, now, sharedRef, sharedSnap);
+        } else if (attempt.isLimitBreakMode) {
+            writeCorrectToSharedBankTransaction(transaction, now, sharedRef, sharedSnap);
+        }
+        transaction.set(userRef, {
+            literacyPortfolio: committed.literacyPortfolio,
+            coins: committed.coins,
+            balance: committed.balance,
+            aeduTokens: committed.aeduTokens,
+            warningTokens: committed.warningTokens,
+            aeduExperience: committed.aeduExperience,
+            aeduLevel: committed.aeduLevel,
+            koreanActivityLog: committed.koreanActivityLog,
+            literacyDan: committed.literacyDan,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        transaction.set(receiptRef, {
+            userId: attempt.userId,
+            attemptId: attempt.attemptId,
+            type: 'literacy-attempt',
+            isCorrect: attempt.isCorrect,
+            solvedAt: attempt.solvedAt,
+            userAnswerText: attempt.userAnswerText,
+            score: attempt.score === null ? -1 : attempt.score,
+            feedback: attempt.feedback,
+            correctAnswerText: attempt.correctAnswerText,
+            createdAt: serverTimestamp()
+        });
+        return { ...committed, canonicalAttempt: attempt };
+    });
+}
+
+async function persistLiteracyReviewRewardAtomic({ claimId, userId, experienceReward, baseExperience = 2, stageMultiplier = 1, fallback }) {
+    if (!claimId || !userId) throw new Error('복습 보상 정보를 확인할 수 없습니다.');
+    const userRef = doc(db, 'users', userId);
+    const receiptRef = doc(db, 'users', userId, 'literacyReviewReceipts', claimId);
+    return runTransaction(db, async (transaction) => {
+        const receiptSnap = await transaction.get(receiptRef);
+        const userSnap = await transaction.get(userRef);
+        const base = buildLiteracyServerState(userSnap.exists() ? userSnap.data() : {}, fallback);
+        if (receiptSnap.exists()) {
+            return { ...base, levelUpCount: 0, removedWarningTokens: 0, duplicate: true };
+        }
+        const committed = applyLiteracyWalletReward(base, 0, experienceReward);
+        const levelUpPoints = Math.max(0, committed.aeduLevel - base.aeduLevel) * AIEDUE_LEVEL_UP_POINT_REWARD;
+        const activityMessage = `${base.studentName}이 문해력 오답 복습을 통해 기본 경험치 ${asNumber(baseExperience, 0).toFixed(1)}%의 ${Math.round(asNumber(stageMultiplier, 1) * 100)}%인 ${asNumber(experienceReward, 0).toFixed(1)}%를 받았다.${committed.levelUpCount > 0 ? ` 레벨 ${base.aeduLevel}에서 ${committed.aeduLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${committed.removedWarningTokens}개가 감소되었다.` : ''}`;
+        committed.koreanActivityLog = [{ id: `literacy_review_${claimId}`, type: 'experience', source: '문해력 오답 복습', baseExperience, multiplier: stageMultiplier, grantedExperience: experienceReward, levelBefore: base.aeduLevel, levelAfter: committed.aeduLevel, levelUpPoints, warningTokensReduced: committed.removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...base.koreanActivityLog].slice(0, 200);
+        transaction.set(userRef, {
+            coins: committed.coins,
+            balance: committed.balance,
+            aeduTokens: committed.aeduTokens,
+            warningTokens: committed.warningTokens,
+            aeduExperience: committed.aeduExperience,
+            aeduLevel: committed.aeduLevel,
+            koreanActivityLog: committed.koreanActivityLog,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        transaction.set(receiptRef, {
+            userId,
+            claimId,
+            type: 'literacy-review',
+            createdAt: serverTimestamp()
+        });
+        return { ...committed, duplicate: false };
+    });
+}
+
+function applyCommittedLiteracyAttempt(committed) {
+    literacyPortfolio = committed.literacyPortfolio;
+    currentUserCoins = committed.coins;
+    currentUserBalance = committed.balance;
+    currentUserAeduTokens = committed.aeduTokens;
+    currentUserWarningTokens = committed.warningTokens;
+    currentUserAeduExperience = committed.aeduExperience;
+    currentUserAeduLevel = committed.aeduLevel;
+    currentUserProfileSnapshot = {
+        ...(currentUserProfileSnapshot || {}),
+        literacyPortfolio,
+        literacyDan: committed.literacyDan,
+        coins: currentUserCoins,
+        balance: currentUserBalance,
+        aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
+        aeduExperience: currentUserAeduExperience,
+        aeduLevel: currentUserAeduLevel,
+        koreanActivityLog: committed.koreanActivityLog || currentUserProfileSnapshot?.koreanActivityLog || []
+    };
+    const coinsEl = document.getElementById('dashboard-coins');
+    if (coinsEl) coinsEl.innerText = currentUserCoins;
+    const coinsHeaderEl = document.getElementById('dashboard-coins-header');
+    if (coinsHeaderEl) coinsHeaderEl.innerText = currentUserCoins;
+    updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
     updateLiteracyDanBadges();
-    showLiteracyPromotionNotice(literacyPromotion);
+}
+
+async function showLiteracyResult(isCorrect, details) {
+    const answeredQuestion = activeLiteracyQuestion;
+    const displayDetails = Object.freeze({
+        score: normalizeLiteracyScore(details.score),
+        feedback: String(details.feedback || ''),
+        correctAnswerText: String(details.correctAnswerText ?? ''),
+        userAnswerText: String(details.userAnswerText ?? '')
+    });
+    let committed;
+    let attempt;
+    try {
+        attempt = createLiteracyAttemptPayload(isCorrect, displayDetails);
+        committed = await persistLiteracyAttemptAtomic(attempt);
+    } catch (error) {
+        userLiteracyAnswerChecked = false;
+        console.error('문해력 공용 은행/개인 기록 원자적 저장 실패', error);
+        showModal(`결과 저장에 실패해 공용 은행과 나의 기록 모두 반영하지 않았어요: ${escapeHtml(error.message || error)}. 잠시 후 다시 시도해 주세요.`);
+        return false;
+    }
+
+    answeredQuestion.pendingLiteracyAttemptId = null;
+    try {
+        applyCommittedLiteracyAttempt(committed);
+        if (activeLiteracyQuestion !== answeredQuestion) return true;
+
+        const renderedAttempt = committed.canonicalAttempt || attempt;
+        const renderedDetails = Object.freeze({
+            score: renderedAttempt.score,
+            feedback: String(renderedAttempt.feedback || ''),
+            correctAnswerText: String(renderedAttempt.correctAnswerText ?? ''),
+            userAnswerText: String(renderedAttempt.userAnswerText ?? '')
+        });
+        const hasScore = renderedDetails.score !== null && Number.isFinite(Number(renderedDetails.score));
+
+        const feedbackContainer = document.getElementById('literacy-feedback-container');
+        const title = document.getElementById('literacy-feedback-title');
+        const detail = document.getElementById('literacy-feedback-detail');
+        const explanation = document.getElementById('literacy-feedback-explanation');
+        feedbackContainer.classList.remove('hidden');
+        if (renderedAttempt.isCorrect) {
+            title.innerText = hasScore ? `⭕ 정답 (AI 채점: ${renderedDetails.score}점)` : '⭕ 정답입니다!';
+            title.className = 'text-2xl font-black text-green-600';
+            detail.innerText = renderedDetails.feedback || `답안: ${renderedDetails.userAnswerText}`;
+        } else {
+            title.innerText = hasScore ? `❌ 아쉬워요 (AI 채점: ${renderedDetails.score}점)` : '❌ 아쉬워요';
+            title.className = 'text-2xl font-black text-red-500';
+            detail.innerText = renderedDetails.feedback
+                ? `${renderedDetails.feedback}\n\n[모범 답안]: ${renderedDetails.correctAnswerText}`
+                : `작성 답안: ${renderedDetails.userAnswerText}\n[올바른 정답]: ${renderedDetails.correctAnswerText}`;
+        }
+        feedbackContainer.style.borderColor = renderedAttempt.isCorrect ? '#bbf7d0' : '#fecaca';
+        feedbackContainer.style.backgroundColor = renderedAttempt.isCorrect ? '#f0fdf4' : '#fef2f2';
+        explanation.innerText = `💡 해설:\n${renderedAttempt.question.explanation || '지문을 다시 읽고 이해해 보세요.'}`;
+
+        if (!renderedAttempt.isCorrect) {
+            const claimId = `review-${renderedAttempt.attemptId}`;
+            answeredQuestion.pendingReviewRewardId = claimId;
+            let left = 60;
+            const renderClaim = () => {
+                const extra = document.getElementById('literacy-wrong-review-reward');
+                if (!extra) return;
+                extra.innerHTML = left > 0
+                    ? `<button type="button" class="mt-4 w-full py-3 bg-gray-200 text-gray-500 font-black rounded-2xl" disabled>예시 답안 확인 후 경험치 받기 (${left}초)</button>`
+                    : `<button type="button" class="mt-4 w-full py-3 bg-orange-500 text-white font-black rounded-2xl" onclick="claimLiteracyWrongReviewReward('${claimId}')">예시 답안을 따라 확인하고 경험치 받기</button>`;
+            };
+            explanation.insertAdjacentHTML('beforeend', '<div id="literacy-wrong-review-reward"></div>');
+            renderClaim();
+            const timer = window.setInterval(() => { left -= 1; renderClaim(); if (left <= 0) window.clearInterval(timer); }, 1000);
+        }
+
+        showLiteracyPromotionNotice(committed.promotion);
+        if (committed.levelUpCount > 0) {
+            showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${committed.aeduLevel} (보상 ${committed.levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD}포인트${committed.removedWarningTokens ? ` · 주의토큰 ${committed.removedWarningTokens}개 차감` : ''})`);
+        }
+    } catch (uiError) {
+        console.error('문해력 결과 저장 후 화면 갱신 실패', uiError);
+        showModal('결과 저장은 완료했지만 화면 갱신 중 오류가 발생했어요. 새로고침하면 저장된 기록을 확인할 수 있습니다.');
+    }
+    return true;
 }
 
 window.claimLiteracyWrongReviewReward = async function(claimId) {
-    if (!activeLiteracyQuestion || activeLiteracyQuestion.pendingReviewRewardId !== claimId || activeLiteracyQuestion.reviewRewardClaimed) return;
-    activeLiteracyQuestion.reviewRewardClaimed = true;
+    const answeredQuestion = activeLiteracyQuestion;
+    if (!answeredQuestion || answeredQuestion.pendingReviewRewardId !== claimId || answeredQuestion.reviewRewardClaimed) return;
+    answeredQuestion.reviewRewardClaimed = true;
     const stageMultiplier = Math.max(calculateStageExperienceMultiplier(4), 1);
     const finalExp = 2 * stageMultiplier;
-    if (finalExp > 0) applyAiedueExperienceReward(finalExp, { source: 'literacy-wrong-review', claimId });
-    await persistLiteracyData();
     const box = document.getElementById('literacy-wrong-review-reward');
-    if (box) box.innerHTML = '<div class="mt-4 p-3 bg-orange-50 text-orange-600 font-black rounded-2xl text-center">오답은 그대로 기록되고, 복습 경험치만 받았어요!</div>';
+    if (box) box.innerHTML = '<button type="button" class="mt-4 w-full py-3 bg-gray-200 text-gray-500 font-black rounded-2xl" disabled><span class="button-loading-spinner"></span>복습 경험치 저장 중...</button>';
+    try {
+        const committed = await persistLiteracyReviewRewardAtomic({
+            claimId,
+            userId: currentUserId,
+            experienceReward: finalExp,
+            baseExperience: 2,
+            stageMultiplier,
+            fallback: {
+                literacyPortfolio: cloneLiteracyValue(literacyPortfolio),
+                literacyDan: literacyPortfolio?.dan,
+                studentName: currentUserProfileSnapshot?.name || currentUserName || '학생',
+                koreanActivityLog: cloneLiteracyValue(currentUserProfileSnapshot?.koreanActivityLog || []),
+                coins: currentUserCoins,
+                balance: currentUserBalance,
+                aeduTokens: currentUserAeduTokens,
+                warningTokens: currentUserWarningTokens,
+                aeduExperience: currentUserAeduExperience,
+                aeduLevel: currentUserAeduLevel
+            }
+        });
+        applyCommittedLiteracyAttempt(committed);
+        answeredQuestion.pendingReviewRewardId = null;
+        if (box) box.innerHTML = `<div class="mt-4 p-3 bg-orange-50 text-orange-600 font-black rounded-2xl text-center">${committed.duplicate ? '이미 받은 복습 경험치예요.' : '오답은 그대로 기록되고, 복습 경험치만 받았어요!'}</div>`;
+        if (committed.levelUpCount > 0) {
+            showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${committed.aeduLevel} (보상 ${committed.levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD}포인트${committed.removedWarningTokens ? ` · 주의토큰 ${committed.removedWarningTokens}개 차감` : ''})`);
+        }
+    } catch (error) {
+        answeredQuestion.reviewRewardClaimed = false;
+        console.error('문해력 오답 복습 경험치 저장 실패', error);
+        if (box) box.innerHTML = `<button type="button" class="mt-4 w-full py-3 bg-orange-500 text-white font-black rounded-2xl" onclick="claimLiteracyWrongReviewReward('${escapeHtml(claimId)}')">저장에 실패했어요. 다시 받기</button>`;
+    }
 }
 
 window.openMyLiteracyRecord = function() {
@@ -15027,187 +15427,298 @@ document.getElementById('teacher-signup-modal').addEventListener('click', (e) =>
 });
 
 // --- Teacher Class Management Logic ---
-// Commented out real Firestore SDK import for offline operation
-// import { collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+let teacherClassStudents = new Map();
+let teacherClassStudentUnsubscribers = [];
+let activeClassManagementTab = 'points';
+
+function stopTeacherClassStudentSubscriptions() {
+    teacherClassStudentUnsubscribers.forEach((unsubscribe) => { try { unsubscribe(); } catch {} });
+    teacherClassStudentUnsubscribers = [];
+}
+
+function setKoreanMultiplierInputs() {
+    const m = window.koreanExperienceMultipliers || {};
+    const values = {
+        'exp-mult-m1-s1': m.max1?.s1 ?? 1,
+        'exp-mult-m2-s1': m.max2?.s1 ?? 0.5, 'exp-mult-m2-s2': m.max2?.s2 ?? 1,
+        'exp-mult-m3-s1': m.max3?.s1 ?? 0.33, 'exp-mult-m3-s2': m.max3?.s2 ?? 0.66, 'exp-mult-m3-s3': m.max3?.s3 ?? 1,
+        'exp-mult-m4-s1': m.max4?.s1 ?? 0.25, 'exp-mult-m4-s2': m.max4?.s2 ?? 0.5, 'exp-mult-m4-s3': m.max4?.s3 ?? 0.75, 'exp-mult-m4-s4': m.max4?.s4 ?? 1
+    };
+    Object.entries(values).forEach(([id, value]) => { const input = document.getElementById(id); if (input) input.value = value; });
+}
+
+window.selectClassManagementTab = function selectClassManagementTab(tab = 'points') {
+    const allowed = new Set(['points', 'multipliers', 'progress', 'activity']);
+    activeClassManagementTab = allowed.has(tab) ? tab : 'points';
+    document.querySelectorAll('.class-management-panel').forEach((panel) => panel.classList.toggle('hidden', panel.id !== `class-management-${activeClassManagementTab}-panel`));
+    document.querySelectorAll('.class-management-tab-btn').forEach((button) => {
+        const active = button.dataset.classTab === activeClassManagementTab;
+        button.classList.toggle('btn-primary', active);
+        button.classList.toggle('btn-outline', !active);
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    renderTeacherClassManagement();
+}
 
 window.openClassManagement = async function() {
+    if (currentUserRole !== 'teacher' || !currentUserId) return showModal('교사 계정으로 로그인해 주세요.');
     document.getElementById('class-management-modal').classList.remove('hidden');
+    closeTeacherStudentAddPanel();
+    selectClassManagementTab('points');
     await loadKoreanExperienceMultipliers(currentUserId, currentUserId);
-
-    // UI 세팅
-    const m = window.koreanExperienceMultipliers;
-    if (m) {
-        if (document.getElementById('exp-mult-m1-s1')) document.getElementById('exp-mult-m1-s1').value = m.max1?.s1 ?? 1.0;
-
-        if (document.getElementById('exp-mult-m2-s1')) document.getElementById('exp-mult-m2-s1').value = m.max2?.s1 ?? 0.5;
-        if (document.getElementById('exp-mult-m2-s2')) document.getElementById('exp-mult-m2-s2').value = m.max2?.s2 ?? 1.0;
-
-        if (document.getElementById('exp-mult-m3-s1')) document.getElementById('exp-mult-m3-s1').value = m.max3?.s1 ?? 0.33;
-        if (document.getElementById('exp-mult-m3-s2')) document.getElementById('exp-mult-m3-s2').value = m.max3?.s2 ?? 0.66;
-        if (document.getElementById('exp-mult-m3-s3')) document.getElementById('exp-mult-m3-s3').value = m.max3?.s3 ?? 1.0;
-
-        if (document.getElementById('exp-mult-m4-s1')) document.getElementById('exp-mult-m4-s1').value = m.max4?.s1 ?? 0.25;
-        if (document.getElementById('exp-mult-m4-s2')) document.getElementById('exp-mult-m4-s2').value = m.max4?.s2 ?? 0.5;
-        if (document.getElementById('exp-mult-m4-s3')) document.getElementById('exp-mult-m4-s3').value = m.max4?.s3 ?? 0.75;
-        if (document.getElementById('exp-mult-m4-s4')) document.getElementById('exp-mult-m4-s4').value = m.max4?.s4 ?? 1.0;
-    }
+    setKoreanMultiplierInputs();
     await loadStudents();
 }
 
 window.closeClassManagement = function() {
+    stopTeacherClassStudentSubscriptions();
+    closeTeacherStudentAddPanel();
     document.getElementById('class-management-modal').classList.add('hidden');
 }
 
-window.loadStudents = async function() {
+function classStudentEntries() {
+    return Array.from(teacherClassStudents.entries()).sort(([, a], [, b]) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
+}
+
+function classEmptyRow(columns, message = '학급에 등록된 학생이 없어요.') {
+    return `<tr><td colspan="${columns}" class="text-center py-10 text-gray-400 font-bold">${escapeHtml(message)}</td></tr>`;
+}
+
+function renderTeacherClassPointRows() {
     const tbody = document.getElementById('student-list-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10">목록을 불러오는 중...</td></tr>';
+    const entries = classStudentEntries();
+    tbody.innerHTML = entries.length ? entries.map(([sid, student]) => {
+        const money = asNumber(student.balance ?? student.coins ?? student.aeduTokens, 0);
+        const warning = Math.max(0, asNumber(student.warningTokens, 0));
+        return `<tr class="border-b border-gray-100 align-top">
+            <td class="py-4 px-3 font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</td>
+            <td class="py-4 px-3 text-teal-600 font-black">${escapeHtml(student.userCode || student.code || '-')}</td>
+            <td class="py-4 px-3 text-amber-600 font-black">${formatAiedueShopCurrency(money)}</td>
+            <td class="py-4 px-3 text-red-500 font-black">${warning}개</td>
+            <td class="py-4 px-3"><div class="space-y-2 min-w-[330px]">
+                <div class="flex flex-wrap gap-1 items-center"><span class="w-16 text-xs font-black">돈</span><input id="wallet-money-${escapeHtml(sid)}" type="number" min="1" class="w-24 px-2 py-1 border rounded-xl text-xs" placeholder="금액"><button type="button" class="btn-primary px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','money',1)">지급</button><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','money',-1)">차감</button></div>
+                <div class="flex flex-wrap gap-1 items-center"><span class="w-16 text-xs font-black">주의토큰</span><input id="wallet-warning-${escapeHtml(sid)}" type="number" min="1" class="w-24 px-2 py-1 border rounded-xl text-xs" placeholder="개수"><button type="button" class="btn-primary px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','warning',1)">지급</button><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','warning',-1)">차감</button></div>
+            </div></td>
+        </tr>`;
+    }).join('') : classEmptyRow(5);
+}
 
+function renderTeacherClassProgressRows() {
+    const tbody = document.getElementById('student-progress-tbody');
+    if (!tbody) return;
+    const entries = classStudentEntries();
+    tbody.innerHTML = entries.length ? entries.map(([sid, student]) => {
+        const unlocked = normalizeUnlockedLevels(student.unlockedLevels, 'student');
+        const toggles = [1, 2, 3, 4].map((level) => {
+            const active = unlocked.includes(level);
+            return `<button type="button" class="toggle-btn ${active ? 'active' : ''}" onclick="toggleLevelLock('${escapeInlineJsString(sid)}',${level},${active})">${level}단계</button>`;
+        }).join('');
+        return `<tr class="border-b border-gray-100 align-top">
+            <td class="py-4 px-3"><div class="font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</div><div class="text-xs text-teal-600 font-bold">${escapeHtml(student.userCode || student.code || '-')}</div></td>
+            <td class="py-4 px-3"><div class="flex flex-wrap gap-2"><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','drawing')">그리기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','hangul')">한글 해득</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','dictation')">받아쓰기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','literacy')">문해력</button></div></td>
+            <td class="py-4 px-3"><div class="flex flex-wrap gap-2">${toggles}</div></td>
+        </tr>`;
+    }).join('') : classEmptyRow(3);
+}
+
+function formatClassActivityTime(value) {
+    const millis = Number(value?.toMillis?.() ?? value?.seconds * 1000 ?? value ?? 0);
+    return millis ? new Date(millis).toLocaleString('ko-KR') : '시간 정보 없음';
+}
+
+function renderTeacherClassActivity() {
+    const root = document.getElementById('student-activity-list');
+    if (!root) return;
+    const entries = classStudentEntries();
+    root.innerHTML = entries.length ? entries.map(([, student]) => {
+        const logs = Array.isArray(student.koreanActivityLog) ? student.koreanActivityLog.slice(0, 30) : [];
+        const logHtml = logs.length ? logs.map((log) => `<li class="border-l-4 ${log.type === 'teacher-wallet' ? 'border-amber-400' : 'border-teal-400'} bg-gray-50 rounded-r-2xl px-4 py-3"><div class="text-sm font-bold text-[#2c3e50]">${escapeHtml(log.message || '활동이 기록되었습니다.')}</div><div class="text-[11px] text-gray-400 mt-1">${escapeHtml(formatClassActivityTime(log.createdAtMs || log.createdAt))}</div></li>`).join('') : '<li class="text-sm text-gray-400 font-bold py-4">새로 지급되는 경험치와 교사 지급·차감부터 여기에 기록됩니다.</li>';
+        return `<article class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><h4 class="text-xl font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</h4><p class="text-xs text-teal-600 font-bold">${escapeHtml(student.userCode || student.code || '-')}</p></div><div class="text-xs font-black text-gray-500">Lv.${Math.max(1, asNumber(student.aeduLevel, 1))} · 경험치 ${asNumber(student.aeduExperience, 0).toFixed(1)}%</div></div><ol class="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">${logHtml}</ol></article>`;
+    }).join('') : '<p class="text-center py-10 text-gray-400 font-bold">학급에 등록된 학생이 없어요.</p>';
+}
+
+function renderTeacherClassManagement() {
+    renderTeacherClassPointRows();
+    renderTeacherClassProgressRows();
+    renderTeacherClassActivity();
+}
+
+function startTeacherClassStudentSubscriptions() {
+    stopTeacherClassStudentSubscriptions();
+    for (const [sid] of teacherClassStudents) {
+        const unsubscribe = onSnapshot(doc(db, 'users', sid), (snap) => {
+            if (!snap.exists()) return;
+            teacherClassStudents.set(sid, { id: sid, ...snap.data() });
+            renderTeacherClassManagement();
+        }, (error) => console.warn('학생 실시간 현황 구독 실패', sid, error));
+        teacherClassStudentUnsubscribers.push(unsubscribe);
+    }
+}
+
+window.loadStudents = async function() {
+    const pointBody = document.getElementById('student-list-tbody');
+    if (pointBody) pointBody.innerHTML = classEmptyRow(5, '목록을 불러오는 중입니다.');
     try {
-        const classRef = doc(db, 'classes', currentUserId);
-        const classSnap = await getDoc(classRef);
-
-        if (!classSnap.exists() || !classSnap.data().students || classSnap.data().students.length === 0) {
-            if (isTeacherTestAccount()) {
-                tbody.innerHTML = '';
-                renderTeacherTestKoreanReportRow(tbody);
-                return;
-            }
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">학급에 등록된 학생이 없어요.</td></tr>';
-            return;
+        const students = await getAiedueKoreanClassStudents();
+        teacherClassStudents = new Map(students.map((student) => [student.id, student]));
+        if (students.length) {
+            await setDoc(doc(db, 'classes', currentUserId), { teacherId: currentUserId, students: students.map((student) => student.id), updatedAt: serverTimestamp() }, { merge: true });
         }
-
-        const studentIds = classSnap.data().students;
-        tbody.innerHTML = '';
-
-        const studentSnaps = await Promise.all(studentIds.map(sid => getDoc(doc(db, 'users', sid))));
-
-        studentSnaps.forEach(docSnap => {
-            if (!docSnap.exists()) return;
-            const student = docSnap.data();
-            const sid = docSnap.id;
-            const unlocked = normalizeUnlockedLevels(student.unlockedLevels, 'student');
-            const report = getKoreanStudentReportFromData(sid, student);
-            window.teacherKoreanReports = window.teacherKoreanReports || {};
-            window.teacherKoreanReports[sid] = report;
-
-            let toggleHtml = '';
-            for (let i = 1; i <= 4; i++) {
-                const active = unlocked.includes(i);
-                toggleHtml += `<button type="button" class="toggle-btn ${active ? 'active' : ''}" onclick="toggleLevelLock('${escapeInlineJsString(sid)}', ${i}, ${active})">${i}단계</button>`;
-            }
-
-            // 단계별 배율 표시
-            const maxUnlockedStep = Math.max(1, ...unlocked.map(Number));
-            const m = window.koreanExperienceMultipliers || {
-                max1: { s1: 1.0 },
-                max2: { s1: 0.5, s2: 1.0 },
-                max3: { s1: 0.33, s2: 0.66, s3: 1.0 },
-                max4: { s1: 0.25, s2: 0.5, s3: 0.75, s4: 1.0 }
-            };
-            let mapping = m[`max${maxUnlockedStep}`] || { s1: 1.0, s2: 1.0, s3: 1.0, s4: 1.0 };
-            const rate1 = Math.round((mapping.s1 ?? (1 / maxUnlockedStep)) * 100);
-            const rate2 = Math.round((mapping.s2 ?? (2 / maxUnlockedStep)) * 100);
-            const rate3 = Math.round((mapping.s3 ?? (3 / maxUnlockedStep)) * 100);
-            const rate4 = Math.round((mapping.s4 ?? (4 / maxUnlockedStep)) * 100);
-            const multiplierText = `단계별 배율: 1단계 ${rate1}% · 2단계 ${rate2}% · 3단계 ${rate3}% · 4단계 ${rate4}%`;
-
-            const tr = document.createElement('tr');
-            tr.className = 'border-b border-gray-50 hover:bg-gray-50 transition-colors';
-            tr.innerHTML = `
-                <td class="py-4 px-4 font-bold text-gray-700">
-                    <div>${escapeHtml(student.name)}</div>
-                    <div class="text-[10px] text-teal-600 font-bold mt-1">${escapeHtml(multiplierText)}</div>
-                </td>
-                <td class="py-4 px-4 text-teal-600 font-bold">${escapeHtml(student.userCode)}</td>
-                <td class="py-4 px-4">
-                    <div class="text-sm font-black text-yellow-600">돈 ${formatAiedueShopCurrency(asNumber(student.balance ?? student.coins ?? student.aeduTokens, 0))}</div>
-                    <div class="text-sm font-black text-red-500">주의토큰 ${asNumber(student.warningTokens, 0)}개</div>
-                </td>
-                <td class="py-4 px-4">
-                    <div class="flex flex-col gap-2 min-w-[150px]">
-                        <div class="flex gap-1"><input id="wallet-money-${escapeHtml(sid)}" type="number" class="w-20 px-2 py-1 border rounded-xl text-xs" placeholder="돈"><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','money',1)">지급</button><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','money',-1)">차감</button></div>
-                        <div class="flex gap-1"><input id="wallet-warning-${escapeHtml(sid)}" type="number" class="w-20 px-2 py-1 border rounded-xl text-xs" placeholder="토큰"><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','warning',1)">지급</button><button type="button" class="btn-outline px-2 py-1 text-xs" onclick="adjustStudentKoreanWallet('${escapeInlineJsString(sid)}','warning',-1)">차감</button></div>
-                    </div>
-                </td>
-                <td class="py-4 px-4">
-                    <div class="flex gap-2">${toggleHtml}</div>
-                </td>
-                <td class="py-4 px-4">
-                    <div class="text-sm font-bold text-[#2c3e50]">완료 ${report.completedLessonCount || 0}개 · 정답률 ${report.accuracyRate || 0}%</div>
-                    <div class="text-xs text-gray-500 mt-1">어려운 유형: ${formatKoreanReportList(report.topErrorTypes, '아직 없음')}</div>
-                    <button type="button" class="btn-outline px-3 py-1 text-xs mt-2" onclick="openKoreanStudentReport('${escapeInlineJsString(sid)}')">상세 보기</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (err) {
-        console.error('Load students error:', err);
-        if (isTeacherTestAccount()) {
-            tbody.innerHTML = '';
-            renderTeacherTestKoreanReportRow(tbody);
-            return;
-        }
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-red-500">목록을 불러오지 못했습니다.</td></tr>';
+        renderTeacherClassManagement();
+        startTeacherClassStudentSubscriptions();
+    } catch (error) {
+        console.error('Load students error:', error);
+        teacherClassStudents = new Map();
+        renderTeacherClassManagement();
+        if (pointBody) pointBody.innerHTML = classEmptyRow(5, '목록을 불러오지 못했습니다.');
     }
 }
 
 window.adjustStudentKoreanWallet = async function(sid, kind, direction) {
     try {
         const inputId = kind === 'warning' ? `wallet-warning-${sid}` : `wallet-money-${sid}`;
-        const rawAmount = Math.abs(asNumber(document.getElementById(inputId)?.value, 0));
-        if (!rawAmount) { showModal('지급/차감할 숫자를 입력해주세요.'); return; }
-        const delta = rawAmount * (direction < 0 ? -1 : 1);
+        const rawAmount = Math.floor(Math.abs(asNumber(document.getElementById(inputId)?.value, 0)));
+        if (!rawAmount) return showModal('지급/차감할 숫자를 입력해주세요.');
+        const requestedDelta = rawAmount * (direction < 0 ? -1 : 1);
         const userRef = doc(db, 'users', sid);
-        const snap = await getDoc(userRef);
-        if (!snap.exists()) throw new Error('학생 정보를 찾지 못했습니다.');
-        const data = snap.data();
-        const update = {};
-        if (kind === 'warning') {
-            update.warningTokens = Math.max(0, asNumber(data.warningTokens, 0) + delta);
-        } else {
-            const currentMoney = asNumber(data.balance ?? data.coins ?? data.aeduTokens, 0);
-            const nextMoney = Math.max(0, currentMoney + delta);
-            update.balance = nextMoney;
-            update.coins = nextMoney;
-            update.aeduTokens = nextMoney;
-        }
-        await setDoc(userRef, { ...update, updatedAt: serverTimestamp() }, { merge: true });
-        try {
-            await addDoc(collection(db, 'transferLog'), { teacherId: currentUserId, studentId: sid, kind, delta, source: 'aiedue-korean-class-management', createdAt: serverTimestamp() });
-        } catch (logError) { console.warn('wallet transfer log failed', logError); }
-        showModal(`${kind === 'warning' ? '주의토큰' : '돈'} ${rawAmount}${kind === 'warning' ? '개' : '원'} ${direction < 0 ? '차감' : '지급'} 완료`);
-        await loadStudents();
+        const transferRef = doc(collection(db, 'transferLog'));
+        const result = await runTransaction(db, async (transaction) => {
+            const snap = await transaction.get(userRef);
+            if (!snap.exists()) throw new Error('학생 정보를 찾지 못했습니다.');
+            const data = snap.data();
+            const studentName = data.name || '학생';
+            const teacherName = currentUserProfileSnapshot?.name || currentUserName || '선생님';
+            const currentValue = kind === 'warning'
+                ? Math.max(0, asNumber(data.warningTokens, 0))
+                : Math.max(0, asNumber(data.balance ?? data.coins ?? data.aeduTokens, 0));
+            const nextValue = Math.max(0, currentValue + requestedDelta);
+            const appliedDelta = nextValue - currentValue;
+            if (!appliedDelta) throw new Error('더 이상 차감할 수 없습니다.');
+            const itemName = kind === 'warning' ? '주의토큰' : '돈';
+            const action = appliedDelta > 0 ? '지급했다.' : '차감했다.';
+            const unit = kind === 'warning' ? '개' : '점';
+            const activity = {
+                id: `teacher_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+                type: 'teacher-wallet',
+                source: 'class-management',
+                kind,
+                delta: appliedDelta,
+                createdAtMs: Date.now(),
+                message: `교사 ${teacherName}가 ${studentName}에게 ${itemName} ${Math.abs(appliedDelta).toLocaleString()}${unit}을 ${action}`
+            };
+            const logs = [activity, ...(Array.isArray(data.koreanActivityLog) ? data.koreanActivityLog : [])].slice(0, 200);
+            const update = kind === 'warning'
+                ? { warningTokens: nextValue }
+                : { balance: nextValue, coins: nextValue, aeduTokens: nextValue };
+            transaction.set(userRef, { ...update, koreanActivityLog: logs, updatedAt: serverTimestamp() }, { merge: true });
+            transaction.set(transferRef, { teacherId: currentUserId, teacherName, studentId: sid, studentName, kind, delta: appliedDelta, source: 'aiedue-korean-class-management', createdAt: serverTimestamp() });
+            return { appliedDelta, itemName, unit };
+        });
+        const input = document.getElementById(inputId); if (input) input.value = '';
+        showModal(`${result.itemName} ${Math.abs(result.appliedDelta).toLocaleString()}${result.unit} ${result.appliedDelta < 0 ? '차감' : '지급'} 완료`);
     } catch (err) {
         console.error('student wallet adjust failed', err);
         showModal(`학생 돈/주의토큰 변경 실패: ${escapeHtml(err.message || err)}`);
     }
 }
 
-window.addStudentByTeacher = async function() {
-    const name = document.getElementById('new-student-name').value.trim();
-    if (!name) return;
+window.openTeacherStudentAddPanel = function openTeacherStudentAddPanel() {
+    const panel = document.getElementById('teacher-student-add-panel');
+    const input = document.getElementById('teacher-student-search-input');
+    const results = document.getElementById('teacher-student-search-results');
+    panel?.classList.remove('hidden');
+    if (input) input.value = '';
+    if (results) results.innerHTML = '<p class="text-sm text-gray-500 font-bold">이름을 검색한 뒤 학생을 선택하세요.</p>';
+    window.setTimeout(() => input?.focus(), 0);
+}
 
+window.closeTeacherStudentAddPanel = function closeTeacherStudentAddPanel() {
+    document.getElementById('teacher-student-add-panel')?.classList.add('hidden');
+    const input = document.getElementById('teacher-student-search-input');
+    if (input) input.value = '';
+}
+
+window.searchStudentsForTeacher = async function searchStudentsForTeacher() {
+    const panel = document.getElementById('teacher-student-add-panel');
+    const input = document.getElementById('teacher-student-search-input');
+    const results = document.getElementById('teacher-student-search-results');
+    if (!panel || panel.classList.contains('hidden') || !results) return;
+    const name = String(input?.value || '').trim();
+    if (!name) return showModal('검색할 학생 이름을 입력해주세요.');
+    results.innerHTML = '<p class="text-sm text-gray-500 font-bold">학생을 검색하는 중입니다.</p>';
     try {
-        // Find student by name (simplified for now, ideally search by userCode)
-        const q = query(collection(db, 'users'), where('role', '==', 'student'), where('name', '==', name));
-        const snap = await getDocs(q);
-
-        if (snap.empty) {
-            showModal('해당 이름의 학생을 찾을 수 없어요. 학생이 먼저 회원가입을 해야 합니다.');
-            return;
-        }
-
-        const studentDoc = snap.docs[0];
-        await updateDoc(studentDoc.ref, { teacherId: currentUserId });
-
-        document.getElementById('new-student-name').value = '';
-        showModal(`${escapeHtml(name)} 학생을 우리 반으로 등록했어요!`);
-        await loadStudents();
-    } catch (err) {
-        console.error('Add student error:', err);
-        showModal('학생 등록 중 오류가 발생했습니다.');
+        const snap = await getDocs(query(collection(db, 'users'), where('name', '==', name), queryLimit(20)));
+        const candidates = snap.docs
+            .map((item) => ({ id: item.id, ...item.data() }))
+            .filter((item) => String(item.role || 'student').toLowerCase() === 'student');
+        results.innerHTML = candidates.length ? candidates.map((student) => {
+            const alreadyAdded = teacherClassStudents.has(student.id);
+            const anotherTeacher = Boolean(student.teacherId && student.teacherId !== currentUserId);
+            const disabled = alreadyAdded || anotherTeacher;
+            const state = alreadyAdded ? '이미 우리 반 학생' : (anotherTeacher ? '다른 학급 소속' : '선택 가능');
+            return `<div class="bg-white border rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><div class="font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</div><div class="text-xs text-gray-500">로그인 번호 ${escapeHtml(student.userCode || student.code || '-')} · ${state}</div></div><button type="button" class="${disabled ? 'btn-outline opacity-50' : 'btn-primary'} px-4 py-2 text-sm" ${disabled ? 'disabled' : ''} onclick="addStudentByTeacher('${escapeInlineJsString(student.id)}')">학생 선택</button></div>`;
+        }).join('') : '<p class="text-sm text-red-500 font-bold">해당 이름으로 가입한 학생을 찾지 못했습니다.</p>';
+    } catch (error) {
+        console.error('student name search failed', error);
+        results.innerHTML = '<p class="text-sm text-red-500 font-bold">학생 검색에 실패했습니다.</p>';
     }
+}
+
+window.addStudentByTeacher = async function(sid) {
+    if (!sid) return showModal('검색 결과에서 추가할 학생을 선택해주세요.');
+    try {
+        const classRef = doc(db, 'classes', currentUserId);
+        const studentRef = doc(db, 'users', sid);
+        const student = await runTransaction(db, async (transaction) => {
+            const [classSnap, studentSnap] = await Promise.all([transaction.get(classRef), transaction.get(studentRef)]);
+            if (!studentSnap.exists()) throw new Error('학생 정보를 찾지 못했습니다.');
+            const data = studentSnap.data();
+            if (String(data.role || 'student').toLowerCase() !== 'student') throw new Error('학생 계정만 추가할 수 있습니다.');
+            if (data.teacherId && data.teacherId !== currentUserId) throw new Error('이미 다른 교사의 학급에 소속된 학생입니다.');
+            const students = Array.from(new Set([...(Array.isArray(classSnap.data()?.students) ? classSnap.data().students : []), sid]));
+            transaction.set(classRef, { teacherId: currentUserId, students, updatedAt: serverTimestamp() }, { merge: true });
+            transaction.set(studentRef, { teacherId: currentUserId, classId: currentUserId, updatedAt: serverTimestamp() }, { merge: true });
+            return data;
+        });
+        closeTeacherStudentAddPanel();
+        showModal(`${escapeHtml(student.name || '학생')} 학생을 우리 반에 추가했습니다.`);
+        await loadStudents();
+    } catch (error) {
+        console.error('Add student error:', error);
+        showModal(`학생 추가 실패: ${escapeHtml(error.message || error)}`);
+    }
+}
+
+window.openStudentProgressDetail = function openStudentProgressDetail(sid, type) {
+    const student = teacherClassStudents.get(sid);
+    if (!student) return showModal('학생 정보를 찾지 못했습니다.');
+    let title = '';
+    let body = '';
+    if (type === 'drawing') {
+        title = '그리기 · 도형별 정확도';
+        const stats = student.drawingPortfolio?.shapeStats || {};
+        const shapes = Array.isArray(drawingShapeLibrary) ? drawingShapeLibrary : [];
+        body = shapes.map((shape) => {
+            const stat = stats[shape.key] || {};
+            const accuracy = Math.max(0, Math.min(100, asNumber(stat.accuracy, 0)));
+            return `<div class="p-3 rounded-2xl bg-purple-50"><div class="flex justify-between gap-3"><span class="font-black">${escapeHtml(shape.label || shape.key)}</span><span class="font-black text-purple-600">${accuracy}%</span></div><div class="text-xs text-gray-500 mt-1">시도 ${asNumber(stat.attempts, 0)}회 · 최고 ${asNumber(stat.bestAccuracy, 0)}%</div></div>`;
+        }).join('') || '<p class="text-gray-400 font-bold">아직 도형 정확도 기록이 없습니다.</p>';
+    } else if (type === 'hangul') {
+        title = '한글 해득 · 현재 진도';
+        const completedStep = Math.max(-1, Math.floor(asNumber(student.currentLearningStep, -1)));
+        const nextStep = Math.min(35, completedStep + 2);
+        body = `<div class="p-6 rounded-3xl bg-green-50 text-center"><div class="text-sm font-black text-green-600">현재 할 차례</div><div class="text-3xl font-black text-[#2c3e50] mt-2">배움 ${nextStep} 활동 차례</div><div class="text-sm text-gray-500 mt-2">완료한 배움 ${Math.max(0, completedStep + 1)}개</div></div>`;
+    } else if (type === 'dictation') {
+        title = '받아쓰기 · 나의 기록';
+        const records = Object.entries(student.dictationPortfolio?.missions || {}).sort((a, b) => Number(b[0]) - Number(a[0])).slice(0, 30);
+        body = records.length ? records.map(([step, record]) => `<div class="p-3 rounded-2xl bg-blue-50"><div class="font-black">${escapeHtml(record?.title || `${step}단계`)}</div><div class="text-sm text-gray-600 mt-1">${record?.score != null ? `점수 ${escapeHtml(record.score)}` : (record?.correct ? '정답' : '완료')} ${record?.answer ? `· 답 ${escapeHtml(record.answer)}` : ''}</div></div>`).join('') : '<p class="text-gray-400 font-bold">아직 받아쓰기 기록이 없습니다.</p>';
+    } else {
+        title = '문해력 · 나의 기록';
+        const history = Array.isArray(student.literacyPortfolio?.history) ? student.literacyPortfolio.history.slice(0, 30) : [];
+        body = history.length ? history.map((record) => `<div class="p-3 rounded-2xl bg-amber-50"><div class="font-black">${escapeHtml(record.title || record.question || '문해력 활동')}</div><div class="text-sm text-gray-600 mt-1">${record.correct === true ? '정답' : (record.correct === false ? '오답' : '완료')}${record.score != null ? ` · ${escapeHtml(record.score)}점` : ''}${record.difficulty ? ` · ${escapeHtml(record.difficulty)}` : ''}</div></div>`).join('') : '<p class="text-gray-400 font-bold">아직 문해력 기록이 없습니다.</p>';
+    }
+    showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-1">${escapeHtml(student.name || '학생')}</h3><p class="font-black text-teal-600 mb-4">${escapeHtml(title)}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[65vh] overflow-y-auto custom-scrollbar pr-1">${body}</div></div>`);
 }
 
 window.toggleLevelLock = async function(sid, level, currentActive) {
