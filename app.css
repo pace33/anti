@@ -6704,17 +6704,17 @@ body {
 .lesson27-hand-track {display:grid;place-items:center;height:186px;overflow:hidden;background:#fff;}
 .lesson27-hand-stage {position:relative;display:block;width:270px;height:186px;overflow:hidden;}
 .lesson27-hand-lower,.lesson27-hand-upper {position:absolute;display:block;object-fit:contain;user-select:none;pointer-events:none;}
-.lesson27-hand-lower {left:30px;top:108px;width:172px;height:auto;}
-.lesson27-hand-upper {left:24px;top:0;width:66px;height:auto;opacity:.88;transform:translateY(4px) rotate(-2deg) scale(.96);transform-origin:50% 86%;transition:transform 650ms cubic-bezier(.22,.75,.25,1),opacity .2s ease;will-change:transform;}
+.lesson27-hand-lower {left:30px;top:102px;width:172px;height:auto;}
+.lesson27-hand-upper {left:24px;top:0;width:66px;height:auto;opacity:.88;transform:translateY(1px) rotate(-2deg) scale(.96);transform-origin:50% 86%;transition:transform 650ms cubic-bezier(.22,.75,.25,1),opacity .2s ease;will-change:transform;}
 .lesson27-hand-motion-lines {position:absolute;left:80px;top:43px;width:42px;height:92px;overflow:visible;opacity:0;transform:translateY(-6px);transition:opacity .16s ease,transform .5s ease;}
 .lesson27-hand-motion-lines path {fill:none;stroke:#4a4a4a;stroke-width:2.4;stroke-linecap:round;}
-.lesson27-hand-contact {position:absolute;left:23px;top:157px;width:18px;height:18px;border:2px solid #ca7a3a;border-radius:50%;opacity:0;transform:scale(.45);}
+.lesson27-hand-contact {position:absolute;left:23px;top:151px;width:18px;height:18px;border:2px solid #ca7a3a;border-radius:50%;opacity:0;transform:scale(.45);}
 .lesson27-stage-caption {min-height:30px;padding:6px 8px;border-top:1px solid #e4ebef;background:#f7fafb;color:#566e7e;text-align:center;font-size:.8rem;font-weight:900;}
-.lesson27-family-card.state-first-sound .lesson27-hand-upper {opacity:1;transform:translateY(4px) rotate(-2deg) scale(1);}
-.lesson27-family-card.state-hand-moving .lesson27-hand-upper,.lesson27-family-card.state-final-sound .lesson27-hand-upper {opacity:1;transform:translateY(63px) rotate(1deg) scale(1);}
+.lesson27-family-card.state-first-sound .lesson27-hand-upper {opacity:1;transform:translateY(1px) rotate(-2deg) scale(1);}
+.lesson27-family-card.state-hand-moving .lesson27-hand-upper,.lesson27-family-card.state-final-sound .lesson27-hand-upper {opacity:1;transform:translateY(57px) rotate(1deg) scale(1);}
 .lesson27-family-card.state-hand-moving .lesson27-hand-motion-lines {opacity:1;transform:translateY(6px);}
 .lesson27-family-card.state-final-sound .lesson27-hand-contact {opacity:1;animation:lesson27-contact-pulse .62s ease-out 1;}
-.lesson27-family-card.state-completed .lesson27-hand-upper {opacity:.88;transform:translateY(4px) rotate(-2deg) scale(.96);transition-duration:500ms;}
+.lesson27-family-card.state-completed .lesson27-hand-upper {opacity:.88;transform:translateY(1px) rotate(-2deg) scale(.96);transition-duration:500ms;}
 @keyframes lesson27-contact-pulse {0%{opacity:0;transform:scale(.4)}45%{opacity:.75;transform:scale(1)}100%{opacity:0;transform:scale(1.35)}}
 .lesson27-card-copy {display:grid;gap:9px;align-content:center;justify-items:stretch;}
 .lesson27-card-copy strong {font-size:1.75rem;font-weight:1000;}
