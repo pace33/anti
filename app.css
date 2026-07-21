@@ -6678,35 +6678,51 @@ body {
 .lesson27-family-explanation strong {display:inline-block;margin-bottom:4px;color:#26734a;font-size:1.05rem;}
 .lesson27-family-explanation p {margin:0;color:#29435a;font-size:1.05rem;font-weight:700;}
 .lesson27-family-explanation b {color:#b54c27;}
+.lesson27-family-explanation .lesson27-family-helper {margin-top:4px;color:#536879;font-size:.96rem;font-weight:700;}
 .lesson27-family-step {display:flex;align-items:center;gap:12px;margin:16px 0 10px;padding:11px 14px;border-left:5px solid #54a8bc;background:#f4fafc;}
 .lesson27-family-step span {padding:6px 10px;border-radius:5px;background:#54a8bc;color:#fff;font-weight:900;}
 .lesson27-family-step strong {font-size:1.05rem;}
-.lesson27-family-cards {display:grid;gap:14px;}
-.lesson27-family-card {position:relative;display:grid;grid-template-columns:130px 100px minmax(150px,1fr) 180px;align-items:center;gap:18px;width:100%;min-height:190px;padding:22px 24px;overflow:hidden;border:2px solid #b8c7d2;border-radius:8px;background:#fff;color:#17324e;text-align:left;cursor:pointer;transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease,transform .2s ease;}
-.lesson27-family-card:hover {transform:translateY(-2px);border-color:#65aabd;box-shadow:0 8px 18px rgba(38,89,108,.12);}
-.lesson27-family-card:focus-visible {outline:4px solid rgba(255,139,70,.35);outline-offset:2px;border-color:#ed7f39;}
-.lesson27-family-card.is-playing {border-color:#ed7f39;background:#fff8ed;box-shadow:0 0 0 4px rgba(237,127,57,.14);}
-.lesson27-family-card.is-heard:not(.is-playing) {border-color:#4fb985;background:#f4fcf7;}
-.lesson27-card-check {position:absolute;top:10px;right:12px;padding:4px 8px;border-radius:4px;background:#dff7e8;color:#167447;font-size:.76rem;font-weight:900;opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease;}
-.lesson27-family-card.is-heard .lesson27-card-check {opacity:1;transform:translateY(0);}
-.lesson27-family-letter {display:grid;place-items:center;min-height:126px;border-right:2px solid #dce5eb;color:#17324e;font-size:5rem;font-weight:1000;line-height:1;transition:color .2s ease,transform .2s ease;}
-.lesson27-family-card.is-playing .lesson27-family-letter {color:#d85f2c;transform:scale(1.06);}
+.lesson27-family-cards {display:grid;gap:18px;}
+.lesson27-family-card {position:relative;display:grid;grid-template-columns:110px 92px minmax(260px,1fr) 180px;align-items:center;gap:18px;width:100%;min-height:210px;padding:25px 22px;overflow:hidden;border:2px solid #b8c7d2;border-radius:8px;background:#fff;color:#17324e;text-align:left;transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease;}
+.lesson27-family-card.is-playing {border-color:#318faa;background:#f4fbfd;box-shadow:0 0 0 4px rgba(49,143,170,.14);}
+.lesson27-family-card.is-heard:not(.is-playing) {border-color:#4fb985;background:#f8fdf9;}
+.lesson27-card-check {position:absolute;top:10px;right:12px;padding:4px 8px;border-radius:4px;background:#dff7e8;color:#167447;font-size:.76rem;font-weight:900;visibility:hidden;opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease;}
+.lesson27-family-card.is-heard .lesson27-card-check {visibility:visible;opacity:1;transform:translateY(0);}
+.lesson27-card-check::before {content:'✓ ';}
+.lesson27-family-letter {display:grid;place-items:center;min-height:150px;border-right:2px solid #dce5eb;color:#17324e;font-size:5rem;font-weight:1000;line-height:1;transition:color .2s ease,transform .2s ease;}
+.lesson27-family-card.state-first .lesson27-family-letter {color:#247c9b;transform:scale(1.05);}
 .lesson27-name-stack {display:grid;overflow:hidden;border:2px solid #9db3c2;border-radius:7px;background:#edf5fa;text-align:center;font-size:2.15rem;font-weight:1000;}
-.lesson27-name-stack > span {display:grid;place-items:center;min-height:61px;}
-.lesson27-ending-block {border-top:2px solid #9db3c2;background:#8abbd7;color:#fff;transition:background-color .2s ease,transform .2s ease;}
-.lesson27-family-card.is-playing .lesson27-ending-block,.lesson27-family-card.is-heard .lesson27-ending-block {background:#2d86a6;color:#fff;}
-.lesson27-family-card.is-playing .lesson27-ending-block {transform:scale(1.08);}
-.lesson27-hand-scene {position:relative;display:flex;align-items:center;justify-content:center;gap:4px;min-height:112px;border-radius:7px;background:#fff4df;font-size:3.3rem;}
-.lesson27-hand {display:inline-block;transform-origin:50% 80%;animation:lesson27-hand-gentle 1.55s ease-in-out infinite;}
-.lesson27-hand-right {transform:scaleX(-1);animation-delay:-.72s;}
-.lesson27-sound-wave {width:14px;height:32px;border:3px solid #e39a45;border-top-color:transparent;border-bottom-color:transparent;border-radius:50%;opacity:.55;}
-.lesson27-family-card.is-playing .lesson27-hand {animation-name:lesson27-hand-active;animation-duration:.78s;}
-.lesson27-family-card.is-playing .lesson27-sound-wave {border-color:#e4672d;border-top-color:transparent;border-bottom-color:transparent;opacity:1;}
-.lesson27-card-copy {display:grid;gap:8px;align-content:center;}
+.lesson27-name-stack > span {display:grid;place-items:center;min-height:70px;transition:background-color .2s ease,color .2s ease,box-shadow .2s ease,transform .2s ease;}
+.lesson27-first-block {background:#edf5fa;}
+.lesson27-ending-block {border-top:2px solid #9db3c2;background:#c9e1ee;color:#234f67;}
+.lesson27-family-card.state-first .lesson27-first-block {background:#4ea9c1;color:#fff;box-shadow:inset 0 0 0 3px #247c9b;transform:scale(1.04);}
+.lesson27-family-card.state-moving .lesson27-first-block {background:#e4edf2;color:#718390;}
+.lesson27-family-card.state-moving .lesson27-ending-block {background:#a8d2e4;color:#174e68;box-shadow:inset 0 0 0 2px #67abc2;}
+.lesson27-family-card.state-final .lesson27-ending-block {background:#267f9f;color:#fff;box-shadow:inset 0 0 0 3px #175d78,0 0 0 4px rgba(38,127,159,.14);transform:scale(1.05);}
+.lesson27-family-card.state-done .lesson27-ending-block {background:#5a9fbb;color:#fff;}
+.lesson27-hand-scene {position:relative;display:grid;grid-template-columns:42px minmax(150px,1fr);grid-template-rows:1fr auto;align-items:center;gap:0 8px;min-width:260px;min-height:150px;overflow:hidden;border:1px solid #f0d7a7;border-radius:7px;background:#fff4df;}
+.lesson27-hand-route {grid-row:1;display:grid;align-content:space-around;justify-items:center;height:128px;padding:8px 0;color:#a26427;font-size:1rem;font-weight:1000;}
+.lesson27-hand-route i {color:#d28a35;font-style:normal;}
+.lesson27-hand-track {grid-column:2;grid-row:1;display:grid;place-items:center;height:128px;overflow:hidden;}
+.lesson27-hand-illustration {width:106px;height:106px;opacity:.84;transform:translateY(-19px) scale(.96);transform-origin:center;transition:transform 650ms ease-in-out,opacity .22s ease;}
+.lesson27-hand-palm,.lesson27-hand-finger,.lesson27-hand-thumb {fill:#f4b87f;stroke:#a85d35;stroke-width:3;stroke-linejoin:round;}
+.lesson27-hand-cuff {fill:#55b9b0;stroke:#257e78;stroke-width:3;rx:6px;}
+.lesson27-hand-detail {fill:none;stroke:#c97b4d;stroke-width:2.5;stroke-linecap:round;opacity:.72;}
+.lesson27-motion-lines {fill:none;stroke:#e08132;stroke-width:4;stroke-linecap:round;opacity:0;transition:opacity .18s ease;}
+.lesson27-stage-caption {grid-column:1 / -1;grid-row:2;min-height:28px;padding:5px 8px;background:rgba(255,255,255,.62);color:#7d5a33;text-align:center;font-size:.8rem;font-weight:900;}
+.lesson27-family-card.state-first .lesson27-hand-illustration {opacity:1;transform:translateY(-19px) scale(1.04);}
+.lesson27-family-card.state-moving .lesson27-hand-illustration {opacity:1;transform:translateY(22px) scale(1);}
+.lesson27-family-card.state-final .lesson27-hand-illustration {opacity:1;transform:translateY(22px) scale(1.06);}
+.lesson27-family-card.state-done .lesson27-hand-illustration {opacity:1;transform:translateY(22px) scale(1);}
+.lesson27-family-card.state-first .lesson27-motion-lines,.lesson27-family-card.state-final .lesson27-motion-lines {opacity:1;}
+.lesson27-card-copy {display:grid;gap:9px;align-content:center;justify-items:stretch;}
 .lesson27-card-copy strong {font-size:1.75rem;font-weight:1000;}
-.lesson27-card-copy span {color:#52697b;font-size:1.05rem;font-weight:900;}
-.lesson27-card-feedback {grid-column:1 / -1;min-height:24px;padding-top:3px;border-top:1px dashed #ccd7df;color:#3d7184;text-align:center;font-size:.94rem;font-weight:800;}
-.lesson27-family-card.is-playing .lesson27-card-feedback {color:#bd541f;}
+.lesson27-card-copy > span {color:#52697b;font-size:1.05rem;font-weight:900;}
+.lesson27-card-copy b {color:#b54c27;font-size:1.18rem;}
+.lesson27-play-button {display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;padding:9px 11px;border:2px solid #3295ae;border-radius:7px;background:#fff;color:#17617a;font-size:.9rem;font-weight:1000;cursor:pointer;}
+.lesson27-play-button:hover {background:#eaf8fb;}
+.lesson27-play-button:focus-visible {outline:4px solid rgba(255,139,70,.34);outline-offset:2px;}
+.lesson27-play-button:disabled {cursor:wait;border-color:#6aa8b9;background:#dff3f7;color:#285f70;opacity:1;}
 .lesson27-sound-compare {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px;padding:14px;border:2px solid #bfd7e0;border-radius:8px;background:#f5fbfd;}
 .lesson27-sound-compare span {display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;border:1px solid #c9d8df;border-radius:6px;background:#fff;font-size:1.15rem;}
 .lesson27-sound-compare i {color:#6e8595;font-style:normal;}
@@ -6714,37 +6730,30 @@ body {
 .lesson27-sound-compare em {grid-column:1 / -1;color:#23704d;text-align:center;font-size:1.1rem;font-style:normal;font-weight:1000;}
 .lesson27-family-summary {margin-top:12px;padding:14px 18px;border:2px dashed #69b58a;border-radius:8px;background:#f3fbf5;color:#266747;text-align:center;font-size:1.05rem;font-weight:900;}
 .lesson27-family-summary.is-complete {border-style:solid;background:#e2f7e9;color:#11683c;}
+.lesson27-family-summary strong,.lesson27-family-summary span {display:block;}
+.lesson27-family-summary span {margin-top:5px;color:#3a6b53;font-size:.95rem;}
 #learning-detail-next-btn:disabled {cursor:not-allowed;filter:grayscale(.45);opacity:.5;box-shadow:none;}
-@keyframes lesson27-hand-gentle {
-    0%,100% {transform:translateY(0) rotate(-4deg);}
-    50% {transform:translateY(-4px) rotate(5deg);}
-}
-@keyframes lesson27-hand-active {
-    0%,100% {transform:translateY(0) rotate(-9deg) scale(1);}
-    50% {transform:translateY(-9px) rotate(10deg) scale(1.08);}
-}
 @media (max-width:900px) {
     .lesson27-family-page {padding:14px;}
     .lesson27-family-header {align-items:flex-start;}
     .lesson27-family-header h2 {font-size:1.65rem;}
     .lesson27-family-step {align-items:flex-start;flex-direction:column;}
-    .lesson27-family-card {grid-template-columns:100px 86px minmax(120px,1fr);gap:12px;padding:18px 14px;}
+    .lesson27-family-card {grid-template-columns:100px 86px minmax(260px,1fr);gap:12px;padding:18px 14px;}
     .lesson27-family-letter {font-size:4rem;}
-    .lesson27-hand-scene {min-height:92px;font-size:2.7rem;}
-    .lesson27-card-copy {grid-column:1 / -1;display:flex;align-items:center;justify-content:center;gap:12px;}
+    .lesson27-hand-scene {min-width:260px;min-height:150px;}
+    .lesson27-card-copy {grid-column:1 / -1;grid-template-columns:auto auto minmax(170px,230px);align-items:center;justify-content:center;gap:14px;}
 }
 @media (max-width:520px) {
     .lesson27-family-header {display:grid;gap:9px;}
     .lesson27-family-card {grid-template-columns:88px minmax(78px,1fr);}
     .lesson27-family-letter {min-height:104px;border-right:0;font-size:3.5rem;}
-    .lesson27-hand-scene {grid-column:1 / -1;min-height:82px;}
+    .lesson27-hand-scene {grid-column:1 / -1;min-width:0;min-height:150px;}
+    .lesson27-card-copy {grid-template-columns:1fr;text-align:center;}
     .lesson27-name-stack {font-size:1.8rem;}
     .lesson27-name-stack > span {min-height:52px;}
     .lesson27-sound-compare {grid-template-columns:1fr;}
     .lesson27-sound-compare em {grid-column:1;}
 }
 @media (prefers-reduced-motion:reduce) {
-    .lesson27-hand,.lesson27-family-card.is-playing .lesson27-hand {animation:none;}
-    .lesson27-family-card,.lesson27-family-letter,.lesson27-ending-block,.lesson27-card-check {transition:none;}
-    .lesson27-family-card:hover {transform:none;}
+    .lesson27-hand-illustration,.lesson27-family-letter,.lesson27-name-stack > span,.lesson27-card-check {transition:none;}
 }

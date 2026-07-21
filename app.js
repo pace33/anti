@@ -12818,8 +12818,31 @@ window.closeLearningStartActivity = function closeLearningStartActivity() {
 const lesson27FamilyState = {
     heard: new Set(),
     playbackToken: 0,
-    stopTimer: null
+    movementTimer: null,
+    activeKey: null
 };
+
+function renderLesson27HandSvg() {
+    return `
+        <svg class="lesson27-hand-illustration" viewBox="0 0 150 150" role="img" aria-label="펼친 손 일러스트">
+            <g class="lesson27-hand-art">
+                <path class="lesson27-hand-cuff" d="M53 111h51v29H53z" />
+                <rect class="lesson27-hand-palm" x="48" y="55" width="62" height="70" rx="25" />
+                <rect class="lesson27-hand-finger" x="48" y="17" width="15" height="58" rx="8" transform="rotate(-5 55 46)" />
+                <rect class="lesson27-hand-finger" x="65" y="9" width="16" height="65" rx="8" />
+                <rect class="lesson27-hand-finger" x="83" y="14" width="16" height="61" rx="8" transform="rotate(3 91 44)" />
+                <rect class="lesson27-hand-finger" x="101" y="25" width="15" height="54" rx="8" transform="rotate(8 108 52)" />
+                <path class="lesson27-hand-thumb" d="M52 73c-10-13-21-21-28-14-7 8 2 18 13 30 8 9 12 20 17 27l18-20c-6-8-13-16-20-23z" />
+                <path class="lesson27-hand-detail" d="M59 91c12 6 27 7 41 2M63 106c11 5 23 5 34 1" />
+            </g>
+            <g class="lesson27-motion-lines">
+                <path d="M21 46c-8 6-11 14-9 23" />
+                <path d="M129 47c8 6 11 14 9 23" />
+                <path d="M23 91c-6 5-8 11-7 18" />
+            </g>
+        </svg>
+    `;
+}
 
 function renderLesson27BatchimFamilyIntro() {
     return `
@@ -12834,7 +12857,8 @@ function renderLesson27BatchimFamilyIntro() {
 
             <div class="lesson27-family-explanation">
                 <strong>쉽게 알아봐요</strong>
-                <p>비읍과 피읖은 이름은 달라요. 그런데 받침으로 쓰이면 두 글자 모두 끝소리가 <b>[ㅂ]</b>으로 나요. 그래서 받침에서는 둘 다 <b>‘읍’</b>으로 들려요.</p>
+                <p>ㅂ과 ㅍ은 이름은 다르지만, 받침에서는 모두 <b>[ㅂ]</b>으로 소리 나요.</p>
+                <p class="lesson27-family-helper">비읍, 피읖의 끝부분은 모두 ‘읍’처럼 들려요.</p>
             </div>
 
             <div class="lesson27-family-step">
@@ -12844,41 +12868,44 @@ function renderLesson27BatchimFamilyIntro() {
 
             <div class="lesson27-family-cards">
                 ${[
-                    { key: 'bieup', letter: 'ㅂ', first: '비', name: '비읍', feedback: 'ㅂ은 받침에서 ‘읍’으로 들려요.' },
-                    { key: 'pieup', letter: 'ㅍ', first: '피', name: '피읖', feedback: 'ㅍ은 받침에서 ‘읍’으로 들려요.' }
+                    { key: 'bieup', letter: 'ㅂ', first: '비', name: '비읍' },
+                    { key: 'pieup', letter: 'ㅍ', first: '피', name: '피읖' }
                 ].map((item) => `
-                    <button type="button" class="lesson27-family-card" data-family-card="${item.key}"
-                        aria-pressed="false" aria-label="${item.name}. 눌러서 받침 소리 듣기"
-                        onclick="playLesson27FamilyCard('${item.key}')">
+                    <article class="lesson27-family-card state-idle" data-family-card="${item.key}" data-animation-state="idle">
                         <span class="lesson27-card-check" aria-hidden="true">확인했어요</span>
                         <span class="lesson27-family-letter">${item.letter}</span>
                         <span class="lesson27-name-stack" aria-label="${item.name}">
-                            <span>${item.first}</span>
+                            <span class="lesson27-first-block">${item.first}</span>
                             <span class="lesson27-ending-block">읍</span>
                         </span>
                         <span class="lesson27-hand-scene" aria-hidden="true">
-                            <span class="lesson27-sound-wave wave-left"></span>
-                            <span class="lesson27-hand hand-left">👋</span>
-                            <span class="lesson27-hand hand-right">👋</span>
-                            <span class="lesson27-sound-wave wave-right"></span>
+                            <span class="lesson27-hand-route">
+                                <b>${item.first}</b><i>↓</i><b>읍</b>
+                            </span>
+                            <span class="lesson27-hand-track">${renderLesson27HandSvg()}</span>
+                            <span class="lesson27-stage-caption">멈춰 있어요</span>
                         </span>
                         <span class="lesson27-card-copy">
                             <strong>${item.name}</strong>
-                            <span>받침에서는 ‘읍’</span>
+                            <span>받침 소리 <b>[ㅂ]</b></span>
+                            <button type="button" class="lesson27-play-button" data-family-play="${item.key}"
+                                aria-label="${item.name} 손동작과 소리 보기"
+                                aria-pressed="false" onclick="playLesson27FamilyCard('${item.key}')">
+                                <span aria-hidden="true">▶</span> <span class="lesson27-play-label">손동작과 소리 보기</span>
+                            </button>
                         </span>
-                        <span class="lesson27-card-feedback">카드를 눌러 소리와 손동작을 확인해요.</span>
-                    </button>
+                    </article>
                 `).join('')}
             </div>
 
             <div class="lesson27-sound-compare" aria-label="받침 소리 비교">
                 <span><b>ㅂ 받침</b><i>→</i><strong>[ㅂ]</strong></span>
                 <span><b>ㅍ 받침</b><i>→</i><strong>[ㅂ]</strong></span>
-                <em>둘 다 ‘읍’으로 들려요.</em>
+                <em>모양과 이름은 다르지만,<br>받침 소리는 같아요.</em>
             </div>
 
             <div id="lesson27-family-summary" class="lesson27-family-summary" role="status" aria-live="polite">
-                ㅂ 카드와 ㅍ 카드를 차례로 눌러 보세요.
+                ㅂ과 ㅍ의 손동작과 소리를 차례로 확인해 보세요.
             </div>
         </section>
     `;
@@ -12890,17 +12917,24 @@ function syncLesson27FamilyPage() {
     page.querySelectorAll('[data-family-card]').forEach((card) => {
         const isHeard = lesson27FamilyState.heard.has(card.dataset.familyCard);
         card.classList.toggle('is-heard', isHeard);
-        card.setAttribute('aria-pressed', String(isHeard));
+        const playButton = card.querySelector('[data-family-play]');
+        if (playButton) {
+            playButton.setAttribute('aria-pressed', String(isHeard));
+            if (!card.classList.contains('is-playing')) {
+                playButton.disabled = false;
+                playButton.querySelector('.lesson27-play-label').textContent = isHeard ? '한 번 더 보기' : '손동작과 소리 보기';
+            }
+        }
     });
     const isComplete = lesson27FamilyState.heard.size === 2;
     const summary = document.getElementById('lesson27-family-summary');
     if (summary) {
         summary.classList.toggle('is-complete', isComplete);
-        summary.textContent = isComplete
-            ? '잘했어요! 비읍과 피읖은 이름은 다르지만, 받침에서는 둘 다 ‘읍’으로 들려요.'
+        summary.innerHTML = isComplete
+            ? '<strong>잘했어요!<br>ㅂ과 ㅍ은 받침에서 모두 [ㅂ] 소리가 나요.</strong><span>그래서 비읍과 피읖의 끝부분은 모두 ‘읍’처럼 들려요.</span>'
             : lesson27FamilyState.heard.size === 1
-                ? '좋아요! 이제 다른 카드도 눌러 같은 받침 소리를 확인해 보세요.'
-                : 'ㅂ 카드와 ㅍ 카드를 차례로 눌러 보세요.';
+                ? '좋아요! 이제 다른 글자의 손동작과 소리도 확인해 보세요.'
+                : 'ㅂ과 ㅍ의 손동작과 소리를 차례로 확인해 보세요.';
     }
     const nextBtn = document.getElementById('learning-detail-next-btn');
     if (nextBtn && Number(window.currentLearningActivityStep) === 27 && Number(window.currentLearningDetailSectionIndex) === 0) {
@@ -12910,42 +12944,105 @@ function syncLesson27FamilyPage() {
     }
 }
 
+function setLesson27CardAnimationState(card, state, config) {
+    const stateClasses = ['state-idle', 'state-first', 'state-moving', 'state-final', 'state-done'];
+    card.classList.remove(...stateClasses);
+    card.classList.add(`state-${state}`);
+    card.classList.toggle('is-playing', !['idle', 'done'].includes(state));
+    card.dataset.animationState = state;
+    const captions = {
+        idle: '멈춰 있어요',
+        first: `${config.first} 소리를 들어요`,
+        moving: '끝부분으로 내려가요',
+        final: '끝부분 소리를 들어요',
+        done: `${config.name} 확인 완료`
+    };
+    const caption = card.querySelector('.lesson27-stage-caption');
+    if (caption) caption.textContent = captions[state];
+    const playButton = card.querySelector('[data-family-play]');
+    if (playButton) {
+        playButton.disabled = !['idle', 'done'].includes(state);
+        playButton.querySelector('.lesson27-play-label').textContent = !['idle', 'done'].includes(state)
+            ? '보고 있어요'
+            : lesson27FamilyState.heard.has(config.key) ? '한 번 더 보기' : '손동작과 소리 보기';
+    }
+}
+
+function waitForLesson27HandMovement(card, playbackToken, onComplete) {
+    const hand = card.querySelector('.lesson27-hand-illustration');
+    if (!hand) {
+        onComplete();
+        return;
+    }
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let finished = false;
+    const finish = () => {
+        if (finished || playbackToken !== lesson27FamilyState.playbackToken) return;
+        finished = true;
+        window.clearTimeout(lesson27FamilyState.movementTimer);
+        onComplete();
+    };
+    if (!reducedMotion) hand.addEventListener('transitionend', finish, { once: true });
+    lesson27FamilyState.movementTimer = window.setTimeout(finish, reducedMotion ? 320 : 850);
+}
+
 window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
     const card = document.querySelector(`[data-family-card="${kind}"]`);
     if (!card) return;
     const config = kind === 'pieup'
-        ? { name: '피읖', letter: 'ㅍ', message: 'ㅍ은 받침에서 ‘읍’으로 들려요.' }
-        : { name: '비읍', letter: 'ㅂ', message: 'ㅂ은 받침에서 ‘읍’으로 들려요.' };
+        ? { key: 'pieup', name: '피읖', first: '피', ending: '읖의 끝소리는 읍처럼 들려요.', rule: '피읖의 받침 소리도 ㅂ이에요.' }
+        : { key: 'bieup', name: '비읍', first: '비', ending: '읍', rule: '비읍의 받침 소리는 ㅂ이에요.' };
     lesson27FamilyState.playbackToken += 1;
     const playbackToken = lesson27FamilyState.playbackToken;
-    window.clearTimeout(lesson27FamilyState.stopTimer);
-    document.querySelectorAll('[data-family-card]').forEach((item) => item.classList.remove('is-playing'));
-    card.classList.add('is-playing');
-    const feedback = card.querySelector('.lesson27-card-feedback');
-    if (feedback) feedback.textContent = config.message;
+    lesson27FamilyState.activeKey = kind;
+    window.clearTimeout(lesson27FamilyState.movementTimer);
+    document.querySelectorAll('[data-family-card]').forEach((item) => {
+        if (item === card) return;
+        const itemKey = item.dataset.familyCard;
+        const itemConfig = itemKey === 'pieup'
+            ? { key: 'pieup', name: '피읖', first: '피' }
+            : { key: 'bieup', name: '비읍', first: '비' };
+        setLesson27CardAnimationState(item, lesson27FamilyState.heard.has(itemKey) ? 'done' : 'idle', itemConfig);
+    });
     const firstListen = !lesson27FamilyState.heard.has(kind);
-    lesson27FamilyState.heard.add(kind);
-    syncLesson27FamilyPage();
-    speakTextKo(`${config.name}. 받침에서는 읍.`, () => {
-        if (playbackToken !== lesson27FamilyState.playbackToken) return;
-        card.classList.remove('is-playing');
-    }, { playbackRate: 0.82 });
-    lesson27FamilyState.stopTimer = window.setTimeout(() => {
-        if (playbackToken === lesson27FamilyState.playbackToken) card.classList.remove('is-playing');
-    }, 4200);
-    if (firstListen) {
-        recordKoreanAttempt({
-            lessonId: 27,
-            lessonTitle: '배움 27: ㅂ 받침가족',
-            unitId: 8,
-            activityType: 'batchimFamily',
-            word: config.name,
-            answer: '읍',
-            userAnswer: `${config.name} 받침 소리 듣기 완료`,
-            isCorrect: true,
-            errorType: null
-        }).catch(() => {});
-    }
+    const isCurrent = () => playbackToken === lesson27FamilyState.playbackToken;
+    const speakStep = (text, next) => speakTextKo(text, () => {
+        if (isCurrent()) next();
+    }, { playbackRate: 0.78 });
+
+    setLesson27CardAnimationState(card, 'first', config);
+    speakStep(config.first, () => {
+        setLesson27CardAnimationState(card, 'moving', config);
+        waitForLesson27HandMovement(card, playbackToken, () => {
+            setLesson27CardAnimationState(card, 'final', config);
+            speakStep(config.ending, () => {
+                speakStep(config.name, () => {
+                    speakStep(config.rule, () => {
+                        lesson27FamilyState.heard.add(kind);
+                        lesson27FamilyState.activeKey = null;
+                        setLesson27CardAnimationState(card, 'done', config);
+                        syncLesson27FamilyPage();
+                        if (firstListen) {
+                            recordKoreanAttempt({
+                                lessonId: 27,
+                                lessonTitle: '배움 27: ㅂ 받침가족',
+                                unitId: 8,
+                                activityType: 'batchimFamily',
+                                word: config.name,
+                                answer: '[ㅂ]',
+                                userAnswer: `${config.name} 손동작과 받침 소리 확인 완료`,
+                                isCorrect: true,
+                                errorType: null
+                            }).catch(() => {});
+                        }
+                        if (lesson27FamilyState.heard.size === 2) {
+                            speakTextKo('비읍과 피읖은 이름은 다르지만, 받침에서는 모두 ㅂ 소리가 나요.', null, { playbackRate: 0.8 });
+                        }
+                    });
+                });
+            });
+        });
+    });
 };
 
 function renderLearningDetail(step, sectionIndex = 0) {
@@ -13313,7 +13410,8 @@ window.openLearningDetailActivity = function openLearningDetailActivity(step) {
     if (Number(step) === 27) {
         lesson27FamilyState.heard.clear();
         lesson27FamilyState.playbackToken += 1;
-        window.clearTimeout(lesson27FamilyState.stopTimer);
+        lesson27FamilyState.activeKey = null;
+        window.clearTimeout(lesson27FamilyState.movementTimer);
     }
     window.currentLearningActivityStep = step;
     window.currentLearningDetailSectionIndex = 0;
