@@ -12815,6 +12815,139 @@ window.closeLearningStartActivity = function closeLearningStartActivity() {
     openMyKoreanSection();
 }
 
+const lesson27FamilyState = {
+    heard: new Set(),
+    playbackToken: 0,
+    stopTimer: null
+};
+
+function renderLesson27BatchimFamilyIntro() {
+    return `
+        <section class="lesson27-family-page" data-lesson27-family-page>
+            <header class="lesson27-family-header">
+                <span class="lesson27-family-number">배움 27</span>
+                <div>
+                    <h2>ㅂ 받침가족</h2>
+                    <p>이름은 달라도, 받침 소리는 같아요!</p>
+                </div>
+            </header>
+
+            <div class="lesson27-family-explanation">
+                <strong>쉽게 알아봐요</strong>
+                <p>비읍과 피읖은 이름은 달라요. 그런데 받침으로 쓰이면 두 글자 모두 끝소리가 <b>[ㅂ]</b>으로 나요. 그래서 받침에서는 둘 다 <b>‘읍’</b>으로 들려요.</p>
+            </div>
+
+            <div class="lesson27-family-step">
+                <span>이해하기</span>
+                <strong>비읍과 피읖은 받침에서 모두 [ㅂ] 소리가 나요.</strong>
+            </div>
+
+            <div class="lesson27-family-cards">
+                ${[
+                    { key: 'bieup', letter: 'ㅂ', first: '비', name: '비읍', feedback: 'ㅂ은 받침에서 ‘읍’으로 들려요.' },
+                    { key: 'pieup', letter: 'ㅍ', first: '피', name: '피읖', feedback: 'ㅍ은 받침에서 ‘읍’으로 들려요.' }
+                ].map((item) => `
+                    <button type="button" class="lesson27-family-card" data-family-card="${item.key}"
+                        aria-pressed="false" aria-label="${item.name}. 눌러서 받침 소리 듣기"
+                        onclick="playLesson27FamilyCard('${item.key}')">
+                        <span class="lesson27-card-check" aria-hidden="true">확인했어요</span>
+                        <span class="lesson27-family-letter">${item.letter}</span>
+                        <span class="lesson27-name-stack" aria-label="${item.name}">
+                            <span>${item.first}</span>
+                            <span class="lesson27-ending-block">읍</span>
+                        </span>
+                        <span class="lesson27-hand-scene" aria-hidden="true">
+                            <span class="lesson27-sound-wave wave-left"></span>
+                            <span class="lesson27-hand hand-left">👋</span>
+                            <span class="lesson27-hand hand-right">👋</span>
+                            <span class="lesson27-sound-wave wave-right"></span>
+                        </span>
+                        <span class="lesson27-card-copy">
+                            <strong>${item.name}</strong>
+                            <span>받침에서는 ‘읍’</span>
+                        </span>
+                        <span class="lesson27-card-feedback">카드를 눌러 소리와 손동작을 확인해요.</span>
+                    </button>
+                `).join('')}
+            </div>
+
+            <div class="lesson27-sound-compare" aria-label="받침 소리 비교">
+                <span><b>ㅂ 받침</b><i>→</i><strong>[ㅂ]</strong></span>
+                <span><b>ㅍ 받침</b><i>→</i><strong>[ㅂ]</strong></span>
+                <em>둘 다 ‘읍’으로 들려요.</em>
+            </div>
+
+            <div id="lesson27-family-summary" class="lesson27-family-summary" role="status" aria-live="polite">
+                ㅂ 카드와 ㅍ 카드를 차례로 눌러 보세요.
+            </div>
+        </section>
+    `;
+}
+
+function syncLesson27FamilyPage() {
+    const page = document.querySelector('[data-lesson27-family-page]');
+    if (!page) return;
+    page.querySelectorAll('[data-family-card]').forEach((card) => {
+        const isHeard = lesson27FamilyState.heard.has(card.dataset.familyCard);
+        card.classList.toggle('is-heard', isHeard);
+        card.setAttribute('aria-pressed', String(isHeard));
+    });
+    const isComplete = lesson27FamilyState.heard.size === 2;
+    const summary = document.getElementById('lesson27-family-summary');
+    if (summary) {
+        summary.classList.toggle('is-complete', isComplete);
+        summary.textContent = isComplete
+            ? '잘했어요! 비읍과 피읖은 이름은 다르지만, 받침에서는 둘 다 ‘읍’으로 들려요.'
+            : lesson27FamilyState.heard.size === 1
+                ? '좋아요! 이제 다른 카드도 눌러 같은 받침 소리를 확인해 보세요.'
+                : 'ㅂ 카드와 ㅍ 카드를 차례로 눌러 보세요.';
+    }
+    const nextBtn = document.getElementById('learning-detail-next-btn');
+    if (nextBtn && Number(window.currentLearningActivityStep) === 27 && Number(window.currentLearningDetailSectionIndex) === 0) {
+        nextBtn.disabled = !isComplete;
+        nextBtn.setAttribute('aria-disabled', String(!isComplete));
+        nextBtn.title = isComplete ? '다음 활동으로 이동' : 'ㅂ과 ㅍ 카드를 모두 들어 보세요.';
+    }
+}
+
+window.playLesson27FamilyCard = function playLesson27FamilyCard(kind) {
+    const card = document.querySelector(`[data-family-card="${kind}"]`);
+    if (!card) return;
+    const config = kind === 'pieup'
+        ? { name: '피읖', letter: 'ㅍ', message: 'ㅍ은 받침에서 ‘읍’으로 들려요.' }
+        : { name: '비읍', letter: 'ㅂ', message: 'ㅂ은 받침에서 ‘읍’으로 들려요.' };
+    lesson27FamilyState.playbackToken += 1;
+    const playbackToken = lesson27FamilyState.playbackToken;
+    window.clearTimeout(lesson27FamilyState.stopTimer);
+    document.querySelectorAll('[data-family-card]').forEach((item) => item.classList.remove('is-playing'));
+    card.classList.add('is-playing');
+    const feedback = card.querySelector('.lesson27-card-feedback');
+    if (feedback) feedback.textContent = config.message;
+    const firstListen = !lesson27FamilyState.heard.has(kind);
+    lesson27FamilyState.heard.add(kind);
+    syncLesson27FamilyPage();
+    speakTextKo(`${config.name}. 받침에서는 읍.`, () => {
+        if (playbackToken !== lesson27FamilyState.playbackToken) return;
+        card.classList.remove('is-playing');
+    }, { playbackRate: 0.82 });
+    lesson27FamilyState.stopTimer = window.setTimeout(() => {
+        if (playbackToken === lesson27FamilyState.playbackToken) card.classList.remove('is-playing');
+    }, 4200);
+    if (firstListen) {
+        recordKoreanAttempt({
+            lessonId: 27,
+            lessonTitle: '배움 27: ㅂ 받침가족',
+            unitId: 8,
+            activityType: 'batchimFamily',
+            word: config.name,
+            answer: '읍',
+            userAnswer: `${config.name} 받침 소리 듣기 완료`,
+            isCorrect: true,
+            errorType: null
+        }).catch(() => {});
+    }
+};
+
 function renderLearningDetail(step, sectionIndex = 0) {
     window.stopVowelOriginSequence?.();
     const detail = learningDetailData[step];
@@ -12826,6 +12959,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isCustomLesson20 = numericStep === 20;
     const isCustomLesson25 = numericStep === 25;
     const isCustomLesson26 = numericStep === 26;
+    const isCustomLesson27 = numericStep === 27;
     const batchimPageSequence = LESSON_BATCHIM_PAGE_SEQUENCES[numericStep] || [];
     const isCustomBatchimLesson = batchimPageSequence.length > 0;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
@@ -12902,6 +13036,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
                 '완성해 보기 2',
                 '단어 놀이 해보기'
             ][safeIndex];
+        } else if (isCustomLesson27 && safeIndex === 0) {
+            sectionTitle = '';
         } else if (isComplexLineLesson && safeIndex === 3) {
             sectionTitle = '선긋기 · 그림과 단어 연결';
         } else if (isPictureWordLesson) {
@@ -12966,6 +13102,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson26WritingPage(safeIndex - 6);
         } else if (isCustomLesson26 && safeIndex === 8) {
             contentHtml = renderLesson13WordGame(26);
+        } else if (isCustomLesson27 && safeIndex === 0) {
+            contentHtml = renderLesson27BatchimFamilyIntro();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
@@ -13103,7 +13241,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         }
 
         const chanchanLesson = getChanchanLesson(step);
-        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && !isCustomLesson25 && !isCustomLesson26 && !isCustomBatchimLesson && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
+        const chanchanActivityHtml = safeIndex === 0 && !isPictureWordLesson && !isCustomLesson20 && !isCustomLesson25 && !isCustomLesson26 && !isCustomLesson27 && !isCustomBatchimLesson && chanchanLesson && (chanchanLesson.activities || []).some((activity) =>
             ['readThreeTimes', 'fillOneJamo', 'wordPictureMatch', 'nonsenseWordRead', 'batchimFamily', 'finalAssessment'].includes(activity)
         ) ? `<div class="mt-4">${renderLessonDetail(step)}</div>` : '';
 
@@ -13137,6 +13275,9 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isLast = safeIndex === totalSections - 1;
     nextBtn.classList.toggle('hidden', isLast);
     completeBtn.classList.toggle('hidden', !isLast);
+    nextBtn.disabled = false;
+    nextBtn.removeAttribute('aria-disabled');
+    nextBtn.removeAttribute('title');
     requestAnimationFrame(() => {
         initializeLesson21MBatchimIntroCanvases();
         initializeLesson21MPracticePage();
@@ -13145,6 +13286,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeLesson26BatchimGlyphs();
         initializeLesson13BoardGames();
         redrawLessonLineMatchLines();
+        if (isCustomLesson27 && safeIndex === 0) syncLesson27FamilyPage();
         document.querySelectorAll('.combine-card').forEach((card, cardIndex) => {
             if (!card.dataset.combineAutoplayed) {
                 card.dataset.combineAutoplayed = 'true';
@@ -13168,6 +13310,11 @@ window.openLearningDetailActivity = function openLearningDetailActivity(step) {
     // 모든 한글 배움 단계는 바로 진입 가능하게 둔다.
     currentLearningActivityStep = step;
     currentLearningDetailSectionIndex = 0;
+    if (Number(step) === 27) {
+        lesson27FamilyState.heard.clear();
+        lesson27FamilyState.playbackToken += 1;
+        window.clearTimeout(lesson27FamilyState.stopTimer);
+    }
     window.currentLearningActivityStep = step;
     window.currentLearningDetailSectionIndex = 0;
     showTopLevelSection('learning-detail-section');
@@ -13188,6 +13335,10 @@ window.goToNextLearningDetailSection = function goToNextLearningDetailSection() 
             ? windowIndex
             : currentLearningDetailSectionIndex;
     if (!activeStep || !learningDetailData[activeStep]) return;
+    if (activeStep === 27 && activeIndex === 0 && lesson27FamilyState.heard.size < 2) {
+        syncLesson27FamilyPage();
+        return;
+    }
     renderLearningDetail(activeStep, activeIndex + 1);
 }
 
