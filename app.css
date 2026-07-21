@@ -6723,7 +6723,7 @@ body {
     0%,100% {transform:translateY(0) rotate(-9deg) scale(1);}
     50% {transform:translateY(-9px) rotate(10deg) scale(1.08);}
 }
-@media (max-width:760px) {
+@media (max-width:900px) {
     .lesson27-family-page {padding:14px;}
     .lesson27-family-header {align-items:flex-start;}
     .lesson27-family-header h2 {font-size:1.65rem;}
