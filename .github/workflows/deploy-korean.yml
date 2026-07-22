@@ -24,10 +24,6 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
-          node --check korean-data-adapter.js
-
-      - name: Test Korean data adapter
-        run: node tools/test-korean-data-adapter.mjs
 
       - name: Validate static site structure
         run: node tools/validate-site.mjs
@@ -36,7 +32,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in index.html app.js korean-data-adapter.js app.css style.css firebase-config.js; do
+          for file in index.html app.js app.css style.css firebase-config.js; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
           done
           grep -q 'src="app.js' index.html
@@ -140,10 +136,11 @@ jobs:
           if ($html -notmatch 'sync-warning-tokens') { throw 'Public page did not include warning-token sync markers.' }
 
           $app = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          $adapter = (Invoke-WebRequest -UseBasicParsing -Uri "$base/korean-data-adapter.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
           if ($app -notmatch 'aiedueKoreanDrawingsV2') { throw 'Public app.js did not include protected drawing persistence.' }
           if ($app -notmatch 'adjustStudentKoreanWallet') { throw 'Public app.js did not include teacher warning-token wallet controls.' }
           if ($app -notmatch 'warningTokens') { throw 'Public app.js did not include warning-token persistence.' }
           if ($app -match 'korean-db/db-api') { throw 'Public app.js still references the retired Korean DB mirror.' }
-          if ($adapter -notmatch '/db-api/korean/v2') { throw 'Public Korean data adapter did not include the self-hosted endpoint.' }
-          Write-Host 'Smoke test passed: modular page, warning tokens, and self-hosted drawing persistence are reachable.'
+          if ($app -notmatch 'firebase-firestore\.js') { throw 'Public app.js did not use Firebase Firestore directly.' }
+          if ($app -notmatch 'firebase-storage\.js') { throw 'Public app.js did not use Firebase Storage directly.' }
+          if ($app -match 'from ["'']\.\/korean-data-adapter\.js') { throw 'Public app.js still routes data through the self-hosted adapter.' }
+          Write-Host 'Smoke test passed: modular page, warning tokens, and direct Firebase persistence are reachable.'

@@ -14,7 +14,6 @@ const assert = (condition, message) => {
 const requiredFiles = [
     'index.html',
     'app.js',
-    'korean-data-adapter.js',
     'app.css',
     'style.css',
     'firebase-config.js',
@@ -35,19 +34,15 @@ requiredFiles.forEach((path) => assert(existsSync(resolve(root, path)), `필수 
 
 const index = read('index.html');
 const app = read('app.js');
-const dataAdapter = read('korean-data-adapter.js');
 const appCss = read('app.css');
 const styleCss = read('style.css');
 
 assert(/<script\s+type=["']module["']\s+src=["']app\.js(?:\?[^"']*)?["']\s*>/i.test(index), 'index.html이 app.js 모듈을 불러오지 않습니다.');
 assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.test(index), 'index.html이 app.css를 불러오지 않습니다.');
 assert(!/<script\s+type=["']module["']\s*>/i.test(index), 'index.html에 인라인 모듈 스크립트가 다시 들어왔습니다.');
-const adapterImportSpecifiers = [...app.matchAll(/from ["'](\.\/korean-data-adapter\.js(?:\?[^"']*)?)["']/g)].map((match) => match[1]);
-assert(adapterImportSpecifiers.length === 2, 'app.js의 Firestore/Storage import가 로컬 데이터 어댑터를 사용하지 않습니다.');
-assert(new Set(adapterImportSpecifiers).size === 1, 'app.js의 Firestore/Storage import가 서로 다른 데이터 어댑터 버전을 사용합니다.');
-assert(dataAdapter.includes("const DEFAULT_ENDPOINT = '/db-api/korean/v2';"), '국어 데이터 어댑터의 자체 서버 endpoint가 올바르지 않습니다.');
-assert(dataAdapter.includes('firebaseBridge: config.firebaseBridge === true'), 'Firebase 데이터 bridge가 명시적 opt-in 방식이 아닙니다.');
-assert(!dataAdapter.includes('config.firebaseBridge !== false'), 'Firebase 데이터 bridge가 기본 활성화되어 있습니다.');
+assert(app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";'), 'app.js must use Firebase Firestore directly.');
+assert(app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";'), 'app.js must use Firebase Storage directly.');
+assert(!app.includes('from "./korean-data-adapter.js'), 'app.js must not route data through the self-hosted adapter.');
 
 [
     'aiedueKoreanDrawingsV2',
