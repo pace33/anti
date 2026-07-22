@@ -2587,6 +2587,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'deleteAiedueKoreanShopItem',
     'distributeAllAiedueKoreanShopItems',
     'editAiedueKoreanShopItem',
+    'enterAiedueCraftAsTeacher',
     'handleModalConfirm',
     'openAiedueKoreanDistributeShopItem',
     'openAiedueKoreanShopItemEditor',

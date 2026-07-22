@@ -71,6 +71,9 @@ const section = (source, startMarker, endMarker) => {
     assert(start >= 0 && end > start, `검증 구간을 찾지 못했습니다: ${startMarker}`);
     return source.slice(start, end);
 };
+const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
+const modalSafetyApi = new Function(`${modalSafety}\nreturn { isSafeModalAction };`)();
+assert(modalSafetyApi.isSafeModalAction('enterAiedueCraftAsTeacher()'), '교사 상점의 크래프트 접속 동작이 팝업 안전 처리 과정에서 제거됩니다.');
 const teacherLiteracyProgress = section(app, 'function buildTeacherLiteracyProgressBody', 'window.openStudentProgressDetail');
 ['easy', 'normal', 'hard', 'expert', 'multipleChoice', 'shortAnswer', 'essay', '현재 문해력 단'].forEach((marker) => {
     assert(teacherLiteracyProgress.includes(marker), `교사용 문해력 진도 표에 필수 항목이 없습니다: ${marker}`);
