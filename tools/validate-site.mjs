@@ -95,11 +95,13 @@ assert(occurrenceCount(teacherLiteracyProgressHtml, 'text-xl font-black text-blu
 const drawingHelpers = section(app, 'function normalizeDrawingPortfolioForPersistence', 'function applyCommittedDrawingState');
 const drawingSharedRecord = section(app, 'function buildSharedDrawingGalleryRecord', 'async function persistDrawingRecord');
 const drawingPersist = section(app, 'async function persistDrawingRecord', 'function normalizeFirebaseDrawingDoc');
+const drawingGalleryLoad = section(app, 'async function loadFriendsDrawingsFromFirebase', 'window.saveCurrentDrawing');
 const drawingSave = section(app, 'window.saveCurrentDrawing', 'function showAiedueAutoToast');
 const drawingComplete = section(app, 'window.completeTodayDrawingMission', 'window.openFriendsDrawingGallery');
 const literacyId = section(app, 'const SHARED_LITERACY_COLLECTION', 'function writeWrongToSharedBankTransaction');
 const sharedBankWrites = section(app, 'function writeWrongToSharedBankTransaction', 'async function getSharedBankProblems');
 const sharedBankLoad = section(app, 'async function getSharedBankProblems', 'window.openLiteracyLimitBreak');
+const limitBreakFlow = section(app, 'window.openLiteracyLimitBreak', 'window.openTodayLiteracyMission');
 const literacyPrompt = section(app, 'function generateLiteracyPrompt', 'function parseAiQuestionResponse');
 const literacyAttemptMerge = section(app, 'function createLiteracyAttemptPayload', 'async function persistLiteracyAttemptAtomic');
 const literacyScoreHelper = section(app, 'function normalizeLiteracyScore', 'function createLiteracyAttemptPayload');
@@ -118,6 +120,8 @@ assert(drawingPersist.includes('const shouldGrantExperience = isNewRecord && (!m
 assert(drawingPersist.includes('mergeDrawingShapeStats(serverPortfolio.shapeStats'), '서버 최신 도형 통계 병합이 없습니다.');
 assert(drawingPersist.includes('compressDrawingImage(record.image, 120)') && drawingPersist.includes('fitDrawingPortfolioToFirestore({'), '사용자 그림 문서에 소형 썸네일/용량 예산이 적용되지 않습니다.');
 assert(drawingPersist.includes('buildSharedDrawingGalleryRecord('), '친구들 그림이 공개 필드 전용 payload를 사용하지 않습니다.');
+assert(drawingGalleryLoad.includes('query(collectionRef, queryLimit(80))'), '친구들 그림이 로그인 사용자의 공유 작품 전체를 조회하지 않습니다.');
+assert(drawingGalleryLoad.indexOf('query(collectionRef, queryLimit(80))') < drawingGalleryLoad.indexOf("where('userId', '==', currentUserId)"), '친구들 그림 전체 조회보다 본인 fallback이 먼저 실행됩니다.');
 assert(drawingPersist.includes('const serverClassId = String(userData.teacherId') && /buildSharedDrawingGalleryRecord\([\s\S]*?serverClassId\s*\)/.test(drawingPersist), '친구들 그림 학급 키가 트랜잭션에서 읽은 최신 사용자 문서를 사용하지 않습니다.');
 ['email', 'shapeAccuracy', 'coins', 'balance', 'aeduTokens', 'warningTokens', 'userCode', 'role', 'teacherId', 'classCode', 'className'].forEach((field) => {
     assert(!drawingSharedRecord.includes(`${field}:`), `친구들 그림 공유 payload에 개인/불필요 필드가 포함됐습니다: ${field}`);
@@ -143,6 +147,8 @@ assert(sharedBankWrites.includes('...buildSharedLiteracyPublicQuestion(questionD
 assert(sharedBankWrites.includes('transaction.update(docRef') && sharedBankWrites.includes('transaction.delete(docRef)'), '공용 카운터 갱신/졸업 처리가 트랜잭션 쓰기가 아닙니다.');
 assert(sharedBankWrites.includes('return false;'), '독립 공용 은행 저장 함수가 실패 여부를 호출자에게 반환하지 않습니다.');
 assert(sharedBankLoad.includes('queryLimit(200)'), '한계돌파 공용 오답 조회 개수 제한이 없습니다.');
+assert(!sharedBankLoad.includes('currentUserId') && !sharedBankLoad.includes("where('userId'"), '한계돌파 조회가 현재 학생이 아닌 다른 학생의 오답을 제외합니다.');
+assert(limitBreakFlow.includes('setupLiteracyWorkspace(randomQuestion, true)'), '다른 학생의 공용 오답이 한계돌파 풀이 화면으로 전달되지 않습니다.');
 const essaySubmit = section(app, 'window.submitLiteracyEssayAnswer', 'function cloneLiteracyValue');
 assert(essaySubmit.indexOf('userLiteracyAnswerChecked = true;') < essaySubmit.indexOf('callKoreanAiGenerate'), '서술형 AI 채점 요청 전에 중복 제출 잠금이 설정되지 않습니다.');
 assert(essaySubmit.includes('await showLiteracyResult') && essaySubmit.includes('userLiteracyAnswerChecked = false;'), '서술형 결과 저장 대기 또는 채점 실패 시 제출 잠금 해제가 없습니다.');

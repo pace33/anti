@@ -5390,11 +5390,12 @@ async function loadFriendsDrawingsFromUserPortfolios() {
 async function loadFriendsDrawingsFromFirebase() {
     if (!currentUserId) return [];
     const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
-    const profile = buildAiedueSchoolProfileSnapshot(currentUserProfileSnapshot);
-    const queryPlans = [];
-    const classId = String(profile.teacherId || profile.classId || '').trim();
-    if (classId) queryPlans.push(query(collectionRef, where('classId', '==', classId), queryLimit(80)));
-    queryPlans.push(query(collectionRef, where('userId', '==', currentUserId), queryLimit(80)));
+    // 친구들 그림은 공개용 필드만 담은 별도 컬렉션이므로 로그인 사용자의 작품을 모두 조회한다.
+    // 규칙 배포가 아직 반영되지 않은 동안에도 본인 작품은 보이도록 소유자 쿼리를 fallback으로 둔다.
+    const queryPlans = [
+        query(collectionRef, queryLimit(80)),
+        query(collectionRef, where('userId', '==', currentUserId), queryLimit(80))
+    ];
     const merged = new Map();
     for (const q of queryPlans) {
         try {
