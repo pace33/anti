@@ -15745,6 +15745,36 @@ window.addStudentByTeacher = async function(sid) {
     }
 }
 
+function buildTeacherLiteracyProgressBody(student) {
+    const portfolio = student?.literacyPortfolio || {};
+    const stats = portfolio.stats || {};
+    const dan = Math.max(1, Math.floor(asNumber(portfolio.dan ?? student?.literacyDan, 1)));
+    const difficulties = [
+        { key: 'easy', label: 'EASY' },
+        { key: 'normal', label: 'NORMAL' },
+        { key: 'hard', label: 'HARD' },
+        { key: 'expert', label: 'EXPERT' }
+    ];
+    const types = [
+        { key: 'multipleChoice', label: '객관식' },
+        { key: 'shortAnswer', label: '단답형' },
+        { key: 'essay', label: '서술형' }
+    ];
+    const rows = difficulties.map((difficulty) => {
+        const cells = types.map((type) => {
+            const stat = stats[`${difficulty.key}-${type.key}`] || {};
+            const attempts = Math.max(0, Math.floor(asNumber(stat.attempts, 0)));
+            const corrects = Math.max(0, Math.floor(asNumber(stat.corrects, 0)));
+            const accuracy = attempts ? Math.max(0, Math.min(100, Math.round((corrects / attempts) * 100))) : 0;
+            return `<td class="p-3 text-center"><div class="text-xl font-black text-blue-700">${accuracy}%</div><div class="text-[11px] font-bold text-gray-500 mt-1">${attempts ? `정답 ${corrects} / ${attempts}회` : '기록 없음'}</div></td>`;
+        }).join('');
+        return `<tr class="border-t border-gray-100"><th scope="row" class="p-3 text-left font-black text-[#2c3e50] bg-gray-50">${difficulty.label}</th>${cells}</tr>`;
+    }).join('');
+    const history = Array.isArray(portfolio.history) ? portfolio.history.slice(0, 12) : [];
+    const historyHtml = history.length ? history.map((record) => `<div class="p-3 rounded-2xl bg-amber-50"><div class="font-black">${escapeHtml(record.question || '문해력 활동')}</div><div class="text-sm text-gray-600 mt-1">${record.isCorrect === true ? '정답' : (record.isCorrect === false ? '오답' : '완료')}${record.score != null ? ` · ${escapeHtml(record.score)}점` : ''}${record.difficulty ? ` · ${escapeHtml(String(record.difficulty).toUpperCase())}` : ''}</div></div>`).join('') : '<p class="text-gray-400 font-bold">아직 문해력 기록이 없습니다.</p>';
+    return `<div class="p-4 rounded-3xl bg-blue-50 text-center mb-4"><div class="text-sm font-black text-blue-600">현재 문해력 단</div><div class="text-4xl font-black text-[#2c3e50] mt-1">${dan}단</div></div><div class="overflow-x-auto rounded-2xl border border-blue-100 mb-4"><table class="w-full min-w-[620px] bg-white text-sm"><thead class="bg-blue-50 text-blue-800"><tr><th class="p-3 text-left">난이도</th>${types.map((type) => `<th class="p-3 text-center">${type.label}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div><div><h4 class="font-black text-gray-700 mb-2">최근 문해력 기록</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${historyHtml}</div></div>`;
+}
+
 window.openStudentProgressDetail = function openStudentProgressDetail(sid, type) {
     const student = teacherClassStudents.get(sid);
     if (!student) return showModal('학생 정보를 찾지 못했습니다.');
@@ -15769,11 +15799,11 @@ window.openStudentProgressDetail = function openStudentProgressDetail(sid, type)
         const records = Object.entries(student.dictationPortfolio?.missions || {}).sort((a, b) => Number(b[0]) - Number(a[0])).slice(0, 30);
         body = records.length ? records.map(([step, record]) => `<div class="p-3 rounded-2xl bg-blue-50"><div class="font-black">${escapeHtml(record?.title || `${step}단계`)}</div><div class="text-sm text-gray-600 mt-1">${record?.score != null ? `점수 ${escapeHtml(record.score)}` : (record?.correct ? '정답' : '완료')} ${record?.answer ? `· 답 ${escapeHtml(record.answer)}` : ''}</div></div>`).join('') : '<p class="text-gray-400 font-bold">아직 받아쓰기 기록이 없습니다.</p>';
     } else {
-        title = '문해력 · 나의 기록';
-        const history = Array.isArray(student.literacyPortfolio?.history) ? student.literacyPortfolio.history.slice(0, 30) : [];
-        body = history.length ? history.map((record) => `<div class="p-3 rounded-2xl bg-amber-50"><div class="font-black">${escapeHtml(record.title || record.question || '문해력 활동')}</div><div class="text-sm text-gray-600 mt-1">${record.correct === true ? '정답' : (record.correct === false ? '오답' : '완료')}${record.score != null ? ` · ${escapeHtml(record.score)}점` : ''}${record.difficulty ? ` · ${escapeHtml(record.difficulty)}` : ''}</div></div>`).join('') : '<p class="text-gray-400 font-bold">아직 문해력 기록이 없습니다.</p>';
+        title = '문해력 · 난이도/유형별 진도';
+        body = buildTeacherLiteracyProgressBody(student);
     }
-    showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-1">${escapeHtml(student.name || '학생')}</h3><p class="font-black text-teal-600 mb-4">${escapeHtml(title)}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[65vh] overflow-y-auto custom-scrollbar pr-1">${body}</div></div>`);
+    const bodyClass = type === 'literacy' ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-3';
+    showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-1">${escapeHtml(student.name || '학생')}</h3><p class="font-black text-teal-600 mb-4">${escapeHtml(title)}</p><div class="${bodyClass} max-h-[65vh] overflow-y-auto custom-scrollbar pr-1">${body}</div></div>`);
 }
 
 window.toggleLevelLock = async function(sid, level, currentActive) {

@@ -40,10 +40,10 @@ const styleCss = read('style.css');
 assert(/<script\s+type=["']module["']\s+src=["']app\.js(?:\?[^"']*)?["']\s*>/i.test(index), 'index.html이 app.js 모듈을 불러오지 않습니다.');
 assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.test(index), 'index.html이 app.css를 불러오지 않습니다.');
 assert(!/<script\s+type=["']module["']\s*>/i.test(index), 'index.html에 인라인 모듈 스크립트가 다시 들어왔습니다.');
+assert(/id=["']result-modal["'][^>]*z-\[1300\]/i.test(index), '상세 결과 모달이 학급 관리 모달보다 위에 표시되지 않습니다.');
 assert(app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";'), 'app.js must use Firebase Firestore directly.');
 assert(app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";'), 'app.js must use Firebase Storage directly.');
 assert(!app.includes('from "./korean-data-adapter.js'), 'app.js must not route data through the self-hosted adapter.');
-
 [
     'aiedueKoreanDrawingsV2',
     'persistDrawingRecord',
@@ -69,7 +69,29 @@ const section = (source, startMarker, endMarker) => {
     assert(start >= 0 && end > start, `검증 구간을 찾지 못했습니다: ${startMarker}`);
     return source.slice(start, end);
 };
+const teacherLiteracyProgress = section(app, 'function buildTeacherLiteracyProgressBody', 'window.openStudentProgressDetail');
+['easy', 'normal', 'hard', 'expert', 'multipleChoice', 'shortAnswer', 'essay', '현재 문해력 단'].forEach((marker) => {
+    assert(teacherLiteracyProgress.includes(marker), `교사용 문해력 진도 표에 필수 항목이 없습니다: ${marker}`);
+});
 const occurrenceCount = (source, marker) => source.split(marker).length - 1;
+const teacherLiteracyProgressApi = new Function('asNumber', 'escapeHtml', `${teacherLiteracyProgress}\nreturn buildTeacherLiteracyProgressBody;`)(
+    (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback,
+    (value) => String(value)
+);
+const teacherLiteracyProgressHtml = teacherLiteracyProgressApi({
+    literacyDan: 2,
+    literacyPortfolio: {
+        dan: 5,
+        stats: {
+            'easy-multipleChoice': { attempts: 4, corrects: 3, wrongs: 1 },
+            'expert-essay': { attempts: 2, corrects: 1, wrongs: 1 }
+        },
+        history: []
+    }
+});
+assert(teacherLiteracyProgressHtml.includes('5단'), '교사용 문해력 진도 표에 현재 단이 표시되지 않습니다.');
+assert(teacherLiteracyProgressHtml.includes('75%') && teacherLiteracyProgressHtml.includes('50%'), '교사용 문해력 진도 표의 정답률 계산이 올바르지 않습니다.');
+assert(occurrenceCount(teacherLiteracyProgressHtml, 'text-xl font-black text-blue-700') === 12, '교사용 문해력 진도 표가 4개 난이도 × 3개 유형을 모두 표시하지 않습니다.');
 const drawingHelpers = section(app, 'function normalizeDrawingPortfolioForPersistence', 'function applyCommittedDrawingState');
 const drawingSharedRecord = section(app, 'function buildSharedDrawingGalleryRecord', 'async function persistDrawingRecord');
 const drawingPersist = section(app, 'async function persistDrawingRecord', 'function normalizeFirebaseDrawingDoc');
