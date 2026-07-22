@@ -2845,7 +2845,7 @@ window.openAiedueKoreanShop = async function() {
 // --- AIEDUE CRAFT ACCOUNT LINK + NATIVE SHOP (ported from y5496694/aiedue) ---
 // =========================================================================
 const AIEDUE_CRAFT_ACCESS_PRICE = 1000;
-const AIEDUE_CRAFT_URL = 'https://aiedue.netlify.app/Aiedue_Craft.html';
+const AIEDUE_CRAFT_URL = 'https://aiedue.ddns.net/Aiedue_Craft.html';
 const AIEDUE_CRAFT_API_BASE = 'https://aiedue.ddns.net/craft-api';
 const AIEDUE_CRAFT_FIXED_KEYS = new Set(['coal', 'iron_ingot', 'gold_ingot', 'diamond']);
 
