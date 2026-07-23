@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eaf7ff">
+  <title>에이두 수학</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#app">본문 바로가기</a>
+  <main id="app" class="app-shell">
+    <header class="topbar">
+      <button class="brand" type="button" data-action="home" aria-label="에이두 수학 홈">
+        <span class="brand-mark">∑</span>
+        <span><strong>에이두 수학</strong><small>나선형 배움 지도</small></span>
+      </button>
+      <div class="student-summary" aria-label="학습 현황">
+        <div><b id="studentName">김토도</b><span>⭐ <b id="stars">0</b></span></div>
+        <div class="progress-track"><span id="totalProgress"></span></div>
+        <small>전체 성장 <b id="totalProgressText">0%</b></small>
+      </div>
+    </header>
+
+    <section id="dashboard" class="screen active" aria-labelledby="dashboardTitle">
+      <div class="hero-card">
+        <div>
+          <p class="eyebrow">2022 개정 초등 수학과 교육과정</p>
+          <h1 id="dashboardTitle">배운 개념을 다시 만나며<br>조금씩 더 깊게 자라요</h1>
+          <p>학년보다 현재 이해 수준을 기준으로, 필요한 개념부터 연결해서 배웁니다.</p>
+        </div>
+        <div class="spiral-visual" aria-hidden="true"><span>경험</span><span>조작</span><span>시각화</span><span>기호화</span><span>설명</span><span>적용</span></div>
+      </div>
+
+      <section class="today-card" aria-labelledby="todayTitle">
+        <div>
+          <p class="eyebrow">오늘의 추천 배움</p>
+          <h2 id="todayTitle">10 만들기</h2>
+          <p>두 수를 합해서 10이 되는 짝을 찾아봐요.</p>
+        </div>
+        <button class="primary" type="button" data-node="make-10">바로 시작</button>
+      </section>
+
+      <section aria-labelledby="mapTitle">
+        <div class="section-title"><div><p class="eyebrow">4개 영역 · 3개 학년군</p><h2 id="mapTitle">나선형 배움 지도</h2></div><button class="ghost" id="resetBtn" type="button">진행도 초기화</button></div>
+        <div id="domainGrid" class="domain-grid"></div>
+      </section>
+    </section>
+
+    <section id="domainScreen" class="screen" aria-labelledby="domainTitle">
+      <button class="back" type="button" data-action="home">← 전체 지도</button>
+      <div id="domainHeader" class="domain-header"></div>
+      <div class="grade-tabs" role="tablist" aria-label="학년군 선택">
+        <button role="tab" class="grade-tab active" data-band="1-2">1~2학년</button>
+        <button role="tab" class="grade-tab" data-band="3-4">3~4학년</button>
+        <button role="tab" class="grade-tab" data-band="5-6">5~6학년</button>
+      </div>
+      <div id="nodePath" class="node-path"></div>
+    </section>
+
+    <section id="lessonScreen" class="screen" aria-labelledby="lessonTitle">
+      <button class="back" type="button" data-action="domain">← 배움 지도</button>
+      <div class="lesson-layout">
+        <aside class="lesson-steps" aria-label="학습 단계">
+          <ol id="stepList"></ol>
+        </aside>
+        <section class="lesson-card">
+          <div class="lesson-head"><div><p class="eyebrow" id="lessonDomain"></p><h1 id="lessonTitle"></h1></div><button id="speakBtn" class="icon-btn" type="button" aria-label="문제 읽어주기">🔊</button></div>
+          <div id="lessonStage" class="lesson-stage"></div>
+          <div class="lesson-actions"><button id="hintBtn" class="ghost" type="button">힌트</button><button id="checkBtn" class="primary" type="button">확인</button></div>
+          <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
