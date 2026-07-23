@@ -1,11 +1,5 @@
 (() => {
   const DOMAIN_ORDER = ['number', 'relation', 'geometry', 'data'];
-  const DOMAIN_NAMES = {
-    number: '수와 연산',
-    relation: '변화와 관계',
-    geometry: '도형과 측정',
-    data: '자료와 가능성'
-  };
 
   function getDomain(areaId) {
     return typeof CURRICULUM !== 'undefined'
@@ -48,13 +42,18 @@
     return { completed, total: lessons.length };
   }
 
+  function escapeInlineValue(value) {
+    return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
   function renderDomainNode(item, index, lessons) {
     const done = state.completed.has(item.id);
     const previous = lessons[index - 1];
     const locked = index > 0 && previous && !state.completed.has(previous.id);
+    const click = locked ? '' : `onclick="openMathLesson('${escapeInlineValue(item.id)}')"`;
     return `
       <button type="button" class="spiral-node domain-lesson-node ${done ? 'completed' : ''} ${locked ? 'locked' : ''}"
-        data-id="${item.id}" ${locked ? 'disabled aria-disabled="true"' : ''}>
+        data-id="${item.id}" ${click} ${locked ? 'disabled aria-disabled="true"' : ''}>
         <span class="node-state">${done ? '✓' : locked ? '🔒' : index + 1}</span>
         <span class="domain-node-copy">
           <strong>${item.title}</strong>
@@ -86,7 +85,7 @@
     root.innerHTML = `
       <main class="spiral-shell domain-map-shell" style="--area:${area.color}">
         <header class="domain-map-hero spiral-panel">
-          <button type="button" class="domain-back-button" onclick="openDashboard()">← 수학 영역 선택</button>
+          <button type="button" class="domain-back-button" onclick="returnToMathDashboard()">← 수학 영역 선택</button>
           <div class="domain-hero-main">
             <span class="domain-hero-icon" aria-hidden="true">${area.icon}</span>
             <div class="domain-hero-copy">
@@ -137,10 +136,6 @@
         resetScroll('spiral-map-section');
       });
     });
-
-    root.querySelectorAll('.domain-lesson-node:not(.locked)').forEach((button) => {
-      button.addEventListener('click', () => window.openSpiralLesson(button.dataset.id));
-    });
   }
 
   function syncDashboardProgress() {
@@ -161,56 +156,72 @@
     if (!area) return;
     document.querySelectorAll('#spiral-lesson-content .spiral-back').forEach((button) => {
       button.textContent = `← ${area.title}`;
+      button.onclick = () => window.openMathDomain(area.id);
     });
     document.querySelectorAll('#spiral-lesson-content .spiral-action').forEach((button) => {
-      if (button.textContent.includes('배움 지도')) button.textContent = `${area.title}로 돌아가기`;
+      if (button.textContent.includes('배움 지도')) {
+        button.textContent = `${area.title}로 돌아가기`;
+        button.onclick = () => window.openMathDomain(area.id);
+      }
     });
   }
 
-  const originalOpenSpiralLesson = window.openSpiralLesson;
-  const originalOpenDashboard = window.openDashboard;
-  const originalOpenTimeQuiz = window.openTimeQuiz;
-
   window.openMathDomain = function openMathDomain(areaId) {
     const area = getDomain(areaId);
-    if (!area) return;
+    if (!area) {
+      console.error('[에이두 수학] 영역을 찾을 수 없습니다.', areaId);
+      return;
+    }
     state.activeAreaId = areaId;
     showSection('spiral-map-section');
     renderDomainMap(area);
     resetScroll('spiral-map-section');
   };
 
+  window.openMathLesson = function openMathLesson(id) {
+    const found = findLesson(id);
+    if (!found) {
+      console.error('[에이두 수학] 활동을 찾을 수 없습니다.', id);
+      return;
+    }
+
+    state.current = found;
+    state.activeAreaId = found.area.id;
+    state.band = found.band;
+    state.step = 0;
+    state.question = null;
+
+    showSection('spiral-lesson-section');
+    renderLesson();
+    resetScroll('spiral-lesson-section');
+    requestAnimationFrame(decorateLessonNavigation);
+  };
+
+  window.openSpiralLesson = window.openMathLesson;
+
   window.openSpiralMap = function openSpiralMap(areaId) {
     const targetId = areaId || state.activeAreaId || state.current?.area?.id;
     if (!targetId) {
-      window.openDashboard();
+      window.returnToMathDashboard();
       return;
     }
     window.openMathDomain(targetId);
   };
 
   window.openSpiralCurriculum = function openSpiralCurriculum() {
-    window.openDashboard();
+    window.returnToMathDashboard();
   };
 
-  window.openSpiralLesson = function openSpiralLesson(id) {
-    const found = findLesson(id);
-    if (found) state.activeAreaId = found.area.id;
-    originalOpenSpiralLesson?.(id);
-    resetScroll('spiral-lesson-section');
-    requestAnimationFrame(decorateLessonNavigation);
-  };
-
-  window.openDashboard = function openDashboardFromDomain() {
+  window.returnToMathDashboard = function returnToMathDashboard() {
     state.activeAreaId = null;
-    originalOpenDashboard?.();
+    if (typeof window.openDashboard === 'function') window.openDashboard();
     syncDashboardProgress();
     resetScroll('dashboard-section');
   };
 
   window.openGeometryTimeQuiz = function openGeometryTimeQuiz() {
     state.activeAreaId = 'geometry';
-    originalOpenTimeQuiz?.();
+    if (typeof window.openTimeQuiz === 'function') window.openTimeQuiz();
     resetScroll('time-quiz-section');
   };
 
@@ -218,7 +229,7 @@
     const lesson = document.getElementById('spiral-lesson-section');
     const lessonVisible = lesson && !lesson.classList.contains('hidden') && lesson.style.display !== 'none';
     if (lessonVisible) window.openSpiralMap();
-    else window.openDashboard();
+    else window.returnToMathDashboard();
   };
 
   window.goBackFromRpgHud = function goBackFromRpgHud() {
@@ -230,23 +241,23 @@
       return;
     }
     if (map && !map.classList.contains('hidden') && map.style.display !== 'none') {
-      window.openDashboard();
+      window.returnToMathDashboard();
       return;
     }
     if (quiz && !quiz.classList.contains('hidden') && quiz.style.display !== 'none' && state.activeAreaId === 'geometry') {
       window.openMathDomain('geometry');
       return;
     }
-    window.openDashboard();
+    window.returnToMathDashboard();
   };
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function initializeDomainNavigation() {
     syncDashboardProgress();
 
     const tray = document.getElementById('rpg-action-tray');
     if (tray) {
       tray.innerHTML = `
-        <button class="rpg-action-button" onclick="openDashboard()">🧮 수학 영역</button>
+        <button class="rpg-action-button" onclick="returnToMathDashboard()">🧮 수학 영역</button>
         <button class="rpg-action-button rpg-korean-action-button" onclick="location.href='index.html'">📗 에이두 국어</button>`;
     }
 
@@ -254,5 +265,11 @@
     if (lessonRoot) {
       new MutationObserver(decorateLessonNavigation).observe(lessonRoot, { childList: true, subtree: true });
     }
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDomainNavigation, { once: true });
+  } else {
+    initializeDomainNavigation();
+  }
 })();

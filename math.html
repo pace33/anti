@@ -110,7 +110,7 @@
 
   <nav id="aiedue-rpg-hud" class="aiedue-rpg-hud hidden math-rpg-hud" aria-label="에이두 수학 하단 메뉴">
     <section class="rpg-profile-banner"><button class="rpg-profile-portrait" onclick="toggleInfoDrawer()"><span class="sync-user-icon">🐻</span><span class="rpg-level-badge">LV.<span class="sync-aedu-level">1</span></span></button><button class="rpg-profile-copy" onclick="toggleInfoDrawer()"><strong class="sync-account-name">이름 없음</strong><span class="sync-user-role">학생</span><span>⭐ <span class="sync-coins">0</span> ⚠️ <span class="sync-warning-tokens">0</span></span></button><div class="rpg-profile-tools"><button class="rpg-tool-button" onclick="goBackFromRpgHud()">← 뒤로</button><button class="rpg-tool-button" onclick="handleLogout()">🚪 나가기</button><button class="rpg-tool-button rpg-expand-button" onclick="toggleRpgHudActions(this)" aria-expanded="false">→ 메뉴</button></div><div class="rpg-experience-track"><div class="rpg-experience-fill sync-aedu-exp-bar" style="width:0%"></div></div><span class="rpg-experience-label"><span class="sync-aedu-exp-percent">0%</span> EXP</span></section>
-    <div id="rpg-action-tray" class="rpg-action-tray" aria-hidden="true" inert><button class="rpg-action-button" onclick="openDashboard()">🧮 수학 영역</button><button class="rpg-action-button rpg-korean-action-button" onclick="location.href='index.html'">📗 에이두 국어</button></div>
+    <div id="rpg-action-tray" class="rpg-action-tray" aria-hidden="true" inert><button class="rpg-action-button" onclick="returnToMathDashboard()">🧮 수학 영역</button><button class="rpg-action-button rpg-korean-action-button" onclick="location.href='index.html'">📗 에이두 국어</button></div>
   </nav>
 
   <div id="result-modal" class="fixed inset-0 bg-black/50 hidden justify-center items-center z-[2000]"><div class="bg-white p-8 rounded-[40px] max-w-sm w-full text-center"><div id="modal-icon" class="text-5xl mb-4">🧮</div><p id="modal-message" class="text-xl font-bold mb-6"></p><button id="modal-confirm-btn" onclick="handleModalConfirm()" class="btn-primary px-8 py-3">확인</button></div></div>
@@ -119,6 +119,6 @@
 
   <script type="module" src="math.js?v=20260723-flow-v2"></script>
   <script src="math-spiral.js?v=20260723-content-v3" defer></script>
-  <script src="math-domain-navigation.js?v=20260723-domain-v1" defer></script>
+  <script src="math-domain-navigation.js?v=20260723-domain-v2" defer></script>
 </body>
 </html>
