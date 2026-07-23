@@ -1,6 +1,7 @@
 *.pdf
 *.pptx
 *.py
+.netlify/
 extracted_text.txt
 pdf_pages/
 workshop_pages/

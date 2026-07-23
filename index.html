@@ -153,6 +153,7 @@
                             <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
                             <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
                         </div>
+                        <button type="button" class="mt-2 px-3 py-1 rounded-full bg-sky-100 text-sky-700 border-2 border-sky-200 text-xs font-black hover:bg-sky-200 transition-colors" onclick="event.stopPropagation(); location.href='math.html'">에이두 수학</button>
                     </div>
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
                 </div>
@@ -198,6 +199,9 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-3 mt-auto">
+                    <button type="button" class="w-full py-4 bg-sky-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-sky-600 transition-all" onclick="location.href='math.html'">
+                        <span>🧮</span> 에이두 수학
+                    </button>
                     <button type="button" id="teacher-manage-btn" class="w-full py-4 bg-teal-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-teal-600 transition-all hidden" onclick="openClassManagement()">
                         <span>🏫</span> 학급 관리하기
                     </button>
@@ -1518,6 +1522,10 @@
             <button type="button" class="rpg-action-button rpg-bank-button" onclick="openDictationBankModal()">
                 <span class="rpg-action-icon" aria-hidden="true">🏦</span>
                 <span>국어 은행</span>
+            </button>
+            <button type="button" class="rpg-action-button rpg-math-button" onclick="location.href='math.html'">
+                <span class="rpg-action-icon" aria-hidden="true">🧮</span>
+                <span>에이두 수학</span>
             </button>
         </div>
 
