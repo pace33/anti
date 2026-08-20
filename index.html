@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f4faf0">
+    <title>에이두 한글</title>
+    <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
+    <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
+    <link rel="stylesheet" href="app.css?v=20260721-lesson27-continuous-hand-v11">
+</head>
+<body>
+    <a class="skip-link" href="#main-container">본문 바로가기</a>
+
+    <audio id="bg-music" loop preload="none">
+        <source src="aiedu_bgm.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="click-sound" preload="none">
+        <source src="aiedu_click.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="premium-card fade-in-up" id="main-container" tabindex="-1">
+
+        <!-- [1. 시작 화면 섹션] -->
+        <div id="start-screen" class="view-section" style="background-image: url('aiedu_korean_nature_bg.webp')">
+            <!-- 음소거 토글 버튼 -->
+            <button type="button" id="mute-toggle-btn" class="mute-control-btn" onclick="toggleMute()" aria-label="배경음악 켜기 또는 끄기">
+                <span id="mute-icon">🔇</span>
+            </button>
+
+            <div class="logo-wrapper">
+                <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글 로고" class="logo-main floating" decoding="async">
+            </div>
+            <button type="button" class="btn-start" onclick="showLoginFromStart()">시작하기</button>
+        </div>
+
+        <!-- [2. 로그인 화면 섹션] -->
+        <div id="login-section" class="view-section hidden" style="background-image: url('aiedu_korean_nature_bg.webp'); background-size: cover; background-position: center;">
+            <!-- 음소거 토글 버튼 -->
+            <button type="button" id="mute-toggle-btn-login" class="mute-control-btn" onclick="toggleMute()" aria-label="배경음악 켜기 또는 끄기">
+                <span class="mute-icon-span">🔇</span>
+            </button>
+
+            <!-- 헤더: 로고 -->
+            <div class="flex justify-between items-center p-10 w-full absolute top-0 left-0">
+                <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" onclick="location.reload()" style="cursor:pointer" decoding="async">
+            </div>
+
+            <!-- 로그인 카드 영역 -->
+            <div class="flex flex-col items-center justify-center h-full">
+
+                <div class="relative"> <!-- 카드와 책갈피를 묶는 새로운 컨테이너 -->
+                    <!-- 오른쪽 책갈피 탭 (카드와 형제 관계로 이동) -->
+                    <div class="login-tabs-container">
+                        <button type="button" id="student-tab-btn" class="nav-tab active" onclick="switchLoginView('student')">학생 로그인</button>
+                        <button type="button" id="teacher-tab-btn" class="nav-tab" onclick="switchLoginView('teacher')">선생님 로그인</button>
+                    </div>
+
+                    <div class="login-card shadow-2xl">
+                        <!-- 학생 로그인 뷰 -->
+                        <div id="student-login-view" class="fade-in">
+                            <div class="text-center mb-12">
+                                <h2 class="text-3xl font-bold text-[#45963a]">학생 로그인</h2>
+                                <p class="text-gray-500 mt-1">에이두 한글로 떠나요!</p>
+                            </div>
+
+                        <div class="flex justify-center items-center gap-4 mb-6">
+                            <div id="password-display" class="stitched flex-1 bg-white text-[#45963a] font-bold text-center h-20 flex items-center justify-center text-5xl rounded-3xl border-2 border-dashed border-[#b7e4a1] shadow-inner" role="status" aria-live="polite" aria-label="입력한 로그인 번호"></div>
+                            <button type="button" class="btn-primary w-28 h-20 rounded-3xl text-xl font-black shadow-lg flex items-center justify-center whitespace-nowrap" onclick="checkStudentLogin()">시작</button>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto mb-6">
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('1')">1</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('2')">2</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('3')">3</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('4')">4</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('5')">5</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('6')">6</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('7')">7</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('8')">8</button>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('9')">9</button>
+                            <div class="flex items-center justify-center text-3xl">🌱</div>
+                            <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('0')">0</button>
+                            <button type="button" class="grid-item text-base font-bold bg-[#fff0f0] text-red-500 border-red-100" onclick="backspace()">지우기</button>
+                        </div>
+
+                        <div class="border-t pt-6 text-center">
+                            <p class="text-gray-400 text-sm mb-3">새로 가입해야 하나요?</p>
+                            <div class="flex justify-center gap-2 flex-wrap">
+                                <button type="button" onclick="openStudentSignupModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-8 py-2 rounded-full font-bold transition-all shadow-sm">회원가입</button>
+                                <button type="button" onclick="testLoginStudent()" class="bg-[#55b346] hover:bg-[#45963a] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">학생 테스트</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 선생님 로그인 뷰 -->
+                    <div id="teacher-login-view" class="fade-in hidden">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-bold text-[#45963a]">선생님 로그인</h2>
+                            <p class="text-gray-500 mt-1">반갑습니다, 선생님!</p>
+                        </div>
+                        <div class="space-y-4">
+                            <input type="email" id="teacher-email" placeholder="이메일 주소" class="premium-input w-full" aria-label="선생님 이메일 주소" autocomplete="username">
+                            <input type="password" id="teacher-pw" placeholder="비밀번호" class="premium-input w-full" aria-label="선생님 비밀번호" autocomplete="current-password">
+                            <button type="button" class="btn-primary w-full py-5 text-xl font-bold mt-4" onclick="checkTeacherLogin()">로그인 하기</button>
+                            <div class="divider my-8 text-gray-300 text-sm font-medium text-center w-full">또는</div>
+                            <button type="button" onclick="checkTeacherGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-100 py-4 rounded-3xl font-bold hover:bg-gray-50 transition-all shadow-sm">
+                                <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" width="24" height="24" alt="" aria-hidden="true">
+                                구글로 로그인
+                            </button>
+                        </div>
+                        <div class="border-t pt-8 mt-8 text-center">
+                            <p class="text-gray-400 text-sm mb-3">새로 오셨나요?</p>
+                            <div class="flex justify-center gap-2 flex-wrap">
+                                <button type="button" onclick="openTeacherSignupModal()" class="bg-[#f4faf0] hover:bg-[#e6f2e0] text-[#45963a] px-8 py-2 rounded-full font-bold transition-all shadow-sm">선생님 회원가입</button>
+                                <button type="button" onclick="testLoginTeacher()" class="bg-[#2c3e50] hover:bg-[#1a252f] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">교사 테스트</button>
+                            </div>
+                        </div>
+                    </div> <!-- teacher-login-view 끝 -->
+                    </div> <!-- login-card 끝 -->
+                </div> <!-- relative 끝 -->
+            </div> <!-- flex 컨테이너 끝 -->
+        </div> <!-- login-section 끝 -->
+
+        <!-- [3. 갤럭시 대시보드 섹션] -->
+        <div id="dashboard-section" class="view-section hidden" style="background-image: url('aiedu_korean_dashboard_nature_bg.webp'); background-size: cover; background-position: center; position: relative;">
+            <!-- 헤더 프로필 -->
+            <!-- 대시보드 상단 영역 -->
+            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <!-- Left: Logo (Raw image, no animation, top-left) -->
+                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+
+                <!-- Right: Info Box (Green border rounded rectangle) -->
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50]" id="dashboard-account-name-header">김토도</span>
+                            <span class="text-sm text-yellow-500">⭐ <span id="dashboard-coins-header" class="font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span id="dashboard-warning-tokens-header" class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
+                </div>
+                <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
+                    <span class="lesson-photo-icon" aria-hidden="true">📷</span>
+                    <span><strong>오늘의 노트 사진 찍기</strong><small>웹 카메라 화면에서 바로 찍어요</small></span>
+                </button>
+                <input id="lesson-photo-input" type="file" accept="image/*" class="hidden" onchange="handleLessonPhotoCapture(this)" aria-label="오늘의 노트 사진 파일 선택">
+            </div>
+
+            <!-- Information Drawer (Right Side) -->
+            <div id="drawer-overlay" class="drawer-overlay" onclick="toggleInfoDrawer()"></div>
+            <div id="info-drawer" class="info-drawer">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-black text-gray-800">회원 정보</h2>
+                    <button type="button" class="text-gray-400 hover:text-gray-600 text-3xl" onclick="toggleInfoDrawer()">×</button>
+                </div>
+
+                <div class="flex flex-col items-center p-8 bg-gray-50 rounded-[40px] border border-gray-100">
+                    <div id="user-icon-btn" class="w-24 h-24 bg-yellow-400 rounded-full border-4 border-white flex items-center justify-center text-5xl shadow-xl cursor-pointer hover:scale-105 transition-transform mb-4" onclick="openIconModal()">🐻</div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center gap-2 mb-1">
+                            <span class="text-2xl font-black text-[#2c3e50]" id="dashboard-account-name">김토도</span>
+                            <span class="text-xs px-2 py-1 bg-teal-100 text-teal-600 rounded-lg font-bold" id="user-role-badge">학생</span>
+                        </div>
+                        <p class="text-gray-400 font-bold" id="dashboard-level-label">1단계</p>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 p-6 rounded-3xl flex items-center justify-between border border-yellow-100">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">⭐</span>
+                        <span class="text-lg font-bold text-yellow-700">에이두 포인트</span>
+                    </div>
+                    <span class="text-2xl font-black text-yellow-600" id="dashboard-coins">0</span>
+                </div>
+                <div class="bg-red-50 p-5 rounded-3xl flex items-center justify-between border border-red-100 mt-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">⚠️</span>
+                        <span class="text-base font-black text-red-600">주의 토큰</span>
+                    </div>
+                    <span class="text-2xl font-black text-red-500 sync-warning-tokens">0</span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 mt-auto">
+                    <button type="button" id="teacher-manage-btn" class="w-full py-4 bg-teal-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-teal-600 transition-all hidden" onclick="openClassManagement()">
+                        <span>🏫</span> 학급 관리하기
+                    </button>
+                    <button type="button" class="w-full py-4 bg-gray-100 text-gray-700 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-gray-200 transition-all" onclick="openSettingsModal()">
+                        <span>⚙️</span> 환경 설정
+                    </button>
+                    <button type="button" class="w-full py-4 border-2 border-red-50 text-red-400 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-red-50 transition-all" onclick="handleLogout()">
+                        <span>🚪</span> 로그아웃
+                    </button>
+                </div>
+            </div>
+
+            <!-- 메인 단계 선택: 1·2·3·4단계 분리 -->
+            <div class="dashboard-stage-board" role="group" aria-label="에이두 한글 단계 선택">
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('drawing')" id="card-level-1">
+                    <span class="stage-badge">STEP 1</span>
+                    <span class="stage-emoji" aria-hidden="true">🎨</span>
+                    <span class="level-title">1단계</span>
+                    <span class="level-desc">그리기</span>
+                    <span class="stage-note">그림 미션 · 스케치북 · 도안 해금</span>
+                </button>
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('hangul')" id="card-level-2">
+                    <span class="stage-badge">STEP 2</span>
+                    <span class="stage-emoji hangul-icon" aria-hidden="true">ㄱㄴㄷ</span>
+                    <span class="level-title">2단계</span>
+                    <span class="level-desc">한글 해득</span>
+                    <span class="stage-note">자음 · 모음 · 낱말 익히기</span>
+                </button>
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('dictation')" id="card-level-3">
+                    <span class="stage-badge">STEP 3</span>
+                    <span class="stage-emoji" aria-hidden="true">✍️</span>
+                    <span class="level-title">3단계</span>
+                    <span class="level-desc">교과 맞춤쓰기</span>
+                    <span class="stage-note">단어 은행 · 오답 연습 · 교과 맞춤쓰기</span>
+                </button>
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('literacy')" id="card-level-4">
+                    <span class="stage-badge">STEP 4</span>
+                    <span class="stage-emoji" aria-hidden="true">📚</span>
+                    <span class="level-title">4단계</span>
+                    <span class="level-desc">문해력</span>
+                    <span class="stage-note">독해 · 어휘 · 문장 만들기</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- [3-1. 에이두 그리기 대시보드 섹션 - 1단계] -->
+        <div id="drawing-activities-section" class="view-section hidden bg-white">
+            <!-- Official Header Integration -->
+            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
+                <!-- 상단 주요 활동: 그림 미션 / 도형 미션 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
+                    <div class="grid-item drawing-action-card p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff] border-purple-100" onclick="openCurrentDrawingMission()">
+                        <div class="drawing-card-art drawing-art-sample">🦋</div>
+                        <div id="drawing-mission-badge" class="aiedu-badge bg-purple-500 mb-6">오늘의 미션[1단계]</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">그림 미션</h3>
+                        <p class="text-2xl text-purple-500 font-bold">오늘의 그림 도안을 따라 그려요!</p>
+                    </div>
+                    <div class="grid-item drawing-action-card p-10 flex flex-col items-center justify-center bg-gradient-to-br from-[#f5f3ff] to-[#e0f2fe] border-purple-100" onclick="openTodayDrawingActivity()">
+                        <div class="drawing-card-art" aria-hidden="true"><span class="drawing-art-shape bg-pink-300">○</span><span class="drawing-art-shape bg-yellow-300">△</span><span class="drawing-art-shape bg-sky-300">□</span></div>
+                        <div class="aiedu-badge bg-purple-500 mb-6">오늘의 미션</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도형 미션</h3>
+                        <p class="text-2xl text-purple-500 font-bold">동그라미·세모·네모를 따라 그려요!</p>
+                    </div>
+                </div>
+
+                <!-- 하단 활동: 나의 그림 / 친구들 그림 / 스케치북 / AI 그림 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openMyDrawingFromDashboard()">
+                        <div class="text-5xl mb-3">🖼️</div>
+                        <div class="text-xl font-bold">나의 그림</div>
+                        <p id="drawing-mission-next-label" class="text-sm text-purple-500 font-black mt-2">1단계 할 차례예요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openFriendsDrawingGallery()">
+                        <div class="text-5xl mb-3">👭</div>
+                        <div class="text-xl font-bold">친구들 그림</div>
+                        <p class="text-sm text-gray-500 mt-2">친구들이 저장한 작품을 구경해요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openSketchbookActivity()">
+                        <div class="text-5xl mb-3">📒</div>
+                        <div class="text-xl font-bold">스케치북</div>
+                        <p class="text-sm text-gray-500 mt-2">해금한 도안을 골라 자유롭게 그려요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openAiDrawingQuizActivity()">
+                        <div class="text-5xl mb-3">🤖</div>
+                        <div class="text-xl font-bold">AI 그림</div>
+                        <p class="text-sm text-gray-500 mt-2">AI와 함께 도형과 그림을 모두 그려보아요!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [3-2. 에이두 교과 맞춤쓰기 대시보드 섹션 - 3단계] -->
+        <div id="dictation-activities-section" class="view-section hidden bg-white">
+            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+                <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
+                    <span class="lesson-photo-icon" aria-hidden="true">📷</span>
+                    <span><strong>오늘의 노트 사진 찍기</strong><small>3단계 단어 은행으로 바로 저장해요</small></span>
+                </button>
+            </div>
+
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
+                <div class="grid grid-cols-1 gap-8 w-full mb-6">
+                    <div id="dictation-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-red-50" onclick="openTodayDictationActivity()">
+                        <div id="dictation-lock-badge" class="aiedu-badge bg-red-500 mb-6">오늘의 미션</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">교과 맞춤쓰기</h3>
+                        <p id="dictation-mission-desc" class="text-2xl text-red-500 font-bold">단어 은행으로 오늘의 교과 맞춤쓰기를 만들어요!</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationPracticeActivity()">
+                        <div class="text-5xl mb-3">✍️</div>
+                        <div class="text-xl font-bold">교과 맞춤쓰기 연습하기</div>
+                        <p class="text-sm text-gray-500 mt-2">오답과 완료 문장을 보고 따라 써요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openMyDictationFromDashboard()">
+                        <div class="text-5xl mb-3">📚</div>
+                        <div class="text-xl font-bold">나의 기록</div>
+                        <p id="dictation-bank-summary" class="text-sm text-red-500 font-black mt-2">오답 0개 · 완료 0개</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationBankModal()">
+                        <div class="text-5xl mb-3">🏦</div>
+                        <div class="text-xl font-bold">단어 은행</div>
+                        <p class="text-sm text-emerald-600 font-black mt-2">오늘의 노트 사진에서 모은 단어를 확인해요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [3-3. 에이두 문해력 대시보드 섹션 - 4단계] -->
+        <div id="literacy-activities-section" class="view-section hidden bg-white">
+            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+                <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
+                    <span class="lesson-photo-icon" aria-hidden="true">📷</span>
+                    <span><strong>오늘의 노트 사진 찍기</strong><small>4단계 지문 소재 단어를 모아요</small></span>
+                </button>
+            </div>
+
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
+                <div class="grid grid-cols-1 gap-8 w-full mb-6">
+                    <!-- 오늘의 미션 -->
+                    <div id="literacy-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-blue-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openTodayLiteracyMission()">
+                        <div class="aiedu-badge bg-blue-600 mb-6">오늘의 미션</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">문해력 문제</h3>
+                        <p id="literacy-mission-desc" class="text-xl text-blue-600 font-bold">내 문해력 단증에 맞춰 자동으로 문제가 나와요!</p><div id="literacy-dan-dashboard-badge" class="mt-4 px-4 py-2 rounded-2xl bg-white text-blue-700 font-black shadow-sm">문해력 1단</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                    <!-- 한계 돌파 -->
+                    <div id="literacy-limit-break-card" class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyLimitBreak()">
+                        <div class="text-5xl mb-3">🚀</div>
+                        <div class="text-xl font-bold">도전! 한계 돌파</div>
+                        <p id="literacy-limit-break-desc" class="text-sm text-purple-600 font-black mt-2">공용 한계돌파 은행의 오답에 도전해요</p>
+                    </div>
+                    <!-- 나의 기록 -->
+                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openMyLiteracyRecord()">
+                        <div class="text-5xl mb-3">📚</div>
+                        <div class="text-xl font-bold">나의 기록</div>
+                        <p id="literacy-record-summary" class="text-sm text-blue-600 font-black mt-2">정답 0개 · 오답 0개</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openDictationBankModal()">
+                        <div class="text-5xl mb-3">🏦</div>
+                        <div class="text-xl font-bold">단어 은행</div>
+                        <p class="text-sm text-emerald-600 font-black mt-2">문해력 지문에 반영할 단어를 확인해요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [에이두 문해력 워크스페이스 섹션] -->
+        <div id="literacy-workspace-section" class="view-section hidden bg-white">
+            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+                    <div class="bg-gray-50 border-4 border-gray-200 rounded-[30px] p-8 flex flex-col min-h-[400px]">
+                        <h3 class="text-2xl font-black text-gray-700 mb-4 flex items-center gap-2">📖 읽기 지문 <span id="literacy-passage-difficulty" class="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Easy</span></h3>
+                        <div id="literacy-passage-content" class="text-xl font-bold text-gray-800 leading-relaxed whitespace-pre-wrap flex-grow overflow-y-auto max-h-[450px] custom-scrollbar">
+                            <span class="literacy-inline-loading" role="status">
+                                <span class="literacy-inline-loading-spinner" aria-hidden="true"></span>
+                                <span>문해력 문제 로딩중...</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-4 border-blue-100 rounded-[30px] p-8 flex flex-col shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-2xl font-black text-blue-700">✏️ 문제</h3>
+                            <span id="literacy-question-type" class="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-bold">객관식</span>
+                        </div>
+                        <div id="literacy-question-content" class="text-2xl font-black text-gray-800 mb-6">
+                            지문을 읽고 문제를 풀어보세요.
+                        </div>
+                        <div id="literacy-keywords-container" class="hidden mb-6 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4"></div>
+
+                        <div id="literacy-options-container" class="space-y-3 hidden"></div>
+
+                        <div id="literacy-short-answer-container" class="hidden">
+                            <input type="text" id="literacy-short-input" class="w-full p-4 border-4 border-gray-200 rounded-2xl font-bold text-xl focus:border-blue-400 focus:outline-none mb-4" placeholder="답을 입력하세요.">
+                            <button type="button" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all" onclick="window.submitLiteracyShortAnswer()">정답 제출하기</button>
+                        </div>
+
+                        <div id="literacy-essay-container" class="hidden">
+                            <textarea id="literacy-essay-input" class="w-full p-4 border-4 border-gray-200 rounded-2xl font-bold text-lg focus:border-blue-400 focus:outline-none mb-4 min-h-[120px]" placeholder="핵심어를 참고해 답해 보세요. AI가 채점합니다."></textarea>
+                            <button type="button" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-xl rounded-2xl shadow-lg transition-all" onclick="window.submitLiteracyEssayAnswer()">AI 채점 받기</button>
+                        </div>
+
+                        <div id="literacy-feedback-container" class="mt-6 p-6 border-4 rounded-2xl hidden">
+                            <div id="literacy-feedback-title" class="text-2xl font-black mb-2"></div>
+                            <div id="literacy-feedback-detail" class="text-lg font-bold text-gray-700 leading-relaxed whitespace-pre-wrap mb-4"></div>
+                            <div id="literacy-feedback-explanation" class="pt-4 border-t-2 border-dashed border-gray-200 text-base text-gray-500 font-bold"></div>
+                            <button type="button" class="mt-6 w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-black text-lg rounded-2xl transition-all" onclick="window.nextLiteracyQuestion()">확인 (다음 문제)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [4. 기존 기능들 - 2단계 하위 섹션들] -->
+        <div id="hangul-activities-section" class="view-section hidden bg-white">
+            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
+                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#f0faf9]" onclick="openMyKoreanFromDashboard()">
+                        <div class="text-7xl mb-6">📚</div>
+                        <div class="text-5xl font-black text-[#2c3e50]">나의 한글</div>
+                        <p class="text-gray-500 mt-2 text-lg">내가 배운 한글을 확인해요</p>
+                    </div>
+                    <div class="grid-item p-10 flex flex-col items-center justify-center bg-orange-50" onclick="openTodayKoreanActivity()">
+                        <div class="aiedu-badge mb-6">오늘의 미션</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">오늘의 한글</h3>
+                        <p id="today-korean-step-label" class="text-2xl text-[#46b3a5] font-bold">배움 시작 활동</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                    <button type="button" class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-green-50" onclick="openLetterWritingActivity()">
+                        <div class="text-6xl mb-3">✍️</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">쓰기 연습</div>
+                        <p class="text-sm text-green-600 font-black mt-2">눌러서 글자·낱말·문장을 연습해요</p>
+                    </button>
+                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-indigo-50 to-purple-50" onclick="openReadingPracticeActivity()">
+                        <div class="text-6xl mb-3">📖</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">읽기 연습</div>
+                        <p class="text-sm text-purple-600 font-black mt-2">카드를 누르면 글자와 문장을 읽어줘요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-amber-50 to-orange-50" onclick="openHangulGameActivity()">
+                        <div class="text-6xl mb-3">🎮</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">한글 게임</div>
+                        <p class="text-sm text-orange-600 font-black mt-2">소리를 듣고 맞는 낱말을 골라요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [그리기 시리즈: 그림 미션] -->
+        <div id="my-drawing-section" class="fade-in hidden">
+            <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
+                <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goDrawingDashboard()">
+                    <span class="aiedu-badge bg-purple-500">뒤로 가기</span>
+                    <span class="text-4xl font-bold text-[#7c3aed] tracking-tight">나의 그림</span>
+                </button>
+                <div class="drawing-header-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                <div class="korean-embed-card p-6 bg-purple-50 border-purple-100">
+                    <div class="text-sm font-black text-purple-500 mb-2">그림 미션</div>
+                    <div id="my-drawing-next-title" class="text-2xl font-black text-[#2c3e50]">1단계 미션</div>
+                    <button type="button" class="btn-primary mt-5 bg-purple-500 shadow-purple-200" onclick="openTodayDrawingActivity()">이어하기</button>
+                </div>
+                <div class="korean-embed-card p-6">
+                    <div class="text-sm font-black text-gray-400 mb-2">완료한 미션</div>
+                    <div id="my-drawing-completed-count" class="text-4xl font-black text-[#2c3e50]">0</div>
+                </div>
+                <div class="korean-embed-card p-6">
+                    <div class="text-sm font-black text-gray-400 mb-2">자유 작품</div>
+                    <div id="my-drawing-free-count" class="text-4xl font-black text-[#2c3e50]">0</div>
+                </div>
+            </div>
+
+            <div class="stitched p-6 bg-white">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-2xl font-black text-[#2c3e50]">단계별 그림 미션 기록</h3>
+                    <button type="button" class="btn-outline px-5 py-2 text-sm" onclick="goDrawingDashboard()">뒤로 가기</button>
+                </div>
+                <div id="my-drawing-mission-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[430px] overflow-y-auto pr-2 custom-scrollbar"></div>
+            </div>
+        </div>
+
+        <!-- [그리기 시리즈: 공용 작업실] -->
+        <div id="drawing-workspace-section" class="fade-in hidden">
+            <div class="drawing-workspace-top">
+                <div class="flex items-center gap-4">
+                    <button type="button" id="drawing-workspace-back-btn" class="btn-outline py-2 px-5" onclick="goDrawingDashboard()">뒤로 가기</button>
+                    <div>
+                        <div class="drawing-title-row">
+                            <button id="drawing-workspace-badge" type="button" class="aiedu-badge bg-purple-500 drawing-mission-logo cursor-default" aria-label="그리기 활동">자유 그리기</button>
+                            <div id="drawing-workspace-progress" class="drawing-progress-chip hidden"></div>
+                        </div>
+                        <div id="drawing-workspace-title" class="text-3xl font-black text-[#2c3e50] mt-2">그림판</div>
+                        <p id="drawing-workspace-desc" class="text-lg text-gray-500 mt-1">마음껏 그리고 저장해요.</p>
+                    </div>
+                </div>
+                <div class="drawing-header-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span id="drawing-workspace-coins" class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
+
+            <div class="learning-pane p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
+                    <div class="space-y-5">
+                        <div class="korean-embed-card p-4">
+                            <div class="font-black text-[#2c3e50] mb-3">색</div>
+                            <div id="drawing-color-palette" class="grid grid-cols-5 gap-2"></div>
+                        </div>
+                        <div class="korean-embed-card p-4">
+                            <div class="font-black text-[#2c3e50] block mb-3">붓 크기</div>
+                            <div id="drawing-brush-size-buttons" class="grid grid-cols-4 gap-2">
+                                <button type="button" class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(1)">1</button>
+                                <button type="button" class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(2)">2</button>
+                                <button type="button" class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(3)">3</button>
+                                <button type="button" class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(4)">4</button>
+                            </div>
+                            <div id="drawing-brush-size-label" class="text-sm text-gray-500 font-bold mt-2">2단계</div>
+                            <button type="button" id="drawing-eraser-btn" class="btn-outline w-full mt-3 py-2 text-sm" onclick="toggleDrawingEraser()">🧽 지우개</button>
+                            <button type="button" class="btn-outline w-full mt-3 py-2 text-sm" onclick="openMyShapeStats()">📈 나의 도형</button>
+                        </div>
+                        <div id="drawing-template-panel" class="korean-embed-card p-4 hidden">
+                            <div class="font-black text-[#2c3e50] mb-3">도안 선택</div>
+                            <button type="button" class="btn-primary bg-purple-500 shadow-purple-200 w-full py-3" onclick="openSketchbookTemplatePicker()">도안 선택</button>
+                            <div id="drawing-template-picked" class="drawing-template-picked mt-3">현재 도안: 자유</div>
+                            <div id="drawing-template-buttons" class="hidden"></div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-3">
+                            <button type="button" id="drawing-save-btn" class="btn-primary bg-purple-500 shadow-purple-200" onclick="saveCurrentDrawing()">저장하기</button>
+                            <button type="button" id="drawing-friends-btn" class="btn-outline" onclick="openFriendsDrawingGallery()">친구들 그림 보기</button>
+                        </div>
+                    </div>
+
+                    <div class="korean-embed-card p-3 h-[520px] relative overflow-hidden shadow-inner bg-white">
+                        <button type="button" id="drawing-clear-btn" class="canvas-action-btn btn-outline py-2 px-4" onclick="clearDrawingCanvas()">지우기</button>
+                        <button type="button" id="drawing-complete-mission-btn" class="canvas-action-btn btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden py-3 px-5" onclick="completeTodayDrawingMission()">완료하기</button>
+                        <canvas id="drawing-canvas" class="korean-embed-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [교과 맞춤쓰기 시리즈: 나의 교과 맞춤쓰기] -->
+        <div id="my-dictation-section" class="view-section fade-in hidden bg-white">
+            <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between">
+                <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goDictationDashboard()">
+                    <span class="aiedu-badge bg-red-500">교과 맞춤쓰기 시리즈</span>
+                    <span class="text-4xl font-bold text-red-500 tracking-tight">나의 교과 맞춤쓰기</span>
+                </button>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-gray-800 sync-account-name">이름</div>
+                    <div id="my-dictation-progress-label" class="text-lg text-red-500 font-semibold">교과 맞춤쓰기 새싹</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="stitched p-6 bg-white">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-2xl font-black text-[#2c3e50]">교과 맞춤쓰기 오답 은행</h3>
+                        <button type="button" class="btn-outline px-4 py-2 text-sm" onclick="openDictationPracticeActivity('wrong')">오답 연습</button>
+                    </div>
+                    <div id="dictation-wrong-bank-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+                <div class="stitched p-6 bg-white">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-2xl font-black text-[#2c3e50]">교과 맞춤쓰기 완료 은행</h3>
+                        <button type="button" class="btn-outline px-4 py-2 text-sm" onclick="openDictationPracticeActivity('completed')">완료 연습</button>
+                    </div>
+                    <div id="dictation-completed-bank-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+            </div>
+
+            <div class="stitched p-6 bg-white">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-2xl font-black text-[#2c3e50]">미션 기록</h3>
+                    <button type="button" class="btn-outline px-5 py-2 text-sm" onclick="goDictationDashboard()">교과 맞춤쓰기 대시보드로</button>
+                </div>
+                <div id="my-dictation-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar"></div>
+            </div>
+        </div>
+
+        <!-- [교과 맞춤쓰기 시리즈: 공용 작업실] -->
+        <div id="dictation-workspace-section" class="view-section fade-in hidden bg-white">
+            <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <div id="dictation-workspace-badge" class="aiedu-badge bg-red-500 mb-3">급수별 교과 맞춤쓰기</div>
+                    <div id="dictation-workspace-title" class="text-3xl font-black text-[#2c3e50]">1단계 교과 맞춤쓰기</div>
+                    <p id="dictation-workspace-desc" class="text-lg text-gray-500 mt-1">소리를 듣고 공책에 쓴 뒤 사진을 올리면 정답이 열려요.</p>
+                </div>
+                <button type="button" class="btn-outline py-2 px-6" onclick="goDictationDashboard()">교과 맞춤쓰기 대시보드로</button>
+            </div>
+
+            <div class="learning-pane p-8">
+                <div id="dictation-workspace-grid" class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+                    <div id="dictation-question-panel" class="korean-embed-card p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <div id="dictation-session-kind" class="text-sm font-black text-red-400">문제는 TTS로만 들려요</div>
+                                <div id="dictation-question-label" class="text-2xl font-black text-[#2c3e50]">문제 1</div>
+                            </div>
+                            <button type="button" class="btn-primary bg-red-500 shadow-red-200 px-8 py-4 text-xl" onclick="playDictationPrompt()">▶ 듣기</button>
+                        </div>
+                        <div class="bg-red-50 border-2 border-red-100 rounded-3xl p-8 text-center">
+                            <div class="text-6xl mb-4">🔊</div>
+                            <p id="dictation-main-instruction" class="text-xl font-bold text-gray-500">공책에 들은 말을 받아써요.</p>
+                            <p id="dictation-sub-instruction" class="text-sm text-gray-400 mt-2">정답은 사진을 올린 뒤에만 공개됩니다.</p>
+                        </div>
+                        <div id="dictation-session-list" class="mt-6 grid grid-cols-1 gap-3"></div>
+                        <div id="dictation-answer-box" class="hidden mt-6 bg-white border-4 border-green-200 rounded-3xl p-6">
+                            <div class="text-sm font-black text-green-500 mb-2">채점 결과</div>
+                            <div id="dictation-answer-text" class="text-lg font-bold text-[#2c3e50]"></div>
+                        </div>
+                    </div>
+
+                    <div id="dictation-photo-card" class="korean-embed-card p-6">
+                        <div id="dictation-photo-panel-title" class="font-black text-[#2c3e50] mb-4">공책/단어 은행 사진</div>
+                        <div id="dictation-camera-panel" class="hidden">
+                            <video id="dictation-camera-video" class="w-full h-[560px] max-h-[70vh] object-cover bg-gray-900 rounded-2xl border" playsinline autoplay muted></video>
+                            <canvas id="dictation-camera-canvas" class="hidden"></canvas>
+                            <div class="grid grid-cols-2 gap-2 mt-3">
+                                <button type="button" id="dictation-camera-capture-btn" class="btn-primary bg-red-500 shadow-red-200 py-2 text-sm" onclick="captureDictationCameraPhoto()">카메라로 촬영</button>
+                                <button type="button" class="btn-outline py-2 text-sm" onclick="startDictationCamera()">카메라 다시 켜기</button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 font-bold mt-4 mb-2">웹 카메라가 안 될 때만 사진 파일을 선택하세요.</div>
+                        <input id="dictation-photo-input" type="file" accept="image/*" class="premium-input bg-white text-sm" aria-label="교과 맞춤쓰기 사진 파일 선택">
+                        <img id="dictation-photo-preview" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="사진 미리보기" class="hidden w-full h-48 object-contain bg-gray-50 rounded-2xl border mt-4">
+                        <textarea id="dictation-ocr-text" class="premium-input bg-white text-sm mt-4 min-h-[120px]" placeholder="AI 사진 분석 결과가 여기에 들어와요. 단어 은행 촬영에서만 OCR 보조 결과를 함께 보여줘요."></textarea>
+                        <div id="dictation-ai-word-preview" class="hidden mt-3 p-3 rounded-2xl bg-red-50 text-sm font-bold text-red-500"></div>
+                        <button type="button" id="dictation-bank-save-btn" class="btn-primary w-full mt-4 bg-red-500 shadow-red-200 hidden" onclick="saveDictationBankPhoto()">AI로 단어 골라 은행에 저장</button>
+                        <button type="button" id="dictation-grade-btn" class="btn-primary w-full mt-5 bg-[#ff9d76] shadow-[#ff9d7633]" onclick="revealDictationAnswer()">사진 촬영 후 AI 채점하기</button>
+                        <button type="button" id="dictation-save-btn" class="btn-primary w-full mt-3 hidden" onclick="completeDictationItem()">연습 기록 저장</button>
+                        <button type="button" id="dictation-next-btn" class="btn-primary w-full mt-3 bg-red-500 shadow-red-200 hidden" onclick="startNextDictationMission()">다음 문제 풀기</button>
+                        <p id="dictation-photo-hint" class="text-sm text-gray-400 font-bold mt-4">사진을 올려야 채점할 수 있어요.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [교과 맞춤쓰기 시리즈: 틀린 글자 찾기] -->
+        <div id="spelling-quiz-section" class="view-section fade-in hidden bg-white">
+            <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <div class="aiedu-badge bg-red-500 mb-3">틀린 글자 찾기</div>
+                    <div class="text-3xl font-black text-[#2c3e50]">맞춤법/문법이 틀린 문장 고르기</div>
+                    <p class="text-lg text-gray-500 mt-1">문항 4개 중 틀린 문장을 골라요.</p>
+                </div>
+                <button type="button" class="btn-outline py-2 px-6" onclick="goDictationDashboard()">교과 맞춤쓰기 대시보드로</button>
+            </div>
+
+            <div class="learning-pane p-8">
+                <div id="spelling-quiz-options" class="grid grid-cols-1 gap-4"></div>
+                <div id="spelling-quiz-feedback" class="hidden mt-6 korean-embed-card p-6 border-green-200 bg-green-50"></div>
+                <button type="button" class="btn-primary mt-6 bg-red-500 shadow-red-200" onclick="generateSpellingQuestion()">다음 문제</button>
+            </div>
+        </div>
+
+        <!-- [나의 한글 섹션] -->
+        <div id="my-korean-section" class="view-section fade-in hidden bg-white">
+            <span class="page-number">08</span>
+            <div class="section-dashboard-header absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <div class="pointer-events-auto cursor-pointer" onclick="goHangulDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                </div>
+                <nav class="my-korean-unit-bar pointer-events-auto" id="my-korean-tabs" aria-label="한글 해득 단원 선택"></nav>
+                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+
+                    <!-- 필수 ID를 오른쪽 상단 배너 내부에서 숨겨진 형태로 유지 -->
+                    <span id="my-korean-profile-name" class="hidden" style="display: none;"></span>
+                    <span id="my-korean-profile-level" class="hidden" style="display: none;"></span>
+                    <span id="current-learning-step-label" class="hidden" style="display: none;"></span>
+                </div>
+            </div>
+
+            <!-- 좌상단 제목 블록과 프로필 텍스트는 보이지 않도록 숨김 처리 -->
+            <div class="hidden" style="display: none;">
+                <button type="button" onclick="goHangulDashboard()">
+                    <span>에이두 한글 시리즈</span>
+                    <span>나의 한글</span>
+                </button>
+            </div>
+
+            <div class="stitched p-8 bg-white mt-28">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-[#46b3a5] text-white rounded-2xl flex items-center justify-center text-2xl font-bold">📚</div>
+                        <h3 id="my-korean-unit-title" class="text-3xl font-black text-[#2c3e50]">모음</h3>
+                    </div>
+                </div>
+                <div class="max-h-[500px] overflow-y-auto pr-2 space-y-4" id="my-korean-list"></div>
+            </div>
+        </div>
+
+        <!-- [배움 시작 활동 섹션] -->
+        <div id="learning-start-section" class="view-section fade-in hidden bg-white">
+            <svg class="hangul-pose-definitions" aria-hidden="true" focusable="false">
+                <defs>
+                    <symbol id="pose-baby-giyeok" viewBox="0 0 220 220">
+                        <g class="pose-character-art">
+                            <path d="M118 88 Q139 78 158 92 Q166 112 157 141 Q139 151 116 139 Q108 113 118 88Z" fill="#62cbbb" stroke="#286f68" stroke-width="5" stroke-linejoin="round"/>
+                            <path d="M118 101 Q94 90 76 87 Q66 85 60 84" fill="none" stroke="#286f68" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M118 101 Q94 90 76 87 Q66 85 60 84" fill="none" stroke="#ffe3d1" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M120 115 Q96 107 77 104 Q67 103 63 104" fill="none" stroke="#286f68" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M120 115 Q96 107 77 104 Q67 103 63 104" fill="none" stroke="#ffe3d1" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="55" cy="83" r="8" fill="#ffe3d1" stroke="#286f68" stroke-width="4"/>
+                            <circle cx="58" cy="104" r="8" fill="#ffe3d1" stroke="#286f68" stroke-width="4"/>
+                            <path d="M127 137 Q120 153 118 174" fill="none" stroke="#286f68" stroke-width="20" stroke-linecap="round"/>
+                            <path d="M127 137 Q120 153 118 174" fill="none" stroke="#79d9cb" stroke-width="12" stroke-linecap="round"/>
+                            <path d="M148 139 Q154 155 149 174" fill="none" stroke="#286f68" stroke-width="20" stroke-linecap="round"/>
+                            <path d="M148 139 Q154 155 149 174" fill="none" stroke="#79d9cb" stroke-width="12" stroke-linecap="round"/>
+                            <path d="M107 183 Q119 175 131 182" fill="none" stroke="#286f68" stroke-width="13" stroke-linecap="round"/>
+                            <path d="M138 183 Q150 175 161 183" fill="none" stroke="#286f68" stroke-width="13" stroke-linecap="round"/>
+                            <rect x="124" y="75" width="25" height="22" rx="10" fill="#ffe3d1" stroke="#286f68" stroke-width="4"/>
+                            <circle cx="140" cy="53" r="35" fill="#ffe3d1" stroke="#286f68" stroke-width="5"/>
+                            <path d="M107 53 Q108 22 139 17 Q169 20 176 48 Q157 36 139 38 Q123 39 107 53Z" fill="#67483f"/>
+                            <path d="M123 55 Q128 51 133 55 M149 55 Q154 51 159 55" fill="none" stroke="#2c3e50" stroke-width="4" stroke-linecap="round"/>
+                            <circle cx="117" cy="66" r="5" fill="#f5a3a3" opacity=".7"/>
+                            <circle cx="165" cy="66" r="5" fill="#f5a3a3" opacity=".7"/>
+                            <path d="M132 68 Q141 77 151 68" fill="none" stroke="#b95f55" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M122 96 Q137 105 154 96" fill="none" stroke="#dffbf5" stroke-width="5" stroke-linecap="round"/>
+                        </g>
+                    </symbol>
+                    <symbol id="pose-mom-ah" viewBox="0 0 220 220">
+                        <g class="pose-character-art">
+                            <path d="M91 78 Q112 69 134 79 Q145 112 139 151 Q112 162 84 151 Q79 112 91 78Z" fill="#ff9d76" stroke="#9b4b2e" stroke-width="5" stroke-linejoin="round"/>
+                            <path d="M91 91 Q77 105 74 132" fill="none" stroke="#9b4b2e" stroke-width="19" stroke-linecap="round"/>
+                            <path d="M91 91 Q77 105 74 132" fill="none" stroke="#ffe3d3" stroke-width="11" stroke-linecap="round"/>
+                            <circle cx="73" cy="137" r="8" fill="#ffe3d3" stroke="#9b4b2e" stroke-width="4"/>
+                            <path d="M133 91 Q149 97 163 101 Q174 104 183 104" fill="none" stroke="#9b4b2e" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M133 91 Q149 97 163 101 Q174 104 183 104" fill="none" stroke="#ffe3d3" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="190" cy="104" r="8" fill="#ffe3d3" stroke="#9b4b2e" stroke-width="4"/>
+                            <path d="M99 149 Q96 167 94 184" fill="none" stroke="#9b4b2e" stroke-width="20" stroke-linecap="round"/>
+                            <path d="M99 149 Q96 167 94 184" fill="none" stroke="#ffe3d3" stroke-width="11" stroke-linecap="round"/>
+                            <path d="M126 150 Q129 168 130 184" fill="none" stroke="#9b4b2e" stroke-width="20" stroke-linecap="round"/>
+                            <path d="M126 150 Q129 168 130 184" fill="none" stroke="#ffe3d3" stroke-width="11" stroke-linecap="round"/>
+                            <path d="M82 196 Q94 187 107 195 M118 195 Q130 187 143 196" fill="none" stroke="#744437" stroke-width="12" stroke-linecap="round"/>
+                            <rect x="101" y="62" width="23" height="23" rx="10" fill="#ffe3d3" stroke="#9b4b2e" stroke-width="4"/>
+                            <circle cx="112" cy="42" r="34" fill="#ffe3d3" stroke="#9b4b2e" stroke-width="5"/>
+                            <path d="M79 46 Q74 14 105 7 Q139 4 147 34 Q147 55 137 66 Q139 42 128 28 Q111 38 88 31 Q82 39 79 46Z" fill="#744437"/>
+                            <path d="M95 44 Q100 40 105 44 M119 44 Q124 40 129 44" fill="none" stroke="#2c3e50" stroke-width="4" stroke-linecap="round"/>
+                            <circle cx="88" cy="55" r="5" fill="#f5a3a3" opacity=".7"/>
+                            <circle cx="136" cy="55" r="5" fill="#f5a3a3" opacity=".7"/>
+                            <path d="M103 57 Q112 66 122 57" fill="none" stroke="#b95f55" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M92 91 Q112 101 134 91" fill="none" stroke="#ffe8dc" stroke-width="5" stroke-linecap="round"/>
+                        </g>
+                    </symbol>
+                </defs>
+            </svg>
+            <div class="flex items-start justify-between mb-8">
+                <div>
+                    <div class="text-3xl font-black text-[#2c3e50]">배움 시작: 모음과 자음</div>
+                    <p class="text-lg text-gray-500 mt-1">이해하기 1 → 이해하기 2 순서로 진행해요.</p>
+                </div>
+                <button type="button" id="tts-btn" class="btn-outline px-4 py-2 text-2xl" onclick="playLearningStartTTS()" title="설명 듣기">🔊</button>
+            </div>
+
+            <div id="understanding-1-pane" class="learning-pane p-8 mb-8">
+                <div class="aiedu-badge mb-4">이해하기 1</div>
+                <h4 class="text-2xl font-bold text-[#2c3e50] mb-6">엄마는 모음, 아기는 자음</h4>
+                <div class="learning-start-reference-card bg-white rounded-3xl shadow-sm">
+                    <div class="learning-start-reference-wrap">
+                        <img src="baby_giyeok.webp?v=20260714-mom-baby" width="1448" height="1086" alt="두 팔을 앞으로 뻗고 앉은 자음 아기와 오른팔을 옆으로 뻗고 선 모음 엄마, 아래에 ㄱ과 ㅏ가 표시된 그림" class="learning-start-reference-image">
+                        <button type="button" class="learning-start-image-hotspot baby" onclick="speakTextKo('자음')" aria-label="자음 아기와 ㄱ 소리 듣기" title="자음 듣기"></button>
+                        <button type="button" class="learning-start-image-hotspot mom" onclick="speakTextKo('모음')" aria-label="모음 엄마와 ㅏ 소리 듣기" title="모음 듣기"></button>
+                    </div>
+                </div>
+                <p class="text-center text-gray-500 mt-6 text-lg">그림과 글자를 비교해서 모음(엄마), 자음(아기)을 찾아봐요.</p>
+            </div>
+
+            <div id="understanding-2-pane" class="learning-pane p-8 mb-8 hidden">
+                <div class="aiedu-badge mb-4">이해하기 2</div>
+                <h4 class="text-2xl font-bold text-[#2c3e50] mb-4">엄마는 모음, 아기는 자음</h4>
+                <p class="text-sm text-gray-500 mb-6">아기 자음과 엄마 모음이 만나 글자가 되는 모습을 살펴봐요. 파란 자음이나 노란 모음을 터치하면 소리가 나요.</p>
+                <div class="cv-animation-board">
+                    <div class="cv-demo-row">
+                        <button type="button" class="cv-character cv-baby" onclick="speakTextKo('자음 기역')" aria-label="자음 기역 소리 듣기">
+                            <span class="cv-reference-character cv-reference-baby" role="img" aria-label="두 팔을 앞으로 뻗고 앉은 자음 아기"></span>
+                            <span class="cv-role-label">자음 아기</span>
+                        </button>
+                        <div class="cv-symbol">+</div>
+                        <button type="button" class="cv-character cv-mom" onclick="speakTextKo('모음 아')" aria-label="모음 아 소리 듣기">
+                            <span class="cv-reference-character cv-reference-mom" role="img" aria-label="오른팔을 옆으로 뻗고 서 있는 모음 엄마"></span>
+                            <span class="cv-role-label">모음 엄마</span>
+                        </button>
+                        <div class="cv-symbol">=</div>
+                        <button type="button" class="cv-result-card" onclick="speakChar('가')" aria-label="가 소리 듣기">
+                            <span class="cv-result-letter">가</span>
+                            <span class="cv-result-label">글자 완성</span>
+                        </button>
+                    </div>
+                    <div class="cv-merge-caption">자음 ㄱ이 모음 ㅏ를 만나면 “가”가 돼요.</div>
+                    <div class="cv-syllable-strip" role="group" aria-label="자음과 모음으로 만들어진 글자">
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('머')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㅁ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅓ</span>
+                        </button>
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('바')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㅂ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅏ</span>
+                        </button>
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('나')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㄴ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅏ</span>
+                        </button>
+                        <button type="button" class="cv-syllable-card" onclick="speakChar('라')">
+                            <span class="syllable-consonant" onclick="event.stopPropagation(); selectConsonants()">ㄹ</span><span class="syllable-vowel" onclick="event.stopPropagation(); selectVowels()">ㅏ</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-8">
+                <button type="button" class="btn-outline" onclick="closeLearningStartActivity()">나의 한글로 돌아가기</button>
+                <div class="flex items-center gap-4">
+                    <button type="button" id="learning-next-btn" class="btn-primary bg-[#ff9d76] shadow-[#ff9d7633]" onclick="goToUnderstandingStep(2)">이해하기 2로 이동</button>
+                    <button type="button" id="learning-complete-btn" class="btn-primary opacity-50 cursor-not-allowed" onclick="completeLearningStartActivity()" disabled>완료하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- [배움 상세 활동 섹션] -->
+        <div id="learning-detail-section" class="view-section fade-in hidden bg-white">
+            <div class="flex items-start justify-between mb-8">
+                <div>
+                    <div id="learning-detail-title" class="text-3xl font-black text-[#2c3e50]">배움 1: 모음의 시작</div>
+                    <div id="learning-detail-subtitle" class="text-lg text-gray-500 mt-1">배움 활동을 순서대로 진행해요.</div>
+                </div>
+            </div>
+            <div id="learning-detail-content" class="space-y-4 pr-1"></div>
+            <div id="learning-detail-nav" class="flex justify-between items-center mt-10">
+                <button type="button" class="btn-outline" onclick="closeLearningDetailActivity()">나의 한글로 돌아가기</button>
+                <div class="flex items-center gap-4">
+                    <button type="button" id="learning-detail-next-btn" class="btn-primary" onclick="goToNextLearningDetailSection()">다음으로</button>
+                    <button type="button" id="learning-detail-complete-btn" class="btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden" onclick="completeLearningDetailActivity()">완료하기</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- [글자 쓰기 연습 섹션] -->
+        <div id="letter-writing-section" class="view-section fade-in hidden bg-white">
+            <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
+                <button type="button" class="activity-logo-button pointer-events-auto" onclick="goHangulDashboard()" aria-label="에이두 한글로 돌아가기">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo">
+                </button>
+                <div class="writing-mode-quick-card pointer-events-auto">
+                    <div class="writing-mode-buttons" id="letter-top-categories">
+                        <button type="button" data-category="letter" class="letter-top-btn nav-tab active">글자 연습</button>
+                        <button type="button" data-category="word" class="letter-top-btn nav-tab">낱말 연습</button>
+                        <button type="button" data-category="sentence" class="letter-top-btn nav-tab">문장 연습</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="learning-pane p-8 min-h-[600px]">
+                <div id="letter-practice-panel">
+                    <div class="letter-practice-kind-tabs" role="tablist" aria-label="글자 연습 종류">
+                        <button type="button" class="nav-tab active" data-letter-kind="consonant">자음</button>
+                        <button type="button" class="nav-tab" data-letter-kind="vowel">모음</button>
+                        <button type="button" class="nav-tab" data-letter-kind="practice-word">낱말</button>
+                    </div>
+                    <div class="letter-practice-selector-grid">
+                        <div class="korean-embed-card letter-practice-selector-card" data-letter-kind-panel="consonant">
+                            <div class="letter-practice-selector-title">자음</div>
+                            <div id="letter-consonants" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div class="korean-embed-card letter-practice-selector-card hidden" data-letter-kind-panel="vowel">
+                            <div class="letter-practice-selector-title">모음</div>
+                            <div id="letter-vowels" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div class="korean-embed-card letter-practice-selector-card letter-practice-word-card hidden" data-letter-kind-panel="practice-word">
+                            <div class="letter-practice-selector-heading">
+                                <div class="letter-practice-selector-title">낱말</div>
+                                <span id="letter-word-count" class="letter-word-count">0개</span>
+                            </div>
+                            <label class="sr-only" for="letter-word-filter">연습할 낱말 찾기</label>
+                            <input id="letter-word-filter" class="letter-word-filter" type="search" placeholder="낱말 찾기" autocomplete="off">
+                            <div id="letter-words" class="letter-word-button-list flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="trace-canvas-wrap">
+                        <div class="trace-canvas-title">✍️ 획순 따라쓰기</div>
+                        <canvas id="letter-writing-canvas" class="trace-writing-canvas" data-guide="ㄱ"></canvas>
+                        <div class="trace-canvas-help">주황색 번호와 화살표 순서대로 천천히 따라 써요.</div>
+                        <div id="letter-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 mt-8">
+                        <button type="button" id="letter-play-sound" class="btn-primary bg-[#46b3a5] text-white">🔊 소리 듣기</button>
+                        <button type="button" id="letter-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
+                        <button type="button" id="letter-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
+                    </div>
+                </div>
+
+                <div id="letter-word-panel" class="hidden">
+                    <div class="korean-embed-card p-6 mb-6">
+                        <div class="embedded-practice-toolbar">
+                            <div class="font-black text-[#2c3e50]">낱말 예시</div>
+                            <div id="letter-word-level-tabs" class="practice-level-tabs" role="group" aria-label="낱말 난이도 선택"></div>
+                        </div>
+                        <div id="letter-word-examples" class="practice-example-grid word"></div>
+                    </div>
+                    <button type="button" id="letter-generate-word" class="btn-primary w-full py-4 text-xl">✨ 새 낱말 만들기</button>
+                    <div class="trace-canvas-wrap mt-8">
+                        <div class="trace-canvas-title">✍️ 낱말 따라쓰기</div>
+                        <p id="letter-word-output" class="embedded-practice-output word"></p>
+                        <canvas id="letter-word-writing-canvas" class="trace-writing-canvas embedded-writing-canvas" data-guide="나무"></canvas>
+                        <div class="trace-canvas-help">예시를 고르면 난이도에 맞게 쓰기판이 바뀌어요.</div>
+                        <div id="letter-word-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-8">
+                        <button type="button" id="letter-word-play-sound" class="btn-primary bg-[#46b3a5] text-white">🔊 소리 듣기</button>
+                        <button type="button" id="letter-word-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
+                        <button type="button" id="letter-word-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
+                    </div>
+                </div>
+
+                <div id="letter-sentence-panel" class="hidden">
+                    <div class="korean-embed-card p-6 mb-6">
+                        <div class="embedded-practice-toolbar">
+                            <div class="font-black text-[#2c3e50]">문장 예시</div>
+                            <div id="letter-sentence-level-tabs" class="practice-level-tabs" role="group" aria-label="문장 난이도 선택"></div>
+                        </div>
+                        <div id="letter-sentence-examples" class="practice-example-grid sentence"></div>
+                    </div>
+                    <button type="button" id="letter-generate-sentence" class="btn-primary w-full py-4 text-xl bg-[#9b59b6] shadow-[#9b59b633]">✨ 새 문장 만들기</button>
+                    <div class="trace-canvas-wrap mt-8">
+                        <div class="trace-canvas-title">✍️ 문장 따라쓰기</div>
+                        <p id="letter-sentence-output" class="embedded-practice-output sentence"></p>
+                        <canvas id="letter-sentence-writing-canvas" class="trace-writing-canvas embedded-writing-canvas sentence-writing-canvas" data-guide="나는학교에가요"></canvas>
+                        <div class="trace-canvas-help">문장 전체를 한 칸 안에 천천히 따라 써요.</div>
+                        <div id="letter-sentence-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-8">
+                        <button type="button" id="letter-sentence-play-sound" class="btn-primary bg-[#46b3a5] text-white">🔊 소리 듣기</button>
+                        <button type="button" id="letter-sentence-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
+                        <button type="button" id="letter-sentence-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [읽기 연습 섹션: 에이두 한글 카드 이전] -->
+        <div id="reading-practice-section" class="view-section fade-in hidden bg-white">
+            <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
+                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="한글 해득 대시보드로 돌아가기">
+                    <span aria-hidden="true">←</span>
+                    <span>한글 해득</span>
+                </button>
+                <button type="button" id="reading-slow-toggle" class="reading-slow-toggle pointer-events-auto" onclick="toggleReadingSlowMode()" aria-pressed="false">
+                    <span aria-hidden="true">🐢</span>
+                    <span>느리게 읽기</span>
+                </button>
+            </div>
+            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-8 overflow-y-auto custom-scrollbar">
+                <div class="w-full text-center mb-8">
+                    <div class="aiedu-badge bg-indigo-500 mb-4">읽기 연습</div>
+                    <h2 class="text-5xl font-black text-[#2c3e50] mb-3">에이두 한글 카드</h2>
+                    <p class="text-xl text-gray-500 font-bold">카드를 클릭하면 읽어줍니다. 느리게 읽기를 켜면 한 글자씩 강조해요.</p>
+                </div>
+                <div id="reading-category-tabs" class="reading-category-tabs" role="tablist" aria-label="읽기 연습 주제">
+                    <button type="button" class="nav-tab active" data-reading-category="greeting">인삿말</button>
+                    <button type="button" class="nav-tab" data-reading-category="animal">동물</button>
+                    <button type="button" class="nav-tab" data-reading-category="food">음식</button>
+                </div>
+                <div id="reading-cards-grid" class="reading-cards-grid w-full" aria-live="polite"></div>
+            </div>
+        </div>
+
+        <!-- [낱말 쓰기 퀴즈 섹션] -->
+        <div id="word-writing-quiz-section" class="view-section fade-in hidden bg-white">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <div class="text-3xl font-black text-[#2c3e50]">낱말 쓰기 연습</div>
+                    <p class="text-lg text-gray-500 mt-1">배움 단원 쓰기와 같은 획순 안내로 낱말을 따라 써요.</p>
+                </div>
+                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">한글 해득으로</button>
+            </div>
+
+            <div class="learning-pane p-8 min-h-[600px]">
+                <div id="word-write-mode-tabs" class="flex gap-4 mb-8">
+                    <button type="button" data-mode="syllable" class="word-mode-tab nav-tab active">받침 없는 낱말 연습</button>
+                </div>
+
+                <div id="word-write-submodes" class="flex justify-center gap-4 mb-8"></div>
+
+                <div id="word-write-name-input-area" class="hidden mb-8 p-6 bg-gray-50 rounded-2xl">
+                    <div class="flex gap-4">
+                        <input id="word-write-name-input" type="text" placeholder="연습할 문장을 입력하세요" class="premium-input bg-white">
+                        <button type="button" id="word-write-start-name" class="btn-primary whitespace-nowrap">연습 시작</button>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 mt-5 mb-3">
+                        <div class="font-black text-[#2c3e50]">추천 문장</div>
+                        <button id="word-write-random-sentences" type="button" class="btn-outline px-4 py-2 text-sm">추천 다시 보기</button>
+                    </div>
+                    <div id="word-write-sentence-recommendations" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+
+                <div id="word-write-display" class="flex items-center justify-center gap-6 mb-8 py-6">
+                    <p id="word-write-current" class="text-7xl font-black text-[#46b3a5]"></p>
+                    <button type="button" id="word-write-tts" class="btn-outline p-4 text-2xl">🔊</button>
+                </div>
+
+                <div class="trace-canvas-wrap">
+                    <div class="trace-canvas-title">✍️ 획순 따라쓰기</div>
+                    <canvas id="word-write-canvas" class="trace-writing-canvas" data-guide="가"></canvas>
+                    <div class="trace-canvas-help">주황색 번호와 화살표 순서대로 한 획씩 따라 써요.</div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mt-8">
+                    <button type="button" id="word-write-clear" class="btn-primary bg-[#e74c3c] shadow-[#e74c3c33]">다시 쓰기</button>
+                    <button type="button" id="word-write-grade" class="btn-primary bg-[#3498db] shadow-[#3498db33]">다 썼어요</button>
+                    <button type="button" id="word-write-next" class="btn-primary">다음 문제</button>
+                </div>
+                <div id="word-write-feedback" class="text-center text-3xl font-bold mt-6 h-10"></div>
+            </div>
+        </div>
+
+        <!-- [낱말 듣기 퀴즈 섹션] -->
+        <div id="word-listening-quiz-section" class="view-section fade-in hidden bg-white">
+            <div class="flex items-center justify-between mb-8">
+                <div class="text-3xl font-black text-[#2c3e50]">낱말 듣기 퀴즈</div>
+                <button type="button" class="btn-outline py-2 px-6" onclick="closeEmbeddedActivity()">한글 해득으로</button>
+            </div>
+
+            <div class="learning-pane p-8 min-h-[600px]">
+                <div id="listening-setup">
+                    <div class="text-2xl font-bold text-[#2c3e50] mb-6">1. 학습 단계 선택하기</div>
+                    <div id="listening-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+
+                    <div class="flex items-center gap-4 mb-10 p-6 bg-gray-50 rounded-2xl">
+                        <span class="text-xl font-bold text-[#2c3e50]">문제 수:</span>
+                        <input type="number" id="listening-question-count" value="10" min="1" max="20" class="premium-input bg-white w-32 text-center">
+                        <span class="text-xl">문제</span>
+                    </div>
+
+                    <button type="button" id="listening-start" class="btn-primary w-full py-5 text-2xl bg-[#ff9d76] shadow-[#ff9d7633]">퀴즈 시작!</button>
+                </div>
+
+                <div id="listening-quiz" class="hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <p id="listening-progress" class="text-xl font-bold text-gray-400"></p>
+                        <button type="button" id="listening-back" class="btn-outline px-6 py-2 text-base">돌아가기</button>
+                    </div>
+                    <p id="listening-msg" class="text-3xl font-black text-center mb-10 text-[#2c3e50]">소리를 듣고 정답을 골라봐!</p>
+
+                    <div class="flex justify-center mb-10">
+                        <button type="button" id="listening-play" class="btn-primary py-6 px-12 text-2xl flex items-center gap-3">
+                            <span>▶</span> 소리 다시 듣기
+                        </button>
+                    </div>
+
+                    <div id="listening-choices" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </div>
+
+                <div id="listening-result" class="hidden text-center py-10">
+                    <div class="text-6xl mb-8">🎉</div>
+                    <div class="text-5xl font-black text-[#46b3a5] mb-4">참 잘했어요!</div>
+                    <p class="text-2xl text-gray-500 mb-2">총 <span id="listening-total" class="font-bold"></span>문제 중 <span id="listening-score" class="text-[#ff9d76] font-bold"></span>개 정답</p>
+                    <p id="listening-final-msg" class="text-2xl font-bold text-[#2c3e50] mt-6"></p>
+                    <button type="button" id="listening-restart" class="btn-primary mt-12 px-10">다시 연습하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- [한글 게임 섹션] -->
+        <div id="hangul-game-section" class="view-section fade-in hidden bg-white">
+            <div class="activity-dashboard-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-start z-50 pointer-events-none">
+                <button type="button" class="activity-back-chip pointer-events-auto" onclick="goHangulDashboard()" aria-label="한글 해득 대시보드로 돌아가기">
+                    <span aria-hidden="true">←</span>
+                    <span>한글 해득</span>
+                </button>
+                <div class="activity-profile-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfoDrawer();}" role="button" tabindex="0" aria-label="내 정보 열기">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
+                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
+                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
+                            <div class="activity-exp-track w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
+                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
+                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
+                        </div>
+                    </div>
+                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                </div>
+            </div>
+
+            <div class="learning-pane hangul-game-shell p-8">
+                <div class="korean-embed-card hangul-game-intro p-6 bg-gradient-to-br from-purple-50 to-indigo-50">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <div class="text-3xl font-black text-[#2c3e50]">🎮 한글 소리 찾기</div>
+                            <p class="text-lg text-gray-500 mt-1">소리를 듣고 맞는 글자나 낱말을 골라요.</p>
+                        </div>
+                        <div class="hangul-game-mode-control">
+                            <div class="flex gap-3">
+                                <button type="button" id="hangul-game-letter-mode" class="btn-outline active px-5 py-2">글자</button>
+                                <button type="button" id="hangul-game-word-mode" class="btn-outline px-5 py-2">낱말</button>
+                            </div>
+                            <span>정답 1개당 경험치 +5%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hangul-game-stats">
+                    <div class="korean-embed-card hangul-game-stat text-center">
+                        <div class="text-sm font-black text-gray-400">정답</div>
+                        <div id="hangul-game-score" class="text-4xl font-black text-[#46b3a5]">0</div>
+                    </div>
+                    <div class="korean-embed-card hangul-game-stat text-center">
+                        <div class="text-sm font-black text-gray-400">연속 정답</div>
+                        <div id="hangul-game-streak" class="text-4xl font-black text-[#f97316]">0</div>
+                    </div>
+                    <div class="korean-embed-card hangul-game-stat text-center">
+                        <div class="text-sm font-black text-gray-400">문제</div>
+                        <div id="hangul-game-round" class="text-4xl font-black text-[#2c3e50]">1/10</div>
+                    </div>
+                </div>
+
+                <div class="hangul-game-play-grid">
+                    <div class="korean-embed-card hangul-game-listen-panel text-center">
+                        <div class="hangul-game-state-pills" aria-hidden="true">
+                            <span id="hangul-game-visual-pill" class="active">글자</span>
+                            <span class="sound">소리</span>
+                        </div>
+                        <div id="hangul-game-target" class="sr-only" aria-live="polite">?</div>
+                        <button type="button" id="hangul-game-sound" class="hangul-game-sound-button btn-primary bg-[#46b3a5] shadow-[#46b3a533]">🔊 <span>소리 듣기</span></button>
+                        <div id="hangul-game-feedback" class="hangul-game-feedback text-2xl font-black text-gray-500" aria-live="polite">소리를 듣고 알맞은 카드를 골라요.</div>
+                    </div>
+                    <div class="hangul-game-choice-panel">
+                        <div id="hangul-game-choices" class="hangul-game-choices" aria-label="정답 선택"></div>
+                        <button type="button" id="hangul-game-restart" class="btn-primary px-10 hidden">다시 하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 활동 이동 로딩 오버레이 -->
+    <div id="activity-loading-overlay" class="activity-loading-overlay" role="status" aria-live="polite" aria-busy="false" aria-hidden="true">
+        <div class="activity-loading-card">
+            <div class="activity-loading-spinner"></div>
+            <div class="activity-loading-text">로딩중...</div>
+        </div>
+    </div>
+
+    <!-- 결과 모달 -->
+    <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1300] p-4">
+        <div class="modal-content text-center max-w-5xl w-full scale-in">
+            <div id="modal-icon" class="text-5xl mb-6">📢</div>
+            <h2 id="modal-message" class="text-2xl font-bold text-[#2c3e50] mb-10 leading-relaxed">메시지</h2>
+            <button type="button" id="modal-confirm-btn" class="btn-primary w-full text-xl py-4" onclick="handleModalConfirm()">확인했습니다</button>
+        </div>
+    </div>
+
+    <!-- 에이두 크래프트 상점 -->
+    <div id="aiedu-craft-shop-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden justify-center items-center z-[1200] p-3 sm:p-5" role="dialog" aria-modal="true" aria-labelledby="aiedu-craft-shop-title">
+        <div class="aiedu-craft-modal-content scale-in">
+            <button type="button" id="close-aiedu-craft-shop-btn" class="aiedu-craft-close-btn" aria-label="에이두 크래프트 상점 닫기">&times;</button>
+            <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3 mb-4 pr-10">
+                <div>
+                    <h2 id="aiedu-craft-shop-title" class="text-2xl font-black text-[#2c3e50]">⛏️ 에이두 크래프트 상점</h2>
+                    <p class="text-sm text-gray-500 font-bold mt-1">고정 상품은 즉시 거래하고, 다른 아이템은 경매장과 랜덤마켓에서 사고팔 수 있어요.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="refresh-aiedu-craft-inventory-btn" class="btn-outline px-3 py-2 text-sm whitespace-nowrap">인벤토리 새로고침</button>
+                    <button type="button" id="refresh-aiedu-craft-auction-btn" class="btn-outline px-3 py-2 text-sm whitespace-nowrap">경매장 새로고침</button>
+                    <button type="button" id="refresh-aiedu-craft-random-btn" class="btn-primary px-3 py-2 text-sm whitespace-nowrap">랜덤마켓 새로고침 (500점)</button>
+                </div>
+            </div>
+            <div id="aiedu-craft-shop-status" class="aiedu-craft-status" aria-live="polite">크래프트 서버에 접속한 적이 있는 계정만 조회할 수 있어요.</div>
+            <div class="aiedu-craft-shop-layout">
+                <section class="aiedu-craft-panel">
+                    <h3 class="font-black text-lg text-[#2c3e50] mb-2">판매 목록</h3>
+                    <p class="text-xs text-gray-500 mb-3">석탄·철·금·다이아는 즉시 판매하고, 나머지는 가격을 정해 경매장에 등록해요.</p>
+                    <div id="aiedu-craft-inventory-list" class="space-y-2 max-h-[34rem] overflow-y-auto text-sm custom-scrollbar">
+                        <p class="text-gray-400 text-center py-8">아직 조회하지 않았어요.</p>
+                    </div>
+                </section>
+                <section class="aiedu-craft-panel space-y-4">
+                    <div>
+                        <h3 class="font-black text-lg text-[#2c3e50] mb-2">구매 목록</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="aiedu-craft-product stone"><p class="font-black">⚫ 석탄</p><p class="text-xs text-gray-500">1개 100점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="coal"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="coal" data-name="석탄" data-price="100">구매</button></div></div>
+                            <div class="aiedu-craft-product iron"><p class="font-black">🔩 철</p><p class="text-xs text-gray-500">1개 200점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="iron_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="iron_ingot" data-name="철" data-price="200">구매</button></div></div>
+                            <div class="aiedu-craft-product gold"><p class="font-black">🟡 금</p><p class="text-xs text-gray-500">1개 300점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="gold_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="gold_ingot" data-name="금" data-price="300">구매</button></div></div>
+                            <div class="aiedu-craft-product diamond"><p class="font-black">💎 다이아몬드</p><p class="text-xs text-gray-500">1개 1,000점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="diamond"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="diamond" data-name="다이아몬드" data-price="1000">구매</button></div></div>
+                        </div>
+                    </div>
+                    <div class="border-t pt-4">
+                        <h3 class="font-black text-lg text-[#2c3e50] mb-2">명령 구매</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="aiedu-craft-command home"><div><p class="font-black">🏠 집으로 이동하기</p><p class="text-xs text-gray-500">x:-204 y:46 z:-162 · 500점</p></div><button type="button" id="buy-aiedu-craft-home-tp-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div>
+                            <div class="aiedu-craft-command house"><div><p class="font-black">🛏️ 집 소환기</p><p class="text-xs text-gray-500">나무 집 생성기 · 1,000점</p></div><button type="button" id="buy-aiedu-craft-housewand-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div>
+                            <div class="aiedu-craft-command teleport"><p class="font-black">🧭 친구에게 이동하기 · 500점</p><select id="aiedu-craft-target-player-select" class="w-full border rounded-xl px-3 py-2 text-sm bg-white"><option value="">온라인 명단 로딩 전</option></select><button type="button" id="buy-aiedu-craft-target-tp-btn" class="btn-primary px-3 py-2 text-xs w-full">선택한 친구에게 이동</button></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="aiedu-craft-panel space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-2"><h3 class="font-black text-lg text-[#2c3e50]">경매장</h3><button type="button" id="refresh-aiedu-craft-auction-inline-btn" class="btn-outline px-2 py-1 text-xs">새로고침</button></div>
+                        <div id="aiedu-craft-auction-list" class="space-y-2 max-h-72 overflow-y-auto text-sm custom-scrollbar"><p class="text-gray-400 text-center py-6">경매장을 불러오는 중이에요.</p></div>
+                    </div>
+                    <div class="border-t pt-4">
+                        <div class="flex items-center justify-between gap-2 mb-2"><h3 class="font-black text-lg text-[#2c3e50]">랜덤마켓</h3><span id="aiedu-craft-random-timer" class="text-xs text-gray-500"></span></div>
+                        <p class="text-xs text-gray-500 mb-2">30분마다 무료 갱신 · 수동 갱신 500점 · 개당 100점 · 최대 10개</p>
+                        <div id="aiedu-craft-random-list" class="space-y-2 max-h-72 overflow-y-auto text-sm custom-scrollbar"><p class="text-gray-400 text-center py-6">상점을 열면 자동으로 불러와요.</p></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- [5. 교사용 학급 관리 모달] -->
+    <div id="class-management-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-2 md:p-4">
+        <div class="modal-content max-w-7xl w-full max-h-[94vh] overflow-hidden">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-5">
+                <div><h3 class="text-3xl font-black text-[#2c3e50]">🏫 우리 학급 관리</h3><p class="text-sm text-gray-500 font-bold mt-1">학생을 선택해 포인트, 진도와 실시간 활동을 관리합니다.</p></div>
+                <div class="flex gap-2"><button type="button" class="btn-primary px-4 py-2" onclick="openTeacherStudentAddPanel()">학생 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="closeClassManagement()">닫기</button></div>
+            </div>
+
+            <div id="teacher-student-add-panel" class="hidden bg-emerald-50 border border-emerald-100 p-4 rounded-3xl mb-5">
+                <div class="flex flex-col md:flex-row gap-3">
+                    <input type="text" id="teacher-student-search-input" placeholder="추가할 학생 이름을 정확히 입력하세요" class="premium-input bg-white flex-1" autocomplete="off" onkeydown="if(event.key==='Enter') searchStudentsForTeacher()">
+                    <button type="button" class="btn-primary px-6" onclick="searchStudentsForTeacher()">이름 검색</button>
+                    <button type="button" class="btn-outline px-4" onclick="closeTeacherStudentAddPanel()">취소</button>
+                </div>
+                <div id="teacher-student-search-results" class="mt-3 space-y-2" aria-live="polite"><p class="text-sm text-gray-500 font-bold">이름을 검색한 뒤 학생을 선택하세요.</p></div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-5" role="tablist" aria-label="학급 관리 항목">
+                <button type="button" class="class-management-tab-btn btn-primary px-4 py-2" data-class-tab="points" onclick="selectClassManagementTab('points')">💰 포인트</button>
+                <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="multipliers" onclick="selectClassManagementTab('multipliers')">⚙️ 경험치 배율</button>
+                <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="progress" onclick="selectClassManagementTab('progress')">📚 단계별 진도</button>
+                <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="activity" onclick="selectClassManagementTab('activity')">📡 학생 현황</button>
+            </div>
+
+            <div class="max-h-[68vh] overflow-y-auto custom-scrollbar pr-1">
+                <section id="class-management-points-panel" class="class-management-panel">
+                    <div class="stitched p-3 overflow-x-auto">
+                        <table class="w-full min-w-[940px] text-left">
+                            <thead class="border-b-2 border-gray-100"><tr><th class="py-3 px-3">학생 이름</th><th class="py-3 px-3">로그인 번호</th><th class="py-3 px-3">돈</th><th class="py-3 px-3">주의토큰</th><th class="py-3 px-3">지급·차감 항목</th></tr></thead>
+                            <tbody id="student-list-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="class-management-progress-panel" class="class-management-panel hidden">
+                    <div class="stitched p-3 overflow-x-auto">
+                        <table class="w-full min-w-[980px] text-left">
+                            <thead class="border-b-2 border-gray-100"><tr><th class="py-3 px-3">학생</th><th class="py-3 px-3">학습 기록</th><th class="py-3 px-3">단계 활성화</th></tr></thead>
+                            <tbody id="student-progress-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="class-management-activity-panel" class="class-management-panel hidden">
+                    <div id="student-activity-list" class="space-y-4"><p class="text-center py-10 text-gray-400 font-bold">학생 활동을 불러오는 중입니다.</p></div>
+                </section>
+
+                <section id="class-management-multipliers-panel" class="class-management-panel hidden">
+                    <div class="bg-gray-50 rounded-3xl p-5">
+                        <h4 class="text-xl font-black text-[#2c3e50] mb-3">⚙️ 단계별 경험치 배율 설정</h4>
+                        <p class="text-sm text-gray-500 mb-4">학생이 해금한 가장 높은 단계에 따라 각 단계 활동으로 받는 경험치 비율을 설정합니다.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 text-xs font-bold text-gray-700 mb-4">
+                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 1단계 해금</div><label class="block">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m1-s1" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
+                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 2단계 해금</div><label class="block mb-1">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m2-s1" value="0.5" class="w-20 px-2 py-1 border rounded"></label><label class="block">2단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m2-s2" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
+                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 3단계 해금</div><label class="block mb-1">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m3-s1" value="0.33" class="w-20 px-2 py-1 border rounded"></label><label class="block mb-1">2단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m3-s2" value="0.66" class="w-20 px-2 py-1 border rounded"></label><label class="block">3단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m3-s3" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
+                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 4단계 해금</div><label class="block mb-1">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s1" value="0.25" class="w-20 px-2 py-1 border rounded"></label><label class="block mb-1">2단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s2" value="0.5" class="w-20 px-2 py-1 border rounded"></label><label class="block mb-1">3단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s3" value="0.75" class="w-20 px-2 py-1 border rounded"></label><label class="block">4단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s4" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
+                        </div>
+                        <div class="flex justify-end"><button type="button" class="btn-primary px-6 py-2" onclick="saveKoreanExperienceMultipliers()">배율 저장하기</button></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- [에이두 한글 내장 클라우드 섹션] -->
+        <div id="aiedue-korean-cloud-section" class="view-section korean-cloud-overlay hidden p-6 md:p-8 overflow-y-auto">
+            <div class="korean-cloud-shell w-full max-w-6xl mx-auto">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <div><p class="text-sm font-black text-amber-500">☁️ AIEDUE HANGUL CLOUD</p><h2 id="korean-cloud-title" class="text-3xl md:text-4xl font-black text-[#2c3e50] mt-1">에이두 한글 클라우드</h2><p id="korean-cloud-desc" class="text-gray-500 font-bold mt-2">에이두 한글 안에서 PDF를 업로드하고 열고 배부해요.</p></div>
+                    <div class="flex flex-wrap gap-2"><button type="button" class="btn-primary px-5 py-3" onclick="triggerAiedueKoreanCloudUpload('mine')">PDF 업로드</button><button type="button" class="btn-outline px-5 py-3" onclick="closeAiedueKoreanCloud()">대시보드</button></div>
+                </div>
+                <input id="korean-cloud-upload-input" type="file" accept="application/pdf" class="hidden"><input id="korean-cloud-student-upload-input" type="file" accept="application/pdf" class="hidden">
+                <div id="korean-cloud-teacher-panel" class="hidden space-y-8">
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        <section class="xl:col-span-2 bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><div class="mb-4"><h3 class="text-2xl font-black text-[#2c3e50]">내 파일</h3><p class="text-sm text-gray-500 font-bold">업로드 / 열기 / 배부 / 수정 / 삭제</p></div><div id="korean-cloud-teacher-my-files" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div><div id="korean-cloud-teacher-my-empty" class="hidden text-center py-12 rounded-3xl bg-amber-50/50 border-2 border-dashed border-amber-100 text-gray-500 font-bold">아직 업로드한 PDF가 없어요.</div></section>
+                        <section class="bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><h3 class="text-2xl font-black text-[#2c3e50] mb-3">우리 반 학생</h3><input id="korean-cloud-student-search" type="text" class="premium-input py-3 text-sm mb-4" placeholder="학생 이름/코드 검색"><div id="korean-cloud-student-list" class="grid grid-cols-1 gap-3 max-h-[460px] overflow-y-auto custom-scrollbar pr-1"></div></section>
+                    </div>
+                    <section id="korean-cloud-student-files-panel" class="hidden bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4"><div><h3 id="korean-cloud-selected-student-name" class="text-2xl font-black text-[#2c3e50]">학생 파일</h3><p class="text-sm text-gray-500 font-bold">학생 클라우드에 직접 올리거나 파일을 열어 확인할 수 있어요.</p></div><button type="button" class="btn-primary px-4 py-2" onclick="triggerAiedueKoreanCloudUpload('student')">학생에게 PDF 업로드</button></div><div id="korean-cloud-student-files" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div><div id="korean-cloud-student-empty" class="hidden text-center py-10 rounded-3xl bg-gray-50 text-gray-400 font-bold">학생 파일이 없어요.</div></section>
+                </div>
+                <div id="korean-cloud-student-panel" class="hidden bg-white rounded-[32px] p-5 md:p-6 shadow-sm border border-amber-100"><div class="mb-4"><h3 class="text-2xl font-black text-[#2c3e50]">내 파일</h3><p class="text-sm text-gray-500 font-bold">선생님이 배부한 PDF를 열고 수정할 수 있어요.</p></div><div id="korean-cloud-student-my-files" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div><div id="korean-cloud-student-my-empty" class="hidden text-center py-12 rounded-3xl bg-amber-50/50 border-2 border-dashed border-amber-100 text-gray-500 font-bold">아직 파일이 없어요.</div></div>
+            </div>
+        </div>
+
+    <div id="student-signup-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
+        <div class="modal-content max-w-md w-full">
+            <h3 class="text-3xl font-black text-center text-[#2c3e50] mb-8">✨ 새 친구 등록하기</h3>
+            <div class="mb-8">
+                <label for="student-signup-name" class="block text-sm font-bold text-gray-400 mb-2 ml-2">학생 이름</label>
+                <input type="text" id="student-signup-name" placeholder="이름을 입력하세요" class="premium-input" autocomplete="name">
+            </div>
+            <div class="flex gap-4">
+                <button type="button" class="btn-primary flex-1 py-4" onclick="createStudentAccount()">등록하기</button>
+                <button type="button" class="btn-outline flex-1 py-4" onclick="closeStudentSignupModal()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 선생님 회원가입 모달 -->
+    <div id="teacher-signup-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
+        <div class="modal-content max-w-md w-full">
+            <h3 class="text-3xl font-black text-center text-[#2c3e50] mb-8">👩‍🏫 선생님 가입하기</h3>
+            <div class="space-y-6 mb-10">
+                <div>
+                    <label for="teacher-signup-name" class="block text-sm font-bold text-gray-400 mb-2 ml-2">이름</label>
+                    <input type="text" id="teacher-signup-name" placeholder="성함을 입력하세요" class="premium-input" autocomplete="name">
+                </div>
+                <div>
+                    <label for="teacher-signup-email" class="block text-sm font-bold text-gray-400 mb-2 ml-2">이메일 주소</label>
+                    <input type="email" id="teacher-signup-email" placeholder="email@example.com" class="premium-input" autocomplete="email">
+                </div>
+                <div>
+                    <label for="teacher-signup-pw" class="block text-sm font-bold text-gray-400 mb-2 ml-2">비밀번호</label>
+                    <input type="password" id="teacher-signup-pw" placeholder="6자 이상 입력하세요" class="premium-input" autocomplete="new-password">
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button type="button" class="btn-primary flex-1 py-4" onclick="createTeacherAccount()">가입하기</button>
+                <button type="button" class="btn-outline flex-1 py-4" onclick="closeTeacherSignupModal()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <nav id="aiedue-rpg-hud" class="aiedue-rpg-hud hidden" aria-label="에이두 한글 하단 메뉴">
+        <section class="rpg-profile-banner" aria-label="내 정보">
+            <button type="button" class="rpg-profile-portrait" onclick="openIconModal()" aria-label="프로필 아이콘 변경">
+                <span class="sync-user-icon" aria-hidden="true">🐻</span>
+                <span class="rpg-level-badge">LV.<span class="sync-aedu-level">1</span></span>
+            </button>
+            <button type="button" class="rpg-profile-copy" onclick="toggleInfoDrawer()" aria-label="내 정보 열기">
+                <strong class="sync-account-name">이름 없음</strong>
+                <span class="rpg-role-label sync-user-role">학생</span>
+                <span class="rpg-wallet-line"><span>⭐ <span class="sync-coins">0</span></span><span>⚠️ <span class="sync-warning-tokens">0</span></span></span>
+            </button>
+            <div class="rpg-profile-tools" aria-label="계정 메뉴">
+                <button type="button" class="rpg-tool-button" onclick="goBackFromRpgHud()" aria-label="뒤로 가기"><span aria-hidden="true">←</span><span>뒤로</span></button>
+                <button type="button" id="rpg-student-shop-btn" class="rpg-tool-button rpg-student-shop-button" onclick="openAiedueKoreanShop()" aria-label="상점"><span aria-hidden="true">🛒</span><span>상점</span></button>
+                <button type="button" id="rpg-teacher-manage-btn" class="rpg-tool-button hidden" onclick="openClassManagement()" aria-label="학급 관리"><span aria-hidden="true">🏫</span><span>학급</span></button>
+                <button type="button" class="rpg-tool-button rpg-logout-button" onclick="handleLogout()" aria-label="로그아웃"><span aria-hidden="true">🚪</span><span>나가기</span></button>
+                <button type="button" class="rpg-tool-button rpg-expand-button" onclick="toggleRpgHudActions(this)" aria-label="하단 메뉴 펼치기" aria-expanded="false" aria-controls="rpg-action-tray"><span aria-hidden="true">→</span><span>메뉴</span></button>
+            </div>
+            <div class="rpg-experience-track" role="progressbar" aria-label="현재 레벨 경험치" aria-valuemin="0" aria-valuemax="100">
+                <div class="rpg-experience-fill sync-aedu-exp-bar" style="width: 0%;"></div>
+            </div>
+            <span class="rpg-experience-label"><span class="sync-aedu-exp-percent">0%</span> EXP</span>
+        </section>
+
+        <div id="rpg-action-tray" class="rpg-action-tray" aria-label="주요 메뉴" aria-hidden="true" inert>
+            <button type="button" class="rpg-action-button rpg-cloud-button" onclick="openAiedueKoreanCloud()">
+                <span class="rpg-action-icon" aria-hidden="true">☁️</span>
+                <span>에이두 클라우드</span>
+            </button>
+            <button type="button" class="rpg-action-button rpg-shop-button" onclick="openAiedueKoreanShop()">
+                <span class="rpg-action-icon" aria-hidden="true">🛒</span>
+                <span>상점</span>
+            </button>
+            <button type="button" class="rpg-action-button rpg-settings-button" onclick="openSettingsModal()">
+                <span class="rpg-action-icon" aria-hidden="true">⚙️</span>
+                <span>환경 설정</span>
+            </button>
+            <button type="button" class="rpg-action-button rpg-bank-button" onclick="openDictationBankModal()">
+                <span class="rpg-action-icon" aria-hidden="true">🏦</span>
+                <span>국어 은행</span>
+            </button>
+        </div>
+
+    </nav>
+
+    <script type="module" src="app.js?v=20260722-teacher-craft-click-v19"></script>
+
+    <!-- [설정 팝업] -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
+        <div class="bg-white rounded-[40px] p-10 w-full max-w-md shadow-2xl scale-in">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">⚙️</div>
+                <h3 class="text-2xl font-black text-[#2c3e50]">설정</h3>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <label for="settings-name-input" class="block text-sm font-bold text-gray-400 mb-2 ml-1">이름 변경</label>
+                    <input type="text" id="settings-name-input" class="premium-input bg-gray-50 border-transparent focus:bg-white" placeholder="이름을 입력하세요" autocomplete="name">
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                        <span id="settings-sound-icon" class="text-2xl">🔊</span>
+                        <span class="font-bold text-[#2c3e50]">소리 설정</span>
+                    </div>
+                    <button type="button" id="settings-mute-toggle" class="btn-outline px-4 py-1.5 text-sm" onclick="toggleMute()">끄기</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mt-10">
+                <button type="button" class="btn-outline py-4" onclick="closeSettingsModal()">취소</button>
+                <button type="button" class="btn-primary py-4" onclick="saveSettings()">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [아이콘 선택 팝업] -->
+    <div id="icon-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
+        <div class="bg-white rounded-[40px] p-10 w-full max-w-lg shadow-2xl scale-in">
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-black text-[#2c3e50]">아이콘 선택</h3>
+                <p class="text-gray-400 font-medium">마음에 드는 아이콘을 골라보세요!</p>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto p-2 custom-scrollbar" id="icon-grid">
+                <!-- Emojis will be populated here -->
+            </div>
+
+            <button type="button" class="btn-outline w-full py-4 mt-8" onclick="closeIconModal()">닫기</button>
+        </div>
+    </div>
+
+
+    <!-- 에이두 한글 PDF 뷰어/편집기 -->
+    <div id="korean-cloud-pdf-editor-modal" class="fixed inset-0 bg-slate-900 z-[1250] hidden flex flex-col">
+        <div class="flex flex-wrap items-center gap-2 p-3 bg-slate-800 text-white border-b border-slate-700"><button type="button" class="korean-cloud-tool active px-3 py-2 rounded-lg bg-slate-700" data-tool="pen" onclick="setAiedueKoreanPdfTool('pen')">연필</button><button type="button" class="korean-cloud-tool px-3 py-2 rounded-lg bg-slate-700" data-tool="text" onclick="setAiedueKoreanPdfTool('text')">텍스트</button><button type="button" class="px-3 py-2 rounded-lg bg-slate-700" onclick="clearAiedueKoreanPdfPage()">현재 쪽 지우기</button><label class="flex items-center gap-2 text-sm text-slate-200">색 <input id="korean-cloud-editor-color" type="color" value="#ef4444" class="w-8 h-8 bg-transparent"></label><label class="flex items-center gap-2 text-sm text-slate-200">굵기 <input id="korean-cloud-editor-width" type="range" min="1" max="18" value="4"></label><div class="ml-auto flex items-center gap-2"><button type="button" class="px-3 py-2 rounded-lg bg-slate-700" onclick="prevAiedueKoreanPdfPage()">◀</button><span id="korean-cloud-page-info" class="font-bold text-sm min-w-[64px] text-center">1 / 1</span><button type="button" class="px-3 py-2 rounded-lg bg-slate-700" onclick="nextAiedueKoreanPdfPage()">▶</button><button id="korean-cloud-pdf-save" type="button" class="px-4 py-2 rounded-lg bg-emerald-600 font-bold" onclick="saveAiedueKoreanPdfEditor()">저장</button><button type="button" class="px-4 py-2 rounded-lg bg-red-600 font-bold" onclick="closeAiedueKoreanPdfEditor()">닫기</button></div></div>
+        <div id="korean-cloud-pdf-area" class="relative flex-1 overflow-auto bg-slate-700 p-4 flex justify-center items-start"><div id="korean-cloud-pdf-loading" class="absolute inset-0 bg-slate-800/80 text-white font-black flex items-center justify-center z-10">PDF를 불러오는 중...</div><div class="relative bg-white shadow-2xl"><canvas id="korean-cloud-pdf-canvas"></canvas><canvas id="korean-cloud-draw-canvas" class="absolute left-0 top-0 touch-none"></canvas></div></div>
+    </div>
+
+</body>
+</html>

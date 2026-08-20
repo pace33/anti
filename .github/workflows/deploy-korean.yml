@@ -1,0 +1,146 @@
+name: Deploy Korean site to aiedue.ddns.net
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-korean-site
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Korean site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+
+      - name: Validate static site structure
+        run: node tools/validate-site.mjs
+
+      - name: Verify modular structure and repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in index.html app.js app.css style.css firebase-config.js; do
+            test -f "$file" || { echo "Missing required file: $file"; exit 1; }
+          done
+          grep -q 'src="app.js' index.html
+          grep -q 'href="app.css' index.html
+          grep -q 'aiedueKoreanDrawings' app.js
+          ! grep -q 'korean-db/db-api' app.js
+          ! grep -q 'localStorage' app.js
+          ! grep -q '<script type="module">' index.html
+          test ! -e school-firestore-adapter.js
+          test ! -d aidu
+          if find . -maxdepth 1 -type f \( -name '*평가문장*' -o -name 'pptx_output*' -o -name 'mattress_comparison.html' \) | grep -q .; then
+            echo 'Private or generated work files must not be committed to the deploy root.'
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy /korean on local domain host
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: [self-hosted, Windows]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Korean sketchbook patch guard
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\tools\verify-korean-sketchbook.ps1
+
+      - name: Sync canonical Pi /korean deployment
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ssh = (Get-Command 'ssh.exe' -ErrorAction Stop).Source
+          $key = 'C:\Users\y5496\.ssh\aiedue_pi_hermes'
+          if (!(Test-Path $key)) { throw "Pi deployment key not found: $key" }
+          $expected = $env:GITHUB_SHA.Substring(0, 7)
+          $remoteCommand = "systemctl --user start aiedue-anti-sync.service && test `"`$(tr -d '\r\n' < /home/aiedue/sites/korean/.anti-sync-commit)`" = '$expected' && tr -d '\r\n' < /home/aiedue/sites/korean/.anti-sync-commit"
+          $output = & $ssh -o BatchMode=yes -o ConnectTimeout=10 -i $key 'aiedue@192.168.219.108' $remoteCommand 2>&1
+          $exitCode = $LASTEXITCODE
+          if ($output) { Write-Host ($output -join "`n") }
+          if ($exitCode -ne 0) { throw "Pi Korean sync failed with exit code $exitCode" }
+          Write-Host "Pi /korean synchronized to $expected"
+
+      - name: Validate and reload Caddy
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $config = 'C:\Users\y5496\aiedue-repo\Caddyfile'
+          if (!(Test-Path $config)) { throw "Caddyfile not found: $config" }
+          $caddy = (Get-Command 'caddy.exe' -ErrorAction Stop).Source
+          function Invoke-CaddyBounded($arguments, $timeoutSeconds, $required) {
+            $process = New-Object System.Diagnostics.Process
+            $process.StartInfo.FileName = $caddy
+            $process.StartInfo.Arguments = (($arguments | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }) -join ' ')
+            $process.StartInfo.UseShellExecute = $false
+            $process.StartInfo.CreateNoWindow = $true
+            $process.StartInfo.RedirectStandardOutput = $true
+            $process.StartInfo.RedirectStandardError = $true
+            [void]$process.Start()
+            $finished = $process.WaitForExit($timeoutSeconds * 1000)
+            if (-not $finished) {
+              $process.Kill()
+              $process.WaitForExit()
+              $message = "caddy $($arguments -join ' ') timed out after ${timeoutSeconds}s"
+              if ($required) { throw $message }
+              Write-Warning "$message; continuing to public smoke test."
+            } else {
+              $process.WaitForExit()
+              $stdout = $process.StandardOutput.ReadToEnd()
+              $stderr = $process.StandardError.ReadToEnd()
+              if ($stdout) { Write-Host $stdout }
+              if ($stderr) { Write-Host $stderr }
+              $exitCode = $process.ExitCode
+              if ($exitCode -ne 0) {
+                throw "caddy $($arguments -join ' ') failed with exit code $exitCode"
+              }
+            }
+            $process.Dispose()
+          }
+
+          Invoke-CaddyBounded @('validate', '--config', $config) 25 $false
+
+          # The canonical /korean files are synchronized on the Pi. Keep the Windows
+          # public-entrypoint Caddy reload best-effort so routing changes are picked up.
+          Invoke-CaddyBounded @('reload', '--config', $config) 20 $false
+
+      - name: Smoke test public /korean site
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+          $base = 'https://aiedue.ddns.net/korean'
+          $html = (Invoke-WebRequest -UseBasicParsing -Uri "$base/?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($html -notmatch 'activity-loading-overlay') { throw 'Public page did not include the loading UI.' }
+          if ($html -notmatch 'src="app.js') { throw 'Public page did not reference app.js.' }
+          if ($html -notmatch 'href="app.css') { throw 'Public page did not reference app.css.' }
+          if ($html -notmatch 'dashboard-warning-tokens-header') { throw 'Public page did not include warning-token header marker.' }
+          if ($html -notmatch 'sync-warning-tokens') { throw 'Public page did not include warning-token sync markers.' }
+
+          $app = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($app -notmatch 'aiedueKoreanDrawingsV2') { throw 'Public app.js did not include protected drawing persistence.' }
+          if ($app -notmatch 'adjustStudentKoreanWallet') { throw 'Public app.js did not include teacher warning-token wallet controls.' }
+          if ($app -notmatch 'warningTokens') { throw 'Public app.js did not include warning-token persistence.' }
+          if ($app -match 'korean-db/db-api') { throw 'Public app.js still references the retired Korean DB mirror.' }
+          if ($app -notmatch 'firebase-firestore\.js') { throw 'Public app.js did not use Firebase Firestore directly.' }
+          if ($app -notmatch 'firebase-storage\.js') { throw 'Public app.js did not use Firebase Storage directly.' }
+          if ($app -match 'from ["'']\.\/korean-data-adapter\.js') { throw 'Public app.js still routes data through the self-hosted adapter.' }
+          Write-Host 'Smoke test passed: modular page, warning tokens, and direct Firebase persistence are reachable.'

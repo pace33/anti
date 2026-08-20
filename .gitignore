@@ -1,0 +1,17 @@
+*.pdf
+*.pptx
+*.py
+.netlify/
+extracted_text.txt
+pdf_pages/
+workshop_pages/
+source_analysis.html
+
+# 배포 루트에 다시 들어오면 안 되는 작업 산출물
+pptx_output*.txt
+out_utf8.txt
+all_slides.txt
+*_평가문장.html
+7단원_*.html
+mattress_comparison.html
+aidu/
