@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260721-lesson27-continuous-hand-v11">
+    <link rel="stylesheet" href="app.css?v=20260820-word-bank-modal-v2">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1548,7 +1548,7 @@
                 <div>
                     <div class="aiedu-badge bg-red-500 mb-2">오늘의 노트 사진</div>
                     <h3 id="word-bank-camera-title">단어 은행 사진 찍기</h3>
-                    <p>카메라 화면에서 바로 찍으면 OCR+AI 분석 후 단어만 저장해요.</p>
+                    <p>화면 가운데에서 사진을 바로 찍고, AI가 단어만 깔끔하게 골라 저장해요.</p>
                 </div>
                 <button type="button" class="word-bank-camera-close" onclick="closeWordBankCameraModal()" aria-label="오늘의 노트 사진 팝업 닫기">×</button>
             </div>
@@ -1564,8 +1564,12 @@
                 <div class="word-bank-camera-side">
                     <div id="word-bank-camera-status" class="word-bank-camera-status">카메라를 준비하고 있어요.</div>
                     <div class="word-bank-camera-fallback">
-                        <div class="text-xs text-gray-400 font-bold mb-2">카메라가 안 될 때만 사진 파일을 선택하세요.</div>
-                        <input id="word-bank-photo-input" type="file" accept="image/*" class="premium-input bg-white text-sm" aria-label="오늘의 노트 사진 파일 선택">
+                        <p>카메라가 자동으로 열리지 않을 때만 사용해요.</p>
+                        <label for="word-bank-photo-input" class="word-bank-file-label">
+                            <span aria-hidden="true">🖼️</span>
+                            사진 파일 선택
+                        </label>
+                        <input id="word-bank-photo-input" type="file" accept="image/*" class="word-bank-file-input" aria-label="오늘의 노트 사진 파일 선택">
                     </div>
                     <div id="word-bank-camera-result" class="word-bank-camera-result hidden"></div>
                     <button type="button" id="word-bank-camera-confirm-btn" class="btn-primary w-full mt-4 bg-red-500 shadow-red-200 hidden" onclick="confirmWordBankCameraResult()">확인</button>
@@ -1575,7 +1579,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260722-teacher-craft-click-v20"></script>
+    <script type="module" src="app.js?v=20260820-word-bank-modal-v2"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

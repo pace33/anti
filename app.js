@@ -6357,7 +6357,7 @@ window.startDictationCamera = async function() {
         document.getElementById('dictation-photo-hint').innerText = '웹사이트 안에서 카메라가 켜졌어요. 화면을 맞춘 뒤 카메라로 촬영을 누르세요.';
     } catch (error) {
         console.warn('dictation camera failed', error);
-        document.getElementById('dictation-photo-hint').innerText = '카메라 권한이 막혔어요. 브라우저 권한을 허용하거나 파일 선택으로 테스트하세요.';
+        document.getElementById('dictation-photo-hint').innerText = '카메라가 자동으로 열리지 않으면 파일 선택으로 이어갈 수 있어요.';
     }
 }
 
@@ -6421,7 +6421,7 @@ window.startWordBankCamera = async function startWordBankCamera() {
     if (!video) return;
     video.classList.remove('hidden');
     if (!navigator.mediaDevices?.getUserMedia) {
-        setWordBankCameraStatus('이 기기에서는 카메라 직접 실행이 어려워요. 아래 사진 파일 선택으로 올려주세요.');
+        setWordBankCameraStatus('카메라가 자동으로 열리지 않으면 아래 사진 파일 선택으로 이어갈 수 있어요.');
         return;
     }
     try {
@@ -6434,10 +6434,10 @@ window.startWordBankCamera = async function startWordBankCamera() {
         video.setAttribute('playsinline', '');
         video.muted = true;
         await video.play();
-        setWordBankCameraStatus('카메라가 켜졌어요. 화면을 맞춘 뒤 오른쪽 위 📷 버튼을 누르세요.');
+        setWordBankCameraStatus('카메라가 켜졌어요. 노트가 잘 보이게 맞춘 뒤 오른쪽 위 📷 버튼을 누르세요.');
     } catch (error) {
         console.warn('word bank camera failed', error);
-        setWordBankCameraStatus('카메라 권한이 막혔어요. 브라우저 권한을 허용하거나 사진 파일을 선택해 주세요.');
+        setWordBankCameraStatus('카메라가 자동으로 열리지 않았어요. 아래 사진 파일 선택으로 오늘의 노트를 올릴 수 있어요.');
     }
 }
 
@@ -6489,12 +6489,13 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         confirm?.classList.add('hidden');
         retry?.classList.add('hidden');
         if (result) { result.classList.add('hidden'); result.innerHTML = ''; }
-        setWordBankCameraStatus('로딩중~\nOCR+AI 분석중~~', true);
+        setWordBankCameraStatus('로딩중~', true);
         const normalized = await normalizeDictationPhotoFile(file, previewDataUrl);
         const dataUrl = normalized.dataUrl || previewDataUrl || await readImageFileAsDataUrl(normalized.file || file);
         const analysisFile = normalized.file || file;
         if (preview && dataUrl) { preview.src = dataUrl; preview.classList.remove('hidden'); }
         if (video) video.classList.add('hidden');
+        setWordBankCameraStatus('OCR+AI 분석중~~', true);
         const [ocrText, aiText] = await Promise.all([runDictationOcr(analysisFile), analyzeDictationImageWithAi(dataUrl)]);
         const combined = ['[OCR]', ocrText, '[AI 사진 분석]', aiText].filter(Boolean).join('\n');
         const aiExtracted = await extractDictationWordsWithAi(combined);

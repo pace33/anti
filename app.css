@@ -6762,86 +6762,108 @@ body {
 
 
 /* 오늘의 노트 사진 단어 은행 팝업 */
+body.modal-open { overflow: hidden; }
 .word-bank-camera-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1200;
-    display: flex;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9000 !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    padding: 24px;
-    background: rgba(15, 23, 42, 0.62);
-    backdrop-filter: blur(10px);
+    padding: clamp(12px, 3vw, 28px);
+    background: rgba(20, 31, 43, 0.56);
+    backdrop-filter: blur(12px);
+    font-family: 'Noto Sans KR', 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 .word-bank-camera-modal.hidden { display: none !important; }
 .word-bank-camera-dialog {
-    width: min(1120px, 96vw);
-    max-height: 94vh;
+    width: min(940px, calc(100vw - 32px));
+    max-height: min(820px, calc(100vh - 32px));
     overflow: hidden;
-    border-radius: 38px;
-    background: #fff;
-    box-shadow: 0 28px 80px rgba(15, 23, 42, .32);
-    border: 6px solid rgba(255, 255, 255, .74);
+    border-radius: 36px;
+    background: linear-gradient(180deg, #fffdfb 0%, #fff 44%, #f8fcfb 100%);
+    box-shadow: 0 34px 90px rgba(15, 23, 42, .34), 0 0 0 1px rgba(255,255,255,.7) inset;
+    border: 4px solid rgba(255, 255, 255, .86);
+    display: flex;
+    flex-direction: column;
 }
 .word-bank-camera-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 18px;
-    padding: 26px 30px 18px;
-    border-bottom: 2px solid #f1f5f9;
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid rgba(226, 232, 240, .9);
 }
 .word-bank-camera-header h3 {
     margin: 0;
     color: #2c3e50;
-    font-size: clamp(1.55rem, 3vw, 2.35rem);
-    font-weight: 1000;
+    font-size: clamp(1.45rem, 2.6vw, 2.05rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
 }
 .word-bank-camera-header p {
     margin: 6px 0 0;
     color: #64748b;
-    font-weight: 800;
+    font-size: .98rem;
+    font-weight: 700;
+    line-height: 1.55;
 }
 .word-bank-camera-close {
     display: grid;
     place-items: center;
-    width: 54px;
-    height: 54px;
+    width: 50px;
+    height: 50px;
     flex: 0 0 auto;
     border: 0;
-    border-radius: 20px;
+    border-radius: 18px;
     background: #f8fafc;
-    color: #94a3b8;
-    font-size: 2.2rem;
-    font-weight: 1000;
+    color: #64748b;
+    font-size: 2rem;
+    font-weight: 900;
     line-height: 1;
     cursor: pointer;
 }
 .word-bank-camera-close:hover { background: #fee2e2; color: #ef4444; }
 .word-bank-camera-body {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(290px, .75fr);
-    gap: 22px;
-    padding: 24px 30px 30px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(260px, .72fr);
+    gap: 20px;
+    padding: 22px 28px 28px;
     overflow-y: auto;
-    max-height: calc(94vh - 122px);
+    max-height: calc(min(820px, 100vh - 32px) - 116px);
 }
 .word-bank-camera-preview-wrap {
     position: relative;
     overflow: hidden;
-    min-height: 560px;
-    border-radius: 30px;
-    background: #0f172a;
-    border: 4px solid #e2e8f0;
+    min-height: 430px;
+    border-radius: 28px;
+    background: radial-gradient(circle at 50% 44%, #334155 0%, #0f172a 68%);
+    border: 3px solid #e2e8f0;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.word-bank-camera-preview-wrap::before {
+    content: '카메라 화면';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: rgba(255,255,255,.62);
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    pointer-events: none;
 }
 #word-bank-camera-video,
 #word-bank-camera-preview {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
-    min-height: 560px;
+    min-height: 430px;
     display: block;
     object-fit: cover;
-    background: #0f172a;
+    background: transparent;
 }
 #word-bank-camera-preview { object-fit: contain; background: #111827; }
 .word-bank-camera-capture {
@@ -6850,11 +6872,12 @@ body {
     right: 16px;
     display: grid;
     place-items: center;
-    width: 72px;
-    height: 72px;
-    border: 5px solid rgba(255, 255, 255, .9);
-    border-radius: 28px;
-    background: linear-gradient(135deg, #ef4444, #fb7185);
+    z-index: 3;
+    width: 68px;
+    height: 68px;
+    border: 5px solid rgba(255, 255, 255, .94);
+    border-radius: 24px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
     color: #fff;
     font-size: 2rem;
     box-shadow: 0 16px 36px rgba(239, 68, 68, .36);
@@ -6862,16 +6885,17 @@ body {
 }
 .word-bank-camera-capture:hover { transform: translateY(-2px) scale(1.03); }
 .word-bank-camera-capture:disabled { cursor: wait; filter: grayscale(.25); opacity: .72; transform: none; }
-.word-bank-camera-side { display: flex; flex-direction: column; min-height: 100%; }
+.word-bank-camera-side { display: flex; flex-direction: column; min-height: 100%; gap: 14px; }
 .word-bank-camera-status {
-    padding: 18px 20px;
-    border-radius: 24px;
-    background: #fff1f2;
-    color: #e11d48;
-    font-size: 1.08rem;
-    font-weight: 1000;
-    line-height: 1.5;
+    padding: 16px 18px;
+    border-radius: 22px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 1.02rem;
+    font-weight: 800;
+    line-height: 1.58;
     white-space: pre-line;
+    box-shadow: inset 0 0 0 1px rgba(251, 146, 60, .2);
 }
 .word-bank-camera-status.is-loading::before {
     content: '';
@@ -6879,21 +6903,55 @@ body {
     width: 18px;
     height: 18px;
     margin-right: 8px;
-    border: 3px solid rgba(225, 29, 72, .23);
-    border-top-color: #e11d48;
+    border: 3px solid rgba(194, 65, 12, .22);
+    border-top-color: #ea580c;
     border-radius: 999px;
     vertical-align: -3px;
     animation: spin .85s linear infinite;
 }
 .word-bank-camera-fallback {
-    margin-top: 16px;
     padding: 16px;
-    border-radius: 24px;
+    border-radius: 22px;
     background: #f8fafc;
-    border: 2px dashed #e2e8f0;
+    border: 2px dashed #dbe7ef;
+}
+.word-bank-camera-fallback p {
+    margin: 0 0 10px;
+    color: #718096;
+    font-size: .86rem;
+    font-weight: 800;
+    line-height: 1.45;
+}
+.word-bank-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+.word-bank-file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 48px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 2px solid #dbe7ef;
+    color: #334155;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .06);
+}
+.word-bank-file-label:hover,
+.word-bank-file-label:focus-within {
+    border-color: #fb923c;
+    color: #c2410c;
 }
 .word-bank-camera-result {
-    margin-top: 16px;
     padding: 18px;
     border-radius: 26px;
     background: #ecfdf5;
@@ -6916,10 +6974,11 @@ body {
     font-weight: 1000;
 }
 @media (max-width: 860px) {
-    .word-bank-camera-modal { padding: 10px; }
-    .word-bank-camera-body { grid-template-columns: 1fr; padding: 18px; }
+    .word-bank-camera-modal { padding: 10px; align-items: center; }
+    .word-bank-camera-dialog { width: min(96vw, 720px); border-radius: 30px; }
+    .word-bank-camera-body { grid-template-columns: 1fr; padding: 18px; gap: 14px; }
     .word-bank-camera-preview-wrap,
     #word-bank-camera-video,
-    #word-bank-camera-preview { min-height: 420px; }
+    #word-bank-camera-preview { min-height: min(46vh, 360px); }
     .word-bank-camera-header { padding: 20px 20px 14px; }
 }
