@@ -68,6 +68,14 @@ assert(!app.includes('from "./korean-data-adapter.js'), 'app.js must not route d
 ].forEach((marker) => assert(!app.includes(marker), `app.js에 제거된 저장 함수가 남아 있습니다: ${marker}`));
 
 assert(index.includes('<small>웹 카메라 화면에서 바로 찍어요</small>'), '사진 촬영 단어 은행 안내 문구가 올바르지 않습니다.');
+assert(index.includes('id="word-bank-camera-modal"'), '오늘의 노트 사진 팝업이 없습니다.');
+assert(index.includes('id="word-bank-camera-capture-btn"') && index.includes('onclick="captureWordBankCameraPhoto()"'), '팝업 카메라 촬영 버튼이 올바르지 않습니다.');
+assert(index.includes('md:grid-cols-3 gap-6 w-full mb-4'), '교과 맞춤쓰기/문해력 하단 카드 3칸 레이아웃이 없습니다.');
+const oldBankLabel = `국어 ${'은'}행`;
+assert(!index.includes(oldBankLabel) && !app.includes(oldBankLabel), '이전 은행 용어가 남아 있습니다.');
+assert(app.includes('openDictationBankCamera = function openDictationBankCamera()') && app.includes('word-bank-camera-modal'), '오늘의 노트 사진이 팝업 카메라를 열지 않습니다.');
+assert(app.includes('로딩중~\\nOCR+AI 분석중~~'), '사진 촬영 로딩 문구가 없습니다.');
+assert(app.includes('사람 이름, 학생 이름, 교사 이름'), '단어 선별 프롬프트에서 이름 제외 규칙이 없습니다.');
 assert(index.includes('class="rpg-profile-portrait" onclick="openIconModal()" aria-label="프로필 아이콘 변경"'), '하단 프로필 아이콘이 아이콘 변경창을 열지 않습니다.');
 assert(index.includes('class="rpg-profile-copy" onclick="toggleInfoDrawer()"'), '하단 프로필 정보 영역이 회원 정보창을 열지 않습니다.');
 

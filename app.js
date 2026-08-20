@@ -210,6 +210,8 @@ let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [] },
 let activeDictationItem = null;
 let activeDictationSession = null;
 let activeDictationCameraStream = null;
+let activeWordBankCameraStream = null;
+let pendingWordBankCameraReward = null;
 let activeDictationPhotoFile = null;
 let activeDictationPhotoDataUrl = '';
 let activeDictationImageAnalysis = '';
@@ -6311,7 +6313,7 @@ function renderMyDictationSection() {
     }).join('') : '<div class="text-center text-gray-400 font-bold py-10 md:col-span-2">아직 미션 기록이 없어요.</div>';
 }
 window.openMyDictationFromDashboard = function() { renderMyDictationSection(); showTopLevelSection('my-dictation-section'); }
-window.openTodayDictationActivity = function() { if (isDictationMissionLocked()) { showModal('교과 맞춤쓰기가 잠겨 있어요. 오늘의 노트 사진을 먼저 찍어 단어 은행을 만들어 주세요.'); openDictationBankCamera(); return; } configureDictationWorkspace(createDictationMissionSession(), { badge: '오늘의 미션', title: '교과 맞춤쓰기' }); }
+window.openTodayDictationActivity = function() { if (isDictationMissionLocked()) { openDictationBankCamera(); return; } configureDictationWorkspace(createDictationMissionSession(), { badge: '오늘의 미션', title: '교과 맞춤쓰기' }); }
 window.openLevelDictationActivity = function() { window.openTodayDictationActivity(); }
 window.openDictationItem = function() { window.openTodayDictationActivity(); }
 window.openAiWordPracticeActivity = function() { window.openDictationPracticeActivity(); }
@@ -6379,16 +6381,195 @@ window.captureDictationCameraPhoto = function() {
     }, 'image/jpeg', DICTATION_PHOTO_JPEG_QUALITY);
 }
 
-window.openDictationBankCamera = function() {
-    configureDictationWorkspace({ kind: 'bank-camera', items: [{ sentence: '오늘의 노트 사진을 찍어 단어 은행을 만들어요.', source: 'bank-camera' }], currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() }, { badge: '오늘의 노트 사진', title: '오늘의 노트 사진', desc: '사진을 찍으면 OCR 단어와 AI 사진 분석 단어를 합친 뒤, AI가 명사만 최종 추출해 단어 은행에 저장해요.' });
-    document.getElementById('dictation-photo-panel-title').innerText = '오늘의 노트 사진';
-    document.getElementById('dictation-bank-save-btn').classList.remove('hidden');
-    document.getElementById('dictation-grade-btn').classList.add('hidden');
-    document.getElementById('dictation-save-btn').classList.add('hidden');
-    document.getElementById('dictation-answer-box').classList.add('hidden');
-    document.getElementById('dictation-camera-panel').classList.remove('hidden');
-    document.getElementById('dictation-session-list').innerHTML = '<div class="bg-red-50 rounded-3xl p-6 text-center font-bold text-gray-600">태블릿은 카메라 화면이 바로 뜹니다. 오늘의 노트 사진을 촬영하거나 파일을 선택하면 OCR 단어 + AI 사진 분석 단어를 먼저 모으고, AI가 명사만 최종 추출해 단어 은행에 저장해요.</div>';
-    setTimeout(() => window.startDictationCamera(), 80);
+function setWordBankCameraStatus(message, isLoading = false) {
+    const status = document.getElementById('word-bank-camera-status');
+    if (!status) return;
+    status.innerText = message;
+    status.classList.toggle('is-loading', Boolean(isLoading));
+}
+
+function stopWordBankCamera() {
+    if (activeWordBankCameraStream) {
+        activeWordBankCameraStream.getTracks().forEach((track) => track.stop());
+        activeWordBankCameraStream = null;
+    }
+    const video = document.getElementById('word-bank-camera-video');
+    if (video) video.srcObject = null;
+}
+
+function resetWordBankCameraModal() {
+    pendingWordBankCameraReward = null;
+    const preview = document.getElementById('word-bank-camera-preview');
+    const video = document.getElementById('word-bank-camera-video');
+    const result = document.getElementById('word-bank-camera-result');
+    const confirm = document.getElementById('word-bank-camera-confirm-btn');
+    const retry = document.getElementById('word-bank-camera-retry-btn');
+    const capture = document.getElementById('word-bank-camera-capture-btn');
+    const input = document.getElementById('word-bank-photo-input');
+    if (preview) { preview.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; preview.classList.add('hidden'); }
+    if (video) video.classList.remove('hidden');
+    if (result) { result.classList.add('hidden'); result.innerHTML = ''; }
+    confirm?.classList.add('hidden');
+    retry?.classList.add('hidden');
+    if (capture) capture.disabled = false;
+    if (input) input.value = '';
+    setWordBankCameraStatus('카메라를 준비하고 있어요. 오른쪽 위 📷 버튼을 누르면 촬영돼요.');
+}
+
+window.startWordBankCamera = async function startWordBankCamera() {
+    const video = document.getElementById('word-bank-camera-video');
+    if (!video) return;
+    video.classList.remove('hidden');
+    if (!navigator.mediaDevices?.getUserMedia) {
+        setWordBankCameraStatus('이 기기에서는 카메라 직접 실행이 어려워요. 아래 사진 파일 선택으로 올려주세요.');
+        return;
+    }
+    try {
+        stopWordBankCamera();
+        activeWordBankCameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280, max: 1920 }, height: { ideal: 960, max: 1440 } },
+            audio: false
+        });
+        video.srcObject = activeWordBankCameraStream;
+        video.setAttribute('playsinline', '');
+        video.muted = true;
+        await video.play();
+        setWordBankCameraStatus('카메라가 켜졌어요. 화면을 맞춘 뒤 오른쪽 위 📷 버튼을 누르세요.');
+    } catch (error) {
+        console.warn('word bank camera failed', error);
+        setWordBankCameraStatus('카메라 권한이 막혔어요. 브라우저 권한을 허용하거나 사진 파일을 선택해 주세요.');
+    }
+}
+
+window.openDictationBankCamera = function openDictationBankCamera() {
+    const modal = document.getElementById('word-bank-camera-modal');
+    if (!modal) {
+        const input = document.getElementById('lesson-photo-input');
+        if (input) { input.value = ''; input.click(); }
+        return;
+    }
+    resetWordBankCameraModal();
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    setTimeout(() => window.startWordBankCamera(), 80);
+}
+
+window.closeWordBankCameraModal = function closeWordBankCameraModal() {
+    stopWordBankCamera();
+    const modal = document.getElementById('word-bank-camera-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('modal-open');
+}
+
+function renderWordBankCameraResult(words, duplicateCount = 0) {
+    const result = document.getElementById('word-bank-camera-result');
+    const confirm = document.getElementById('word-bank-camera-confirm-btn');
+    const retry = document.getElementById('word-bank-camera-retry-btn');
+    if (!result) return;
+    const chips = words.map((word) => `<span>${escapeHtml(word)}</span>`).join('');
+    result.innerHTML = `<h4>AI 2차 선별 완료</h4><p class="mb-3">아래 단어들을 단어 은행에 저장했어요.</p><div class="word-bank-camera-chip-list">${chips}</div>${duplicateCount ? `<p class="mt-3 text-xs text-emerald-700">중복 단어 ${duplicateCount}개는 제외했어요.</p>` : ''}<p class="mt-4 text-sm text-emerald-800">확인을 누르면 팝업을 닫고 포인트를 지급해요.</p>`;
+    result.classList.remove('hidden');
+    confirm?.classList.remove('hidden');
+    retry?.classList.remove('hidden');
+}
+
+async function processWordBankCameraPhoto(file, previewDataUrl = '') {
+    const capture = document.getElementById('word-bank-camera-capture-btn');
+    const preview = document.getElementById('word-bank-camera-preview');
+    const video = document.getElementById('word-bank-camera-video');
+    const confirm = document.getElementById('word-bank-camera-confirm-btn');
+    const retry = document.getElementById('word-bank-camera-retry-btn');
+    const result = document.getElementById('word-bank-camera-result');
+    try {
+        if (capture) capture.disabled = true;
+        confirm?.classList.add('hidden');
+        retry?.classList.add('hidden');
+        if (result) { result.classList.add('hidden'); result.innerHTML = ''; }
+        setWordBankCameraStatus('로딩중~\nOCR+AI 분석중~~', true);
+        const normalized = await normalizeDictationPhotoFile(file, previewDataUrl);
+        const dataUrl = normalized.dataUrl || previewDataUrl || await readImageFileAsDataUrl(normalized.file || file);
+        const analysisFile = normalized.file || file;
+        if (preview && dataUrl) { preview.src = dataUrl; preview.classList.remove('hidden'); }
+        if (video) video.classList.add('hidden');
+        const [ocrText, aiText] = await Promise.all([runDictationOcr(analysisFile), analyzeDictationImageWithAi(dataUrl)]);
+        const combined = ['[OCR]', ocrText, '[AI 사진 분석]', aiText].filter(Boolean).join('\n');
+        const aiExtracted = await extractDictationWordsWithAi(combined);
+        const candidateWords = Array.from(new Set((aiExtracted.words || []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)));
+        const existing = new Set(dictationPortfolio.koreanBank?.words || []);
+        const newWords = candidateWords.filter((word) => !existing.has(word));
+        const duplicateCount = candidateWords.length - newWords.length;
+        if (!candidateWords.length) throw new Error('사진에서 저장할 단어를 찾지 못했어요. 글자가 잘 보이게 다시 찍어주세요.');
+        if (!newWords.length) throw new Error(`AI가 고른 단어 ${candidateWords.length}개가 이미 단어 은행에 있어요. 다른 노트를 찍어주세요.`);
+        mergeKoreanBank({ words: newWords });
+        dictationPortfolio.captures = [{
+            source: 'today-note-photo',
+            ocrText,
+            aiAnalysis: aiText,
+            words: candidateWords,
+            newWords,
+            skippedDuplicateWords: duplicateCount,
+            photo: dataUrl,
+            savedAt: new Date().toISOString()
+        }, ...(dictationPortfolio.captures || [])].slice(0, 20);
+        dictationPortfolio.dictationLocked = false;
+        await persistDictationData();
+        updateDictationDashboardPreview();
+        pendingWordBankCameraReward = { ready: true };
+        setWordBankCameraStatus('AI 2차 선별이 끝났어요!');
+        renderWordBankCameraResult(newWords, duplicateCount);
+    } catch (error) {
+        console.error('word bank camera photo failed', error);
+        setWordBankCameraStatus(error.message || '사진 분석에 실패했어요. 다시 찍어주세요.');
+        retry?.classList.remove('hidden');
+    } finally {
+        if (capture) capture.disabled = false;
+    }
+}
+
+window.captureWordBankCameraPhoto = function captureWordBankCameraPhoto() {
+    const video = document.getElementById('word-bank-camera-video');
+    const canvas = document.getElementById('word-bank-camera-canvas');
+    if (!video || !canvas || !video.videoWidth) {
+        setWordBankCameraStatus('카메라 화면이 아직 준비되지 않았어요. 잠시 후 다시 눌러주세요.');
+        return;
+    }
+    const size = getDictationPhotoSize(video.videoWidth, video.videoHeight);
+    canvas.width = size.width;
+    canvas.height = size.height;
+    canvas.getContext('2d').drawImage(video, 0, 0, size.width, size.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', DICTATION_PHOTO_JPEG_QUALITY);
+    canvas.toBlob((blob) => {
+        if (!blob) return;
+        const file = new File([blob], `word-bank-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        processWordBankCameraPhoto(file, dataUrl);
+    }, 'image/jpeg', DICTATION_PHOTO_JPEG_QUALITY);
+}
+
+window.retryWordBankCamera = function retryWordBankCamera() {
+    resetWordBankCameraModal();
+    window.startWordBankCamera();
+}
+
+window.confirmWordBankCameraResult = async function confirmWordBankCameraResult() {
+    const confirm = document.getElementById('word-bank-camera-confirm-btn');
+    if (confirm) confirm.disabled = true;
+    try {
+        if (pendingWordBankCameraReward?.ready) {
+            setWordBankCameraStatus('포인트 지급중~', true);
+            await awardLessonPhotoPoints();
+            pendingWordBankCameraReward = null;
+        }
+        window.closeWordBankCameraModal();
+    } catch (error) {
+        console.error('lesson photo reward failed', error);
+        setWordBankCameraStatus('단어는 저장됐지만 포인트 지급 확인에 실패했어요. 잠시 후 다시 확인을 눌러주세요.');
+    } finally {
+        if (confirm) confirm.disabled = false;
+    }
 }
 
 async function runDictationOcr(file) {
@@ -6451,13 +6632,14 @@ async function extractDictationWordsWithAi(text) {
 - OCR로 읽은 글자
 - AI가 사진을 보고 분석한 글자/사물/학습 주제어
 
-이 후보 중에서 초등 국어 단어 은행에 넣을 한국어 명사(단어)만 최종 추출하세요.
+이 후보 중에서 초등 단어 은행에 넣을 한국어 명사(단어)만 최종 추출하세요.
 반드시 지킬 규칙:
-1. 명사/이름/개념어만 남깁니다.
-2. 동사, 형용사, 문장, 조사, 어미, 감탄사, 설명 문구는 제외합니다.
-3. 한 글자 조각, 숫자만 있는 값, 의미 없는 OCR 조각은 제외합니다.
-4. 중복은 제거합니다.
-5. 이미 단어 은행에 있는 단어는 제외합니다.
+1. 명사/개념어/학습 주제어만 남깁니다.
+2. 사람 이름, 학생 이름, 교사 이름, 기관명처럼 개인정보가 될 수 있는 고유명사는 제외합니다.
+3. 동사, 형용사, 문장, 조사, 어미, 감탄사, 설명 문구는 제외합니다.
+4. 한 글자 조각, 숫자만 있는 값, 의미 없는 OCR 조각은 제외합니다.
+5. 중복은 제거합니다.
+6. 이미 단어 은행에 있는 단어는 제외합니다.
 
 기존 단어 은행: ${existingWords || '없음'}
 화면 후보 단어: ${visibleCandidates}
@@ -6676,6 +6858,11 @@ document.getElementById('dictation-photo-input').addEventListener('change', asyn
     await processDictationPhotoFile(file);
 });
 
+document.getElementById('word-bank-photo-input')?.addEventListener('change', async (event) => {
+    const file = event.target.files?.[0]; if (!file) return;
+    await processWordBankCameraPhoto(file);
+});
+
 window.saveDictationBankPhoto = async function() {
     const text = document.getElementById('dictation-ocr-text').value;
     const aiExtracted = await extractDictationWordsWithAi(text);
@@ -6802,12 +6989,12 @@ window.startNextDictationMission = function() {
 window.completeDictationItem = async function() {
     showModal('미션 채점 결과는 AI 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
 }
-window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">국어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="flex flex-wrap gap-2 max-h-64 overflow-y-auto">${(bank.words || []).map((word) => `<span class="px-3 py-1 rounded-full bg-red-50 text-red-500 font-bold">${escapeHtml(word)}</span>`).join('') || '<span class="text-gray-400">아직 단어가 없어요.</span>'}</div><p class="text-xs text-gray-400 font-bold mt-4">문장 은행은 사용하지 않아요. 교과 맞춤쓰기/문해력 문장은 단어 은행을 바탕으로 미션 시작 때 생성됩니다.</p></div></div>`); }
+window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="flex flex-wrap gap-2 max-h-64 overflow-y-auto">${(bank.words || []).map((word) => `<span class="px-3 py-1 rounded-full bg-red-50 text-red-500 font-bold">${escapeHtml(word)}</span>`).join('') || '<span class="text-gray-400">아직 단어가 없어요.</span>'}</div><p class="text-xs text-gray-400 font-bold mt-4">문장 은행은 사용하지 않아요. 교과 맞춤쓰기/문해력 문장은 단어 은행을 바탕으로 미션 시작 때 생성됩니다.</p></div></div>`); }
 
 window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
 window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button type="button" class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${escapeHtml(text)}</button>`).join(''); }
 async function createSpellingQuestion() {
-    try { const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 10).join(', '); const prompt = `초등학생용 맞춤법/문법 객관식 문제를 JSON으로 만들어줘. 가능하면 다음 국어 단어 은행을 반영해: ${bankWords}. 문항 4개 중 하나만 틀린 문장. 형식 {"options":["","","",""],"answerIndex":0,"reason":""}`; const payload = { contents: [{ role: 'user', parts: [{ text: prompt }]}], generationConfig: { responseMimeType: 'application/json' } }; const res = await fetch('/.netlify/functions/generatePlan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'gemini', payload }) }); if (!res.ok) throw new Error(`generatePlan ${res.status}`); const data = await res.json(); const text = data?.candidates?.[0]?.content?.parts?.[0]?.text; const parsed = JSON.parse(text); if (Array.isArray(parsed.options) && parsed.options.length === 4 && Number.isInteger(parsed.answerIndex)) return parsed; throw new Error('bad spelling quiz'); }
+    try { const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 10).join(', '); const prompt = `초등학생용 맞춤법/문법 객관식 문제를 JSON으로 만들어줘. 가능하면 다음 단어 은행을 반영해: ${bankWords}. 문항 4개 중 하나만 틀린 문장. 형식 {"options":["","","",""],"answerIndex":0,"reason":""}`; const payload = { contents: [{ role: 'user', parts: [{ text: prompt }]}], generationConfig: { responseMimeType: 'application/json' } }; const res = await fetch('/.netlify/functions/generatePlan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'gemini', payload }) }); if (!res.ok) throw new Error(`generatePlan ${res.status}`); const data = await res.json(); const text = data?.candidates?.[0]?.content?.parts?.[0]?.text; const parsed = JSON.parse(text); if (Array.isArray(parsed.options) && parsed.options.length === 4 && Number.isInteger(parsed.answerIndex)) return parsed; throw new Error('bad spelling quiz'); }
     catch { const fallback = spellingFallbackQuestions[spellingFallbackIndex % spellingFallbackQuestions.length]; spellingFallbackIndex += 1; return fallback; }
 }
 window.checkSpellingAnswer = function(index) { if (!activeSpellingQuestion) return; const buttons = document.querySelectorAll('#spelling-quiz-options .btn-choice'); buttons.forEach((button, buttonIndex) => { button.disabled = true; if (buttonIndex === activeSpellingQuestion.answerIndex) button.classList.add('!bg-green-100', '!border-green-400'); }); const isCorrect = index === activeSpellingQuestion.answerIndex; const feedback = document.getElementById('spelling-quiz-feedback'); feedback.classList.remove('hidden'); feedback.innerHTML = `<div class="text-xl font-black ${isCorrect ? 'text-green-600' : 'text-red-500'}">${isCorrect ? '정답이에요!' : '아쉬워요. 초록색 문장이 틀린 문장이에요.'}</div><div class="mt-3 text-2xl font-black text-[#2c3e50]">${escapeHtml(activeSpellingQuestion.options[activeSpellingQuestion.answerIndex])}</div><p class="mt-3 text-gray-600 font-bold">${escapeHtml(activeSpellingQuestion.reason || '틀린 부분을 바르게 고쳐 읽어봐요.')}</p>`; }

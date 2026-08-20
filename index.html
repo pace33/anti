@@ -351,7 +351,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationPracticeActivity()">
                         <div class="text-5xl mb-3">✍️</div>
                         <div class="text-xl font-bold">교과 맞춤쓰기 연습하기</div>
@@ -410,7 +410,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
                     <!-- 한계 돌파 -->
                     <div id="literacy-limit-break-card" class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyLimitBreak()">
                         <div class="text-5xl mb-3">🚀</div>
@@ -1535,13 +1535,47 @@
             </button>
             <button type="button" class="rpg-action-button rpg-bank-button" onclick="openDictationBankModal()">
                 <span class="rpg-action-icon" aria-hidden="true">🏦</span>
-                <span>국어 은행</span>
+                <span>단어 은행</span>
             </button>
         </div>
 
     </nav>
 
-    <script type="module" src="app.js?v=20260722-teacher-craft-click-v19"></script>
+    <!-- [오늘의 노트 사진 단어 은행 팝업] -->
+    <div id="word-bank-camera-modal" class="word-bank-camera-modal hidden" role="dialog" aria-modal="true" aria-labelledby="word-bank-camera-title" aria-hidden="true">
+        <div class="word-bank-camera-dialog scale-in">
+            <div class="word-bank-camera-header">
+                <div>
+                    <div class="aiedu-badge bg-red-500 mb-2">오늘의 노트 사진</div>
+                    <h3 id="word-bank-camera-title">단어 은행 사진 찍기</h3>
+                    <p>카메라 화면에서 바로 찍으면 OCR+AI 분석 후 단어만 저장해요.</p>
+                </div>
+                <button type="button" class="word-bank-camera-close" onclick="closeWordBankCameraModal()" aria-label="오늘의 노트 사진 팝업 닫기">×</button>
+            </div>
+            <div class="word-bank-camera-body">
+                <div class="word-bank-camera-preview-wrap">
+                    <video id="word-bank-camera-video" playsinline autoplay muted></video>
+                    <canvas id="word-bank-camera-canvas" class="hidden"></canvas>
+                    <img id="word-bank-camera-preview" class="hidden" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="촬영한 오늘의 노트 사진 미리보기">
+                    <button type="button" id="word-bank-camera-capture-btn" class="word-bank-camera-capture" onclick="captureWordBankCameraPhoto()" aria-label="사진 촬영하기">
+                        <span aria-hidden="true">📷</span>
+                    </button>
+                </div>
+                <div class="word-bank-camera-side">
+                    <div id="word-bank-camera-status" class="word-bank-camera-status">카메라를 준비하고 있어요.</div>
+                    <div class="word-bank-camera-fallback">
+                        <div class="text-xs text-gray-400 font-bold mb-2">카메라가 안 될 때만 사진 파일을 선택하세요.</div>
+                        <input id="word-bank-photo-input" type="file" accept="image/*" class="premium-input bg-white text-sm" aria-label="오늘의 노트 사진 파일 선택">
+                    </div>
+                    <div id="word-bank-camera-result" class="word-bank-camera-result hidden"></div>
+                    <button type="button" id="word-bank-camera-confirm-btn" class="btn-primary w-full mt-4 bg-red-500 shadow-red-200 hidden" onclick="confirmWordBankCameraResult()">확인</button>
+                    <button type="button" id="word-bank-camera-retry-btn" class="btn-outline w-full mt-3 hidden" onclick="retryWordBankCamera()">다시 찍기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js?v=20260722-teacher-craft-click-v20"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
