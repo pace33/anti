@@ -14094,14 +14094,80 @@ function renderLesson27ReadingPage() {
     return `<section class="lesson27-reading-page" data-lesson27-reading><div class="lesson27-reading-heading"><strong>읽기</strong><span>받침소리를 생각하며, 단어 읽기</span></div><p class="lesson27-reading-tip"><b>TIP</b> 복잡한 받침은 읽는 데 중점을 두고 쓰는 연습을 하지 않습니다.</p><div class="lesson27-reading-grid">${words.map((word) => `<button type="button" class="lesson27-reading-word" onclick="speakTextKo('${word}')" aria-label="${word} 소리 듣기">${wordTiles(word)}</button>`).join('')}</div></section>`;
 }
 
+const LESSON27_CHALLENGE_LEVELS = [
+    { label:'1단계', words:['입','앞','옆','톱','숲','법','잎'] },
+    { label:'2단계', words:['답답','쉽다','깊다','눕다','덮밥'] },
+    { label:'3단계', words:['눕지대','구급차','앞치마'] }
+];
+const lesson27ChallengeState = { level:0, index:0, score:0, completedLevels:new Set(), order:[] };
+
 function renderLesson27ChallengePage() {
-    const levels = [
-        { label:'1단계', words:['입','앞','옆','톱','숲','법','잎'], count:7 },
-        { label:'2단계', words:['답답','쉽다','깊다','덮밥'], count:4 },
-        { label:'3단계', words:['눕지대','구급차','앞치마'], count:3 }
-    ];
-    return `<section class="lesson27-challenge-page" data-lesson27-challenge><div class="lesson27-challenge-heading"><strong>도전하기</strong><span>스스로 정확하게 읽기</span></div><div class="lesson27-challenge-levels">${levels.map((level) => `<div class="lesson27-challenge-level"><span class="lesson27-challenge-label">${level.label}</span><div class="lesson27-challenge-words">${level.words.map((word) => `<button type="button" onclick="speakTextKo('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}</div><span class="lesson27-challenge-count">/ ${level.count}</span></div>`).join('')}</div><div class="lesson27-challenge-tip">단어를 눌러 소리를 듣고, 받침 소리를 생각하며 정확하게 읽어 보세요.</div></section>`;
+    return `<section class="lesson27-challenge-page" data-lesson27-challenge><div class="lesson27-challenge-heading"><strong>도전하기</strong><span>스스로 정확하게 읽기 게임</span></div><div class="lesson27-game-status"><span>⭐ <b data-lesson27-score>0</b>점</span><span data-lesson27-progress>단계를 골라 시작해요.</span></div><div class="lesson27-game-levels">${LESSON27_CHALLENGE_LEVELS.map((level, index) => `<button type="button" data-lesson27-level="${index}" onclick="startLesson27Challenge(${index})" ${index ? 'disabled' : ''}><strong>${level.label}</strong><small>${level.words.length}개 읽기</small><span>${index ? '🔒' : '▶'}</span></button>`).join('')}</div><div class="lesson27-game-arena"><p data-lesson27-game-guide>1단계부터 도전해 보세요.</p><div class="lesson27-game-word" data-lesson27-game-word aria-live="polite">준비!</div><div class="lesson27-game-actions"><button type="button" class="lesson27-game-listen" onclick="listenLesson27ChallengeWord()" disabled>🔊 소리 확인</button><button type="button" class="lesson27-game-read" onclick="completeLesson27ChallengeWord()" disabled>✓ 읽었어요</button></div></div><div class="lesson27-challenge-tip">먼저 혼자 읽고, 어려울 때만 소리 확인을 눌러 보세요.</div></section>`;
 }
+
+window.startLesson27Challenge = function startLesson27Challenge(levelIndex) {
+    if (levelIndex > 0 && !lesson27ChallengeState.completedLevels.has(levelIndex - 1)) return;
+    lesson27ChallengeState.level = levelIndex;
+    lesson27ChallengeState.index = 0;
+    lesson27ChallengeState.order = [...LESSON27_CHALLENGE_LEVELS[levelIndex].words].sort(() => Math.random() - 0.5);
+    updateLesson27ChallengeGame();
+};
+
+function updateLesson27ChallengeGame(message = '') {
+    const page = document.querySelector('[data-lesson27-challenge]');
+    if (!page || !lesson27ChallengeState.order.length) return;
+    const level = LESSON27_CHALLENGE_LEVELS[lesson27ChallengeState.level];
+    const word = lesson27ChallengeState.order[lesson27ChallengeState.index];
+    page.querySelector('[data-lesson27-game-word]').textContent = word;
+    page.querySelector('[data-lesson27-progress]').textContent = `${level.label} ${lesson27ChallengeState.index + 1} / ${level.words.length}`;
+    page.querySelector('[data-lesson27-score]').textContent = lesson27ChallengeState.score;
+    page.querySelector('[data-lesson27-game-guide]').textContent = message || '받침 소리를 생각하며 큰 소리로 읽어 보세요.';
+    page.querySelector('.lesson27-game-listen').disabled = false;
+    page.querySelector('.lesson27-game-read').disabled = false;
+    page.querySelectorAll('[data-lesson27-level]').forEach((button, index) => {
+        button.classList.toggle('is-active', index === lesson27ChallengeState.level);
+        button.classList.toggle('is-complete', lesson27ChallengeState.completedLevels.has(index));
+        button.disabled = index > 0 && !lesson27ChallengeState.completedLevels.has(index - 1);
+        button.querySelector('span').textContent = lesson27ChallengeState.completedLevels.has(index) ? '✓' : button.disabled ? '🔒' : '▶';
+    });
+}
+
+window.listenLesson27ChallengeWord = function listenLesson27ChallengeWord() {
+    const word = lesson27ChallengeState.order[lesson27ChallengeState.index];
+    if (word) speakTextKo(word);
+};
+
+window.completeLesson27ChallengeWord = function completeLesson27ChallengeWord() {
+    if (!lesson27ChallengeState.order.length) return;
+    lesson27ChallengeState.score += 10;
+    lesson27ChallengeState.index += 1;
+    const level = LESSON27_CHALLENGE_LEVELS[lesson27ChallengeState.level];
+    if (lesson27ChallengeState.index < level.words.length) {
+        updateLesson27ChallengeGame('잘했어요! 다음 단어에 도전해요.');
+        return;
+    }
+    lesson27ChallengeState.completedLevels.add(lesson27ChallengeState.level);
+    const nextLevel = lesson27ChallengeState.level + 1;
+    if (nextLevel < LESSON27_CHALLENGE_LEVELS.length) {
+        lesson27ChallengeState.level = nextLevel;
+        lesson27ChallengeState.index = 0;
+        lesson27ChallengeState.order = [...LESSON27_CHALLENGE_LEVELS[nextLevel].words].sort(() => Math.random() - 0.5);
+        updateLesson27ChallengeGame(`${level.label} 성공! ${nextLevel + 1}단계가 열렸어요.`);
+    } else {
+        const page = document.querySelector('[data-lesson27-challenge]');
+        page.querySelector('[data-lesson27-score]').textContent = lesson27ChallengeState.score;
+        page.querySelector('[data-lesson27-progress]').textContent = '모든 단계 완료!';
+        page.querySelector('[data-lesson27-game-word]').textContent = '참 잘했어요!';
+        page.querySelector('[data-lesson27-game-guide]').textContent = 'ㅂ 받침가족 읽기 도전을 모두 완료했어요.';
+        page.querySelectorAll('.lesson27-game-actions button').forEach((button) => { button.disabled = true; });
+        page.querySelectorAll('[data-lesson27-level]').forEach((button, index) => {
+            button.classList.remove('is-active');
+            button.classList.toggle('is-complete', lesson27ChallengeState.completedLevels.has(index));
+            button.disabled = false;
+            button.querySelector('span').textContent = '✓';
+        });
+    }
+};
 
 function syncLesson27FamilyPage() {
     const page = document.querySelector('[data-lesson27-family-page]');
