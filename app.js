@@ -14573,6 +14573,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (isCustomLesson20) totalSections = 5;
     if (isCustomLesson25) totalSections = 4;
     if (isCustomLesson26) totalSections = 9;
+    if (isCustomLesson27) totalSections = 4;
     if (isCustomBatchimLesson) totalSections = batchimPageSequence.length * 5;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
