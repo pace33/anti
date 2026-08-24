@@ -6928,6 +6928,22 @@ body {
 .lesson27-hand-contact {position:absolute;width:18px;height:18px;border:2px solid #ca7a3a;border-radius:50%;opacity:0;transform:translate(-50%,-50%) scale(.45);}
 .lesson27-stage-caption {min-height:30px;padding:6px 8px;border-top:1px solid #e4ebef;background:#f7fafb;color:#566e7e;text-align:center;font-size:.8rem;font-weight:900;}
 .lesson27-family-card.state-hand-moving .lesson27-hand-motion-lines {opacity:1;transform:translateY(6px);}
+.lesson27-writing-page { max-width:1120px; margin:0 auto; padding:26px; background:#fffaf2; border:3px solid #ffd2a8; border-radius:24px; }
+.lesson27-writing-heading { display:flex; align-items:center; gap:14px; color:#a63b13; font-size:28px; font-weight:800; }
+.lesson27-writing-heading strong { padding:10px 18px; border-radius:12px; background:#ff8e3d; color:#fff; font-size:22px; }
+.lesson27-writing-help { margin:18px 0 24px; color:#604d42; font-size:20px; text-align:center; }
+.lesson27-writing-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.lesson27-writing-card { display:grid; grid-template-columns:1fr auto 1.25fr; gap:10px; align-items:center; padding:18px; background:#fff; border:2px solid #ffd7ad; border-radius:16px; }
+.lesson27-writing-sound { min-height:86px; border:2px solid #b9efcf; border-radius:14px; background:#effff5; color:#176b39; font-size:30px; font-weight:800; cursor:pointer; }
+.lesson27-writing-arrow { color:#a0a0a0; font-size:28px; }
+.lesson27-writing-result { display:grid; grid-template-columns:1fr 1fr; min-height:86px; border:2px solid #c5e5f7; border-radius:14px; overflow:hidden; background:#eef8ff; color:#174e68; font-size:34px; font-weight:800; text-align:center; }
+.lesson27-writing-result > span { display:grid; place-items:center; }
+.lesson27-writing-slot { border-left:2px solid #c5e5f7; background:#fff; }
+.lesson27-writing-canvas { width:100%; height:82px; display:block; }
+.lesson27-writing-done { grid-column:1 / -1; justify-self:end; padding:8px 16px; border:0; border-radius:9px; background:#ff8e3d; color:#fff; font-weight:700; cursor:pointer; }
+.lesson27-writing-card.is-complete { border-color:#38b969; background:#f3fff6; }
+.lesson27-writing-feedback { margin-top:20px; padding:14px; border-radius:12px; background:#effaf1; color:#176b39; text-align:center; font-size:18px; font-weight:700; }
+@media (max-width:760px) { .lesson27-writing-page { padding:16px; } .lesson27-writing-grid { grid-template-columns:1fr; } .lesson27-writing-heading { font-size:22px; } }
 .lesson27-family-card.state-final-sound .lesson27-hand-contact {opacity:1;animation:lesson27-contact-pulse .62s ease-out 1;}
 @keyframes lesson27-contact-pulse {0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}45%{opacity:.75;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.35)}}
 .lesson27-card-copy {display:grid;gap:9px;align-content:center;justify-items:stretch;}

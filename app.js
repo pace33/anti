@@ -14046,6 +14046,20 @@ function renderLesson27BatchimFamilyIntro() {
     `;
 }
 
+function renderLesson27BatchimWritingPage() {
+    const items = [{ base:'수', result:'숩' }, { base:'지', result:'집' }, { base:'아', result:'압' }, { base:'저시', result:'저십' }, { base:'무르', result:'무릅' }, { base:'노다', result:'노답' }];
+    return `<section class="lesson27-writing-page" data-lesson27-writing><div class="lesson27-writing-heading"><strong>연습하기</strong><span>들리는 대로 받침쓰기</span></div><p class="lesson27-writing-help">낱말을 듣고 들리는 대로 <b>ㅂ 받침</b>을 써서 글자를 완성해 보세요.</p><div class="lesson27-writing-grid">${items.map((item) => `<article class="lesson27-writing-card" data-lesson27-writing-card data-base="${item.base}" data-result="${item.result}"><button type="button" class="lesson27-writing-sound" onclick="speakTextKo('${item.result}')" aria-label="${item.result} 소리 듣기">🔊 ${item.base}</button><span class="lesson27-writing-arrow" aria-hidden="true">→</span><div class="lesson27-writing-result"><span>${item.base}</span><span class="lesson27-writing-slot"><canvas class="trace-writing-canvas lesson27-writing-canvas" data-guide="ㅂ" data-result="${item.result}" tabindex="0" aria-label="${item.result}의 ㅂ 받침 따라쓰기"></canvas></span></div><button type="button" class="lesson27-writing-done" onclick="completeLesson27Writing(this)">썼어요</button></article>`).join('')}</div><div class="lesson27-writing-feedback" role="status" aria-live="polite">낱말을 듣고 빈칸에 ㅂ 받침을 써 보세요.</div></section>`;
+}
+
+window.completeLesson27Writing = function completeLesson27Writing(button) {
+    const card = button.closest('[data-lesson27-writing-card]');
+    if (!card) return;
+    card.classList.add('is-complete');
+    const feedback = card.closest('[data-lesson27-writing]')?.querySelector('.lesson27-writing-feedback');
+    if (feedback) feedback.textContent = `잘했어요! ${card.dataset.base}에 ㅂ 받침을 넣으면 ${card.dataset.result}이 돼요.`;
+    speakTextKo(`${card.dataset.result}. 잘했어요!`);
+};
+
 function syncLesson27FamilyPage() {
     const page = document.querySelector('[data-lesson27-family-page]');
     if (!page) return;
@@ -14580,6 +14594,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson13WordGame(26);
         } else if (isCustomLesson27 && safeIndex === 0) {
             contentHtml = renderLesson27BatchimFamilyIntro();
+        } else if (isCustomLesson27 && safeIndex === 1) {
+            contentHtml = renderLesson27BatchimWritingPage();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
