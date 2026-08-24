@@ -3891,7 +3891,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     gap: 8px;
     flex-wrap: wrap;
 }
-.sentence-generator-toolbar {
+.practice-generator-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3902,22 +3902,22 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     border-radius: 8px;
     background: #fbf7fd;
 }
-.sentence-generator-toolbar > div:first-child {
+.practice-generator-toolbar > div:first-child {
     display: grid;
     gap: 3px;
 }
-.sentence-generator-toolbar strong {
+.practice-generator-toolbar strong {
     color: #2c3e50;
     font-size: 1.05rem;
     font-weight: 1000;
 }
-.sentence-generator-toolbar span {
+.practice-generator-toolbar span {
     color: #6b7280;
     font-size: .86rem;
     font-weight: 700;
 }
 @media (max-width: 640px) {
-    .sentence-generator-toolbar {
+    .practice-generator-toolbar {
         align-items: flex-start;
         flex-direction: column;
         gap: 10px;

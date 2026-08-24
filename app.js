@@ -8277,9 +8277,9 @@ function initializeLetterWritingActivity() {
 
     const levelLabels = { low: '하', mid: '중', high: '상' };
     const wordExamplesByLevel = {
-        low: ['가나', '나비', '바다', '사과'],
-        mid: ['나무', '오리', '고기', '포도'],
-        high: ['바나나', '피아노', '라디오', '아버지']
+        low: ['가나', '나비', '바다', '사과', '오리', '모기', '고기', '포도', '우유', '기차', '바지', '소리'],
+        mid: ['나무', '토끼', '거미', '다리미', '주머니', '어머니', '아버지', '바구니', '개나리', '도토리', '라디오', '피아노'],
+        high: ['바나나', '피아노', '라디오', '아버지', '카메라', '고구마', '코끼리', '비디오', '기러기', '해바라기', '오디오', '파프리카']
     };
     const sentenceExamplesByLevel = {
         low: ['나는 가요.', '나무가 커요.', '사과를 먹어요.', '물이 맑아요.', '해가 떠요.', '새가 날아요.', '비가 와요.', '꽃이 피어요.', '아기가 웃어요.', '친구가 와요.', '우유를 마셔요.', '공을 차요.'],
@@ -8355,56 +8355,34 @@ function initializeLetterWritingActivity() {
         }
         const current = embeddedPracticeState[kind].text;
         const candidates = list.filter((text) => text !== current);
-        const next = kind === 'sentence' && candidates.length
+        const next = candidates.length
             ? candidates[Math.floor(Math.random() * candidates.length)]
             : (list[0] || '');
         setEmbeddedPractice(kind, next, { speak: false });
     }
 
-    function pickDifferentSentence(level, currentText = '') {
-        const sentences = sentenceExamplesByLevel[level] || sentenceExamplesByLevel.low;
-        const candidates = sentences.filter((sentence) => sentence !== currentText);
-        const pool = candidates.length ? candidates : sentences;
-        return pool[Math.floor(Math.random() * pool.length)] || sentences[0] || '';
+    function pickDifferentPracticeItem(items, currentText = '') {
+        const candidates = items.filter((item) => item !== currentText);
+        const pool = candidates.length ? candidates : items;
+        return pool[Math.floor(Math.random() * pool.length)] || items[0] || '';
     }
 
-    async function simpleGen(prompt, fallback) {
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), 3500);
-        try {
-            const payload = { contents: [{ role: 'user', parts: [{ text: prompt }]}] };
-            const res = await fetch('/.netlify/functions/generatePlan', {
-                method: 'POST',
-                body: JSON.stringify({ type: 'gemini', payload }),
-                signal: controller.signal
-            });
-            if (!res.ok) throw new Error(`generatePlan ${res.status}`);
-            const data = await res.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-            return text || fallback;
-        } catch {
-            return fallback;
-        } finally {
-            window.clearTimeout(timeoutId);
-        }
-    }
-    document.getElementById('letter-generate-word').addEventListener('click', async () => {
+    document.getElementById('letter-generate-word').addEventListener('click', () => {
+        const button = document.getElementById('letter-generate-word');
         const level = embeddedPracticeState.word.level;
         const examples = wordExamplesByLevel[level] || wordExamplesByLevel.low;
-        const prompt = level === 'high'
-            ? '초등학생용 받침 없는 한국어 3~4글자 낱말 하나만 출력해줘. 받침 있는 글자는 쓰지 말고 낱말 하나만 출력해줘.'
-            : level === 'mid'
-                ? '초등학생용 받침 없는 한국어 2~3글자 낱말 하나만 출력해줘. 낱말 하나만 출력해줘.'
-                : '초등학생용 받침 없는 한국어 쉬운 2글자 낱말 하나만 출력해줘. 낱말 하나만 출력해줘.';
-        const fallback = examples[Math.floor(Math.random() * examples.length)];
-        const generated = cleanPracticeWord(await simpleGen(prompt, fallback));
-        setEmbeddedPractice('word', generated && hasNoBatchim(generated) ? generated : fallback);
+        setEmbeddedPractice('word', pickDifferentPracticeItem(examples, embeddedPracticeState.word.text));
+        button.animate(
+            [{ transform: 'scale(1)' }, { transform: 'scale(.985)' }, { transform: 'scale(1)' }],
+            { duration: 220, easing: 'ease-out' }
+        );
     });
     document.getElementById('letter-generate-sentence').addEventListener('click', () => {
         const button = document.getElementById('letter-generate-sentence');
         const level = embeddedPracticeState.sentence.level;
         const previous = embeddedPracticeState.sentence.text;
-        setEmbeddedPractice('sentence', pickDifferentSentence(level, previous));
+        const examples = sentenceExamplesByLevel[level] || sentenceExamplesByLevel.low;
+        setEmbeddedPractice('sentence', pickDifferentPracticeItem(examples, previous));
         button.animate(
             [{ transform: 'scale(1)' }, { transform: 'scale(.985)' }, { transform: 'scale(1)' }],
             { duration: 220, easing: 'ease-out' }

@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260824-sentence-generator-v2">
+    <link rel="stylesheet" href="app.css?v=20260824-word-generator-v1">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1051,19 +1051,19 @@
                 </div>
 
                 <div id="letter-word-panel" class="hidden">
-                    <div class="korean-embed-card p-6 mb-6">
-                        <div class="embedded-practice-toolbar">
-                            <div class="font-black text-[#2c3e50]">낱말 예시</div>
-                            <div id="letter-word-level-tabs" class="practice-level-tabs" role="group" aria-label="낱말 난이도 선택"></div>
+                    <div class="practice-generator-toolbar">
+                        <div>
+                            <strong>새 낱말 연습</strong>
+                            <span>난이도를 고르고 새로운 낱말을 만들어 보세요.</span>
                         </div>
-                        <div id="letter-word-examples" class="practice-example-grid word"></div>
+                        <div id="letter-word-level-tabs" class="practice-level-tabs" role="group" aria-label="낱말 난이도 선택"></div>
                     </div>
                     <button type="button" id="letter-generate-word" class="btn-primary w-full py-4 text-xl">✨ 새 낱말 만들기</button>
                     <div class="trace-canvas-wrap mt-8">
                         <div class="trace-canvas-title">✍️ 낱말 따라쓰기</div>
                         <p id="letter-word-output" class="embedded-practice-output word"></p>
-                        <canvas id="letter-word-writing-canvas" class="trace-writing-canvas embedded-writing-canvas" data-guide="나무"></canvas>
-                        <div class="trace-canvas-help">예시를 고르면 난이도에 맞게 쓰기판이 바뀌어요.</div>
+                        <canvas id="letter-word-writing-canvas" class="trace-writing-canvas embedded-writing-canvas" data-guide="나무" data-trace-hide-label></canvas>
+                        <div class="trace-canvas-help">검은색 낱말을 보고 쓰기판에 천천히 따라 써요.</div>
                         <div id="letter-word-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
                     </div>
                     <div class="grid grid-cols-3 gap-4 mt-8">
@@ -1074,7 +1074,7 @@
                 </div>
 
                 <div id="letter-sentence-panel" class="hidden">
-                    <div class="sentence-generator-toolbar">
+                    <div class="practice-generator-toolbar">
                         <div>
                             <strong>새 문장 연습</strong>
                             <span>난이도를 고르고 새로운 문장을 만들어 보세요.</span>
@@ -1579,7 +1579,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260824-sentence-generator-v2"></script>
+    <script type="module" src="app.js?v=20260824-word-generator-v1"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
