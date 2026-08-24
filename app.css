@@ -268,6 +268,57 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     .rpg-tool-button > span:last-child { display: none; }
 }
 
+/* 태블릿·모바일에서는 HUD 전체를 오른쪽 위에 두어 학습 이동 버튼을 가리지 않는다. */
+@media (max-width: 1024px) {
+    .aiedue-rpg-hud {
+        top: max(12px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        bottom: auto;
+        left: auto;
+        flex-direction: column;
+        align-items: flex-end;
+        max-width: calc(100vw - 24px);
+    }
+    .rpg-action-tray {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        bottom: auto;
+        left: auto;
+        height: 0;
+        flex-wrap: wrap;
+        transform: translateY(-10px) scale(.98);
+        transform-origin: top right;
+    }
+    .aiedue-rpg-hud.actions-open .rpg-action-tray {
+        width: min(560px, calc(100vw - 24px));
+        height: 68px;
+        transform: translateY(0) scale(1);
+    }
+    body.rpg-hud-active .page-number { bottom: 16px; }
+}
+
+@media (max-width: 640px) {
+    .aiedue-rpg-hud {
+        top: max(9px, env(safe-area-inset-top));
+        right: max(9px, env(safe-area-inset-right));
+        left: auto;
+        width: min(430px, calc(100vw - 18px));
+    }
+    .rpg-action-tray {
+        top: calc(100% + 7px);
+        right: 0;
+        bottom: auto;
+        left: auto;
+        width: 0;
+        height: 0;
+    }
+    .aiedue-rpg-hud.actions-open .rpg-action-tray {
+        width: min(340px, 100%);
+        height: 124px;
+    }
+}
+
 .skip-link {
     position: fixed;
     top: 12px;
@@ -595,6 +646,24 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     z-index: 30;
     background: #ffffff;
     padding-top: 12px;
+}
+#learning-detail-next-btn,
+#learning-next-btn {
+    min-width: 172px;
+    min-height: 58px;
+    padding: 16px 36px;
+    font-size: 1.08rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+@media (max-width: 640px) {
+    #learning-detail-next-btn,
+    #learning-next-btn {
+        min-width: 154px;
+        min-height: 60px;
+        padding: 16px 26px;
+        font-size: 1.05rem;
+    }
 }
 .learning-main-card,
 .learning-practice-card {
