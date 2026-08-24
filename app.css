@@ -645,24 +645,46 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     position: relative;
     z-index: 30;
     background: #ffffff;
-    padding-top: 12px;
+    margin-top: 30px !important;
+    padding: 12px 4px 18px;
+    transform: translateY(-14px);
 }
+#learning-detail-nav > .btn-outline,
 #learning-detail-next-btn,
+#learning-detail-complete-btn,
 #learning-next-btn {
-    min-width: 172px;
-    min-height: 58px;
-    padding: 16px 36px;
-    font-size: 1.08rem;
+    min-width: 190px;
+    min-height: 64px;
+    padding: 17px 38px;
+    font-size: 1.12rem;
     font-weight: 900;
     line-height: 1.2;
 }
+#learning-detail-nav > .btn-outline {
+    min-width: 218px;
+}
 @media (max-width: 640px) {
+    #learning-detail-nav {
+        gap: 10px;
+        padding-inline: 0;
+        transform: translateY(-10px);
+    }
+    #learning-detail-nav > .btn-outline,
     #learning-detail-next-btn,
+    #learning-detail-complete-btn,
     #learning-next-btn {
-        min-width: 154px;
+        min-width: 0;
         min-height: 60px;
-        padding: 16px 26px;
-        font-size: 1.05rem;
+        padding: 15px 14px;
+        font-size: 1rem;
+    }
+    #learning-detail-nav > .btn-outline,
+    #learning-detail-nav > div {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    #learning-detail-nav > div > button {
+        width: 100%;
     }
 }
 .learning-main-card,
