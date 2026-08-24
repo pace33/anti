@@ -14263,6 +14263,45 @@ const LESSON30_PATH = [
 function renderLesson30PathGame(){return `<section class="lesson25-path-game" data-lesson30-path><div class="lesson25-path-guide"><span class="lesson25-path-start">출발</span><strong>그림에 알맞은 글자를 골라 도착까지 가요.</strong></div><div class="lesson25-path-progress"><span data-lesson30-path-message>첫 번째 그림부터 시작해요.</span><strong data-lesson30-path-count>도착까지 0 / 10</strong></div><div class="lesson25-path-board">${LESSON30_PATH.map(([icon,choices,answer],index)=>`<section class="lesson25-path-stage ${index?'is-locked':'is-current'}" data-path-stage="${index}" data-answer="${answer}"><span class="lesson25-path-step">${index+1}</span><div class="lesson25-path-picture">${icon}</div><div class="lesson25-path-choices">${choices.map(choice=>`<button type="button" onclick="selectLesson30Path(this,'${choice}')" ${index?'disabled':''}>${choice}</button>`).join('')}</div><p class="lesson25-path-stage-feedback">${index?'앞의 길을 먼저 통과해요.':'글자를 골라요.'}</p></section>`).join('')}</div><div class="lesson25-path-finish"><span>🏁</span><strong>도착</strong></div></section>`;}
 window.selectLesson30Path=function selectLesson30Path(button,selected){const stage=button.closest('.lesson25-path-stage'),game=stage.closest('[data-lesson30-path]');if(stage.classList.contains('is-locked')||stage.classList.contains('is-complete'))return;if(selected!==stage.dataset.answer){button.classList.add('is-try-again');stage.querySelector('.lesson25-path-stage-feedback').textContent='그림을 다시 보고 골라 보세요.';speakTextKo('다시 골라 보아요.');return;}stage.classList.remove('is-current');stage.classList.add('is-complete');stage.querySelectorAll('button').forEach(item=>item.disabled=true);button.classList.add('is-correct');stage.querySelector('.lesson25-path-stage-feedback').textContent=`○ ${selected}, 맞았어요!`;speakTextKo(`${selected}. 맞았어요.`);const count=game.querySelectorAll('.lesson25-path-stage.is-complete').length;game.querySelector('[data-lesson30-path-count]').textContent=`도착까지 ${count} / 10`;const next=game.querySelector(`[data-path-stage="${count}"]`);if(next){next.classList.remove('is-locked');next.classList.add('is-current');next.querySelectorAll('button').forEach(item=>item.disabled=false);next.querySelector('.lesson25-path-stage-feedback').textContent='글자를 골라요.';}else{game.classList.add('is-finished');game.querySelector('[data-lesson30-path-message]').textContent='받침왕 길을 모두 통과했어요!';}};
 
+const UNIT9_READING_PAGES = [
+    { family:'ㅂ·ㅍ', pictures:[['🍙','김밥'],['👄','입술'],['🍿','팝콘'],['🍃','은행잎'],['🦵','무릎'],['👟','짚신']], rows:[['낙엽','방법','과즙'],['월급','가볍다','깊다'],['옆구리','짚신','옆방'],['잎사귀','형편','덮개']] },
+    { family:'ㄱ·ㅋ·ㄲ', pictures:[['🌙','저녁'],['🎯','과녁'],['🍳','부엌'],['🎣','낚시'],['🧽','닦다'],['🍚','볶음밥']], rows:[['달력','국수','수박'],['극장','들녘','저물녘'],['묶음','깎다','떡볶이'],['엮다','밖으로','섞다']] },
+    { family:'ㄷ·ㅌ·ㅈ·ㅊ·ㅅ·ㅆ·ㅎ', pictures:[['🥄','숟가락'],['🍲','가마솥'],['🏖️','모래밭'],['🐄','젖소'],['1️⃣','첫째'],['⛵','돛단배']], rows:[['듣기','쓰레받기','바깥'],['입맛','멋지다','좋다'],['젖다','낮잠','별빛'],['잇다','하얗다','꽃밭']] }
+];
+const UNIT9_NONSENSE_WORDS = ['아삭','낙후','섞히','후쿠닻','르곶','해짓','꾸발','빗지','빗종','바마숯','나수랏','수좁','리오닻','숯버무','배무돛','지훌밭','잇구리','아라짓','다롭','숲제','프로잎','가롭','재이첫','옆다그'];
+const UNIT9_FIND_SETS = [
+    [['🌙','저녁',['저녕','저녁']],['🎯','과녁',['과녁','과녕']],['🍳','부엌',['부어','부엌']],['🎣','낚시',['낚시','낭시']],['🧽','닦다',['닦다','단다']],['🍚','볶음밥',['보음밥','볶음밥']],['🍙','김밥',['기밥','김밥']],['👄','입술',['입술','임술']],['🍿','팝콘',['팜콘','팝콘']],['🍃','은행잎',['은행일','은행잎']]],
+    [['🦵','무릎',['무릎','무름']],['👟','짚신',['짐신','짚신']],['🥄','숟가락',['숟가락','술가락']],['🍲','가마솥',['가마술','가마솥']],['🏖️','모래밭',['모래밭','모래방']],['🐄','젖소',['젖소','전소']],['1️⃣','첫째',['청째','첫째']],['⛵','돛단배',['돋단배','돛단배']],['🧵','헝겊',['헝겊','헌겊']],['😴','낮잠',['난잠','낮잠']]]
+];
+const UNIT9_BOARD_WORDS = ['저녁','과녁','부엌','낚시','극장','묶음','해질녘','들녘','달력','떡볶이','볶음밥','김밥','입술','팝콘','은행잎','무릎','숲속','낙엽','옆구리','덮밥','숟가락','가마솥','젖소','첫째','돛단배','좋다','낮잠','별빛'];
+
+function renderUnit9ReadingPage(pageIndex) {
+    const page=UNIT9_READING_PAGES[pageIndex];
+    return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>받침 ${page.family} 단어</span></div><p class="unit9-guide">그림과 낱말을 누르고 받침소리를 생각하며 읽어 보세요.</p><div class="unit9-picture-grid">${page.pictures.map(([icon,word])=>`<button type="button" onclick="speakTextKo('${word}')"><span>${icon}</span><strong>${word}</strong><small>🔊 소리 듣기</small></button>`).join('')}</div><div class="unit9-word-grid">${page.rows.flat().map(word=>`<button type="button" onclick="speakTextKo('${word}')">${word}</button>`).join('')}</div></section>`;
+}
+function renderUnit9NonsensePage(){return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 4</strong><span>3가지 받침가족 무의미 단어</span></div><p class="unit9-guide">처음 보는 말도 받침소리를 생각하며 천천히 읽어요.</p><div class="unit9-nonsense-grid">${UNIT9_NONSENSE_WORDS.map(word=>`<button type="button" onclick="speakTextKo('${word}')">${word}</button>`).join('')}</div></section>`;}
+
+const unit9FindState={set:0,index:0,score:0,locked:false};
+function renderUnit9FindPage(setIndex){unit9FindState.set=setIndex;unit9FindState.index=0;unit9FindState.score=0;unit9FindState.locked=false;const [icon,answer,choices]=UNIT9_FIND_SETS[setIndex][0];return `<section class="unit9-find-game" data-unit9-find="${setIndex}" data-answer="${answer}"><div class="unit9-heading"><strong>확인하기 ${setIndex+1}</strong><span>읽고 알맞은 그림 찾기</span></div><div class="unit9-game-status"><span>문제 <b data-u9-number>1</b> / 10</span><span>⭐ <b data-u9-score>0</b>점</span></div><div class="unit9-find-arena"><div class="unit9-find-icon" data-u9-icon>${icon}</div><button type="button" class="unit9-listen" onclick="speakUnit9FindAnswer()">🔊 낱말 소리 듣기</button><p data-u9-feedback>그림에 알맞은 낱말을 골라요.</p><div class="unit9-find-choices">${choices.map(choice=>`<button type="button" onclick="selectUnit9Find(this,'${choice}')">${choice}</button>`).join('')}</div></div></section>`;}
+window.speakUnit9FindAnswer=function(){const item=UNIT9_FIND_SETS[unit9FindState.set][unit9FindState.index];if(item)speakTextKo(item[1]);};
+window.selectUnit9Find=function(button,selected){if(unit9FindState.locked)return;const game=button.closest('[data-unit9-find]'),answer=game.dataset.answer,feedback=game.querySelector('[data-u9-feedback]');if(selected!==answer){button.classList.add('is-wrong');feedback.textContent='다시 선택해 보아요.';speakTextKo('다시 선택해 보아요.');return;}unit9FindState.locked=true;unit9FindState.score+=10;button.classList.add('is-correct');feedback.textContent=`정답이에요! ${answer}`;speakTextKo(`정답이에요. ${answer}.`);game.querySelectorAll('.unit9-find-choices button').forEach(item=>item.disabled=true);window.setTimeout(updateUnit9Find,850);};
+function updateUnit9Find(){const game=document.querySelector(`[data-unit9-find="${unit9FindState.set}"]`);if(!game)return;unit9FindState.index+=1;if(unit9FindState.index>=10){game.classList.add('is-complete');game.querySelector('.unit9-find-arena').innerHTML=`<div class="unit9-finish">참 잘했어요!</div><p>10개 낱말을 모두 찾았어요. ${unit9FindState.score}점!</p>`;game.querySelector('[data-u9-number]').textContent='10';game.querySelector('[data-u9-score]').textContent=unit9FindState.score;return;}const [icon,answer,choices]=UNIT9_FIND_SETS[unit9FindState.set][unit9FindState.index];game.dataset.answer=answer;game.querySelector('[data-u9-number]').textContent=unit9FindState.index+1;game.querySelector('[data-u9-score]').textContent=unit9FindState.score;game.querySelector('[data-u9-icon]').textContent=icon;game.querySelector('[data-u9-feedback]').textContent='그림에 알맞은 낱말을 골라요.';game.querySelector('.unit9-find-choices').innerHTML=choices.map(choice=>`<button type="button" onclick="selectUnit9Find(this,'${choice}')">${choice}</button>`).join('');unit9FindState.locked=false;}
+
+const unit9BoardState={index:0,score:0};
+function renderUnit9BoardGame(){unit9BoardState.index=0;unit9BoardState.score=0;return `<section class="unit9-board-game" data-unit9-board><div class="unit9-heading"><strong>놀이</strong><span>혼자 하는 받침가족 단어 여행</span></div><div class="unit9-board-track">${UNIT9_BOARD_WORDS.map((word,index)=>`<span class="${index===0?'is-current':''}" data-u9-cell="${index}">${index+1}</span>`).join('')}</div><div class="unit9-board-arena"><p>낱말을 읽고 확인하면 다음 칸으로 이동해요.</p><strong data-u9-board-word>${UNIT9_BOARD_WORDS[0]}</strong><div><button type="button" onclick="listenUnit9Board()">🔊 소리 확인</button><button type="button" class="unit9-read-button" onclick="advanceUnit9Board()">✓ 읽었어요</button></div><small data-u9-board-progress>1 / ${UNIT9_BOARD_WORDS.length}</small></div></section>`;}
+window.listenUnit9Board=function(){speakTextKo(UNIT9_BOARD_WORDS[unit9BoardState.index]);};
+window.advanceUnit9Board=function(){const game=document.querySelector('[data-unit9-board]');if(!game)return;game.querySelector(`[data-u9-cell="${unit9BoardState.index}"]`)?.classList.replace('is-current','is-done');unit9BoardState.score+=10;unit9BoardState.index+=1;if(unit9BoardState.index>=UNIT9_BOARD_WORDS.length){game.querySelector('.unit9-board-arena').innerHTML=`<div class="unit9-finish">🏁 도착했어요!</div><p>받침가족 낱말을 모두 읽었어요.</p>`;speakTextKo('참 잘했어요. 도착했어요.');return;}game.querySelector(`[data-u9-cell="${unit9BoardState.index}"]`)?.classList.add('is-current');game.querySelector('[data-u9-board-word]').textContent=UNIT9_BOARD_WORDS[unit9BoardState.index];game.querySelector('[data-u9-board-progress]').textContent=`${unit9BoardState.index+1} / ${UNIT9_BOARD_WORDS.length}`;};
+
+const UNIT9_DOUBLE_FINAL_WORDS=[[['📖','읽다','익따'],['🐔','닭','닥'],['🌱','흙','흑'],['💡','밝다','박따']],[['🙋','많다','만타'],['😊','괜찮다','괜찬타'],['↔️','넓다','널따'],['📏','짧다','짤따']],[['👵','늙다','늑따'],['😣','싫다','실타'],['🪑','앉다','안따'],['🫙','없다','업따']]];
+function renderUnit9DoubleFinalIntro(){return `<section class="unit9-double-intro"><div class="unit9-heading"><strong>이해하기</strong><span>겹받침 있는 단어 읽기</span></div><p class="unit9-guide">겹받침은 두 글자를 쓰지만 대표소리로 읽어요.</p><div class="unit9-intro-example"><span>📖</span><strong>읽다</strong><i>→</i><button type="button" onclick="speakTextKo('익따')">🔊 익따</button></div><div class="unit9-intro-steps"><span>그림과 단어 연결하기</span><span>소리 내어 읽기</span><span>읽으면서 써 보기</span><span>표기와 소리 구분하기</span></div></section>`;}
+function renderUnit9DoubleFinalReading(pageIndex){const words=UNIT9_DOUBLE_FINAL_WORDS[pageIndex];return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>겹받침 단어</span></div><div class="unit9-double-grid">${words.map(([icon,word,sound])=>`<article><span>${icon}</span><strong>${word}</strong><div class="unit9-trace-words">${word}<b>${word}</b></div><button type="button" onclick="speakTextKo('${sound}')">🔊 ${sound}</button></article>`).join('')}</div></section>`;}
+const UNIT9_DOUBLE_MATCH=[
+    [['읽다','📖'],['흙','🌱'],['싫다','😣'],['없다','🫙'],['닭','🐔']],
+    [['앉다','🪑'],['많다','🙋'],['밝다','💡'],['괜찮다','😊'],['넓다','↔️']]
+];
+function renderUnit9DoubleMatch(setIndex){const items=UNIT9_DOUBLE_MATCH[setIndex];return `<section class="unit9-match-page"><div class="unit9-heading"><strong>확인하기 ${setIndex+1}</strong><span>읽고 알맞은 그림 찾기</span></div><p class="unit9-guide">낱말을 누른 다음 알맞은 그림을 골라 보세요.</p><div class="unit9-match-grid">${items.map(([word,icon],index)=>{const choices=[items[index],items[(index+2)%items.length],items[(index+4)%items.length]];return `<article data-u9-match data-answer="${icon}"><button type="button" class="unit9-match-word" onclick="speakTextKo('${word}')">🔊 ${word}</button><div>${choices.map(([,choiceIcon])=>`<button type="button" onclick="selectUnit9Match(this,'${choiceIcon}')">${choiceIcon}</button>`).join('')}</div><small>그림을 골라요.</small></article>`;}).join('')}</div></section>`;}
+window.selectUnit9Match=function(button,selected){const card=button.closest('[data-u9-match]'),feedback=card.querySelector('small');if(card.classList.contains('is-correct'))return;if(selected!==card.dataset.answer){button.classList.add('is-wrong');feedback.textContent='다시 선택해 보아요.';speakTextKo('다시 선택해 보아요.');return;}card.classList.add('is-correct');button.classList.add('is-correct');card.querySelectorAll('div button').forEach(item=>item.disabled=true);feedback.textContent='정답이에요!';speakTextKo('정답이에요.');};
+
 function syncLesson27FamilyPage() {
     const page = document.querySelector('[data-lesson27-family-page]');
     if (!page) return;
@@ -14655,6 +14694,9 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isCustomLesson27 = numericStep === 27;
     const isCustomRepresentativeFamily = numericStep === 28 || numericStep === 29;
     const isCustomLesson30 = numericStep === 30;
+    const isCustomLesson31 = numericStep === 31;
+    const isCustomLesson32 = numericStep === 32;
+    const isCustomLesson33 = numericStep === 33;
     const batchimPageSequence = LESSON_BATCHIM_PAGE_SEQUENCES[numericStep] || [];
     const isCustomBatchimLesson = batchimPageSequence.length > 0;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33];
@@ -14672,6 +14714,9 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (isCustomLesson27) totalSections = 4;
     if (isCustomRepresentativeFamily) totalSections = 4;
     if (isCustomLesson30) totalSections = 2;
+    if (isCustomLesson31) totalSections = 7;
+    if (isCustomLesson32) totalSections = 1;
+    if (isCustomLesson33) totalSections = 5;
     if (isCustomBatchimLesson) totalSections = batchimPageSequence.length * 5;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
@@ -14712,6 +14757,12 @@ function renderLearningDetail(step, sectionIndex = 0) {
             sectionTitle = detail.sections[1].title;
         } else if (isCustomLesson20) {
             sectionTitle = ['읽기 1·2 · 그림과 단어', '읽기 3 · 무의미 단어', '확인하기 1·2 · 읽고 찾기', '쓰기 1·2 · 완성해 보기', '놀이 · 단어 놀이 해보기'][safeIndex];
+        } else if (isCustomLesson31) {
+            sectionTitle = ['받침 ㅂ·ㅍ 단어', '받침 ㄱ·ㅋ·ㄲ 단어', '받침 ㄷ 가족 단어', '3가지 받침가족 무의미 단어', '읽고 찾기 1', '읽고 찾기 2', '혼자 하는 단어 놀이'][safeIndex];
+        } else if (isCustomLesson32) {
+            sectionTitle = '겹받침 있는 단어 읽기';
+        } else if (isCustomLesson33) {
+            sectionTitle = ['겹받침 단어 읽기 1', '겹받침 단어 읽기 2', '겹받침 단어 읽기 3', '읽고 알맞은 그림 찾기 1', '읽고 알맞은 그림 찾기 2'][safeIndex];
         } else if (isCustomBatchimLesson) {
             const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             const localIndex = safeIndex % 5;
@@ -14820,6 +14871,20 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson30Quiz();
         } else if (isCustomLesson30 && safeIndex === 1) {
             contentHtml = renderLesson30PathGame();
+        } else if (isCustomLesson31 && safeIndex < 3) {
+            contentHtml = renderUnit9ReadingPage(safeIndex);
+        } else if (isCustomLesson31 && safeIndex === 3) {
+            contentHtml = renderUnit9NonsensePage();
+        } else if (isCustomLesson31 && safeIndex >= 4 && safeIndex <= 5) {
+            contentHtml = renderUnit9FindPage(safeIndex - 4);
+        } else if (isCustomLesson31 && safeIndex === 6) {
+            contentHtml = renderUnit9BoardGame();
+        } else if (isCustomLesson32) {
+            contentHtml = renderUnit9DoubleFinalIntro();
+        } else if (isCustomLesson33 && safeIndex < 3) {
+            contentHtml = renderUnit9DoubleFinalReading(safeIndex);
+        } else if (isCustomLesson33) {
+            contentHtml = renderUnit9DoubleMatch(safeIndex - 3);
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
