@@ -4578,11 +4578,14 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 .mouth-quiz-hint-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 360px);
+    justify-content: center;
     gap: 10px;
     margin-top: 10px;
+    min-height: 132px;
 }
 .mouth-quiz-hint-card {
+    display: none;
     min-width: 0;
     border: 3px solid #bfdbfe;
     border-radius: 16px;
@@ -4590,6 +4593,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     padding: 7px 5px 9px;
     text-align: center;
     transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.mouth-quiz-hint-card.is-visible,
+.mouth-quiz-hint-card.is-playing,
+.mouth-quiz-hint-card.is-active {
+    display: block;
 }
 .mouth-quiz-hint-card.is-playing,
 .mouth-quiz-hint-card.is-active {

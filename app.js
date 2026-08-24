@@ -12806,8 +12806,8 @@ function renderLessonMouthSoundQuiz(step) {
     window.lessonMouthQuizPlayed[step] = false;
     const hintItems = config.items.filter((item) => config.quizChoices.includes(item.char));
     const hintGuide = step === 15
-        ? 'ㅔ보다 입 안 공간과 아래턱이 더 크게 보이면 ㅐ예요.'
-        : '두 입 모양을 비교하며 입 안 공간과 아래턱의 차이를 살펴보세요.';
+        ? '소리를 들으면 입 모양 힌트가 하나 나타나요. 입이 조금 벌어지면 ㅔ, 크게 벌어지면 ㅐ예요.'
+        : '소리를 들으면 해당하는 입 모양 힌트가 하나 나타나요.';
     return `
         <div class="learning-practice-card">
             <div class="learning-card-label practice-label">듣고 구별하기</div>
@@ -12823,7 +12823,7 @@ function renderLessonMouthSoundQuiz(step) {
                 <div class="mouth-quiz-hint" aria-label="입 모양 힌트">
                     <div class="mouth-quiz-hint-title">👄 입 모양 힌트</div>
                     <div class="mouth-quiz-hint-guide">${hintGuide}</div>
-                    <div class="mouth-quiz-hint-grid">
+                    <div class="mouth-quiz-hint-grid" aria-live="polite">
                         ${hintItems.map((item) => `
                             <div class="mouth-quiz-hint-card" data-mouth-step="${step}" data-mouth-char="${item.char}" style="${getLessonMouthStyle(item)}">
                                 <div class="mouth-quiz-hint-visual mouth-visual" aria-hidden="true">${renderLessonMouthFace(item)}</div>
@@ -13364,7 +13364,15 @@ function resetLessonMouthCards(step) {
         ? `.mouth-sound-card[data-mouth-step="${step}"], .mouth-quiz-hint-card[data-mouth-step="${step}"]`
         : '.mouth-sound-card, .mouth-quiz-hint-card';
     document.querySelectorAll(selector).forEach((card) => {
+        card.classList.remove('is-playing', 'is-active', 'is-visible', 'is-reduced-motion');
+    });
+}
+
+function settleLessonMouthCards(step, char) {
+    document.querySelectorAll(`.mouth-sound-card[data-mouth-step="${step}"], .mouth-quiz-hint-card[data-mouth-step="${step}"]`).forEach((card) => {
+        const keepQuizHint = card.classList.contains('mouth-quiz-hint-card') && card.dataset.mouthChar === char;
         card.classList.remove('is-playing', 'is-active', 'is-reduced-motion');
+        card.classList.toggle('is-visible', keepQuizHint);
     });
 }
 
@@ -13384,14 +13392,16 @@ function activateLessonMouthCard(step, char, slow = false, options = {}) {
     cards.forEach((card) => {
         const isTarget = card.dataset.mouthChar === char;
         const isQuizHint = card.classList.contains('mouth-quiz-hint-card');
-        const shouldPlay = revealCard ? isTarget : isQuizHint;
+        const shouldPlay = isTarget;
+        const shouldReveal = isQuizHint ? isTarget : (revealCard && isTarget);
         card.classList.toggle('is-playing', shouldPlay);
-        card.classList.toggle('is-active', revealCard && isTarget);
+        card.classList.toggle('is-active', shouldReveal);
+        card.classList.toggle('is-visible', isQuizHint && isTarget);
         card.classList.toggle('is-reduced-motion', shouldPlay && reducedMotion);
         card.style.setProperty('--mouth-duration', `${duration}ms`);
     });
     state.activeTimer = window.setTimeout(() => {
-        resetLessonMouthCards(step);
+        settleLessonMouthCards(step, char);
         state.activeTimer = null;
     }, duration + 250);
 }
@@ -14171,6 +14181,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const detail = learningDetailData[step];
     if (!detail) return;
     const numericStep = Number(step);
+    if (numericStep === 15 || numericStep === 16) stopLessonMouthPlayback(numericStep);
     const hasMakeLettersActivity = Boolean(MAKE_LETTER_ACTIVITY_CONFIGS[numericStep]);
     const isPictureWordLesson = Boolean(PICTURE_WORD_LESSON_CONFIGS[numericStep]);
     const isComplexLineLesson = numericStep >= 15 && numericStep <= 19;
