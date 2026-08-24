@@ -8128,10 +8128,12 @@ function initializeLetterWritingActivity() {
     let currentChar = 'ㄱ';
     let currentLetterKind = 'consonant';
 
-    const setTraceGuide = (value, kind = currentLetterKind) => {
+    const setTraceGuide = (value, kind = currentLetterKind, options = {}) => {
         currentChar = value;
         currentLetterKind = kind;
         canvas.dataset.guide = value;
+        canvas.dataset.spokenText = value;
+        delete canvas.dataset.traceSpokenPrompt;
         canvas._traceCompleted = {};
         canvas._tracePaths = [];
         delete canvas.dataset.rewarded;
@@ -8139,6 +8141,10 @@ function initializeLetterWritingActivity() {
         drawTraceWritingGuide(canvas);
         const feedback = document.getElementById('letter-feedback');
         if (feedback) feedback.textContent = '';
+        if (options.speak !== false) {
+            speakTextKo(value);
+            canvas.dataset.traceSpokenPrompt = value;
+        }
     };
 
     const drawButtons = (target, list, kind) => {
@@ -8175,14 +8181,37 @@ function initializeLetterWritingActivity() {
             if (firstButton) firstButton.click();
         });
     });
-    setTraceGuide(currentChar, currentLetterKind);
-    window.refreshLetterWritingCanvas = () => setTraceGuide(currentChar, currentLetterKind);
+    setTraceGuide(currentChar, currentLetterKind, { speak: false });
+    window.refreshLetterWritingCanvas = () => setTraceGuide(currentChar, currentLetterKind, { speak: false });
     window.addEventListener('resize', () => drawTraceWritingGuide(canvas));
 
     document.getElementById('letter-clear').addEventListener('click', () => resetTraceWritingCanvas(canvas));
     document.getElementById('letter-play-sound').addEventListener('click', () => {
         speakTextKo(currentChar);
+        canvas.dataset.traceSpokenPrompt = currentChar;
     });
+
+    const waitForNextWritingPrompt = (milliseconds = 900) => new Promise((resolve) => {
+        window.setTimeout(resolve, milliseconds);
+    });
+
+    async function advanceAfterSuccessfulWriting(button, nextPrompt) {
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        await waitForNextWritingPrompt();
+        nextPrompt();
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+    }
+
+    function advanceLetterWritingPrompt() {
+        const panel = document.querySelector(`[data-letter-kind-panel="${currentLetterKind}"]`);
+        const buttons = Array.from(panel?.querySelectorAll('button[data-char]') || []);
+        if (!buttons.length) return;
+        const currentIndex = buttons.findIndex((button) => button.dataset.char === currentChar);
+        const nextButton = buttons[(currentIndex + 1 + buttons.length) % buttons.length];
+        nextButton?.click();
+    }
 
     async function gradeCompletedWriting({ targetCanvas, button, feedback, reward, attempt }) {
         if (!isTraceWritingComplete(targetCanvas)) {
@@ -8234,10 +8263,10 @@ function initializeLetterWritingActivity() {
     }
 
     const letterGradeButton = document.getElementById('letter-grade');
-    letterGradeButton.addEventListener('click', () => {
+    letterGradeButton.addEventListener('click', async () => {
         const reward = currentLetterKind === 'practice-word' ? 2 : 1;
         const kindLabel = currentLetterKind === 'practice-word' ? '낱말' : (currentLetterKind === 'vowel' ? '모음' : '자음');
-        return gradeCompletedWriting({
+        const completed = await gradeCompletedWriting({
             targetCanvas: canvas,
             button: letterGradeButton,
             feedback: document.getElementById('letter-feedback'),
@@ -8250,6 +8279,7 @@ function initializeLetterWritingActivity() {
                 skillTags: ['글자쓰기', kindLabel]
             }
         });
+        if (completed) await advanceAfterSuccessfulWriting(letterGradeButton, advanceLetterWritingPrompt);
     });
 
     document.querySelectorAll('.letter-top-btn').forEach((btn) => btn.addEventListener('click', () => {
@@ -8314,6 +8344,7 @@ function initializeLetterWritingActivity() {
         if (canvas) {
             canvas.dataset.guide = writingGuideForPractice(text, kind === 'sentence');
             canvas.dataset.spokenText = text;
+            delete canvas.dataset.traceSpokenPrompt;
             canvas._traceCompleted = {};
             canvas._tracePaths = [];
             delete canvas.dataset.rewarded;
@@ -8323,7 +8354,10 @@ function initializeLetterWritingActivity() {
         document.querySelectorAll(`#letter-${kind}-examples button`).forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.text === text);
         });
-        if (options.speak !== false) speakKorean(text);
+        if (options.speak !== false) {
+            speakKorean(text);
+            if (canvas) canvas.dataset.traceSpokenPrompt = text;
+        }
     }
 
     function renderEmbeddedPracticeLevels(kind) {
@@ -8388,38 +8422,58 @@ function initializeLetterWritingActivity() {
             { duration: 220, easing: 'ease-out' }
         );
     });
-    document.getElementById('letter-word-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.word.text));
-    document.getElementById('letter-sentence-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.sentence.text));
+    document.getElementById('letter-word-play-sound').addEventListener('click', () => {
+        speakKorean(embeddedPracticeState.word.text);
+        document.getElementById('letter-word-writing-canvas').dataset.traceSpokenPrompt = embeddedPracticeState.word.text;
+    });
+    document.getElementById('letter-sentence-play-sound').addEventListener('click', () => {
+        speakKorean(embeddedPracticeState.sentence.text);
+        document.getElementById('letter-sentence-writing-canvas').dataset.traceSpokenPrompt = embeddedPracticeState.sentence.text;
+    });
     document.getElementById('letter-word-clear').addEventListener('click', () => resetTraceWritingCanvas(document.getElementById('letter-word-writing-canvas')));
     document.getElementById('letter-sentence-clear').addEventListener('click', () => resetTraceWritingCanvas(document.getElementById('letter-sentence-writing-canvas')));
     const wordGradeButton = document.getElementById('letter-word-grade');
     const sentenceGradeButton = document.getElementById('letter-sentence-grade');
-    wordGradeButton.addEventListener('click', () => gradeCompletedWriting({
-        targetCanvas: document.getElementById('letter-word-writing-canvas'),
-        button: wordGradeButton,
-        feedback: document.getElementById('letter-word-feedback'),
-        reward: 5,
-        attempt: {
-            lessonId: 'word-practice-writing',
-            lessonTitle: '단어 연습 쓰기',
-            word: embeddedPracticeState.word.text,
-            practiceType: 'word',
-            skillTags: ['단어쓰기', embeddedPracticeState.word.level]
-        }
-    }));
-    sentenceGradeButton.addEventListener('click', () => gradeCompletedWriting({
-        targetCanvas: document.getElementById('letter-sentence-writing-canvas'),
-        button: sentenceGradeButton,
-        feedback: document.getElementById('letter-sentence-feedback'),
-        reward: 10,
-        attempt: {
-            lessonId: 'sentence-practice-writing',
-            lessonTitle: '문장 연습 쓰기',
-            word: embeddedPracticeState.sentence.text,
-            practiceType: 'sentence',
-            skillTags: ['문장쓰기', embeddedPracticeState.sentence.level]
-        }
-    }));
+    wordGradeButton.addEventListener('click', async () => {
+        const completed = await gradeCompletedWriting({
+            targetCanvas: document.getElementById('letter-word-writing-canvas'),
+            button: wordGradeButton,
+            feedback: document.getElementById('letter-word-feedback'),
+            reward: 5,
+            attempt: {
+                lessonId: 'word-practice-writing',
+                lessonTitle: '단어 연습 쓰기',
+                word: embeddedPracticeState.word.text,
+                practiceType: 'word',
+                skillTags: ['단어쓰기', embeddedPracticeState.word.level]
+            }
+        });
+        if (!completed) return;
+        await advanceAfterSuccessfulWriting(wordGradeButton, () => {
+            const examples = wordExamplesByLevel[embeddedPracticeState.word.level] || wordExamplesByLevel.low;
+            setEmbeddedPractice('word', pickDifferentPracticeItem(examples, embeddedPracticeState.word.text));
+        });
+    });
+    sentenceGradeButton.addEventListener('click', async () => {
+        const completed = await gradeCompletedWriting({
+            targetCanvas: document.getElementById('letter-sentence-writing-canvas'),
+            button: sentenceGradeButton,
+            feedback: document.getElementById('letter-sentence-feedback'),
+            reward: 10,
+            attempt: {
+                lessonId: 'sentence-practice-writing',
+                lessonTitle: '문장 연습 쓰기',
+                word: embeddedPracticeState.sentence.text,
+                practiceType: 'sentence',
+                skillTags: ['문장쓰기', embeddedPracticeState.sentence.level]
+            }
+        });
+        if (!completed) return;
+        await advanceAfterSuccessfulWriting(sentenceGradeButton, () => {
+            const examples = sentenceExamplesByLevel[embeddedPracticeState.sentence.level] || sentenceExamplesByLevel.low;
+            setEmbeddedPractice('sentence', pickDifferentPracticeItem(examples, embeddedPracticeState.sentence.text));
+        });
+    });
     renderEmbeddedPractice('word');
     renderEmbeddedPractice('sentence');
 }
@@ -15043,11 +15097,16 @@ function initializeTraceWritingCanvas(target) {
                 activePath = [p];
 
                 const targetChar = chars[charIndex];
-                // 중복 재생 방지 (동일 글자는 1.2초 내 한 번만 발음)
-                if (window.lastSpokenChar !== targetChar || (Date.now() - window.lastSpokenTime > 1200)) {
-                    window.speakChar(targetChar);
+                const promptKey = canvas.dataset.spokenText || canvas.dataset.guide || targetChar;
+                const speakOnce = canvas.dataset.traceSpeakOnce !== undefined;
+                const shouldSpeak = speakOnce
+                    ? canvas.dataset.traceSpokenPrompt !== promptKey
+                    : (window.lastSpokenChar !== targetChar || (Date.now() - window.lastSpokenTime > 1200));
+                if (shouldSpeak) {
+                    window.speakChar(speakOnce ? promptKey : targetChar);
                     window.lastSpokenChar = targetChar;
                     window.lastSpokenTime = Date.now();
+                    if (speakOnce) canvas.dataset.traceSpokenPrompt = promptKey;
                 }
             }
         }
