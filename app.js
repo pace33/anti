@@ -8368,18 +8368,6 @@ function initializeLetterWritingActivity() {
         return pool[Math.floor(Math.random() * pool.length)] || sentences[0] || '';
     }
 
-    function cleanPracticeSentence(value) {
-        const firstLine = String(value || '').split(/\r?\n/).map((line) => line.trim()).find(Boolean) || '';
-        const cleaned = firstLine
-            .replace(/^[-*#\d.\s]+/, '')
-            .replace(/["'“”‘’]/g, '')
-            .replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s.!?]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-        if (!cleaned || !/[가-힣]/.test(cleaned)) return '';
-        return /[.!?]$/.test(cleaned) ? cleaned : `${cleaned}.`;
-    }
-
     async function simpleGen(prompt, fallback) {
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 3500);
@@ -8412,28 +8400,15 @@ function initializeLetterWritingActivity() {
         const generated = cleanPracticeWord(await simpleGen(prompt, fallback));
         setEmbeddedPractice('word', generated && hasNoBatchim(generated) ? generated : fallback);
     });
-    document.getElementById('letter-generate-sentence').addEventListener('click', async () => {
+    document.getElementById('letter-generate-sentence').addEventListener('click', () => {
         const button = document.getElementById('letter-generate-sentence');
         const level = embeddedPracticeState.sentence.level;
         const previous = embeddedPracticeState.sentence.text;
-        const fallback = pickDifferentSentence(level, previous);
-        const prompt = level === 'high'
-            ? '초등학생용 한국어 문장 하나만 출력해줘. 4~6어절 이내로 해줘.'
-            : level === 'mid'
-                ? '초등학생용 짧은 한국어 문장 하나만 출력해줘. 3~5어절 이내로 해줘.'
-                : '초등학생용 아주 쉬운 한국어 문장 하나만 출력해줘. 2~3어절 이내로 해줘.';
-        setEmbeddedPractice('sentence', fallback);
-        button.disabled = true;
-        button.textContent = '새 문장을 만들고 있어요';
-        try {
-            const generated = cleanPracticeSentence(await simpleGen(prompt, fallback));
-            if (generated && generated !== previous && generated !== fallback) {
-                setEmbeddedPractice('sentence', generated, { speak: false });
-            }
-        } finally {
-            button.disabled = false;
-            button.textContent = '✨ 새 문장 만들기';
-        }
+        setEmbeddedPractice('sentence', pickDifferentSentence(level, previous));
+        button.animate(
+            [{ transform: 'scale(1)' }, { transform: 'scale(.985)' }, { transform: 'scale(1)' }],
+            { duration: 220, easing: 'ease-out' }
+        );
     });
     document.getElementById('letter-word-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.word.text));
     document.getElementById('letter-sentence-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.sentence.text));
