@@ -14018,15 +14018,15 @@ function renderLesson27BatchimFamilyIntro() {
                         </span>
                         <span class="lesson27-hand-scene" aria-hidden="true">
                             <span class="lesson27-hand-track">${renderLesson27HandMotion()}</span>
-                            <span class="lesson27-stage-caption">손동작과 소리를 살펴보세요.</span>
+                            <span class="lesson27-stage-caption">손동작과 소리를 들어 보세요.</span>
                         </span>
                         <span class="lesson27-card-copy">
                             <strong>${item.name}</strong>
                             <span>받침 소리 <b>[ㅂ]</b></span>
                             <button type="button" class="lesson27-play-button" data-family-play="${item.key}"
-                                aria-label="${item.name} 손동작과 소리 보기"
+                                aria-label="${item.name} 손동작과 소리 듣기"
                                 aria-pressed="false" onclick="playLesson27FamilyCard('${item.key}')">
-                                <span aria-hidden="true">▶</span> <span class="lesson27-play-label">손동작과 소리 보기</span>
+                                <span aria-hidden="true">▶</span> <span class="lesson27-play-label">손동작과 소리 듣기</span>
                             </button>
                         </span>
                     </article>
@@ -14040,7 +14040,7 @@ function renderLesson27BatchimFamilyIntro() {
             </div>
 
             <div id="lesson27-family-summary" class="lesson27-family-summary" role="status" aria-live="polite">
-                ㅂ과 ㅍ의 손동작과 소리를 차례로 확인해 보세요.
+                ㅂ과 ㅍ의 손동작과 소리를 차례로 들어 보세요.
             </div>
         </section>
     `;
@@ -14057,7 +14057,7 @@ function syncLesson27FamilyPage() {
             playButton.setAttribute('aria-pressed', String(isHeard));
             if (!card.classList.contains('is-playing')) {
                 playButton.disabled = false;
-                playButton.querySelector('.lesson27-play-label').textContent = isHeard ? '한 번 더 보기' : '손동작과 소리 보기';
+                playButton.querySelector('.lesson27-play-label').textContent = isHeard ? '한 번 더 듣기' : '손동작과 소리 듣기';
             }
         }
     });
@@ -14068,8 +14068,8 @@ function syncLesson27FamilyPage() {
         summary.innerHTML = isComplete
             ? '<strong>잘했어요!<br>ㅂ과 ㅍ은 받침에서 모두 [ㅂ] 소리가 나요.</strong><span>그래서 비읍과 피읖의 끝부분은 모두 ‘읍’처럼 들려요.</span>'
             : lesson27FamilyState.heard.size === 1
-                ? '좋아요! 이제 다른 글자의 손동작과 소리도 확인해 보세요.'
-                : 'ㅂ과 ㅍ의 손동작과 소리를 차례로 확인해 보세요.';
+                ? '좋아요! 이제 다른 글자의 손동작과 소리도 들어 보세요.'
+                : 'ㅂ과 ㅍ의 손동작과 소리를 차례로 들어 보세요.';
     }
     const nextBtn = document.getElementById('learning-detail-next-btn');
     if (nextBtn && Number(window.currentLearningActivityStep) === 27 && Number(window.currentLearningDetailSectionIndex) === 0) {
@@ -14088,7 +14088,7 @@ function setLesson27CardAnimationState(card, state, config) {
     card.classList.toggle('is-playing', state !== 'idle' && !hasCompleted);
     card.dataset.animationState = state;
     const captions = {
-        idle: '손동작과 소리를 살펴보세요.',
+        idle: '손동작과 소리를 들어 보세요.',
         firstSound: `${config.first} 소리를 들어요.`,
         handMoving: '위 손이 아래 손을 향해 내려와요.',
         finalSound: '손이 닿을 때 끝부분 ‘읍’을 들어요.',
@@ -14103,7 +14103,7 @@ function setLesson27CardAnimationState(card, state, config) {
         playButton.disabled = state !== 'idle' && !hasCompleted;
         playButton.querySelector('.lesson27-play-label').textContent = state !== 'idle' && !hasCompleted
             ? '손동작을 보고 있어요'
-            : lesson27FamilyState.heard.has(config.key) ? '한 번 더 보기' : '손동작과 소리 보기';
+            : lesson27FamilyState.heard.has(config.key) ? '한 번 더 듣기' : '손동작과 소리 듣기';
     }
 }
 
