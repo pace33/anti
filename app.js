@@ -410,14 +410,6 @@ const CHANCHAN_LESSONS = [
         activities: ["batchimFamily", "readThreeTimes"],
         words: ["옷", "낮", "팥", "빛", "꽃", "좋다"],
         rule: "대표소리 /ㄷ/으로 읽어요."
-    },
-    {
-        id: 34,
-        unit: 10,
-        title: "최종 평가하기",
-        focus: ["최종 평가"],
-        activities: ["finalAssessment"],
-        assessmentAreas: ["모음 듣고 고르기", "자음+모음 읽기", "받침 없는 단어 읽기", "복잡한 모음 단어 읽기", "대표받침 단어 읽기", "복잡한 받침 단어 읽기"]
     }
 ];
 
@@ -2008,29 +2000,7 @@ const learningDetailData = {
                 title: '읽고 찾기 (2)',
                 cards: [
                     '많다/맍다, 괜찮다/괜찬다, 넓다/널다, 짧다/짤다, 없다/업다를 비교해 맞는 단어를 골라요.',
-                    '모든 확인 활동을 마친 뒤 마지막 페이지에서 완료하기 버튼을 눌러 배움 34로 이동해요.'
-                ]
-            }
-        ]
-    },
-    34: {
-        title: '배움 34: 최종 평가하기',
-        subtitle: '해독→교과 맞춤쓰기 활동을 순서대로 진행한 뒤 완료해요.',
-        sections: [
-            {
-                label: '1. 해독',
-                title: '정확하게 읽어봅시다',
-                cards: [
-                    '가지, 우표, 코끼리, 노드, 버위, 서랍, 모래밭, 원숭이, 안홈, 결척 단어를 번호 순서대로 읽어요.',
-                    '날짜/점수 칸을 확인하며 천천히 정확하게 읽도록 연습해요.'
-                ]
-            },
-            {
-                label: '2. 교과 맞춤쓰기',
-                title: '불러주기용 단어 교과 맞춤쓰기',
-                cards: [
-                    '모기, 요리, 바구니, 튜브, 더스, 행복, 춥다, 솔방울, 잠자리, 돌보기 단어를 받아써요.',
-                    '최종 평가를 마친 뒤 마지막 페이지에서 완료하기 버튼을 눌러 학습을 마무리해요.'
+                    '모든 확인 활동을 마친 뒤 마지막 페이지에서 완료하기 버튼을 눌러 한글 학습을 마무리해요.'
                 ]
             }
         ]
@@ -2046,8 +2016,7 @@ const unitMeta = {
     batchim: { unit: 6, label: '대표받침', color: '#ef4444' },
     batchimWord: { unit: 7, label: '대표받침 단어 읽기', color: '#f97316' },
     complexBatchim: { unit: 8, label: '복잡한 받침', color: '#0ea5e9' },
-    complexBatchimWord: { unit: 9, label: '복잡한 받침 단어 읽기', color: '#0284c7' },
-    evaluation: { unit: 10, label: '최종 평가', color: '#14b8a6' }
+    complexBatchimWord: { unit: 9, label: '복잡한 받침 단어 읽기', color: '#0284c7' }
 };
 
 const learningPracticeFlows = {
@@ -2083,8 +2052,7 @@ const learningPracticeFlows = {
     30: { listen: '삶, 앉다, 닭, 읽다. 받침왕 도전이에요.', choices: ['삶', '앉다', '닭', '읽다'], writeLines: ['삶 앉다', '닭 읽다'] },
     31: { listen: '읽다, 닭고기, 삶다, 흙. 받침 가족 단어예요.', choices: ['읽다', '닭고기', '삶다', '흙'], writeLines: ['읽다 닭고기', '삶다 흙'] },
     32: { listen: '앉다, 읽다, 넓다, 닮다. 겹받침 단어를 읽어요.', choices: ['앉다', '읽다', '넓다', '닮다'], writeLines: ['앉다 읽다', '넓다 닮다'] },
-    33: { listen: '밟다, 맑다, 짧다, 얇다. 겹받침 단어를 공부해요.', choices: ['밟다', '맑다', '짧다', '얇다'], writeLines: ['밟다 맑다', '짧다 얇다'] },
-    34: { listen: '아이, 거미, 감, 달. 배운 내용을 모두 확인해요.', choices: ['아이', '거미', '감', '달'], writeLines: ['아이 거미', '감 달'] }
+    33: { listen: '밟다, 맑다, 짧다, 얇다. 겹받침 단어를 공부해요.', choices: ['밟다', '맑다', '짧다', '얇다'], writeLines: ['밟다 맑다', '짧다 얇다'] }
 };
 
 const learningUnits = {
@@ -2139,9 +2107,6 @@ const learningUnits = {
         { step: 31, title: '배움 31: 받침가족 단어 공부하기', page: 183 },
         { step: 32, title: '배움 32: 겹받침 있는 단어 읽기', page: 190 },
         { step: 33, title: '배움 33: 겹받침 단어 공부하기', page: 191 }
-    ],
-    evaluation: [
-        { step: 34, title: '배움 34: 최종 평가하기', page: 198 }
     ]
 };
 
@@ -3600,6 +3565,10 @@ function updateTodayKoreanPreview() {
     const nextStep = currentLearningStep + 1;
     const todayLabel = document.getElementById('today-korean-step-label');
     if (!todayLabel) return;
+    if (currentLearningStep >= 33) {
+        todayLabel.innerText = '한글 배움 완료';
+        return;
+    }
     if (nextStep <= 0) {
         todayLabel.innerText = '배움 시작 활동';
         return;
@@ -3611,7 +3580,7 @@ function updateTodayKoreanPreview() {
 function updateDashboardExperience(userData = {}) {
     currentUserRole = (userData?.role || 'student').toLowerCase();
     const rawLearningStep = Number(userData?.currentLearningStep);
-    currentLearningStep = Number.isFinite(rawLearningStep) ? Math.max(-1, Math.floor(rawLearningStep)) : -1;
+    currentLearningStep = Number.isFinite(rawLearningStep) ? Math.min(33, Math.max(-1, Math.floor(rawLearningStep))) : -1;
 
     // 교사가 학생 계정에 저장한 단계만 활성화한다. 교사는 전체 단계를 확인할 수 있다.
     unlockedLevels = normalizeUnlockedLevels(userData?.unlockedLevels, currentUserRole);
@@ -9057,7 +9026,6 @@ function getUnitIdForLesson(lessonId) {
     if (lessonId === 26) return 7;
     if (lessonId >= 27 && lessonId <= 30) return 8;
     if (lessonId >= 31 && lessonId <= 33) return 9;
-    if (lessonId === 34) return 10;
     return null;
 }
 
@@ -14013,7 +13981,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isCustomLesson27 = numericStep === 27;
     const batchimPageSequence = LESSON_BATCHIM_PAGE_SEQUENCES[numericStep] || [];
     const isCustomBatchimLesson = batchimPageSequence.length > 0;
-    const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34];
+    const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33];
     const practiceFlow = learningPracticeFlows[step];
     const isActivityFlow = visibleActivitySteps.includes(numericStep) && practiceFlow;
 
@@ -15277,6 +15245,10 @@ window.completeLearningDetailActivity = async function completeLearningDetailAct
 
 window.openTodayKoreanActivity = function openTodayKoreanActivity() {
     const nextStep = currentLearningStep + 1;
+    if (currentLearningStep >= 33) {
+        showModal('한글 배움을 모두 마쳤어요!');
+        return;
+    }
     if (nextStep <= 0) {
         openLearningStartActivity();
         return;
@@ -15476,7 +15448,7 @@ function buildTestUserProfile(user, account) {
         aeduTokens: 0,
         aeduExperience: 0,
         aeduLevel: 1,
-        currentLearningStep: 34,
+        currentLearningStep: 33,
         currentDrawingStep: 5,
         currentDictationStep: 5,
         unlockedLevels: [1, 2, 3, 4],
@@ -16157,10 +16129,10 @@ onAuthStateChanged(auth, async (user) => {
         const userData = userSnap.data();
         updateAccountName(userData.name || user.displayName || '이름 없음');
 
-        // 선생님인 경우 학습 단계를 34단계로 고정
-        if ((userData.role || '').toLowerCase() === 'teacher' && Number(userData.currentLearningStep) !== 34) {
-            await setDoc(doc(db, 'users', user.uid), { currentLearningStep: 34 }, { merge: true });
-            userData.currentLearningStep = 34;
+        // 선생님인 경우 마지막 한글 배움 단계까지 열어 둔다.
+        if ((userData.role || '').toLowerCase() === 'teacher' && Number(userData.currentLearningStep) !== 33) {
+            await setDoc(doc(db, 'users', user.uid), { currentLearningStep: 33 }, { merge: true });
+            userData.currentLearningStep = 33;
         }
 
         const teacherId = userData.teacherId || null;
