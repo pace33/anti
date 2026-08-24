@@ -14065,6 +14065,15 @@ function renderLesson27ReadingPage() {
     return `<section class="lesson27-reading-page" data-lesson27-reading><div class="lesson27-reading-heading"><strong>읽기</strong><span>받침소리를 생각하며, 단어 읽기</span></div><p class="lesson27-reading-tip"><b>TIP</b> 복잡한 받침은 있는데 중점을 두고 쓰는 연습을 하지 않습니다.</p><div class="lesson27-reading-grid">${words.map((word) => `<button type="button" class="lesson27-reading-word" onclick="speakTextKo('${word}')" aria-label="${word} 소리 듣기">${[...word].map((char) => `<span>${char}</span>`).join('')}</button>`).join('')}</div></section>`;
 }
 
+function renderLesson27ChallengePage() {
+    const levels = [
+        { label:'1단계', words:['입','앞','옆','톱','숲','법','잎'], count:7 },
+        { label:'2단계', words:['답답','쉽다','깊다','덮밥'], count:4 },
+        { label:'3단계', words:['눕지대','구급차','앞치마'], count:3 }
+    ];
+    return `<section class="lesson27-challenge-page" data-lesson27-challenge><div class="lesson27-challenge-heading"><strong>도전하기</strong><span>스스로 정확하게 읽기</span></div><div class="lesson27-challenge-levels">${levels.map((level) => `<div class="lesson27-challenge-level"><span class="lesson27-challenge-label">${level.label}</span><div class="lesson27-challenge-words">${level.words.map((word) => `<button type="button" onclick="speakTextKo('${word}')" aria-label="${word} 소리 듣기">${word}</button>`).join('')}</div><span class="lesson27-challenge-count">/ ${level.count}</span></div>`).join('')}</div><div class="lesson27-challenge-tip">단어를 눌러 소리를 듣고, 받침 소리를 생각하며 정확하게 읽어 보세요.</div></section>`;
+}
+
 function syncLesson27FamilyPage() {
     const page = document.querySelector('[data-lesson27-family-page]');
     if (!page) return;
@@ -14603,6 +14612,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson27BatchimWritingPage();
         } else if (isCustomLesson27 && safeIndex === 2) {
             contentHtml = renderLesson27ReadingPage();
+        } else if (isCustomLesson27 && safeIndex === 3) {
+            contentHtml = renderLesson27ChallengePage();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {

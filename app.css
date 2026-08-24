@@ -6953,6 +6953,18 @@ body {
 .lesson27-reading-word span { display:grid; place-items:center; min-width:36px; min-height:38px; padding:2px 5px; }
 .lesson27-reading-word span:last-child { background:#d8eaf5; }
 .lesson27-reading-word:hover, .lesson27-reading-word:focus-visible { outline:3px solid #55a8c2; transform:translateY(-2px); }
+.lesson27-challenge-page { max-width:1120px; margin:0 auto; padding:26px; background:#fff; border:3px solid #b9cbd8; border-radius:18px; }
+.lesson27-challenge-heading { display:flex; align-items:center; gap:14px; color:#173a5c; font-size:26px; font-weight:800; }
+.lesson27-challenge-heading strong { padding:10px 18px; border-radius:4px; background:#55a8c2; color:#fff; font-size:20px; }
+.lesson27-challenge-levels { margin-top:22px; display:grid; gap:10px; }
+.lesson27-challenge-level { display:grid; grid-template-columns:72px 1fr 58px; align-items:center; gap:12px; min-height:72px; padding:8px 10px; border-bottom:1px solid #d4dce1; }
+.lesson27-challenge-label { color:#3c91b0; font-weight:800; text-align:center; }
+.lesson27-challenge-words { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+.lesson27-challenge-words button { min-width:70px; padding:8px 10px; border:1px solid #aeb8c0; border-radius:5px; background:#fff; color:#102f50; font-size:30px; font-weight:800; cursor:pointer; }
+.lesson27-challenge-words button:hover, .lesson27-challenge-words button:focus-visible { background:#d8eaf5; outline:3px solid #55a8c2; }
+.lesson27-challenge-count { justify-self:end; min-width:44px; padding:7px 10px; border-radius:18px; background:#d8edf5; color:#173a5c; font-weight:800; text-align:center; }
+.lesson27-challenge-tip { margin-top:20px; padding:14px; border-radius:10px; background:#f2fae9; color:#5b7d36; text-align:center; font-weight:700; }
+@media (max-width:760px) { .lesson27-challenge-page { padding:16px; } .lesson27-challenge-heading { font-size:20px; } .lesson27-challenge-level { grid-template-columns:58px 1fr 46px; gap:6px; } .lesson27-challenge-words button { min-width:56px; font-size:24px; } }
 @media (max-width:760px) { .lesson27-reading-page { padding:16px; } .lesson27-reading-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .lesson27-reading-heading { font-size:20px; } }
 @media (max-width:760px) { .lesson27-writing-page { padding:16px; } .lesson27-writing-grid { grid-template-columns:1fr; } .lesson27-writing-heading { font-size:22px; } }
 .lesson27-family-card.state-final-sound .lesson27-hand-contact {opacity:1;animation:lesson27-contact-pulse .62s ease-out 1;}
