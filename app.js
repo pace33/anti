@@ -14194,6 +14194,22 @@ function splitRepresentativeWord(word, targetFinals, writableFinal = '') {
     }).join('');
 }
 
+function splitFamilyWritingWord(word, targetFinals) {
+    const finals = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    return [...word].map((char) => {
+        const code = char.charCodeAt(0) - 0xac00;
+        if (code < 0 || code > 11171) return `<span class="lesson27-syllable"><b>${char}</b><i></i></span>`;
+        const finalIndex = code % 28;
+        const base = String.fromCharCode(char.charCodeAt(0) - finalIndex);
+        const final = finals[finalIndex];
+        const isWritable = targetFinals.includes(final);
+        const bottom = isWritable
+            ? `<canvas class="trace-writing-canvas lesson27-writing-canvas" data-guide="${final}" data-trace-hide-label tabindex="0" aria-label="${base} 아래에 ${final} 받침 쓰기"></canvas>`
+            : final;
+        return `<span class="lesson27-syllable"><b>${base}</b><i class="${isWritable ? 'is-writing-batchim' : ''}">${bottom}</i></span>`;
+    }).join('');
+}
+
 function renderRepresentativeFamilyIntro(lessonId) {
     const config = REPRESENTATIVE_FAMILY_CONFIGS[lessonId];
     return `<section class="lesson27-family-page representative-family-page" data-lesson27-family-page data-family-lesson="${lessonId}" data-family-expected="${config.family.length}" data-family-representative="${config.representative}" data-family-spoken="${config.spokenSound}"><header class="lesson27-family-header"><span class="lesson27-family-number">배움 ${lessonId}</span><div><h2>${config.title}</h2><p>이름은 달라도, 받침 소리는 같아요!</p></div></header><div class="lesson27-family-step"><span>이해하기</span><strong>${config.family.map(([letter]) => letter).join('·')}은 받침에서 모두 ${config.sound}, “${config.spokenSound}” 소리가 나요.</strong></div><div class="lesson27-family-cards">${config.family.map(([letter,name],index) => { const key=`family-${lessonId}-${index}`; return `<article class="lesson27-family-card state-idle" data-family-card="${key}" data-family-name="${name}" data-family-first="${name.slice(0,-1)}" data-family-ending="${config.spokenSound}" data-family-lesson-id="${lessonId}" data-family-answer="${config.sound}" data-animation-state="idle"><span class="lesson27-card-check" aria-hidden="true">확인했어요</span><span class="lesson27-family-letter">${letter}</span><span class="lesson27-name-stack" aria-label="${name}"><span class="lesson27-first-block">${name.slice(0,-1)}</span><span class="lesson27-ending-block">${name.slice(-1)}</span></span><span class="lesson27-hand-scene" aria-hidden="true"><span class="lesson27-hand-track">${renderLesson27HandMotion()}</span><span class="lesson27-stage-caption">손동작과 소리를 들어 보세요.</span></span><span class="lesson27-card-copy"><strong>${name}</strong><span>받침 소리 <b>${config.sound}</b> · ${config.spokenSound}</span><button type="button" class="lesson27-play-button" data-family-play="${key}" aria-label="${name} 손동작과 소리 듣기" aria-pressed="false" onclick="playLesson27FamilyCard('${key}')"><span aria-hidden="true">▶</span> <span class="lesson27-play-label">손동작과 소리 듣기</span></button></span></article>`; }).join('')}</div><div id="lesson27-family-summary" class="lesson27-family-summary" role="status" aria-live="polite">${config.family.map(([,name])=>name).join(', ')}의 손동작과 소리를 차례로 들어 보세요.</div></section>`;
@@ -14201,7 +14217,8 @@ function renderRepresentativeFamilyIntro(lessonId) {
 
 function renderRepresentativeWritingPage(lessonId) {
     const config = REPRESENTATIVE_FAMILY_CONFIGS[lessonId];
-    return `<section class="lesson27-writing-page"><div class="lesson27-writing-heading"><strong>연습하기</strong><span>들리는 대로 받침쓰기</span></div><p class="lesson27-writing-instruction">낱말을 듣고 빈 받침 칸에 <b>${config.representative}</b>을 직접 써 보세요.</p><div class="representative-writing-grid">${config.writing.map(([word,heard,picture]) => `<article class="lesson27-writing-card"><button type="button" class="lesson27-picture-button" onclick="speakTextKo('${word}')"><span aria-hidden="true">${picture}</span><small>🔊 ${word}</small></button><div class="lesson27-tile-word">${splitRepresentativeWord(heard,[config.representative],config.representative)}</div></article>`).join('')}</div><div class="lesson27-writing-promise"><strong>약속하기</strong><span>${config.family.map(([letter]) => `‘${letter}’`).join('과 ')}은 글자는 다르지만 받침소리는 <b>${config.sound}</b>으로 같아요.</span></div></section>`;
+    const familyFinals = config.family.map(([letter]) => letter);
+    return `<section class="lesson27-writing-page"><div class="lesson27-writing-heading"><strong>연습하기</strong><span>알맞은 받침쓰기</span></div><p class="lesson27-writing-instruction">낱말을 듣고 빈 받침 칸에 낱말의 실제 받침을 직접 써 보세요.</p><div class="representative-writing-grid">${config.writing.map(([word,,picture]) => `<article class="lesson27-writing-card"><button type="button" class="lesson27-picture-button" onclick="speakTextKo('${word}')"><span aria-hidden="true">${picture}</span><small>🔊 ${word}</small></button><div class="lesson27-tile-word">${splitFamilyWritingWord(word,familyFinals)}</div></article>`).join('')}</div><div class="lesson27-writing-promise"><strong>약속하기</strong><span>${config.family.map(([letter]) => `‘${letter}’`).join('과 ')}은 글자는 다르지만 받침소리는 <b>${config.sound}</b>으로 같아요.</span></div></section>`;
 }
 
 function renderRepresentativeReadingPage(lessonId) {
