@@ -6953,9 +6953,12 @@ body {
 .lesson27-reading-tip { margin:18px 0; padding:10px 14px; background:#f2fae9; color:#5b7d36; font-weight:700; }
 .lesson27-reading-tip b { color:#54a52d; margin-right:8px; }
 .lesson27-reading-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:7px; align-items:start; }
-.lesson27-reading-word { display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch; min-height:76px; padding:0; border:1px solid #aeb8c0; border-radius:5px; background:#fff; color:#102f50; font-size:32px; font-weight:800; cursor:pointer; overflow:hidden; }
-.lesson27-reading-word span { display:grid; place-items:center; min-width:36px; min-height:38px; padding:2px 5px; }
-.lesson27-reading-word span:last-child { background:#d8eaf5; }
+.lesson27-reading-word { display:flex; justify-content:center; align-items:stretch; min-height:82px; padding:0; border:0; background:#fff; color:#102f50; cursor:pointer; }
+.lesson27-reading-syllable { display:grid; grid-template-rows:48px 32px; min-width:50px; border:1px solid #aeb8c0; border-radius:4px; overflow:hidden; }
+.lesson27-reading-syllable b,.lesson27-reading-syllable i { display:grid; place-items:center; font-style:normal; font-weight:800; }
+.lesson27-reading-syllable b { background:#dcecf6; font-size:29px; }
+.lesson27-reading-syllable i { background:#fff; color:#102f50; font-size:23px; }
+.lesson27-reading-syllable i.is-target-batchim { color:#e85d22; font-weight:1000; }
 .lesson27-reading-word:hover, .lesson27-reading-word:focus-visible { outline:3px solid #55a8c2; transform:translateY(-2px); }
 .lesson27-challenge-page { max-width:1120px; margin:0 auto; padding:26px; background:#fff; border:3px solid #b9cbd8; border-radius:18px; }
 .lesson27-challenge-heading { display:flex; align-items:center; gap:14px; color:#173a5c; font-size:26px; font-weight:800; }

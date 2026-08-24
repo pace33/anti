@@ -14069,8 +14069,18 @@ function renderLesson27BatchimWritingPage() {
 }
 
 function renderLesson27ReadingPage() {
-    const words = ['집', '앞', '밥', '삽', '옆', '숲', '톱', '법', '잎', '답답', '쉽다', '깊다', '덮밥', '눕지대', '구급차', '앞치마'];
-    return `<section class="lesson27-reading-page" data-lesson27-reading><div class="lesson27-reading-heading"><strong>읽기</strong><span>받침소리를 생각하며, 단어 읽기</span></div><p class="lesson27-reading-tip"><b>TIP</b> 복잡한 받침은 있는데 중점을 두고 쓰는 연습을 하지 않습니다.</p><div class="lesson27-reading-grid">${words.map((word) => `<button type="button" class="lesson27-reading-word" onclick="speakTextKo('${word}')" aria-label="${word} 소리 듣기">${[...word].map((char) => `<span>${char}</span>`).join('')}</button>`).join('')}</div></section>`;
+    const words = ['집','앞','밥','삽','옆','숲','톱','높다','접다','춥다','무릎','접시','뒤덮다','갚다','입체','잎사귀','앞치마','보고싶다'];
+    const finals = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    const wordTiles = (word) => [...word].map((char) => {
+        const code = char.charCodeAt(0) - 0xac00;
+        if (code < 0 || code > 11171) return `<span class="lesson27-reading-syllable"><b>${char}</b><i></i></span>`;
+        const finalIndex = code % 28;
+        const base = String.fromCharCode(char.charCodeAt(0) - finalIndex);
+        const final = finals[finalIndex];
+        const isTarget = final === 'ㅂ' || final === 'ㅍ';
+        return `<span class="lesson27-reading-syllable"><b>${base}</b><i class="${isTarget ? 'is-target-batchim' : ''}">${final}</i></span>`;
+    }).join('');
+    return `<section class="lesson27-reading-page" data-lesson27-reading><div class="lesson27-reading-heading"><strong>읽기</strong><span>받침소리를 생각하며, 단어 읽기</span></div><p class="lesson27-reading-tip"><b>TIP</b> 복잡한 받침은 읽는 데 중점을 두고 쓰는 연습을 하지 않습니다.</p><div class="lesson27-reading-grid">${words.map((word) => `<button type="button" class="lesson27-reading-word" onclick="speakTextKo('${word}')" aria-label="${word} 소리 듣기">${wordTiles(word)}</button>`).join('')}</div></section>`;
 }
 
 function renderLesson27ChallengePage() {
