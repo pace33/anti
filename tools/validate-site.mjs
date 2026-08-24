@@ -73,7 +73,7 @@ assert(index.includes('id="word-bank-camera-capture-btn"') && index.includes('on
 assert(index.includes('md:grid-cols-3 gap-6 w-full mb-4'), '교과 맞춤쓰기/문해력 하단 카드 3칸 레이아웃이 없습니다.');
 const oldBankLabel = `국어 ${'은'}행`;
 assert(!index.includes(oldBankLabel) && !app.includes(oldBankLabel), '이전 은행 용어가 남아 있습니다.');
-assert(app.includes('openDictationBankCamera = function openDictationBankCamera()') && app.includes('word-bank-camera-modal'), '오늘의 노트 사진이 팝업 카메라를 열지 않습니다.');
+assert(app.includes('openDictationBankCamera = function openDictationBankCamera(options = {})') && app.includes('word-bank-camera-modal'), '오늘의 노트 사진이 팝업 카메라를 열지 않습니다.');
 assert(app.includes("setWordBankCameraStatus('로딩중~', true)") && app.includes("setWordBankCameraStatus('OCR+AI 분석중~~', true)"), '사진 촬영 단계별 로딩 문구가 없습니다.');
 assert(app.includes('사람 이름, 학생 이름, 교사 이름'), '단어 선별 프롬프트에서 이름 제외 규칙이 없습니다.');
 assert(index.includes('class="rpg-profile-portrait" onclick="openIconModal()" aria-label="프로필 아이콘 변경"'), '하단 프로필 아이콘이 아이콘 변경창을 열지 않습니다.');
