@@ -14163,6 +14163,101 @@ window.completeLesson27ChallengeWord = function completeLesson27ChallengeWord() 
     }
 };
 
+const REPRESENTATIVE_FAMILY_CONFIGS = {
+    28: {
+        title:'ㄱ 받침가족', representative:'ㄱ', sound:'/ㄱ/', family:[['ㄱ','기역'],['ㅋ','키읔'],['ㄲ','쌍기역']],
+        writing:[['밖','박','🏠'],['국','국','🍲'],['깎다','각다','🔪'],['부엌','부억','🍳'],['묶다','묵다','🪢'],['낚시터','낙시터','🎣']],
+        reading:['복','넋','섞다','국자','싹','묶다','깎다','부엌','꺾다','볶다','떡볶이','식탁','깎다','새벽녘','꼭대기','안팎으로'],
+        levels:[['약','박','곽','북','넋','깎','떡'],['엮다','식탁','창밖','북녘','섞다'],['새벽녘','연필깎이','볶습니다']]
+    },
+    29: {
+        title:'ㄷ 받침가족', representative:'ㄷ', sound:'/ㄷ/', family:[['ㄷ','디귿'],['ㅅ','시옷'],['ㅆ','쌍시옷'],['ㅈ','지읒'],['ㅊ','치읓'],['ㅌ','티읕'],['ㅎ','히읗']],
+        writing:[['꽃','꼳','🌸'],['빗','빋','🪮'],['윷','윧','🎲'],['옷','옫','🧥'],['솥','솓','🍲'],['낮','낟','☀️'],['씻다','씯다','🧼'],['젖소','젇소','🐄'],['벚꽃','벋꼳','🌸'],['찧다','찓다','🥣']],
+        reading:['옷','빛','곧','팥','붓','밑','낫','겉','숯','못','뜻','낮','샀다','벚꽃','끝나다','버섯','젖다','초콜릿','놀랐다','쫓겨났다'],
+        levels:[['옷','낫','팥','옻','뜻','윷','빛'],['잇다','찾다','도넛','쫓다','짖다'],['가마솥','자줏빛','쫓겨났다']]
+    }
+};
+
+function splitRepresentativeWord(word, targetFinals, writableFinal = '') {
+    const finals = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    return [...word].map((char, index) => {
+        const code = char.charCodeAt(0) - 0xac00;
+        if (code < 0 || code > 11171) return `<span class="lesson27-syllable"><b>${char}</b><i></i></span>`;
+        const finalIndex = code % 28;
+        const base = String.fromCharCode(char.charCodeAt(0) - finalIndex);
+        const final = finals[finalIndex];
+        const isTarget = targetFinals.includes(final);
+        const bottom = writableFinal && final === writableFinal
+            ? `<canvas class="trace-writing-canvas lesson27-writing-canvas" data-guide="${writableFinal}" data-trace-hide-label tabindex="0" aria-label="${base} 아래에 ${writableFinal} 받침 쓰기"></canvas>`
+            : final;
+        return `<span class="lesson27-syllable"><b>${base}</b><i class="${isTarget ? 'is-target-batchim' : ''}">${bottom}</i></span>`;
+    }).join('');
+}
+
+function renderRepresentativeFamilyIntro(lessonId) {
+    const config = REPRESENTATIVE_FAMILY_CONFIGS[lessonId];
+    return `<section class="lesson27-family-page representative-family-page"><header class="lesson27-family-header"><span class="lesson27-family-number">배움 ${lessonId}</span><div><h2>${config.title}</h2><p>글자는 달라도 받침 소리는 같아요!</p></div></header><div class="lesson27-family-step"><span>이해하기</span><strong>${config.family.map(([letter]) => letter).join('·')}은 받침에서 모두 ${config.sound} 소리가 나요.</strong></div><div class="representative-family-grid">${config.family.map(([letter,name]) => `<article class="representative-family-card"><strong>${letter}</strong><span class="lesson27-name-stack"><span>${name.slice(0,-1)}</span><span>${name.slice(-1)}</span></span><div><b>${name}</b><small>받침 소리 ${config.sound}</small><button type="button" onclick="playRepresentativeFamilyCard(this,'${name}','${config.representative}')">▶ 손동작과 소리 듣기</button></div></article>`).join('')}</div></section>`;
+}
+
+window.playRepresentativeFamilyCard = function playRepresentativeFamilyCard(button, name, representative) {
+    const card = button.closest('.representative-family-card');
+    card?.classList.add('is-heard');
+    if (button) button.textContent = '▶ 한 번 더 듣기';
+    speakTextKo(`${name}. 받침 소리는 ${representative}.`);
+};
+
+function renderRepresentativeWritingPage(lessonId) {
+    const config = REPRESENTATIVE_FAMILY_CONFIGS[lessonId];
+    return `<section class="lesson27-writing-page"><div class="lesson27-writing-heading"><strong>연습하기</strong><span>들리는 대로 받침쓰기</span></div><p class="lesson27-writing-instruction">낱말을 듣고 빈 받침 칸에 <b>${config.representative}</b>을 직접 써 보세요.</p><div class="representative-writing-grid">${config.writing.map(([word,heard,picture]) => `<article class="lesson27-writing-card"><button type="button" class="lesson27-picture-button" onclick="speakTextKo('${word}')"><span aria-hidden="true">${picture}</span><small>🔊 ${word}</small></button><div class="lesson27-tile-word">${splitRepresentativeWord(heard,[config.representative],config.representative)}</div></article>`).join('')}</div><div class="lesson27-writing-promise"><strong>약속하기</strong><span>${config.family.map(([letter]) => `‘${letter}’`).join('과 ')}은 글자는 다르지만 받침소리는 <b>${config.sound}</b>으로 같아요.</span></div></section>`;
+}
+
+function renderRepresentativeReadingPage(lessonId) {
+    const config = REPRESENTATIVE_FAMILY_CONFIGS[lessonId];
+    const finals = config.family.map(([letter]) => letter);
+    return `<section class="lesson27-reading-page"><div class="lesson27-reading-heading"><strong>읽기</strong><span>받침소리를 생각하며, 단어 읽기</span></div><p class="lesson27-reading-tip"><b>TIP</b> 복잡한 받침은 읽는 데 중점을 두고 쓰는 연습을 하지 않습니다.</p><div class="representative-reading-grid">${config.reading.map((word) => `<button type="button" class="lesson27-reading-word" onclick="speakTextKo('${word}')">${splitRepresentativeWord(word,finals)}</button>`).join('')}</div></section>`;
+}
+
+const representativeChallengeState = { lessonId:0, level:0, index:0, score:0, completed:new Set(), words:[] };
+function renderRepresentativeChallengePage(lessonId) {
+    const config = REPRESENTATIVE_FAMILY_CONFIGS[lessonId];
+    return `<section class="lesson27-challenge-page" data-representative-game="${lessonId}"><div class="lesson27-challenge-heading"><strong>도전하기</strong><span>스스로 정확하게 읽기 게임</span></div><div class="lesson27-game-status"><span>⭐ <b data-rep-score>0</b>점</span><span data-rep-progress>1단계부터 시작해요.</span></div><div class="lesson27-game-levels">${config.levels.map((words,index) => `<button type="button" data-rep-level="${index}" onclick="startRepresentativeChallenge(${lessonId},${index})" ${index ? 'disabled' : ''}><strong>${index+1}단계</strong><small>${words.length}개 읽기</small><span>${index ? '🔒' : '▶'}</span></button>`).join('')}</div><div class="lesson27-game-arena"><p data-rep-guide>1단계를 눌러 시작해 보세요.</p><div class="lesson27-game-word" data-rep-word>준비!</div><div class="lesson27-game-actions"><button type="button" onclick="listenRepresentativeChallenge()" disabled>🔊 소리 확인</button><button type="button" class="lesson27-game-read" onclick="completeRepresentativeChallengeWord()" disabled>✓ 읽었어요</button></div></div></section>`;
+}
+
+window.startRepresentativeChallenge = function startRepresentativeChallenge(lessonId, level) {
+    if (level && !representativeChallengeState.completed.has(level-1)) return;
+    representativeChallengeState.lessonId=lessonId; representativeChallengeState.level=level; representativeChallengeState.index=0;
+    representativeChallengeState.words=[...REPRESENTATIVE_FAMILY_CONFIGS[lessonId].levels[level]].sort(()=>Math.random()-.5);
+    updateRepresentativeChallenge();
+};
+function updateRepresentativeChallenge(message='받침 소리를 생각하며 큰 소리로 읽어 보세요.') {
+    const state=representativeChallengeState, page=document.querySelector(`[data-representative-game="${state.lessonId}"]`); if(!page)return;
+    const config=REPRESENTATIVE_FAMILY_CONFIGS[state.lessonId], word=state.words[state.index];
+    page.querySelector('[data-rep-word]').textContent=word; page.querySelector('[data-rep-score]').textContent=state.score;
+    page.querySelector('[data-rep-progress]').textContent=`${state.level+1}단계 ${state.index+1} / ${config.levels[state.level].length}`; page.querySelector('[data-rep-guide]').textContent=message;
+    page.querySelectorAll('.lesson27-game-actions button').forEach(button=>button.disabled=false);
+    page.querySelectorAll('[data-rep-level]').forEach((button,index)=>{button.disabled=index>0&&!state.completed.has(index-1);button.classList.toggle('is-active',index===state.level);button.classList.toggle('is-complete',state.completed.has(index));button.querySelector('span').textContent=state.completed.has(index)?'✓':button.disabled?'🔒':'▶';});
+}
+window.listenRepresentativeChallenge = function listenRepresentativeChallenge(){const word=representativeChallengeState.words[representativeChallengeState.index];if(word)speakTextKo(word);};
+window.completeRepresentativeChallengeWord = function completeRepresentativeChallengeWord(){const state=representativeChallengeState, config=REPRESENTATIVE_FAMILY_CONFIGS[state.lessonId];if(!state.words.length)return;state.score+=10;state.index+=1;if(state.index<state.words.length){updateRepresentativeChallenge('잘했어요! 다음 단어에 도전해요.');return;}state.completed.add(state.level);if(state.level<2){startRepresentativeChallenge(state.lessonId,state.level+1);return;}const page=document.querySelector(`[data-representative-game="${state.lessonId}"]`);page.querySelector('[data-rep-word]').textContent='참 잘했어요!';page.querySelector('[data-rep-progress]').textContent='모든 단계 완료!';page.querySelector('[data-rep-score]').textContent=state.score;page.querySelectorAll('.lesson27-game-actions button').forEach(button=>button.disabled=true);};
+
+const LESSON30_QUESTIONS = [
+    [['앗','안'],'앗'],[['앞','앙'],'앙'],[['알','악'],'악'],[['악','암'],'암'],[['있','인'],'있'],
+    [['잊','일'],'잊'],[['읕','음'],'읕'],[['읏','은'],'은'],[['응','읒'],'응'],[['음','읖'],'읖'],
+    [['웃','웅'],'웅'],[['웊','울'],'웊'],[['억','언'],'억'],[['억','얻'],'얻'],[['옻','올'],'올'],
+    [['옷','옵'],'옷'],[['얖','약'],'얖'],[['욨','욥'],'욨'],[['엇','엮'],'엇'],[['윤','윷'],'윤']
+];
+function renderLesson30Quiz() {
+    return `<section class="lesson25-listen-page" data-lesson30-quiz><div class="lesson25-listen-guide"><strong>도전, 받침왕!</strong><span>문제 소리를 듣고 두 글자 중 알맞은 글자를 골라요.</span></div><div class="lesson25-listen-progress"><span data-lesson30-message>1번부터 소리를 들어 보세요.</span><strong data-lesson30-count>푼 문제 0 / 20</strong></div><div class="lesson25-question-grid">${LESSON30_QUESTIONS.map(([choices,answer],index)=>`<section class="lesson25-question-card" data-answer="${answer}"><div class="lesson25-question-head"><span class="lesson25-question-number">${index+1}</span><button type="button" class="lesson25-question-sound" onclick="speakTextKo('${answer}')">🔊 문제 소리 듣기</button></div><div class="lesson25-choice-pair">${choices.map(choice=>`<button type="button" class="lesson25-choice-button" onclick="selectLesson30Answer(this,'${choice}')"><span>${choice}</span><small>(　)</small></button>`).join('')}</div><p class="lesson25-question-feedback">소리를 듣고 골라요.</p></section>`).join('')}</div></section>`;
+}
+window.selectLesson30Answer = function selectLesson30Answer(button,selected){const card=button.closest('.lesson25-question-card');if(!card||card.classList.contains('is-complete'))return;const feedback=card.querySelector('.lesson25-question-feedback');if(selected!==card.dataset.answer){button.classList.add('is-try-again');feedback.textContent='다시 소리를 듣고 골라 보세요.';speakTextKo('다시 골라 보아요.');return;}card.classList.add('is-complete');button.classList.add('is-correct');button.querySelector('small').textContent='( ○ )';card.querySelectorAll('.lesson25-choice-button').forEach(choice=>choice.disabled=true);feedback.textContent=`맞았어요! ${selected}이에요.`;speakTextKo(`${selected}. 맞았어요.`);const page=card.closest('[data-lesson30-quiz]'),count=page.querySelectorAll('.lesson25-question-card.is-complete').length;page.querySelector('[data-lesson30-count]').textContent=`푼 문제 ${count} / 20`;page.querySelector('[data-lesson30-message]').textContent=count===20?'참 잘했어요! 모든 문제를 풀었어요.':`${count+1}번 문제에 도전해 보세요.`;};
+
+const LESSON30_PATH = [
+    ['🌸',['꽃','꼭'],'꽃'],['🧥',['옷','온'],'옷'],['🎣',['낚시','남시'],'낚시'],['🍃',['임','잎'],'잎'],['🐄',['젖소','전소'],'젖소'],
+    ['🏠',['집','지'],'집'],['🍲',['솥','숲'],'솥'],['🌳',['숨','숲'],'숲'],['🪮',['빗','빙'],'빗'],['🦵',['무른','무릎'],'무릎']
+];
+function renderLesson30PathGame(){return `<section class="lesson25-path-game" data-lesson30-path><div class="lesson25-path-guide"><span class="lesson25-path-start">출발</span><strong>그림에 알맞은 글자를 골라 도착까지 가요.</strong></div><div class="lesson25-path-progress"><span data-lesson30-path-message>첫 번째 그림부터 시작해요.</span><strong data-lesson30-path-count>도착까지 0 / 10</strong></div><div class="lesson25-path-board">${LESSON30_PATH.map(([icon,choices,answer],index)=>`<section class="lesson25-path-stage ${index?'is-locked':'is-current'}" data-path-stage="${index}" data-answer="${answer}"><span class="lesson25-path-step">${index+1}</span><div class="lesson25-path-picture">${icon}</div><div class="lesson25-path-choices">${choices.map(choice=>`<button type="button" onclick="selectLesson30Path(this,'${choice}')" ${index?'disabled':''}>${choice}</button>`).join('')}</div><p class="lesson25-path-stage-feedback">${index?'앞의 길을 먼저 통과해요.':'글자를 골라요.'}</p></section>`).join('')}</div><div class="lesson25-path-finish"><span>🏁</span><strong>도착</strong></div></section>`;}
+window.selectLesson30Path=function selectLesson30Path(button,selected){const stage=button.closest('.lesson25-path-stage'),game=stage.closest('[data-lesson30-path]');if(stage.classList.contains('is-locked')||stage.classList.contains('is-complete'))return;if(selected!==stage.dataset.answer){button.classList.add('is-try-again');stage.querySelector('.lesson25-path-stage-feedback').textContent='그림을 다시 보고 골라 보세요.';speakTextKo('다시 골라 보아요.');return;}stage.classList.remove('is-current');stage.classList.add('is-complete');stage.querySelectorAll('button').forEach(item=>item.disabled=true);button.classList.add('is-correct');stage.querySelector('.lesson25-path-stage-feedback').textContent=`○ ${selected}, 맞았어요!`;speakTextKo(`${selected}. 맞았어요.`);const count=game.querySelectorAll('.lesson25-path-stage.is-complete').length;game.querySelector('[data-lesson30-path-count]').textContent=`도착까지 ${count} / 10`;const next=game.querySelector(`[data-path-stage="${count}"]`);if(next){next.classList.remove('is-locked');next.classList.add('is-current');next.querySelectorAll('button').forEach(item=>item.disabled=false);next.querySelector('.lesson25-path-stage-feedback').textContent='글자를 골라요.';}else{game.classList.add('is-finished');game.querySelector('[data-lesson30-path-message]').textContent='받침왕 길을 모두 통과했어요!';}};
+
 function syncLesson27FamilyPage() {
     const page = document.querySelector('[data-lesson27-family-page]');
     if (!page) return;
@@ -14553,6 +14648,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
     const isCustomLesson25 = numericStep === 25;
     const isCustomLesson26 = numericStep === 26;
     const isCustomLesson27 = numericStep === 27;
+    const isCustomRepresentativeFamily = numericStep === 28 || numericStep === 29;
+    const isCustomLesson30 = numericStep === 30;
     const batchimPageSequence = LESSON_BATCHIM_PAGE_SEQUENCES[numericStep] || [];
     const isCustomBatchimLesson = batchimPageSequence.length > 0;
     const visibleActivitySteps = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33];
@@ -14568,6 +14665,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (isCustomLesson25) totalSections = 4;
     if (isCustomLesson26) totalSections = 9;
     if (isCustomLesson27) totalSections = 4;
+    if (isCustomRepresentativeFamily) totalSections = 4;
+    if (isCustomLesson30) totalSections = 2;
     if (isCustomBatchimLesson) totalSections = batchimPageSequence.length * 5;
     const safeIndex = Math.max(0, Math.min(sectionIndex, totalSections - 1));
     currentLearningDetailSectionIndex = safeIndex;
@@ -14704,6 +14803,18 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson27ReadingPage();
         } else if (isCustomLesson27 && safeIndex === 3) {
             contentHtml = renderLesson27ChallengePage();
+        } else if (isCustomRepresentativeFamily && safeIndex === 0) {
+            contentHtml = renderRepresentativeFamilyIntro(numericStep);
+        } else if (isCustomRepresentativeFamily && safeIndex === 1) {
+            contentHtml = renderRepresentativeWritingPage(numericStep);
+        } else if (isCustomRepresentativeFamily && safeIndex === 2) {
+            contentHtml = renderRepresentativeReadingPage(numericStep);
+        } else if (isCustomRepresentativeFamily && safeIndex === 3) {
+            contentHtml = renderRepresentativeChallengePage(numericStep);
+        } else if (isCustomLesson30 && safeIndex === 0) {
+            contentHtml = renderLesson30Quiz();
+        } else if (isCustomLesson30 && safeIndex === 1) {
+            contentHtml = renderLesson30PathGame();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {

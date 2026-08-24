@@ -6953,6 +6953,13 @@ body {
 .lesson27-writing-promise { display:flex; justify-content:center; align-items:center; gap:12px; margin-top:18px; color:#355568; font-weight:700; }
 .lesson27-writing-promise strong { padding:7px 14px; border-radius:3px; background:#55a8c2; color:#fff; }
 .lesson27-writing-promise b { color:#e85d22; }
+.representative-family-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.representative-family-card { display:grid; grid-template-columns:90px 90px 1fr; align-items:center; gap:14px; padding:18px; border:2px solid #b8c7d2; border-radius:8px; background:#fff; transition:.2s ease; }
+.representative-family-card > strong { color:#17324e; font-size:64px; text-align:center; }.representative-family-card > div { display:grid; gap:8px; }.representative-family-card > div b { font-size:24px; }.representative-family-card > div small { color:#52697b;font-size:16px;font-weight:800; }.representative-family-card button { padding:10px; border:2px solid #2f9cbd; border-radius:7px; background:#fff; color:#176784; font-weight:900; cursor:pointer; }.representative-family-card.is-heard { border-color:#39a96b; background:#c8edd5; }
+.representative-writing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid #aeb8c0; }.representative-writing-grid .lesson27-writing-card { grid-column:auto; }
+.representative-reading-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px 12px; }
+.representative-reading-grid .lesson27-reading-word { overflow:visible; }.representative-reading-grid .lesson27-syllable { display:grid; grid-template-rows:58px 36px; min-width:54px; border:1px solid #aeb8c0; border-radius:4px; overflow:hidden; }.representative-reading-grid .lesson27-syllable b,.representative-reading-grid .lesson27-syllable i { display:grid; place-items:center; font-style:normal; font-weight:900; }.representative-reading-grid .lesson27-syllable b { background:#dcecf6; font-size:34px; }.representative-reading-grid .lesson27-syllable i { font-size:25px; }.representative-reading-grid .is-target-batchim { color:#e85d22; }
+@media(max-width:760px){.representative-family-grid,.representative-writing-grid,.representative-reading-grid{grid-template-columns:1fr}.representative-family-card{grid-template-columns:70px 80px 1fr}.representative-family-card>strong{font-size:48px}}
 .lesson27-reading-page { max-width:1120px; margin:0 auto; padding:26px; background:#fff; border:3px solid #b9cbd8; border-radius:18px; }
 .lesson27-reading-heading { display:flex; align-items:center; gap:14px; color:#173a5c; font-size:22px; font-weight:800; }
 .lesson27-reading-heading strong { padding:8px 17px; border-radius:4px; background:#55a8c2; color:#fff; font-size:18px; }
