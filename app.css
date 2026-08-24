@@ -6931,19 +6931,21 @@ body {
 .lesson27-writing-page { max-width:1120px; margin:0 auto; padding:22px; background:#fff; border:2px solid #b8c0c7; border-radius:6px; }
 .lesson27-writing-heading { display:flex; align-items:center; gap:14px; padding-bottom:12px; border-bottom:1px solid #9ea9b0; color:#263849; font-size:22px; font-weight:800; }
 .lesson27-writing-heading strong { padding:8px 18px; border-radius:3px; background:#55a8c2; color:#fff; font-size:18px; }
-.lesson27-writing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:18px; border:1px solid #aeb8c0; border-radius:5px; overflow:hidden; }
-.lesson27-writing-card { display:grid; grid-template-columns:1fr auto auto; grid-template-rows:108px auto; align-items:end; justify-items:center; gap:7px; padding:12px 10px 10px; border-right:1px solid #c3cbd0; border-bottom:1px solid #c3cbd0; background:#fff; }
+.lesson27-writing-instruction { margin:14px 0; color:#526777; text-align:center; font-size:19px; font-weight:700; }
+.lesson27-writing-instruction b { color:#e85d22; }
+.lesson27-writing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid #aeb8c0; border-radius:5px; overflow:hidden; }
+.lesson27-writing-card { display:grid; grid-template-rows:116px auto; align-items:end; justify-items:center; gap:10px; min-height:240px; padding:16px 12px; border-right:1px solid #c3cbd0; border-bottom:1px solid #c3cbd0; background:#fff; }
 .lesson27-writing-card:nth-child(6) { grid-column:1; }
 .lesson27-picture-button { grid-column:1 / -1; align-self:stretch; display:grid; place-items:center; align-content:center; gap:2px; width:100%; border:0; background:#fff; cursor:pointer; }
-.lesson27-picture-button > span { font-size:58px; line-height:1; }
-.lesson27-picture-button small { color:#526777; font-size:15px; font-weight:800; }
+.lesson27-picture-button > span { font-size:66px; line-height:1; }
+.lesson27-picture-button small { color:#526777; font-size:18px; font-weight:800; }
 .lesson27-tile-word { display:flex; align-items:stretch; }
-.lesson27-syllable { display:grid; grid-template-rows:46px 30px; min-width:48px; border:1px solid #aeb8c0; border-radius:4px; overflow:hidden; background:#fff; color:#102f50; text-align:center; }
+.lesson27-syllable { display:grid; grid-template-rows:62px 48px; min-width:68px; border:1px solid #aeb8c0; border-radius:5px; overflow:hidden; background:#fff; color:#102f50; text-align:center; }
 .lesson27-syllable b,.lesson27-syllable i { display:grid; place-items:center; font-style:normal; font-weight:800; }
-.lesson27-syllable b { background:#dcecf6; font-size:28px; }
-.lesson27-syllable i { font-size:22px; }
-.lesson27-syllable i.is-heard-batchim { color:#ff6b28; }
-.lesson27-writing-arrow { align-self:center; color:#9ba2a7; font-size:28px; font-weight:800; }
+.lesson27-syllable b { background:#dcecf6; font-size:38px; }
+.lesson27-syllable i { font-size:28px; }
+.lesson27-syllable i.is-writing-batchim { background:#fff8ef; box-shadow:inset 0 0 0 3px #ffb466; }
+.lesson27-writing-canvas { display:block; width:100%; height:48px; touch-action:none; }
 .lesson27-writing-promise { display:flex; justify-content:center; align-items:center; gap:12px; margin-top:18px; color:#355568; font-weight:700; }
 .lesson27-writing-promise strong { padding:7px 14px; border-radius:3px; background:#55a8c2; color:#fff; }
 .lesson27-writing-promise b { color:#e85d22; }
