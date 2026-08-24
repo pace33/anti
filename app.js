@@ -8488,6 +8488,7 @@ function initializeLetterWritingActivity() {
         canvas._traceCompleted = {};
         canvas._tracePaths = [];
         delete canvas.dataset.rewarded;
+        delete canvas.dataset.traceCompletionNotified;
         initializeTraceWritingCanvas(canvas);
         drawTraceWritingGuide(canvas);
         const feedback = document.getElementById('letter-feedback');
@@ -8577,24 +8578,33 @@ function initializeLetterWritingActivity() {
     }
 
     const letterGradeButton = document.getElementById('letter-grade');
-    letterGradeButton.addEventListener('click', async () => {
+    let letterCompletionPending = false;
+    const completeCurrentLetterWriting = async () => {
+        if (letterCompletionPending) return;
+        letterCompletionPending = true;
         const reward = currentLetterKind === 'practice-word' ? 2 : 1;
         const kindLabel = currentLetterKind === 'practice-word' ? '낱말' : (currentLetterKind === 'vowel' ? '모음' : '자음');
-        const completed = await gradeCompletedWriting({
-            targetCanvas: canvas,
-            button: letterGradeButton,
-            feedback: document.getElementById('letter-feedback'),
-            reward,
-            attempt: {
-                lessonId: 'letter-writing',
-                lessonTitle: `${kindLabel} 쓰기 연습`,
-                word: currentChar,
-                practiceType: currentLetterKind,
-                skillTags: ['글자쓰기', kindLabel]
-            }
-        });
-        if (completed) await advanceAfterSuccessfulWriting(letterGradeButton, advanceLetterWritingPrompt);
-    });
+        try {
+            const completed = await gradeCompletedWriting({
+                targetCanvas: canvas,
+                button: letterGradeButton,
+                feedback: document.getElementById('letter-feedback'),
+                reward,
+                attempt: {
+                    lessonId: 'letter-writing',
+                    lessonTitle: `${kindLabel} 쓰기 연습`,
+                    word: currentChar,
+                    practiceType: currentLetterKind,
+                    skillTags: ['글자쓰기', kindLabel]
+                }
+            });
+            if (completed) await advanceAfterSuccessfulWriting(letterGradeButton, advanceLetterWritingPrompt);
+        } finally {
+            letterCompletionPending = false;
+        }
+    };
+    letterGradeButton.addEventListener('click', completeCurrentLetterWriting);
+    canvas.addEventListener('tracewritingcomplete', completeCurrentLetterWriting);
 
     document.querySelectorAll('.letter-top-btn').forEach((btn) => btn.addEventListener('click', () => {
         document.querySelectorAll('.letter-top-btn').forEach((b) => b.classList.remove('active'));
@@ -15556,7 +15566,13 @@ function initializeTraceWritingCanvas(target) {
         activePath = [];
         activePointerId = null;
         refreshGuide();
-        if (isTraceWritingComplete(canvas)) showLearningDetailNavigationGuide();
+        if (isTraceWritingComplete(canvas)) {
+            showLearningDetailNavigationGuide();
+            if (canvas.dataset.traceCompletionNotified !== 'true') {
+                canvas.dataset.traceCompletionNotified = 'true';
+                canvas.dispatchEvent(new CustomEvent('tracewritingcomplete'));
+            }
+        }
     };
     if (window.PointerEvent) {
         canvas.addEventListener('pointerdown', start);
@@ -15593,6 +15609,7 @@ window.resetTraceWritingCanvas = function resetTraceWritingCanvas(target) {
         canvas._traceCompleted = {};
         canvas._tracePaths = [];
         delete canvas.dataset.rewarded;
+        delete canvas.dataset.traceCompletionNotified;
         delete canvas.dataset.fillRecorded;
     }
     drawTraceWritingGuide(canvas);
