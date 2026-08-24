@@ -14060,6 +14060,11 @@ window.completeLesson27Writing = function completeLesson27Writing(button) {
     speakTextKo(`${card.dataset.result}. 잘했어요!`);
 };
 
+function renderLesson27ReadingPage() {
+    const words = ['집', '앞', '밥', '삽', '옆', '숲', '톱', '법', '잎', '답답', '쉽다', '깊다', '덮밥', '눕지대', '구급차', '앞치마'];
+    return `<section class="lesson27-reading-page" data-lesson27-reading><div class="lesson27-reading-heading"><strong>읽기</strong><span>받침소리를 생각하며, 단어 읽기</span></div><p class="lesson27-reading-tip"><b>TIP</b> 복잡한 받침은 있는데 중점을 두고 쓰는 연습을 하지 않습니다.</p><div class="lesson27-reading-grid">${words.map((word) => `<button type="button" class="lesson27-reading-word" onclick="speakTextKo('${word}')" aria-label="${word} 소리 듣기">${[...word].map((char) => `<span>${char}</span>`).join('')}</button>`).join('')}</div></section>`;
+}
+
 function syncLesson27FamilyPage() {
     const page = document.querySelector('[data-lesson27-family-page]');
     if (!page) return;
@@ -14596,6 +14601,8 @@ function renderLearningDetail(step, sectionIndex = 0) {
             contentHtml = renderLesson27BatchimFamilyIntro();
         } else if (isCustomLesson27 && safeIndex === 1) {
             contentHtml = renderLesson27BatchimWritingPage();
+        } else if (isCustomLesson27 && safeIndex === 2) {
+            contentHtml = renderLesson27ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 0) {
             contentHtml = renderLesson20ReadingPage();
         } else if (isCustomLesson20 && safeIndex === 1) {
