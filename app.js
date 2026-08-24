@@ -8149,6 +8149,7 @@ function initializeLetterWritingActivity() {
 
     const drawButtons = (target, list, kind) => {
         const root = document.getElementById(target);
+        if (!root) return;
         root.innerHTML = list.map((c) => `<button type="button" class="btn-outline px-3 py-1 text-base ${c === currentChar ? 'active' : ''}" data-char="${escapeHtml(c)}" data-kind="${kind}">${escapeHtml(c)}</button>`).join('');
         root.querySelectorAll('button').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -8287,7 +8288,7 @@ function initializeLetterWritingActivity() {
         btn.classList.add('active');
         const c = btn.dataset.category;
         const titleMap = {
-            letter: ['글자 쓰기', '글자를 골라 따라 써요.'],
+            letter: ['자음 쓰기', '자음을 골라 획순대로 따라 써요.'],
             word: ['낱말 쓰기', '받침 없는 낱말을 골라 따라 써요.'],
             sentence: ['문장 쓰기', '문장을 골라 따라 써요.']
         };

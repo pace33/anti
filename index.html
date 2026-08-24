@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260824-sentence-two-lines-v1">
+    <meta name="aiedue-korean-build" content="20260824-consonant-only-v1">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -16,8 +16,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
-    <link rel="stylesheet" href="style.css?v=20260824-sentence-two-lines-v1">
-    <link rel="stylesheet" href="app.css?v=20260824-sentence-two-lines-v1">
+    <link rel="stylesheet" href="style.css?v=20260824-consonant-only-v1">
+    <link rel="stylesheet" href="app.css?v=20260824-consonant-only-v1">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1015,34 +1015,16 @@
 
             <div class="learning-pane p-8 min-h-[600px]">
                 <div id="letter-practice-panel">
-                    <div class="letter-practice-kind-tabs" role="tablist" aria-label="글자 연습 종류">
-                        <button type="button" class="nav-tab active" data-letter-kind="consonant">자음</button>
-                        <button type="button" class="nav-tab" data-letter-kind="vowel">모음</button>
-                        <button type="button" class="nav-tab" data-letter-kind="practice-word">낱말</button>
-                    </div>
                     <div class="letter-practice-selector-grid">
                         <div class="korean-embed-card letter-practice-selector-card" data-letter-kind-panel="consonant">
                             <div class="letter-practice-selector-title">자음</div>
                             <div id="letter-consonants" class="flex flex-wrap gap-2"></div>
                         </div>
-                        <div class="korean-embed-card letter-practice-selector-card hidden" data-letter-kind-panel="vowel">
-                            <div class="letter-practice-selector-title">모음</div>
-                            <div id="letter-vowels" class="flex flex-wrap gap-2"></div>
-                        </div>
-                        <div class="korean-embed-card letter-practice-selector-card letter-practice-word-card hidden" data-letter-kind-panel="practice-word">
-                            <div class="letter-practice-selector-heading">
-                                <div class="letter-practice-selector-title">낱말</div>
-                                <span id="letter-word-count" class="letter-word-count">0개</span>
-                            </div>
-                            <label class="sr-only" for="letter-word-filter">연습할 낱말 찾기</label>
-                            <input id="letter-word-filter" class="letter-word-filter" type="search" placeholder="낱말 찾기" autocomplete="off">
-                            <div id="letter-words" class="letter-word-button-list flex flex-wrap gap-2"></div>
-                        </div>
                     </div>
 
                     <div class="trace-canvas-wrap">
                         <div class="trace-canvas-title">✍️ 획순 따라쓰기</div>
-                        <canvas id="letter-writing-canvas" class="trace-writing-canvas" data-guide="ㄱ" data-trace-speak-once></canvas>
+                        <canvas id="letter-writing-canvas" class="trace-writing-canvas" data-guide="ㄱ" data-trace-hide-label data-trace-speak-once></canvas>
                         <div class="trace-canvas-help">주황색 번호와 화살표 순서대로 천천히 따라 써요.</div>
                         <div id="letter-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
                     </div>
@@ -1583,7 +1565,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260824-sentence-two-lines-v1"></script>
+    <script type="module" src="app.js?v=20260824-consonant-only-v1"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
