@@ -8325,11 +8325,37 @@ function initializeLetterWritingActivity() {
         speakTextKo(text);
     }
 
+    function splitSentenceForPractice(text) {
+        const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+        if (!words.length) return [];
+        if (words.length === 1) {
+            const chars = Array.from(words[0]);
+            const middle = Math.max(1, Math.ceil(chars.length / 2));
+            return [chars.slice(0, middle).join(''), chars.slice(middle).join('')].filter(Boolean);
+        }
+
+        let bestBreak = 1;
+        let smallestDifference = Number.POSITIVE_INFINITY;
+        for (let index = 1; index < words.length; index += 1) {
+            const firstLength = Array.from(words.slice(0, index).join('')).length;
+            const secondLength = Array.from(words.slice(index).join('')).length;
+            const difference = Math.abs(firstLength - secondLength);
+            if (difference < smallestDifference) {
+                smallestDifference = difference;
+                bestBreak = index;
+            }
+        }
+        return [words.slice(0, bestBreak).join(' '), words.slice(bestBreak).join(' ')];
+    }
+
     function writingGuideForPractice(text, keepTogether = false) {
-        const cleaned = String(text || '')
-            .replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●\s]/g, '')
-            .trim();
-        if (keepTogether) return cleaned.replace(/\s+/g, '');
+        if (keepTogether) {
+            return splitSentenceForPractice(text)
+                .map((line) => line.replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●]/g, ''))
+                .filter(Boolean)
+                .join('/');
+        }
+        const cleaned = String(text || '').replace(/[^\uAC00-\uD7A3ㄱ-ㅎㅏ-ㅣㆍ●\s]/g, '').trim();
         return cleaned.split(/\s+/).filter(Boolean).join('/');
     }
 
@@ -8339,7 +8365,17 @@ function initializeLetterWritingActivity() {
         const output = document.getElementById(`letter-${kind}-output`);
         const feedback = document.getElementById(`letter-${kind}-feedback`);
         const canvas = document.getElementById(`letter-${kind}-writing-canvas`);
-        if (output) output.textContent = text;
+        if (output && kind === 'sentence') {
+            const lines = splitSentenceForPractice(text);
+            output.replaceChildren(...lines.map((line) => {
+                const span = document.createElement('span');
+                span.className = 'sentence-practice-line';
+                span.textContent = line;
+                return span;
+            }));
+        } else if (output) {
+            output.textContent = text;
+        }
         if (feedback) feedback.textContent = '';
         if (canvas) {
             canvas.dataset.guide = writingGuideForPractice(text, kind === 'sentence');
@@ -14734,11 +14770,16 @@ function getTraceWritingCanvas(target) {
 
 function getTraceGridLayout(canvas, chars) {
     const isMakeLetterGrid = canvas?.classList?.contains('make-letter-grid');
+    const isSentenceLines = canvas?.dataset?.traceSentenceLines !== undefined;
     const isDoubleRow = chars.length === 10;
     const isWordDoubleRow = chars.length === 4 && chars.some((char) => Array.from(char).length > 1);
     const configuredCols = Number(canvas?.dataset?.gridCols || 0);
-    const cols = isMakeLetterGrid ? (configuredCols || 5) : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length));
-    const rows = isMakeLetterGrid ? Math.ceil(chars.length / cols) : (isDoubleRow || isWordDoubleRow ? 2 : 1);
+    const cols = isSentenceLines
+        ? 1
+        : (isMakeLetterGrid ? (configuredCols || 5) : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length)));
+    const rows = isSentenceLines
+        ? Math.max(1, chars.length)
+        : (isMakeLetterGrid ? Math.ceil(chars.length / cols) : (isDoubleRow || isWordDoubleRow ? 2 : 1));
     return { cols, rows };
 }
 

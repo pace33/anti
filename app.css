@@ -3947,11 +3947,14 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     font-size: clamp(1.9rem, 4.4vw, 3rem);
     line-height: 1.25;
 }
+.embedded-practice-output.sentence .sentence-practice-line {
+    display: block;
+}
 .embedded-writing-canvas.trace-writing-canvas {
     height: 360px;
 }
 .embedded-writing-canvas.sentence-writing-canvas {
-    height: 460px;
+    height: 560px;
 }
 .writing-compact-toolbar {
     width: min(100%, 1100px);
@@ -4041,9 +4044,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     .practice-example-grid.sentence {
         grid-template-columns: 1fr;
     }
-    .embedded-writing-canvas.trace-writing-canvas,
-    .embedded-writing-canvas.sentence-writing-canvas {
+    .embedded-writing-canvas.trace-writing-canvas {
         height: 340px;
+    }
+    .embedded-writing-canvas.sentence-writing-canvas {
+        height: 520px;
     }
     .trace-writing-canvas.make-letter-grid {
         height: 760px;
