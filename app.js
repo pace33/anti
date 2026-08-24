@@ -12144,8 +12144,9 @@ function renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, 
 
 function renderLessonCompletionTile(lessonId, setIndex, itemIndex, tile, tileIndex) {
     const layout = getLessonCompletionTileLayout(tile);
+    const writingSlotClass = tile.givenSlot === 'initial' ? 'write-vowel' : 'write-initial';
     return `
-        <div class="lesson-complete-tile ${layout}" aria-label="${tile.syllable} 완성 칸">
+        <div class="lesson-complete-tile ${layout} ${writingSlotClass}" aria-label="${tile.syllable} 완성 칸">
             ${renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, tile, slot: 'initial' })}
             ${renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, tile, slot: 'vowel' })}
         </div>
@@ -12175,7 +12176,7 @@ function renderLesson13CompletionWriting(lessonId, setIndex) {
                                     ${item.tiles.map((tile, tileIndex) => renderLessonCompletionTile(lessonId, setIndex, itemIndex, tile, tileIndex)).join('')}
                                 </div>
                                 <div class="lesson-complete-actions">
-                                    <button type="button" class="btn-outline py-2 px-4" onclick="speakChar('${item.word}')">🔊 ${item.word}</button>
+                                    <button type="button" class="btn-outline lesson-complete-listen-button" onclick="speakChar('${item.word}')" aria-label="${item.word} 소리 듣기" title="${item.word} 소리 듣기">🔊</button>
                                     <button type="button" class="btn-outline py-2 px-4" onclick="clearLesson13WordWriting(this)">다시 쓰기</button>
                                     <button type="button" class="trace-clear-button !mt-0 !py-2 !px-4"
                                         onclick="completeLesson13WordWriting(${lessonId}, ${setIndex}, ${itemIndex}, this)">완성했어요</button>

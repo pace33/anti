@@ -3597,9 +3597,9 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 .lesson-complete-tile {
     position: relative;
-    width: 104px;
+    width: 120px;
     height: 116px;
-    flex: 0 0 104px;
+    flex: 0 0 120px;
     border: 3px solid #bfdbfe;
     border-radius: 16px;
     background: #dbeafe;
@@ -3609,10 +3609,22 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     line-height: 1;
 }
 .lesson-complete-tile.vertical {
-    grid-template-columns: 48% 52%;
+    grid-template-columns: 50% 50%;
 }
 .lesson-complete-tile.horizontal {
-    grid-template-rows: 48% 52%;
+    grid-template-rows: 50% 50%;
+}
+.lesson-complete-tile.vertical.write-initial {
+    grid-template-columns: 58% 42%;
+}
+.lesson-complete-tile.vertical.write-vowel {
+    grid-template-columns: 42% 58%;
+}
+.lesson-complete-tile.horizontal.write-initial {
+    grid-template-rows: 58% 42%;
+}
+.lesson-complete-tile.horizontal.write-vowel {
+    grid-template-rows: 42% 58%;
 }
 .lesson-complete-word.three-syllable .lesson-complete-tile {
     width: 88px;
@@ -3700,6 +3712,13 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 .lesson-complete-actions .btn-outline {
     flex: 1 1 96px;
+}
+.lesson-complete-actions .lesson-complete-listen-button {
+    flex: 0 0 50px;
+    min-width: 50px;
+    min-height: 44px;
+    padding: 8px;
+    font-size: 1.2rem;
 }
 .lesson-complete-feedback {
     min-height: 1.5rem;
@@ -4262,9 +4281,9 @@ body.rpg-hud-active .page-number { bottom: 112px; }
         gap: 4px;
     }
     .lesson-complete-tile {
-        width: 96px;
+        width: 108px;
         height: 108px;
-        flex-basis: 96px;
+        flex-basis: 108px;
     }
     .lesson-complete-word.three-syllable .lesson-complete-tile {
         width: 60px;
