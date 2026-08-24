@@ -14102,7 +14102,7 @@ function setLesson27CardAnimationState(card, state, config) {
     if (playButton) {
         playButton.disabled = state !== 'idle' && !hasCompleted;
         playButton.querySelector('.lesson27-play-label').textContent = state !== 'idle' && !hasCompleted
-            ? '손동작을 보고 있어요'
+            ? '손동작과 소리를 듣고 있어요'
             : lesson27FamilyState.heard.has(config.key) ? '한 번 더 듣기' : '손동작과 소리 듣기';
     }
 }
