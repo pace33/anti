@@ -13113,6 +13113,32 @@ function resizeLessonCompletionCanvas(canvas, { preserve = true } = {}) {
     return ctx;
 }
 
+function getLessonCompletionBackgroundLuminance(canvas) {
+    let element = canvas;
+    while (element) {
+        const color = window.getComputedStyle(element).backgroundColor;
+        const channels = color?.match(/[\d.]+/g)?.map(Number) || [];
+        const alpha = channels.length >= 4 ? channels[3] : 1;
+        if (channels.length >= 3 && alpha > 0.05) {
+            const [red, green, blue] = channels.slice(0, 3).map((value) => {
+                const channel = value / 255;
+                return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+            });
+            return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
+        }
+        element = element.parentElement;
+    }
+    return 1;
+}
+
+function getLessonCompletionInkColor(canvas) {
+    const configuredColor = window.getComputedStyle(canvas).getPropertyValue('--lesson-completion-ink').trim();
+    if (configuredColor) return configuredColor;
+    return getLessonCompletionBackgroundLuminance(canvas) < 0.34
+        ? 'rgba(255, 255, 255, 0.96)'
+        : 'rgba(17, 24, 39, 0.82)';
+}
+
 function initializeLessonCompletionCanvas(canvas) {
     if (!canvas || canvas.dataset.ready === 'true') return;
     let ctx = resizeLessonCompletionCanvas(canvas);
@@ -13120,6 +13146,7 @@ function initializeLessonCompletionCanvas(canvas) {
     let lastX = 0;
     let lastY = 0;
     let activePointerId = null;
+    let inkColor = getLessonCompletionInkColor(canvas);
 
     const point = (ev) => {
         const rect = canvas.getBoundingClientRect();
@@ -13144,6 +13171,7 @@ function initializeLessonCompletionCanvas(canvas) {
         }
         if (ev.cancelable) ev.preventDefault();
         ctx = resizeLessonCompletionCanvas(canvas, { preserve: true });
+        inkColor = getLessonCompletionInkColor(canvas);
         const p = point(ev);
         drawing = true;
         lastX = p.x;
@@ -13161,7 +13189,7 @@ function initializeLessonCompletionCanvas(canvas) {
         if (activePointerId !== null && ev.pointerId !== undefined && ev.pointerId !== activePointerId) return;
         if (ev.cancelable) ev.preventDefault();
         const p = point(ev);
-        ctx.strokeStyle = 'rgba(17, 24, 39, 0.82)';
+        ctx.strokeStyle = inkColor;
         ctx.lineWidth = 6;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
