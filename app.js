@@ -13804,8 +13804,9 @@ window.selectLessonMouthSoundAnswer = async function(step, btn, userAnswer) {
     const feedback = document.getElementById(`lesson-mouth-quiz-feedback-${step}`);
     if (feedback) {
         feedback.className = `text-center font-black mt-3 min-h-[1.6rem] ${isCorrect ? 'text-green-600' : 'text-red-500'}`;
-        feedback.textContent = isCorrect ? `좋아요! 이 소리는 ${answer}예요.` : '다시 들어 보고 입모양도 떠올려 보세요.';
+        feedback.textContent = isCorrect ? `정답이에요! ${answer}예요.` : '다시 선택해 보아요.';
     }
+    speakTextKo(isCorrect ? '정답이에요.' : '다시 선택해 보아요.');
     if (isCorrect) resetKoreanRetryIndex({ lessonId: step, activityType: config.activityType, word: answer, answer });
 };
 
