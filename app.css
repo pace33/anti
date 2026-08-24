@@ -649,6 +649,42 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     padding: 12px 4px 18px;
     transform: translateY(-14px);
 }
+.learning-detail-nav-guide {
+    position: absolute;
+    right: 4px;
+    bottom: calc(100% - 4px);
+    max-width: min(390px, 80vw);
+    padding: 12px 18px;
+    border: 2px solid #55b346;
+    border-radius: 16px;
+    background: #effbea;
+    color: #226b2b;
+    box-shadow: 0 10px 24px rgba(48, 132, 55, .16);
+    font-size: 1rem;
+    font-weight: 900;
+    text-align: center;
+}
+.learning-detail-nav-guide::after {
+    position: absolute;
+    right: 58px;
+    top: 100%;
+    width: 13px;
+    height: 13px;
+    border-right: 2px solid #55b346;
+    border-bottom: 2px solid #55b346;
+    background: #effbea;
+    content: '';
+    transform: translateY(-7px) rotate(45deg);
+}
+#learning-detail-nav .learning-nav-guided {
+    outline: 4px solid rgba(85, 179, 70, .28);
+    outline-offset: 5px;
+    animation: learning-nav-guide-pulse .72s ease-in-out 3;
+}
+@keyframes learning-nav-guide-pulse {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-4px) scale(1.045); }
+}
 #learning-detail-nav > .btn-outline,
 #learning-detail-next-btn,
 #learning-detail-complete-btn,
@@ -685,6 +721,17 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     }
     #learning-detail-nav > div > button {
         width: 100%;
+    }
+    .learning-detail-nav-guide {
+        right: 0;
+        max-width: 88vw;
+        padding: 10px 14px;
+        font-size: .92rem;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #learning-detail-nav .learning-nav-guided {
+        animation: none;
     }
 }
 .learning-main-card,

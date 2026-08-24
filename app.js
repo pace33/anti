@@ -2507,6 +2507,112 @@ function isTraceWritingComplete(canvas) {
     });
 }
 
+let learningDetailCompletionObserver = null;
+let learningDetailNavGuideShownForPage = '';
+let learningDetailStaticGuideTimer = null;
+
+function resetLearningDetailNavigationGuide() {
+    learningDetailCompletionObserver?.disconnect();
+    learningDetailCompletionObserver = null;
+    window.clearTimeout(learningDetailStaticGuideTimer);
+    learningDetailStaticGuideTimer = null;
+    const guide = document.getElementById('learning-detail-nav-guide');
+    const nav = document.getElementById('learning-detail-nav');
+    guide?.classList.add('hidden');
+    if (guide) guide.textContent = '';
+    nav?.querySelectorAll('.learning-nav-guided').forEach((button) => button.classList.remove('learning-nav-guided'));
+}
+
+function showLearningDetailNavigationGuide() {
+    const section = document.getElementById('learning-detail-section');
+    const nav = document.getElementById('learning-detail-nav');
+    const guide = document.getElementById('learning-detail-nav-guide');
+    if (!section || section.classList.contains('hidden') || !nav || !guide) return;
+    const completeButton = document.getElementById('learning-detail-complete-btn');
+    const nextButton = document.getElementById('learning-detail-next-btn');
+    const target = completeButton && !completeButton.classList.contains('hidden') ? completeButton : nextButton;
+    if (!target || target.disabled) return;
+    const pageKey = `${section.dataset.currentStep || ''}:${section.dataset.currentSection || ''}`;
+    if (learningDetailNavGuideShownForPage === pageKey) return;
+    learningDetailNavGuideShownForPage = pageKey;
+    const isComplete = target === completeButton;
+    guide.textContent = isComplete
+        ? '활동을 모두 마쳤어요. 완료하기를 눌러 주세요.'
+        : '활동을 마쳤어요. 다음으로를 눌러 주세요.';
+    guide.classList.remove('hidden');
+    target.classList.remove('learning-nav-guided');
+    requestAnimationFrame(() => target.classList.add('learning-nav-guided'));
+    nav.scrollIntoView({
+        behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'end'
+    });
+}
+
+function learningDetailPageLooksComplete(root) {
+    if (!root) return false;
+    const completionGroups = [
+        ['.choice-chip-button', 'correct'],
+        ['[data-family-card]', 'is-heard'],
+        ['.lesson25-question-card', 'is-complete'],
+        ['.lesson25-reading-check', 'is-complete'],
+        ['.lesson25-path-stage', 'is-complete'],
+        ['.lesson26-find-card', 'is-complete'],
+        ['.lesson21-m-pair', 'is-complete'],
+        ['.lesson21-m-syllable-cell.is-target', 'is-complete'],
+        ['.lesson21-b-word-item', 'is-complete'],
+        ['.lesson21-m-picture-item', 'is-complete']
+    ];
+    let foundRequirements = false;
+    for (const [selector, completedClass] of completionGroups) {
+        const items = [...root.querySelectorAll(selector)];
+        if (!items.length) continue;
+        foundRequirements = true;
+        if (!items.every((item) => item.classList.contains(completedClass))) return false;
+    }
+    const traceCanvases = [...root.querySelectorAll('.trace-writing-canvas')];
+    if (traceCanvases.length) {
+        foundRequirements = true;
+        if (!traceCanvases.every((canvas) => isTraceWritingComplete(canvas) || canvas.dataset.completed === 'true')) return false;
+    }
+    return foundRequirements;
+}
+
+function setupLearningDetailCompletionGuide() {
+    resetLearningDetailNavigationGuide();
+    learningDetailNavGuideShownForPage = '';
+    const content = document.getElementById('learning-detail-content');
+    if (!content) return;
+    const check = () => {
+        if (learningDetailPageLooksComplete(content)) showLearningDetailNavigationGuide();
+    };
+    learningDetailCompletionObserver = new MutationObserver(check);
+    learningDetailCompletionObserver.observe(content, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['class', 'data-completed']
+    });
+    const trackedActivitySelector = 'canvas, [data-family-card], .choice-chip-button, .lesson25-question-card, .lesson25-reading-check, .lesson25-path-stage, .lesson26-find-card, .lesson21-m-pair, .lesson21-m-syllable-cell.is-target, .lesson21-b-word-item, .lesson21-m-picture-item';
+    const hasTrackedActivity = Boolean(content.querySelector(trackedActivitySelector));
+    const reviewButtons = hasTrackedActivity ? [] : [...content.querySelectorAll('button')].filter((button) => {
+        const label = button.textContent?.trim() || '';
+        return !button.disabled && !/다시|지우기|초기화|한 번 더|다음 문제/.test(label);
+    });
+    if (reviewButtons.length) {
+        reviewButtons.forEach((button) => button.addEventListener('click', () => {
+            button.dataset.learningReviewed = 'true';
+            if (!learningDetailPageLooksComplete(content)
+                && reviewButtons.every((item) => item.dataset.learningReviewed === 'true')) {
+                showLearningDetailNavigationGuide();
+            }
+        }));
+    } else if (!hasTrackedActivity) {
+        learningDetailStaticGuideTimer = window.setTimeout(showLearningDetailNavigationGuide, 1200);
+    }
+}
+
+window.showLearningDetailNavigationGuide = showLearningDetailNavigationGuide;
+
 function escapeKoreanShopHtml(value = '') {
     return escapeHtml(value);
 }
@@ -14391,6 +14497,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     nextBtn.removeAttribute('aria-disabled');
     nextBtn.removeAttribute('title');
     requestAnimationFrame(() => {
+        setupLearningDetailCompletionGuide();
         initializeLesson21MBatchimIntroCanvases();
         initializeLesson21MPracticePage();
         initializeVisibleTraceWritingCanvases();
@@ -15202,6 +15309,7 @@ function initializeTraceWritingCanvas(target) {
         activePath = [];
         activePointerId = null;
         refreshGuide();
+        if (isTraceWritingComplete(canvas)) showLearningDetailNavigationGuide();
     };
     if (window.PointerEvent) {
         canvas.addEventListener('pointerdown', start);
