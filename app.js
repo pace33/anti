@@ -10453,6 +10453,67 @@ const LESSON25_LISTEN_CHOICE_QUESTIONS = [
     { choices: ['윰', '윧'], answer: '윧' }
 ];
 
+const lesson25SoloState = { index:0, score:0, locked:false };
+
+function renderLesson25SoloQuiz() {
+    lesson25SoloState.index = 0;
+    lesson25SoloState.score = 0;
+    lesson25SoloState.locked = false;
+    const question = LESSON25_LISTEN_CHOICE_QUESTIONS[0];
+    return `<section class="lesson30-solo-game lesson25-solo-game" data-lesson25-solo data-answer="${question.answer}"><div class="lesson30-game-head"><strong>👑 도전, 받침왕! (1)</strong><span>혼자 듣고 알맞은 받침 글자를 찾아 보세요.</span></div><div class="lesson30-game-score"><span>문제 <b data-lesson25-number>1</b> / ${LESSON25_LISTEN_CHOICE_QUESTIONS.length}</span><span>⭐ <b data-lesson25-score>0</b>점</span></div><div class="lesson30-progress-track"><i data-lesson25-progress></i></div><div class="lesson30-game-arena"><button type="button" class="lesson30-sound-button" onclick="playLesson25SoloSound()">🔊 문제 소리 듣기</button><p data-lesson25-feedback>소리를 잘 듣고 정답을 골라요.</p><div class="lesson30-choice-pair">${question.choices.map(choice=>`<button type="button" onclick="selectLesson25SoloAnswer(this,'${choice}')">${choice}</button>`).join('')}</div></div></section>`;
+}
+
+window.playLesson25SoloSound = function playLesson25SoloSound() {
+    const question = LESSON25_LISTEN_CHOICE_QUESTIONS[lesson25SoloState.index];
+    if (question) speakTextKo(question.answer);
+};
+
+window.selectLesson25SoloAnswer = function selectLesson25SoloAnswer(button, selected) {
+    if (lesson25SoloState.locked) return;
+    const game = button.closest('[data-lesson25-solo]');
+    const question = LESSON25_LISTEN_CHOICE_QUESTIONS[lesson25SoloState.index];
+    const feedback = game?.querySelector('[data-lesson25-feedback]');
+    if (!game || !question) return;
+    if (selected !== question.answer) {
+        button.classList.add('is-wrong');
+        if (feedback) feedback.textContent = '아쉬워요. 다시 선택해 보아요.';
+        speakTextKo('다시 선택해 보아요.');
+        return;
+    }
+    lesson25SoloState.locked = true;
+    lesson25SoloState.score += 10;
+    button.classList.add('is-correct');
+    game.querySelectorAll('.lesson30-choice-pair button').forEach(item => { item.disabled = true; });
+    if (feedback) feedback.textContent = `정답이에요! ${question.answer}!`;
+    speakTextKo(`정답이에요. ${question.answer}.`);
+    recordKoreanAttempt({ lessonId:25, lessonTitle:'배움 25: 도전, 받침왕! (1)', unitId:getUnitIdForLesson(25), activityType:'listenAndFind', word:question.answer, answer:question.answer, userAnswer:selected, isCorrect:true, errorType:null }).catch(()=>{});
+    lesson25SoloState.index += 1;
+    window.setTimeout(updateLesson25SoloQuiz, 900);
+};
+
+function updateLesson25SoloQuiz() {
+    const game = document.querySelector('[data-lesson25-solo]');
+    if (!game) return;
+    if (lesson25SoloState.index >= LESSON25_LISTEN_CHOICE_QUESTIONS.length) {
+        game.classList.add('is-complete');
+        game.querySelector('.lesson30-game-arena').innerHTML = `<div class="lesson30-crown">👑</div><strong class="lesson30-finish-title">받침왕 1단계 성공!</strong><p>20문제를 모두 해결했어요. 최종 점수 ${lesson25SoloState.score}점!</p>`;
+        game.querySelector('[data-lesson25-number]').textContent = String(LESSON25_LISTEN_CHOICE_QUESTIONS.length);
+        game.querySelector('[data-lesson25-score]').textContent = String(lesson25SoloState.score);
+        game.querySelector('[data-lesson25-progress]').style.width = '100%';
+        speakTextKo('참 잘했어요. 받침왕 1단계 성공!');
+        return;
+    }
+    const question = LESSON25_LISTEN_CHOICE_QUESTIONS[lesson25SoloState.index];
+    game.dataset.answer = question.answer;
+    game.querySelector('[data-lesson25-number]').textContent = String(lesson25SoloState.index + 1);
+    game.querySelector('[data-lesson25-score]').textContent = String(lesson25SoloState.score);
+    game.querySelector('[data-lesson25-progress]').style.width = `${lesson25SoloState.index / LESSON25_LISTEN_CHOICE_QUESTIONS.length * 100}%`;
+    game.querySelector('[data-lesson25-feedback]').textContent = '소리를 잘 듣고 정답을 골라요.';
+    game.querySelector('.lesson30-choice-pair').innerHTML = question.choices.map(choice=>`<button type="button" onclick="selectLesson25SoloAnswer(this,'${choice}')">${choice}</button>`).join('');
+    lesson25SoloState.locked = false;
+    window.setTimeout(() => window.playLesson25SoloSound(), 250);
+}
+
 function renderLesson25ListenChoicePage(pageIndex = 0) {
     const startIndex = pageIndex * 10;
     const pageQuestions = LESSON25_LISTEN_CHOICE_QUESTIONS.slice(startIndex, startIndex + 10);
@@ -10741,7 +10802,7 @@ window.selectLesson25PathAnswer = function selectLesson25PathAnswer(stageIndex, 
 };
 
 window.resetLesson25PathGame = function resetLesson25PathGame() {
-    renderLearningDetail(25, 3);
+    renderLearningDetail(25, 1);
 };
 
 const LESSON26_READING_GROUPS = [
@@ -14735,7 +14796,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
     if (numericStep === 14) totalSections = 7;
     if (isComplexLineLesson) totalSections = 4;
     if (isCustomLesson20) totalSections = 5;
-    if (isCustomLesson25) totalSections = 4;
+    if (isCustomLesson25) totalSections = 2;
     if (isCustomLesson26) totalSections = 9;
     if (isCustomLesson27) totalSections = 4;
     if (isCustomRepresentativeFamily) totalSections = 4;
@@ -14793,12 +14854,10 @@ function renderLearningDetail(step, sectionIndex = 0) {
             const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             const localIndex = safeIndex % 5;
             sectionTitle = [`${batchim} 받침 · 따라하기`, `${batchim} 받침 · 연습하기`, `${batchim} 받침 · 단어 쓰기`, `${batchim} 받침 · 그림 보고 쓰기`, `${batchim} 받침 · 도전하기`][localIndex];
-        } else if (isCustomLesson25 && safeIndex < 2) {
-            sectionTitle = `들은 낱말에 ○표 하기 ${safeIndex + 1} · ${safeIndex * 10 + 1}~${safeIndex * 10 + 10}번`;
-        } else if (isCustomLesson25 && safeIndex === 2) {
-            sectionTitle = '한 줄씩 소리 내어 읽기';
-        } else if (isCustomLesson25 && safeIndex === 3) {
-            sectionTitle = '도전하기 · 그림 글자 길 찾기';
+        } else if (isCustomLesson25 && safeIndex === 0) {
+            sectionTitle = '도전하기 1 · 혼자 듣고 정답 찾기';
+        } else if (isCustomLesson25 && safeIndex === 1) {
+            sectionTitle = '도전하기 2 · 그림 글자 길 찾기';
         } else if (isCustomLesson26) {
             sectionTitle = [
                 '읽기 1 · ㅁ·ㅂ 받침 단어',
@@ -14861,11 +14920,9 @@ function renderLearningDetail(step, sectionIndex = 0) {
         if (isCustomBatchimLesson) {
             const batchim = batchimPageSequence[Math.floor(safeIndex / 5)];
             contentHtml = renderLesson21Page(numericStep, batchim, safeIndex % 5);
-        } else if (isCustomLesson25 && safeIndex < 2) {
-            contentHtml = renderLesson25ListenChoicePage(safeIndex);
-        } else if (isCustomLesson25 && safeIndex === 2) {
-            contentHtml = renderLesson25ReadingPage();
-        } else if (isCustomLesson25 && safeIndex === 3) {
+        } else if (isCustomLesson25 && safeIndex === 0) {
+            contentHtml = renderLesson25SoloQuiz();
+        } else if (isCustomLesson25 && safeIndex === 1) {
             contentHtml = renderLesson25PathGame();
         } else if (isCustomLesson26 && safeIndex < 3) {
             contentHtml = renderLesson26ReadingPage(safeIndex);
