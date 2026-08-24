@@ -6900,8 +6900,11 @@ body {
 .lesson27-family-cards {display:grid;gap:18px;}
 .lesson27-family-card {position:relative;display:grid;grid-template-columns:110px 92px minmax(260px,1fr) 180px;align-items:center;gap:18px;width:100%;min-height:210px;padding:25px 22px;overflow:hidden;border:2px solid #b8c7d2;border-radius:8px;background:#fff;color:#17324e;text-align:left;transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease;}
 .lesson27-family-card.is-playing {border-color:#318faa;background:#f4fbfd;box-shadow:0 0 0 4px rgba(49,143,170,.14);}
-.lesson27-family-card.is-heard:not(.is-playing) {border-color:#4fb985;background:#f8fdf9;}
-.lesson27-card-check {position:absolute;top:10px;right:12px;padding:4px 8px;border-radius:4px;background:#dff7e8;color:#167447;font-size:.76rem;font-weight:900;visibility:hidden;opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease;}
+.lesson27-family-card.is-heard:not(.is-playing) {border-color:#39a96b;background:#e7f8ec;box-shadow:0 0 0 3px rgba(57,169,107,.12);}
+.lesson27-family-card.is-heard:not(.is-playing) .lesson27-hand-scene {border-color:#a9ddbb;background:#f1fbf4;}
+.lesson27-family-card.is-heard:not(.is-playing) .lesson27-stage-caption {border-top-color:#bfe5cb;background:#ddf4e5;color:#176b3d;}
+.lesson27-family-card.is-heard:not(.is-playing) .lesson27-name-stack {border-color:#74bd8e;background:#e0f3e7;}
+.lesson27-card-check {position:absolute;top:10px;right:12px;padding:5px 10px;border-radius:4px;background:#c9f0d6;color:#12683d;font-size:.8rem;font-weight:900;visibility:hidden;opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease;}
 .lesson27-family-card.is-heard .lesson27-card-check {visibility:visible;opacity:1;transform:translateY(0);}
 .lesson27-card-check::before {content:'✓ ';}
 .lesson27-family-letter {display:grid;place-items:center;min-height:150px;border-right:2px solid #dce5eb;color:#17324e;font-size:5rem;font-weight:1000;line-height:1;transition:color .2s ease,transform .2s ease;}
