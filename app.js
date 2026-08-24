@@ -8471,8 +8471,13 @@ function initializeLetterWritingActivity() {
     });
     const words = allPracticeWords.sort((a, b) => a.localeCompare(b, 'ko'));
     const canvas = document.getElementById('letter-writing-canvas');
-    let currentChar = 'ㄱ';
-    let currentLetterKind = 'consonant';
+    const letterPool = [
+        ...consonants.map((char) => ({ char, kind: 'consonant' })),
+        ...vowels.map((char) => ({ char, kind: 'vowel' }))
+    ];
+    const firstLetter = letterPool[Math.floor(Math.random() * letterPool.length)];
+    let currentChar = firstLetter.char;
+    let currentLetterKind = firstLetter.kind;
 
     const setTraceGuide = (value, kind = currentLetterKind, options = {}) => {
         currentChar = value;
@@ -8493,41 +8498,6 @@ function initializeLetterWritingActivity() {
         }
     };
 
-    const drawButtons = (target, list, kind) => {
-        const root = document.getElementById(target);
-        if (!root) return;
-        root.innerHTML = list.map((c) => `<button type="button" class="btn-outline px-3 py-1 text-base ${c === currentChar ? 'active' : ''}" data-char="${escapeHtml(c)}" data-kind="${kind}">${escapeHtml(c)}</button>`).join('');
-        root.querySelectorAll('button').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('#letter-consonants button, #letter-vowels button, #letter-words button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                setTraceGuide(btn.dataset.char, btn.dataset.kind);
-            });
-        });
-    };
-
-    drawButtons('letter-consonants', consonants, 'consonant');
-    drawButtons('letter-vowels', vowels, 'vowel');
-    const renderWordButtons = (query = '') => {
-        const normalized = cleanPracticeWord(query);
-        const filtered = normalized ? words.filter((word) => word.includes(normalized)) : words;
-        drawButtons('letter-words', filtered, 'practice-word');
-        const count = document.getElementById('letter-word-count');
-        if (count) count.textContent = normalized ? `${filtered.length}/${words.length}개` : `${words.length}개`;
-    };
-    renderWordButtons();
-    document.getElementById('letter-word-filter')?.addEventListener('input', (event) => renderWordButtons(event.target.value));
-    document.querySelectorAll('[data-letter-kind]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const kind = button.dataset.letterKind;
-            document.querySelectorAll('[data-letter-kind]').forEach((item) => item.classList.toggle('active', item === button));
-            document.querySelectorAll('[data-letter-kind-panel]').forEach((panel) => {
-                panel.classList.toggle('hidden', panel.dataset.letterKindPanel !== kind);
-            });
-            const firstButton = document.querySelector(`[data-letter-kind-panel="${kind}"] button[data-char]`);
-            if (firstButton) firstButton.click();
-        });
-    });
     setTraceGuide(currentChar, currentLetterKind, { speak: false });
     window.refreshLetterWritingCanvas = () => setTraceGuide(currentChar, currentLetterKind, { speak: false });
     window.addEventListener('resize', () => drawTraceWritingGuide(canvas));
@@ -8552,12 +8522,9 @@ function initializeLetterWritingActivity() {
     }
 
     function advanceLetterWritingPrompt() {
-        const panel = document.querySelector(`[data-letter-kind-panel="${currentLetterKind}"]`);
-        const buttons = Array.from(panel?.querySelectorAll('button[data-char]') || []);
-        if (!buttons.length) return;
-        const currentIndex = buttons.findIndex((button) => button.dataset.char === currentChar);
-        const nextButton = buttons[(currentIndex + 1 + buttons.length) % buttons.length];
-        nextButton?.click();
+        const candidates = letterPool.filter((letter) => letter.char !== currentChar);
+        const nextLetter = candidates[Math.floor(Math.random() * candidates.length)];
+        setTraceGuide(nextLetter.char, nextLetter.kind);
     }
 
     async function gradeCompletedWriting({ targetCanvas, button, feedback, reward, attempt }) {
@@ -8634,7 +8601,7 @@ function initializeLetterWritingActivity() {
         btn.classList.add('active');
         const c = btn.dataset.category;
         const titleMap = {
-            letter: ['자음 쓰기', '자음을 골라 획순대로 따라 써요.'],
+            letter: ['글자 쓰기', '제시되는 자음과 모음을 획순대로 따라 써요.'],
             word: ['낱말 쓰기', '받침 없는 낱말을 골라 따라 써요.'],
             sentence: ['문장 쓰기', '문장을 골라 따라 써요.']
         };
