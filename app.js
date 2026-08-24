@@ -352,7 +352,7 @@ const CHANCHAN_LESSONS = [
             { word: "해", icon: "☀️" },
             { word: "여우", icon: "🦊" },
             { word: "야구", icon: "⚾" },
-            { word: "우표", icon: "📮" },
+            { word: "우표", icon: '<img class="word-picture-asset" src="assets/word-postage-stamp.svg" alt="">' },
             { word: "요리사", icon: "🧑‍🍳" },
             { word: "우유", icon: "🥛" },
             { word: "의사", icon: "🧑‍⚕️" },
@@ -11766,7 +11766,7 @@ const LESSON20_READING_GROUPS = [
             { word: '해', icon: '☀️' },
             { word: '여우', icon: '🦊' },
             { word: '야구', icon: '⚾' },
-            { word: '우표', icon: '📮' },
+            { word: '우표', icon: '<img class="word-picture-asset" src="assets/word-postage-stamp.svg" alt="">' },
             { word: '요리사', icon: '🧑‍🍳' },
             { word: '우유', icon: '🥛' }
         ],
@@ -11816,7 +11816,7 @@ const LESSON20_READ_FIND_ITEMS = [
     { word: '야채', icon: '🥕', choices: ['야처', '야채'] },
     { word: '의자', icon: '🪑', choices: ['의자', '으자'] },
     { word: '추위', icon: '🥶', choices: ['추위', '추이'] },
-    { word: '우표', icon: '📮', choices: ['오표', '우표'] }
+    { word: '우표', icon: '<img class="word-picture-asset" src="assets/word-postage-stamp.svg" alt="">', choices: ['오표', '우표'] }
 ];
 
 const COMPLEX_VOWEL_MEDIALS = new Set(['ㅐ', 'ㅔ', 'ㅑ', 'ㅕ', 'ㅒ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']);
@@ -11917,7 +11917,7 @@ const LESSON20_COMPLETION_WRITING_SETS = [
             { word: '더위', icon: '🥵', tiles: [{ syllable: '더', initial: 'ㄷ', vowel: 'ㅓ', givenSlot: 'vowel' }, { syllable: '위', initial: 'ㅇ', vowel: 'ㅟ', givenSlot: 'initial' }] },
             { word: '튜브', icon: '🛟', tiles: [{ syllable: '튜', initial: 'ㅌ', vowel: 'ㅠ', givenSlot: 'initial' }, { syllable: '브', initial: 'ㅂ', vowel: 'ㅡ', givenSlot: 'vowel' }] },
             { word: '추위', icon: '🥶', tiles: [{ syllable: '추', initial: 'ㅊ', vowel: 'ㅠ', givenSlot: 'initial' }, { syllable: '위', initial: 'ㅇ', vowel: 'ㅟ', givenSlot: 'vowel' }] },
-            { word: '우표', icon: '📮', tiles: [{ syllable: '우', initial: 'ㅇ', vowel: 'ㅜ', givenSlot: 'initial' }, { syllable: '표', initial: 'ㅍ', vowel: 'ㅛ', givenSlot: 'initial' }] }
+            { word: '우표', icon: '<img class="word-picture-asset" src="assets/word-postage-stamp.svg" alt="">', tiles: [{ syllable: '우', initial: 'ㅇ', vowel: 'ㅜ', givenSlot: 'initial' }, { syllable: '표', initial: 'ㅍ', vowel: 'ㅛ', givenSlot: 'initial' }] }
         ]
     }
 ];

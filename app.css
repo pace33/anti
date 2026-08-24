@@ -3667,6 +3667,13 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     cursor: crosshair;
     z-index: 2;
 }
+.word-picture-asset {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    object-fit: contain;
+    vertical-align: middle;
+}
 @media (prefers-color-scheme: dark) and (pointer: coarse) {
     .lesson-complete-writing-canvas {
         --lesson-completion-ink: rgba(255, 255, 255, 0.96);
