@@ -8282,9 +8282,9 @@ function initializeLetterWritingActivity() {
         high: ['바나나', '피아노', '라디오', '아버지']
     };
     const sentenceExamplesByLevel = {
-        low: ['나는 가요.', '나무가 커요.', '사과를 먹어요.', '물이 맑아요.'],
-        mid: ['나는 학교에 가요.', '하늘이 참 맑아요.', '친구와 같이 놀아요.', '나무 아래에서 쉬어요.'],
-        high: ['사과를 맛있게 먹어요.', '오늘은 기분이 좋아요.', '도서관에서 책을 읽어요.', '궁금한 것을 질문해요.']
+        low: ['나는 가요.', '나무가 커요.', '사과를 먹어요.', '물이 맑아요.', '해가 떠요.', '새가 날아요.', '비가 와요.', '꽃이 피어요.', '아기가 웃어요.', '친구가 와요.', '우유를 마셔요.', '공을 차요.'],
+        mid: ['나는 학교에 가요.', '하늘이 참 맑아요.', '친구와 같이 놀아요.', '나무 아래에서 쉬어요.', '동생과 그림을 그려요.', '아침에 우유를 마셔요.', '공원에서 자전거를 타요.', '선생님께 인사를 해요.', '고양이가 창밖을 보아요.', '가족과 함께 밥을 먹어요.', '도서관에서 책을 빌려요.', '운동장에서 공을 차요.'],
+        high: ['사과를 맛있게 먹어요.', '오늘은 기분이 좋아요.', '도서관에서 책을 읽어요.', '궁금한 것을 질문해요.', '친구에게 고마운 마음을 전해요.', '아침 햇살이 교실을 환하게 비춰요.', '주말에는 가족과 공원을 산책해요.', '읽은 책의 내용을 차근차근 말해요.', '비가 그친 뒤 무지개가 떠올랐어요.', '동생과 장난감을 사이좋게 나누어요.', '학교 화단에 예쁜 꽃이 피었어요.', '약속 시간을 지키려고 일찍 출발해요.']
     };
     const embeddedPracticeState = {
         word: { level: 'low', text: wordExamplesByLevel.low[0] },
@@ -8345,24 +8345,60 @@ function initializeLetterWritingActivity() {
         const level = embeddedPracticeState[kind].level;
         const list = examples[level] || [];
         renderEmbeddedPracticeLevels(kind);
-        root.innerHTML = list.map((text, index) => `
-            <button type="button" class="btn-outline py-3 px-4 ${kind === 'word' ? 'text-xl' : 'text-lg text-left'} ${index === 0 ? 'active' : ''}" data-text="${escapeHtml(text)}">${escapeHtml(text)}</button>
-        `).join('');
-        root.querySelectorAll('button').forEach((btn) => {
-            btn.addEventListener('click', () => setEmbeddedPractice(kind, btn.dataset.text));
-        });
-        setEmbeddedPractice(kind, list[0] || '', { speak: false });
+        if (root) {
+            root.innerHTML = list.map((text, index) => `
+                <button type="button" class="btn-outline py-3 px-4 ${kind === 'word' ? 'text-xl' : 'text-lg text-left'} ${index === 0 ? 'active' : ''}" data-text="${escapeHtml(text)}">${escapeHtml(text)}</button>
+            `).join('');
+            root.querySelectorAll('button').forEach((btn) => {
+                btn.addEventListener('click', () => setEmbeddedPractice(kind, btn.dataset.text));
+            });
+        }
+        const current = embeddedPracticeState[kind].text;
+        const candidates = list.filter((text) => text !== current);
+        const next = kind === 'sentence' && candidates.length
+            ? candidates[Math.floor(Math.random() * candidates.length)]
+            : (list[0] || '');
+        setEmbeddedPractice(kind, next, { speak: false });
+    }
+
+    function pickDifferentSentence(level, currentText = '') {
+        const sentences = sentenceExamplesByLevel[level] || sentenceExamplesByLevel.low;
+        const candidates = sentences.filter((sentence) => sentence !== currentText);
+        const pool = candidates.length ? candidates : sentences;
+        return pool[Math.floor(Math.random() * pool.length)] || sentences[0] || '';
+    }
+
+    function cleanPracticeSentence(value) {
+        const firstLine = String(value || '').split(/\r?\n/).map((line) => line.trim()).find(Boolean) || '';
+        const cleaned = firstLine
+            .replace(/^[-*#\d.\s]+/, '')
+            .replace(/["'“”‘’]/g, '')
+            .replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s.!?]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        if (!cleaned || !/[가-힣]/.test(cleaned)) return '';
+        return /[.!?]$/.test(cleaned) ? cleaned : `${cleaned}.`;
     }
 
     async function simpleGen(prompt, fallback) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 3500);
         try {
             const payload = { contents: [{ role: 'user', parts: [{ text: prompt }]}] };
-            const res = await fetch('/.netlify/functions/generatePlan', { method:'POST', body: JSON.stringify({ type:'gemini', payload })});
+            const res = await fetch('/.netlify/functions/generatePlan', {
+                method: 'POST',
+                body: JSON.stringify({ type: 'gemini', payload }),
+                signal: controller.signal
+            });
             if (!res.ok) throw new Error(`generatePlan ${res.status}`);
             const data = await res.json();
             const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
             return text || fallback;
-        } catch { return fallback; }
+        } catch {
+            return fallback;
+        } finally {
+            window.clearTimeout(timeoutId);
+        }
     }
     document.getElementById('letter-generate-word').addEventListener('click', async () => {
         const level = embeddedPracticeState.word.level;
@@ -8377,14 +8413,27 @@ function initializeLetterWritingActivity() {
         setEmbeddedPractice('word', generated && hasNoBatchim(generated) ? generated : fallback);
     });
     document.getElementById('letter-generate-sentence').addEventListener('click', async () => {
+        const button = document.getElementById('letter-generate-sentence');
         const level = embeddedPracticeState.sentence.level;
-        const examples = sentenceExamplesByLevel[level] || sentenceExamplesByLevel.low;
+        const previous = embeddedPracticeState.sentence.text;
+        const fallback = pickDifferentSentence(level, previous);
         const prompt = level === 'high'
             ? '초등학생용 한국어 문장 하나만 출력해줘. 4~6어절 이내로 해줘.'
             : level === 'mid'
                 ? '초등학생용 짧은 한국어 문장 하나만 출력해줘. 3~5어절 이내로 해줘.'
                 : '초등학생용 아주 쉬운 한국어 문장 하나만 출력해줘. 2~3어절 이내로 해줘.';
-        setEmbeddedPractice('sentence', await simpleGen(prompt, examples[Math.floor(Math.random() * examples.length)]));
+        setEmbeddedPractice('sentence', fallback);
+        button.disabled = true;
+        button.textContent = '새 문장을 만들고 있어요';
+        try {
+            const generated = cleanPracticeSentence(await simpleGen(prompt, fallback));
+            if (generated && generated !== previous && generated !== fallback) {
+                setEmbeddedPractice('sentence', generated, { speak: false });
+            }
+        } finally {
+            button.disabled = false;
+            button.textContent = '✨ 새 문장 만들기';
+        }
     });
     document.getElementById('letter-word-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.word.text));
     document.getElementById('letter-sentence-play-sound').addEventListener('click', () => speakKorean(embeddedPracticeState.sentence.text));

@@ -13,7 +13,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260605-tablet-fix">
-    <link rel="stylesheet" href="app.css?v=20260824-tablet-top-hud-v1">
+    <link rel="stylesheet" href="app.css?v=20260824-sentence-generator-v1">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1074,18 +1074,18 @@
                 </div>
 
                 <div id="letter-sentence-panel" class="hidden">
-                    <div class="korean-embed-card p-6 mb-6">
-                        <div class="embedded-practice-toolbar">
-                            <div class="font-black text-[#2c3e50]">문장 예시</div>
-                            <div id="letter-sentence-level-tabs" class="practice-level-tabs" role="group" aria-label="문장 난이도 선택"></div>
+                    <div class="sentence-generator-toolbar">
+                        <div>
+                            <strong>새 문장 연습</strong>
+                            <span>난이도를 고르고 새로운 문장을 만들어 보세요.</span>
                         </div>
-                        <div id="letter-sentence-examples" class="practice-example-grid sentence"></div>
+                        <div id="letter-sentence-level-tabs" class="practice-level-tabs" role="group" aria-label="문장 난이도 선택"></div>
                     </div>
                     <button type="button" id="letter-generate-sentence" class="btn-primary w-full py-4 text-xl bg-[#9b59b6] shadow-[#9b59b633]">✨ 새 문장 만들기</button>
                     <div class="trace-canvas-wrap mt-8">
                         <div class="trace-canvas-title">✍️ 문장 따라쓰기</div>
                         <p id="letter-sentence-output" class="embedded-practice-output sentence"></p>
-                        <canvas id="letter-sentence-writing-canvas" class="trace-writing-canvas embedded-writing-canvas sentence-writing-canvas" data-guide="나는학교에가요"></canvas>
+                        <canvas id="letter-sentence-writing-canvas" class="trace-writing-canvas embedded-writing-canvas sentence-writing-canvas" data-guide="나는학교에가요" data-trace-hide-label></canvas>
                         <div class="trace-canvas-help">문장 전체를 한 칸 안에 천천히 따라 써요.</div>
                         <div id="letter-sentence-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
                     </div>
@@ -1579,7 +1579,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260824-vowel-stroke-order-v1"></script>
+    <script type="module" src="app.js?v=20260824-sentence-generator-v1"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
