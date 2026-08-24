@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260825-lesson27-direct-writing-v11">
+    <meta name="aiedue-korean-build" content="20260825-learning-back-navigation-v12">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -16,8 +16,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
-    <link rel="stylesheet" href="style.css?v=20260825-lesson27-direct-writing-v11">
-    <link rel="stylesheet" href="app.css?v=20260825-lesson27-direct-writing-v11">
+    <link rel="stylesheet" href="style.css?v=20260825-learning-back-navigation-v12">
+    <link rel="stylesheet" href="app.css?v=20260825-learning-back-navigation-v12">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -979,7 +979,7 @@
             </div>
 
             <div class="flex justify-between items-center mt-8">
-                <button type="button" class="btn-outline" onclick="closeLearningStartActivity()">나의 한글로 돌아가기</button>
+                <button type="button" class="btn-outline" onclick="goBackLearningStartActivity()" aria-label="이전 페이지로 이동">← 뒤로 가기</button>
                 <div class="flex items-center gap-4">
                     <button type="button" id="learning-next-btn" class="btn-primary bg-[#ff9d76] shadow-[#ff9d7633]" onclick="goToUnderstandingStep(2)">이해하기 2로 이동</button>
                     <button type="button" id="learning-complete-btn" class="btn-primary opacity-50 cursor-not-allowed" onclick="completeLearningStartActivity()" disabled>완료하기</button>
@@ -998,7 +998,7 @@
             <div id="learning-detail-content" class="space-y-4 pr-1"></div>
             <div id="learning-detail-nav" class="flex justify-between items-center mt-10">
                 <div id="learning-detail-nav-guide" class="learning-detail-nav-guide hidden" role="status" aria-live="polite"></div>
-                <button type="button" class="btn-outline" onclick="closeLearningDetailActivity()">나의 한글로 돌아가기</button>
+                <button type="button" class="btn-outline" onclick="goBackLearningDetailSection()" aria-label="이전 페이지로 이동">← 뒤로 가기</button>
                 <div class="flex items-center gap-4">
                     <button type="button" id="learning-detail-next-btn" class="btn-primary" onclick="goToNextLearningDetailSection()">다음으로</button>
                     <button type="button" id="learning-detail-complete-btn" class="btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden" onclick="completeLearningDetailActivity()">완료하기</button>
@@ -1567,7 +1567,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260825-lesson27-direct-writing-v11"></script>
+    <script type="module" src="app.js?v=20260825-learning-back-navigation-v12"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

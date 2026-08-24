@@ -13948,6 +13948,14 @@ window.closeLearningStartActivity = function closeLearningStartActivity() {
     openMyKoreanSection();
 }
 
+window.goBackLearningStartActivity = function goBackLearningStartActivity() {
+    if (currentUnderstandingStep > 1) {
+        goToUnderstandingStep(currentUnderstandingStep - 1);
+        return;
+    }
+    closeLearningStartActivity();
+}
+
 const lesson27FamilyState = {
     heard: new Set(),
     playbackToken: 0,
@@ -14875,6 +14883,23 @@ window.goToNextLearningDetailSection = function goToNextLearningDetailSection() 
         return;
     }
     renderLearningDetail(activeStep, activeIndex + 1);
+}
+
+window.goBackLearningDetailSection = function goBackLearningDetailSection() {
+    const learningDetailSectionEl = document.getElementById('learning-detail-section');
+    const domStep = Number(learningDetailSectionEl?.dataset.currentStep);
+    const domIndex = Number(learningDetailSectionEl?.dataset.currentSection);
+    const activeStep = Number.isFinite(domStep) && domStep > 0
+        ? domStep
+        : Number(currentLearningActivityStep || window.currentLearningActivityStep);
+    const activeIndex = Number.isFinite(domIndex)
+        ? domIndex
+        : Number(currentLearningDetailSectionIndex || window.currentLearningDetailSectionIndex || 0);
+    if (activeStep && activeIndex > 0) {
+        renderLearningDetail(activeStep, activeIndex - 1);
+        return;
+    }
+    closeLearningDetailActivity();
 }
 
 window.closeLearningDetailActivity = function closeLearningDetailActivity() {
