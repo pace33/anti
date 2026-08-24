@@ -14001,12 +14001,6 @@ function renderLesson27BatchimFamilyIntro() {
                 </div>
             </header>
 
-            <div class="lesson27-family-explanation">
-                <strong>쉽게 알아봐요</strong>
-                <p>ㅂ과 ㅍ은 이름은 다르지만, 받침에서는 모두 <b>[ㅂ]</b>으로 소리 나요.</p>
-                <p class="lesson27-family-helper">비읍, 피읖의 끝부분은 모두 ‘읍’처럼 들려요.</p>
-            </div>
-
             <div class="lesson27-family-step">
                 <span>이해하기</span>
                 <strong>비읍과 피읖은 받침에서 모두 [ㅂ] 소리가 나요.</strong>
