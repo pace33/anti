@@ -4761,7 +4761,7 @@ window.openSketchbookActivity = function() {
     configureDrawingWorkspace({
         mode: 'sketchbook',
         title: '스케치북',
-        desc: '자유 그리기, 따라 그리기, 색칠하기를 하나로 모았어요. 해금한 도안을 골라 그려요.',
+        desc: '자유롭게 그림을 그려 봅시다.',
         template: firstUnlocked
     });
 }
