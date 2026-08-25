@@ -2587,7 +2587,7 @@ function hideLearningActivityButtonGuide() {
 
 function getLearningActivityGuideText(control) {
     const label = `${control?.getAttribute?.('aria-label') || ''} ${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
-    if (/소리|듣기|🔊/.test(label)) return '소리 듣기 버튼을 눌러 보세요.';
+    if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';
     if (/읽었어요|읽기/.test(label)) return '읽은 횟수 버튼을 눌러 보세요.';
     if (/완성|썼어요/.test(label)) return '활동을 마쳤다면 이 버튼을 눌러 보세요.';
     if (label && label.length <= 12) return `“${label}” 버튼을 눌러 보세요.`;

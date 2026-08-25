@@ -109,6 +109,8 @@ assert(app.includes("event.target?.closest?.('button')") && app.includes("event.
 const combinationRenderer = section(app, 'function renderCardContent(card)', 'function renderVowelOriginScene');
 assert(combinationRenderer.includes('const comboData = JSON.stringify([combos[index]])') && combinationRenderer.includes('return `<div class="combine-card-list">${cards}</div>`'), '글자 결합 예시가 한 줄씩 독립된 영역으로 분리되지 않습니다.');
 assert(appCss.includes('.combine-card-list') && appCss.includes('flex-direction: column;'), '글자 결합 카드가 한 줄씩 세로 배치되지 않습니다.');
+assert(app.includes("if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';"), '소리 듣기 활동의 안내 문구가 간단한 표현으로 변경되지 않았습니다.');
+assert(!app.includes('소리 듣기 버튼을 눌러 보세요.'), '이전 소리 듣기 안내 문구가 남아 있습니다.');
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
 const modalSafetyApi = new Function(`${modalSafety}\nreturn { isSafeModalAction };`)();
 assert(modalSafetyApi.isSafeModalAction('enterAiedueCraftAsTeacher()'), '교사 상점의 크래프트 접속 동작이 팝업 안전 처리 과정에서 제거됩니다.');
