@@ -9460,46 +9460,43 @@ function initializeLetterWritingActivity() {
     document.getElementById('letter-sentence-clear').addEventListener('click', () => resetTraceWritingCanvas(document.getElementById('letter-sentence-writing-canvas')));
     const wordGradeButton = document.getElementById('letter-word-grade');
     const sentenceGradeButton = document.getElementById('letter-sentence-grade');
-    wordGradeButton.addEventListener('click', async () => {
-        const completed = await gradeCompletedWriting({
-            targetCanvas: document.getElementById('letter-word-writing-canvas'),
-            button: wordGradeButton,
-            feedback: document.getElementById('letter-word-feedback'),
-            reward: 5,
-            attempt: {
-                lessonId: 'word-practice-writing',
-                lessonTitle: '단어 연습 쓰기',
-                word: embeddedPracticeState.word.text,
-                practiceType: 'word',
-                skillTags: ['단어쓰기', embeddedPracticeState.word.level]
-            }
-        });
-        if (!completed) return;
-        await advanceAfterSuccessfulWriting(wordGradeButton, () => {
-            const examples = wordExamplesByLevel[embeddedPracticeState.word.level] || wordExamplesByLevel.low;
-            setEmbeddedPractice('word', pickDifferentPracticeItem(examples, embeddedPracticeState.word.text));
-        });
-    });
-    sentenceGradeButton.addEventListener('click', async () => {
-        const completed = await gradeCompletedWriting({
-            targetCanvas: document.getElementById('letter-sentence-writing-canvas'),
-            button: sentenceGradeButton,
-            feedback: document.getElementById('letter-sentence-feedback'),
-            reward: 10,
-            attempt: {
-                lessonId: 'sentence-practice-writing',
-                lessonTitle: '문장 연습 쓰기',
-                word: embeddedPracticeState.sentence.text,
-                practiceType: 'sentence',
-                skillTags: ['문장쓰기', embeddedPracticeState.sentence.level]
-            }
-        });
-        if (!completed) return;
-        await advanceAfterSuccessfulWriting(sentenceGradeButton, () => {
-            const examples = sentenceExamplesByLevel[embeddedPracticeState.sentence.level] || sentenceExamplesByLevel.low;
-            setEmbeddedPractice('sentence', pickDifferentPracticeItem(examples, embeddedPracticeState.sentence.text));
-        });
-    });
+    const practiceCompletionPending = { word: false, sentence: false };
+
+    async function completeEmbeddedWriting(kind) {
+        if (practiceCompletionPending[kind]) return;
+        practiceCompletionPending[kind] = true;
+        const isWord = kind === 'word';
+        const gradeButton = isWord ? wordGradeButton : sentenceGradeButton;
+        const targetCanvas = document.getElementById(`letter-${kind}-writing-canvas`);
+        try {
+            const completed = await gradeCompletedWriting({
+                targetCanvas,
+                button: gradeButton,
+                feedback: document.getElementById(`letter-${kind}-feedback`),
+                reward: isWord ? 5 : 10,
+                attempt: {
+                    lessonId: `${kind}-practice-writing`,
+                    lessonTitle: `${isWord ? '낱말' : '문장'} 연습 쓰기`,
+                    word: embeddedPracticeState[kind].text,
+                    practiceType: kind,
+                    skillTags: [`${isWord ? '낱말' : '문장'}쓰기`, embeddedPracticeState[kind].level]
+                }
+            });
+            if (!completed) return;
+            await advanceAfterSuccessfulWriting(gradeButton, () => {
+                const exampleGroups = isWord ? wordExamplesByLevel : sentenceExamplesByLevel;
+                const examples = exampleGroups[embeddedPracticeState[kind].level] || exampleGroups.low;
+                setEmbeddedPractice(kind, pickDifferentPracticeItem(examples, embeddedPracticeState[kind].text));
+            });
+        } finally {
+            practiceCompletionPending[kind] = false;
+        }
+    }
+
+    wordGradeButton.addEventListener('click', () => completeEmbeddedWriting('word'));
+    sentenceGradeButton.addEventListener('click', () => completeEmbeddedWriting('sentence'));
+    document.getElementById('letter-word-writing-canvas').addEventListener('tracewritingcomplete', () => completeEmbeddedWriting('word'));
+    document.getElementById('letter-sentence-writing-canvas').addEventListener('tracewritingcomplete', () => completeEmbeddedWriting('sentence'));
     renderEmbeddedPractice('word');
     renderEmbeddedPractice('sentence');
 }
