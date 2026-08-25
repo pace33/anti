@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260825-simple-listen-guide-v62">
+    <meta name="aiedue-korean-build" content="20260825-korean-unit-header-v63">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -16,8 +16,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
-    <link rel="stylesheet" href="style.css?v=20260825-simple-listen-guide-v62">
-    <link rel="stylesheet" href="app.css?v=20260825-simple-listen-guide-v62">
+    <link rel="stylesheet" href="style.css?v=20260825-korean-unit-header-v63">
+    <link rel="stylesheet" href="app.css?v=20260825-korean-unit-header-v63">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -811,11 +811,11 @@
         <div id="my-korean-section" class="view-section fade-in hidden bg-white">
             <span class="page-number">08</span>
             <div class="section-dashboard-header absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
-                <div class="pointer-events-auto cursor-pointer" onclick="goHangulDashboard()">
-                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
+                <div class="my-korean-logo-link pointer-events-auto cursor-pointer" onclick="goHangulDashboard()">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo">
                 </div>
                 <nav class="my-korean-unit-bar pointer-events-auto" id="my-korean-tabs" aria-label="한글 해득 단원 선택"></nav>
-                <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
+                <div class="my-korean-profile-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
                     <div class="text-right">
                         <div class="flex items-center justify-end gap-2">
                             <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
@@ -1562,7 +1562,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260825-simple-listen-guide-v62"></script>
+    <script type="module" src="app.js?v=20260825-korean-unit-header-v63"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
