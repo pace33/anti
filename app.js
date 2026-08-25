@@ -6536,31 +6536,30 @@ function getCurricularDanInfo(dan = getCurrentCurricularDan()) {
         return {
             dan: 2,
             title: '나의 교과 맞춤쓰기 2단',
-            short: '단어 + 문장 힌트 받아쓰기',
-            help: '2단은 스피커로 문장을 듣고, 화면 위쪽 힌트에서 OOO로 가려진 단어를 캔버스에 써요.'
+            short: '단어 받아쓰기',
+            help: '2단은 듣기 버튼으로 문제를 듣고 빈 칸에 단어를 써요.'
         };
     }
     if (level === 3) {
         return {
             dan: 3,
             title: '나의 교과 맞춤쓰기 3단',
-            short: '문장 통째로 받아쓰기',
-            help: '3단은 스피커로 문장 전체를 듣고, OOO 힌트만 보며 문장 전체를 캔버스에 써요.'
+            short: '문장 받아쓰기',
+            help: '3단은 듣기 버튼으로 문제를 듣고 빈 칸에 문장 전체를 써요.'
         };
     }
     return {
         dan: 1,
         title: '나의 교과 맞춤쓰기 1단',
-        short: '단어만 듣고 쓰기',
-        help: '1단은 스피커로 단어를 듣고, 글자 수 힌트만 보며 단어를 캔버스에 써요.'
+        short: '단어 받아쓰기',
+        help: '1단은 듣기 버튼으로 단어를 듣고 빈 칸에 써요.'
     };
 }
 function updateDictationDanDisplay() {
-    const info = getCurricularDanInfo();
     const summary = document.getElementById('dictation-dan-summary');
-    if (summary) summary.innerText = `${info.title} · ${info.short}`;
+    if (summary) { summary.innerText = ''; summary.classList.add('hidden'); }
     const help = document.getElementById('dictation-dan-help');
-    if (help) help.innerText = `현재 ${info.dan}단이에요. ${info.help} 총 1단/2단/3단으로 차근차근 올라가요.`;
+    if (help) { help.innerText = ''; help.classList.add('hidden'); }
 }
 function updateDictationDashboardPreview() {
     dictationPortfolio = normalizeDictationPortfolio(dictationPortfolio);
@@ -6571,7 +6570,7 @@ function updateDictationDashboardPreview() {
     const badge = document.getElementById('dictation-lock-badge'); const desc = document.getElementById('dictation-mission-desc'); const card = document.getElementById('dictation-mission-card');
     const locked = isDictationMissionLocked();
     if (badge) badge.innerText = locked ? '잠겨 있음' : '오늘의 미션';
-    if (desc) desc.innerText = locked ? '교과 맞춤쓰기는 먼저 오늘의 노트 사진을 찍고 AI+OCR 2차 선별 단어 10개를 뽑아 시작해요!' : `${getCurricularGateText()} · 2스텝에서 화면 글자를 따라 채우고 3스텝 받아쓰기로 이어가요.`;
+    if (desc) desc.innerText = '쓰기 공부하고 싶은 내용을 사진 찍고, 에이두와 같이 공부해요.';
     if (card) card.classList.toggle('opacity-70', locked);
     updateDictationDanDisplay();
 }
@@ -7122,12 +7121,100 @@ window.openTodayDictationActivity = function() { openDictationBankCamera({ after
 window.openLevelDictationActivity = function() { window.openTodayDictationActivity(); }
 window.openDictationItem = function() { window.openTodayDictationActivity(); }
 window.openAiWordPracticeActivity = function() { window.openDictationPracticeActivity(); }
+function getCurricularPracticeWrongRate(word = '', fallback = {}) {
+    const state = getCurricularWritingState();
+    const stat = state.wordStats?.[cleanKoreanWord(word)] || dictationPortfolio.koreanBank?.wordStats?.[cleanKoreanWord(word)] || {};
+    const totals = ['step1', 'step2', 'step3'].reduce((acc, key) => {
+        const step = stat[key] || {};
+        acc.attempts += Math.max(0, Number(step.attempts || 0));
+        acc.wrongs += Math.max(0, Number(step.wrongs || 0));
+        return acc;
+    }, { attempts: 0, wrongs: 0 });
+    const fbWrong = Math.max(0, Number(fallback.wrongCount || 0));
+    const fbCorrect = Math.max(0, Number(fallback.correctCount || 0));
+    if (totals.attempts > 0) return { rate: totals.wrongs / totals.attempts, wrongs: totals.wrongs, attempts: totals.attempts };
+    if (fbWrong + fbCorrect > 0) return { rate: fbWrong / (fbWrong + fbCorrect), wrongs: fbWrong, attempts: fbWrong + fbCorrect };
+    return { rate: 1, wrongs: 1, attempts: 1 };
+}
+function normalizeCurricularPracticeCandidate(raw = {}, fallback = {}) {
+    const sentence = cleanKoreanSentence(raw.sentence || raw.prompt || raw.answer || fallback.sentence || '');
+    const answer = cleanKoreanSentence(raw.answer || raw.word || raw.sentence || fallback.answer || sentence);
+    const wordSource = raw.word || fallback.word || (Number(raw.difficulty || fallback.difficulty || 1) < 3 ? raw.answer : '') || splitDictationCandidateWords(sentence || answer)[0] || answer || sentence;
+    const word = cleanKoreanWord(wordSource);
+    const difficulty = Number(raw.difficulty || fallback.difficulty || 1);
+    const reviewAnswer = difficulty >= 3 ? (sentence || answer || word) : (word || answer || sentence);
+    const traceWord = cleanKoreanWord(word || splitDictationCandidateWords(reviewAnswer)[0] || answer || sentence);
+    if (!traceWord || !reviewAnswer) return null;
+    const rate = getCurricularPracticeWrongRate(traceWord, fallback);
+    return {
+        word: traceWord,
+        sentence: sentence || reviewAnswer,
+        answer: reviewAnswer,
+        audioText: reviewAnswer,
+        canvasGuide: '',
+        hintText: '',
+        displayText: '',
+        source: 'curricular-review-wrong',
+        difficulty: 3,
+        originalDifficulty: difficulty,
+        coverage: 0,
+        aiGraded: false,
+        wrongRate: rate.rate,
+        wrongs: rate.wrongs,
+        attempts: rate.attempts,
+        lastTriedAt: raw.lastTriedAt || fallback.lastTriedAt || fallback.savedAt || raw.savedAt || ''
+    };
+}
+function getCurricularPracticeReviewItems(limit = 10, filter = 'all') {
+    dictationPortfolio = normalizeDictationPortfolio(dictationPortfolio);
+    const candidates = [];
+    const pushCandidate = (raw, fallback = {}) => {
+        const item = normalizeCurricularPracticeCandidate(raw, fallback);
+        if (item) candidates.push(item);
+    };
+    const histories = [
+        ...(dictationPortfolio.curricularWriting?.history || []),
+        ...Object.values(dictationPortfolio.missions || {})
+    ];
+    histories.forEach((record) => {
+        (Array.isArray(record.items) ? record.items : []).forEach((item) => {
+            if (item && item.correct === false) pushCandidate(item, { savedAt: record.savedAt, difficulty: item.difficulty || record.difficulty });
+        });
+    });
+    if (filter !== 'completed') {
+        (dictationPortfolio.wrongBank || []).forEach((item) => pushCandidate({ sentence: item.sentence, answer: item.sentence, word: cleanKoreanWord(item.word || item.sentence), difficulty: 3 }, item));
+    }
+    const byKey = new Map();
+    candidates.forEach((item) => {
+        const key = `${item.word}|${item.answer}`;
+        const prev = byKey.get(key);
+        if (!prev || item.wrongRate > prev.wrongRate || (item.wrongRate === prev.wrongRate && item.wrongs > prev.wrongs)) byKey.set(key, item);
+    });
+    return Array.from(byKey.values())
+        .sort((a, b) => (b.wrongRate - a.wrongRate) || (b.wrongs - a.wrongs) || String(b.lastTriedAt || '').localeCompare(String(a.lastTriedAt || '')))
+        .slice(0, limit);
+}
+function createCurricularPracticeTraceSession(reviewItems = []) {
+    const words = Array.from(new Set(reviewItems.map((item) => cleanKoreanWord(item.word)).filter(Boolean))).slice(0, 10);
+    const missionItems = reviewItems.slice(0, 10).map((item) => ({ ...item, canvasGuide: '', hintText: '', displayText: '', aiGraded: false, traceComplete: false, coverage: 0 }));
+    return {
+        kind: 'trace',
+        mode: 'curricular',
+        practiceReview: true,
+        marker: CURRICULAR_TRACE_CANVAS_MARKER,
+        items: words.map((word) => ({ word, sentence: word, answer: word, canvasGuide: word, source: 'curricular-review-trace', coverage: 0, traceComplete: false })),
+        nextMissionSession: { kind: 'mission', mode: 'curricular', practiceReview: true, marker: CURRICULAR_AI_CANVAS_GRADING_MARKER, difficulty: 3, items: missionItems, currentIndex: 0, graded: null, saved: false, autoSaved: false, startedAt: new Date().toISOString() },
+        currentIndex: 0,
+        graded: null,
+        saved: false,
+        startedAt: new Date().toISOString()
+    };
+}
 window.openDictationPracticeActivity = function(filter = 'all') {
-    const wrong = filter === 'completed' ? [] : (dictationPortfolio.wrongBank || []); const done = filter === 'wrong' ? [] : (dictationPortfolio.completedBank || []);
-    const items = [...wrong, ...done].slice(0, 20).map((item) => ({ sentence: item.sentence, source: item.correctCount >= 3 ? 'completed-bank' : 'wrong-bank' }));
-    if (!items.length) { items.push(...(dictationPortfolio.koreanBank?.words || []).slice(0, 10).map((word, i) => ({ sentence: makeSentenceFromWords([word], i), source: 'generated-word' }))); }
-    if (!items.length) { showModal('연습할 문장이 아직 없어요. 오늘의 노트 사진을 먼저 찍어 단어 은행을 만들어 주세요.'); openDictationBankCamera({ afterSave: 'curricular-writing' }); return; }
-    configureDictationWorkspace({ kind: 'practice', items, currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() }, { badge: '교과 맞춤쓰기 연습하기', title: '교과 맞춤쓰기 연습하기', desc: '오답/완료/단어 은행 기반 문장을 보고 따라 써요.' });
+    const reviewItems = getCurricularPracticeReviewItems(10, filter);
+    if (!reviewItems.length) { showModal('아직 다시 연습할 오답 단어/문장이 없어요. 교과 맞춤쓰기 미션을 먼저 풀어 오답 기록을 만들어요.'); return; }
+    const session = createCurricularPracticeTraceSession(reviewItems);
+    configureDictationWorkspace(session, { badge: '교과 맞춤쓰기 연습하기', title: '오답 2스텝-3스텝 다시 연습', desc: '나의 기록에서 오답률이 높은 단어/문장을 그대로 가져와 2스텝 따라쓰기 후 3스텝 받아쓰기로 다시 연습해요.' });
 }
 function stopDictationCamera() {
     if (activeDictationCameraStream) {
@@ -7772,12 +7859,12 @@ async function saveMissionGradingResult() {
     dictationPortfolio.hasCompletedOnce = true;
     dictationPortfolio.dictationLocked = false;
     const sessionId = activeDictationSession.startedAt || now;
-    const record = { id: sessionId, mode: activeDictationSession.mode || 'curricular', difficulty, total, correctCount, wrongCount: total - correctCount, accuracy: Math.round(accuracy), items: activeDictationSession.graded, words: getCurricularWords(), aiAnalysis: activeDictationImageAnalysis, photo, savedAt: now };
+    const record = { id: sessionId, mode: activeDictationSession.mode || 'curricular', practiceReview: !!activeDictationSession.practiceReview, difficulty, total, correctCount, wrongCount: total - correctCount, accuracy: Math.round(accuracy), items: activeDictationSession.graded, words: activeDictationSession.items?.map((item) => item.word).filter(Boolean) || getCurricularWords(), aiAnalysis: activeDictationImageAnalysis, photo, savedAt: now };
     dictationPortfolio.missions = { ...(dictationPortfolio.missions || {}), [now]: record };
     const state = getCurricularWritingState();
     dictationPortfolio.curricularWriting.history = [record, ...(state.history || [])].slice(0, 200);
     dictationPortfolio.curricularWriting.rewardedSessions = dictationPortfolio.curricularWriting.rewardedSessions || [];
-    if (difficulty === 3 && accuracy >= 50 && !dictationPortfolio.curricularWriting.rewardedSessions.includes(sessionId)) {
+    if (difficulty === 3 && !activeDictationSession.practiceReview && accuracy >= 50 && !dictationPortfolio.curricularWriting.rewardedSessions.includes(sessionId)) {
         applyAiedueExperienceReward(100, { source: '교과 맞춤쓰기 3단계 성공', sessionId, accuracy, baseReward: 100, stageMultiplier: 1 });
         dictationPortfolio.curricularWriting.rewardedSessions.unshift(sessionId);
         showAiedueAutoToast('🎉 교과 맞춤쓰기 3단계 성공!', '경험치 100% 보상으로 돈 1000점 지급 및 주의토큰 1개 감소 조건을 적용했어요.', 5500);
@@ -7872,9 +7959,14 @@ window.completeDictationItem = async function() {
             showModal('1번부터 10번까지 모두 80% 이상 따라 쓴 뒤 다음으로 갈 수 있어요.');
             return;
         }
-        mergeKoreanBank({ words: getCurricularWords() });
+        const traceWords = activeDictationSession.items.map((item) => item.word).filter(Boolean);
+        mergeKoreanBank({ words: traceWords.length ? traceWords : getCurricularWords() });
         await persistDictationData();
-        configureDictationWorkspace(createDictationMissionSession(), { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
+        if (activeDictationSession.practiceReview && activeDictationSession.nextMissionSession) {
+            configureDictationWorkspace(activeDictationSession.nextMissionSession, { badge: '교과 맞춤쓰기 연습하기', title: '오답 3스텝 받아쓰기', desc: '새 문장을 만들지 않고 기존에 틀렸던 단어/문장을 그대로 듣고 빈 칸에 다시 써요.' });
+        } else {
+            configureDictationWorkspace(createDictationMissionSession(), { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
+        }
         return;
     }
     showModal('미션 채점 결과는 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
