@@ -13821,7 +13821,7 @@ function renderLessonMouthIntro(step) {
             <div class="text-base font-bold text-stone-600 mb-4">${config.guideText || '소리를 듣고 입모양을 함께 살펴보세요.'}</div>
             <div class="mouth-flow-grid">
                 ${config.items.map((item) => `
-                    <div class="mouth-sound-card" data-mouth-step="${step}" data-mouth-char="${item.char}" style="${getLessonMouthStyle(item)}">
+                    <div class="mouth-sound-card" data-mouth-step="${step}" data-mouth-char="${item.char}" style="${getLessonMouthStyle(item)}" role="group" tabindex="0" aria-label="${item.char} 입 모양과 소리 듣기" onclick="playLessonMouthCard(event, ${step}, '${item.char}')" onkeydown="playLessonMouthCard(event, ${step}, '${item.char}')">
                         <div class="mouth-letter">${item.char}</div>
                         <div class="mouth-visual" aria-hidden="true">${renderLessonMouthFace(item)}</div>
                         <div class="text-lg font-black text-[#2c3e50]">${item.label}</div>
@@ -13882,6 +13882,15 @@ function renderLessonMouthSoundQuiz(step) {
         </div>
     `;
 }
+
+window.playLessonMouthCard = function playLessonMouthCard(event, step, char) {
+    if (event?.type === 'click' && event.target?.closest?.('button')) return;
+    if (event?.type === 'keydown') {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+    }
+    window.playLessonMouthSound(step, char, false);
+};
 
 const renderLesson15MouthIntro = () => renderLessonMouthIntro(15);
 const renderLesson15SoundQuiz = () => renderLessonMouthSoundQuiz(15);

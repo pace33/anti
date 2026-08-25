@@ -4446,6 +4446,15 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     text-align: center;
     overflow: visible;
     transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+    cursor: pointer;
+}
+.mouth-sound-card:hover {
+    border-color: #fb923c;
+    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.14);
+}
+.mouth-sound-card:focus-visible {
+    outline: 4px solid rgba(20, 184, 166, .38);
+    outline-offset: 3px;
 }
 .mouth-sound-card::after {
     content: "→";
