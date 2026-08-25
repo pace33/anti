@@ -112,8 +112,9 @@ assert(appCss.includes('.combine-card-list') && appCss.includes('flex-direction:
 assert(app.includes("if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';"), '소리 듣기 활동의 안내 문구가 간단한 표현으로 변경되지 않았습니다.');
 assert(!app.includes('소리 듣기 버튼을 눌러 보세요.'), '이전 소리 듣기 안내 문구가 남아 있습니다.');
 assert(index.includes('class="my-korean-logo-link pointer-events-auto cursor-pointer"') && index.includes('class="my-korean-profile-banner pointer-events-auto'), '나의 한글 상단 영역의 로고 또는 프로필 구분 클래스가 없습니다.');
-assert(appCss.includes('grid-template-columns:180px minmax(0,1fr) minmax(220px,auto)') && appCss.includes('.my-korean-unit-bar {position:static;'), 'PC 나의 한글 상단 로고와 단원 메뉴가 독립된 그리드 영역으로 배치되지 않습니다.');
-assert(appCss.includes('@media (max-width:1180px)') && appCss.includes('.my-korean-profile-banner{display:none !important;}'), '좁은 PC 화면에서 단원 메뉴 공간을 확보하지 못합니다.');
+assert(appCss.includes('grid-template-columns:180px minmax(0,1fr)') && appCss.includes('.my-korean-unit-bar {position:static;'), 'PC 나의 한글 상단 로고와 단원 메뉴가 독립된 그리드 영역으로 배치되지 않습니다.');
+assert(appCss.includes('.my-korean-profile-banner {display:none !important;}') && appCss.includes('overflow:hidden;'), '단원 메뉴가 비어 있는 오른쪽 공간을 모두 사용하지 못합니다.');
+assert(appCss.includes('.my-korean-unit-tab {flex:1 1 0;') && appCss.includes('flex-wrap:wrap;overflow:visible;'), '단원 탭이 PC와 모바일에서 스크롤 없이 배치되지 않습니다.');
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
 const modalSafetyApi = new Function(`${modalSafety}\nreturn { isSafeModalAction };`)();
 assert(modalSafetyApi.isSafeModalAction('enterAiedueCraftAsTeacher()'), '교사 상점의 크래프트 접속 동작이 팝업 안전 처리 과정에서 제거됩니다.');
