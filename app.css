@@ -6785,7 +6785,7 @@ body {
 .my-korean-logo-link .login-mini-logo {display:block;width:180px;height:auto;filter:drop-shadow(0 5px 15px rgba(0,0,0,.1));}
 .my-korean-unit-bar {position:static;display:flex;align-items:center;gap:6px;width:100%;min-width:0;max-width:none;padding:6px 8px;border:1px solid #dcebd6;border-radius:18px;background:rgba(255,255,255,.94);box-shadow:0 10px 26px rgba(44,62,80,.1);overflow:hidden;}
 .my-korean-profile-banner {display:none !important;}
-#my-korean-section .stitched {margin-top:10rem !important;}
+#my-korean-section .stitched {margin-top:calc(10rem - 1cm) !important;}
 .my-korean-unit-tab {flex:1 1 0;min-width:56px;padding:9px 8px;border:1px solid transparent;border-radius:12px;background:transparent;color:#64748b;font-size:.82rem;font-weight:1000;white-space:nowrap;transition:background .2s ease,color .2s ease,transform .2s ease;}
 .my-korean-unit-tab:hover {background:#f0f8ec;color:#28756a;transform:translateY(-1px);}
 .my-korean-unit-tab.active {box-shadow:0 5px 12px rgba(70,179,165,.16);}
