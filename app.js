@@ -236,15 +236,6 @@ const KOREAN_ERROR_TYPES = {
 
 const CHANCHAN_LESSONS = [
     {
-        id: "start",
-        unit: 1,
-        title: "배움 시작: 모음과 자음",
-        focus: ["모음", "자음"],
-        activities: ["jamoSort", "listenAndFind", "writeOnCanvas"],
-        letters: ["가", "머", "바", "나", "라"],
-        description: "글자에서 모음과 자음을 찾아요."
-    },
-    {
         id: 1,
         unit: 1,
         title: "모음의 시작",
@@ -2058,7 +2049,6 @@ const learningPracticeFlows = {
 
 const learningUnits = {
     vowel: [
-        { step: 0, title: '배움 시작: 모음과 자음', page: 12 },
         { step: 1, title: '배움 1: 모음의 시작', page: 13 },
         { step: 2, title: '배움 2: ㅏ, ㅓ 공부하기', page: 14 },
         { step: 3, title: '배움 3: ㅗ, ㅜ 공부하기', page: 16 },
@@ -3803,15 +3793,11 @@ function findLearningItemByStep(step) {
 }
 
 function updateTodayKoreanPreview() {
-    const nextStep = currentLearningStep + 1;
+    const nextStep = Math.max(1, currentLearningStep + 1);
     const todayLabel = document.getElementById('today-korean-step-label');
     if (!todayLabel) return;
     if (currentLearningStep >= 33) {
         todayLabel.innerText = '한글 배움 완료';
-        return;
-    }
-    if (nextStep <= 0) {
-        todayLabel.innerText = '배움 시작 활동';
         return;
     }
     const nextItem = findLearningItemByStep(nextStep);
@@ -4271,10 +4257,6 @@ window.goDictationDashboard = function goDictationDashboard() {
 }
 
 window.openMyKoreanFromDashboard = function openMyKoreanFromDashboard() {
-    if (currentLearningStep < 0 && currentUserRole !== 'teacher') {
-        showModal('배움 시작 활동을 완료하면 나의 한글이 열려요.');
-        return;
-    }
     openMyKoreanSection();
 }
 
@@ -16721,13 +16703,9 @@ window.completeLearningDetailActivity = async function completeLearningDetailAct
 }
 
 window.openTodayKoreanActivity = function openTodayKoreanActivity() {
-    const nextStep = currentLearningStep + 1;
+    const nextStep = Math.max(1, currentLearningStep + 1);
     if (currentLearningStep >= 33) {
         showModal('한글 배움을 모두 마쳤어요!');
-        return;
-    }
-    if (nextStep <= 0) {
-        openLearningStartActivity();
         return;
     }
     if (learningDetailData[nextStep]) {
