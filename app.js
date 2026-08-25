@@ -2505,6 +2505,7 @@ let learningDetailActivityGuideTimer = null;
 let learningDetailActivityGuideTarget = null;
 let learningDetailActivityClickHandler = null;
 let learningDetailActivityInteractionHandler = null;
+const learningDetailReviewedControlsByPage = new Map();
 
 function getLearningDetailActionControls(root) {
     if (!root) return [];
@@ -2513,6 +2514,49 @@ function getLearningDetailActionControls(root) {
         const label = `${control.getAttribute('aria-label') || ''} ${control.textContent || ''}`.trim();
         return !/다시 쓰기|지우기|초기화|처음으로|한 번 더 보기/.test(label);
     });
+}
+
+function getLearningDetailReviewPageKey() {
+    const section = document.getElementById('learning-detail-section');
+    return `${section?.dataset.currentStep || ''}:${section?.dataset.currentSection || ''}`;
+}
+
+function getLearningDetailControlReviewKey(control, index) {
+    const label = `${control.getAttribute('aria-label') || ''} ${control.textContent || ''}`
+        .replace(/\s+/g, ' ')
+        .trim();
+    const identity = control.id
+        || control.dataset.familyPlay
+        || control.dataset.text
+        || control.dataset.level
+        || control.dataset.lesson27Level
+        || control.dataset.repLevel
+        || control.dataset.pathStage
+        || label;
+    return `${index}:${identity || control.tagName}`;
+}
+
+function markLearningDetailControlReviewed(control) {
+    if (!control) return;
+    control.dataset.learningReviewed = 'true';
+    control.dataset.learningReviewState = 'done';
+    control.classList.add('learning-activity-reviewed');
+}
+
+function syncLearningDetailReviewedControls(content) {
+    const controls = getLearningDetailActionControls(content);
+    const pageKey = getLearningDetailReviewPageKey();
+    let reviewed = learningDetailReviewedControlsByPage.get(pageKey);
+    if (!reviewed) {
+        reviewed = new Set();
+        learningDetailReviewedControlsByPage.set(pageKey, reviewed);
+    }
+    controls.forEach((control, index) => {
+        const reviewKey = getLearningDetailControlReviewKey(control, index);
+        control.dataset.learningReviewKey = reviewKey;
+        if (reviewed.has(reviewKey)) markLearningDetailControlReviewed(control);
+    });
+    return { controls, reviewed };
 }
 
 function ensureLearningActivityGuide() {
@@ -2689,6 +2733,7 @@ function setupLearningDetailCompletionGuide() {
             && controls.every((control) => control.dataset.learningReviewed === 'true');
     };
     const check = () => {
+        syncLearningDetailReviewedControls(content);
         if (pageLooksComplete()) showLearningDetailNavigationGuide();
         else scheduleLearningActivityButtonGuide(content);
     };
@@ -2699,11 +2744,22 @@ function setupLearningDetailCompletionGuide() {
         attributes: true,
         attributeFilter: ['class', 'data-completed']
     });
-    const controls = getLearningDetailActionControls(content);
+    const { controls, reviewed } = syncLearningDetailReviewedControls(content);
     learningDetailActivityClickHandler = (event) => {
         const control = event.target.closest('button, [role="button"][tabindex]');
         if (!control || !content.contains(control)) return;
-        control.dataset.learningReviewed = 'true';
+        if (control.matches('.wrong, .is-wrong, .is-try-again')) {
+            hideLearningActivityButtonGuide();
+            scheduleLearningActivityButtonGuide(content);
+            return;
+        }
+        const currentControls = getLearningDetailActionControls(content);
+        const controlIndex = currentControls.indexOf(control);
+        const reviewKey = control.dataset.learningReviewKey
+            || getLearningDetailControlReviewKey(control, Math.max(0, controlIndex));
+        reviewed.add(reviewKey);
+        control.dataset.learningReviewKey = reviewKey;
+        markLearningDetailControlReviewed(control);
         hideLearningActivityButtonGuide();
         requestAnimationFrame(check);
     };
