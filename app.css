@@ -5801,7 +5801,7 @@ body {
     --stage-color: #8b5cf6;
     --stage-soft: #f3e8ff;
     --stage-ink: #6d28d9;
-    height: 330px;
+    height: 300px;
     border: 1px solid rgba(255, 255, 255, 0.92);
     border-radius: 34px;
     background: rgba(255, 255, 255, 0.9);
@@ -5882,21 +5882,13 @@ body {
 .dashboard-stage-card.level-card .level-title {
     color: var(--stage-ink);
     font-size: 2rem;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .dashboard-stage-card.level-card .level-desc {
     color: var(--ui-ink);
     opacity: 1;
-}
-
-.dashboard-stage-card .stage-note {
-    width: 100%;
-    min-height: 0;
-    margin-top: 13px;
-    padding-top: 12px;
-    border-top: 1px solid var(--ui-line);
-    color: var(--ui-muted);
+    line-height: 1.35;
 }
 
 .shop-btn {

@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260825-collapsible-hud-v50">
+    <meta name="aiedue-korean-build" content="20260825-clean-stage-cards-v51">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -16,8 +16,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
-    <link rel="stylesheet" href="style.css?v=20260825-collapsible-hud-v50">
-    <link rel="stylesheet" href="app.css?v=20260825-collapsible-hud-v50">
+    <link rel="stylesheet" href="style.css?v=20260825-clean-stage-cards-v51">
+    <link rel="stylesheet" href="app.css?v=20260825-clean-stage-cards-v51">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -221,28 +221,24 @@
                     <span class="stage-emoji" aria-hidden="true">🎨</span>
                     <span class="level-title">1단계</span>
                     <span class="level-desc">그리기</span>
-                    <span class="stage-note">그림 미션 · 스케치북 · 도안 해금</span>
                 </button>
                 <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('hangul')" id="card-level-2">
                     <span class="stage-badge">STEP 2</span>
                     <span class="stage-emoji hangul-icon" aria-hidden="true">ㄱㄴㄷ</span>
                     <span class="level-title">2단계</span>
                     <span class="level-desc">한글 해득</span>
-                    <span class="stage-note">자음 · 모음 · 낱말 익히기</span>
                 </button>
                 <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('dictation')" id="card-level-3">
                     <span class="stage-badge">STEP 3</span>
                     <span class="stage-emoji" aria-hidden="true">✍️</span>
                     <span class="level-title">3단계</span>
                     <span class="level-desc">교과 맞춤쓰기</span>
-                    <span class="stage-note">단어 은행 · 오답 연습 · 교과 맞춤쓰기</span>
                 </button>
                 <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('literacy')" id="card-level-4">
                     <span class="stage-badge">STEP 4</span>
                     <span class="stage-emoji" aria-hidden="true">📚</span>
                     <span class="level-title">4단계</span>
                     <span class="level-desc">문해력</span>
-                    <span class="stage-note">독해 · 어휘 · 문장 만들기</span>
                 </button>
             </div>
 
@@ -1568,7 +1564,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260825-collapsible-hud-v50"></script>
+    <script type="module" src="app.js?v=20260825-clean-stage-cards-v51"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
