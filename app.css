@@ -5268,6 +5268,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     }
 }
 /* ===== 글자 결합 애니메이션 ===== */
+.combine-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 .combine-card {
     background: linear-gradient(135deg,#f0fdf4,#f0f9ff);
     border: 2px solid #86efac;
@@ -5275,7 +5280,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     padding: 14px 10px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 .combine-row {
     display: flex;
@@ -5315,7 +5320,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 .combine-card.combine-reset .combine-dot-left {
     animation: none !important;
 }
-.combine-replay{ font-size:1.4rem; color:#94a3b8; text-align:center; margin-top:15px; }
+.combine-replay{ font-size:1.4rem; color:#94a3b8; text-align:center; margin-top:8px; }
 @keyframes combineLeft  { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(82px);opacity:1} }
 @keyframes combineRight { 0%,28%{transform:translateX(0);opacity:1} 68%,100%{transform:translateX(-82px);opacity:1} }
 @keyframes opFade       { 0%,100%{opacity:1} }

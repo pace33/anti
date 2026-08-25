@@ -6237,13 +6237,12 @@ function renderCardContent(card) {
     // 2) A+B→C 결합 패턴
     const combos = parseCombinations(card);
     if (combos.length) {
-        const combosData = JSON.stringify(combos).replace(/"/g, '&quot;');
         const vertUp   = ['ㅗ','ㅛ'];
         const vertDown = ['ㅜ','ㅠ'];
         const vertRight = ['ㅏ','ㅑ','ㅐ','ㅒ'];
         const vertLeft  = ['ㅓ','ㅕ','ㅔ','ㅖ'];
         const rows = combos.map((c, i) => {
-            const d = `animation-delay:${i * 4.7}s`;
+            const d = 'animation-delay:0s';
             const isUp   = vertUp.includes(c.res);
             const isDown = vertDown.includes(c.res);
             const isRight = vertRight.includes(c.res);
@@ -6290,8 +6289,12 @@ function renderCardContent(card) {
                 <span class="combine-op" style="${d}">→</span>
                 <div class="combine-box combine-result" style="${d}">${c.res}</div>
             </div>`;
+        });
+        const cards = rows.map((row, index) => {
+            const comboData = JSON.stringify([combos[index]]).replace(/"/g, '&quot;');
+            return `<div class="combine-card" onclick="restartCombineAnim(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();restartCombineAnim(this)}" role="button" tabindex="0" data-combos="${comboData}" title="소리 듣기">${row}<div class="combine-replay">🔊 소리 듣기</div></div>`;
         }).join('');
-        return `<div class="combine-card" onclick="restartCombineAnim(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();restartCombineAnim(this)}" role="button" tabindex="0" data-combos="${combosData}" title="소리 듣기">${rows}<div class="combine-replay">🔊 소리 듣기</div></div>`;
+        return `<div class="combine-card-list">${cards}</div>`;
     }
     // 3) 일반 텍스트 카드
     return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
