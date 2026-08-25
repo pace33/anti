@@ -5539,13 +5539,21 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 .sync-coins.point-pop, #dashboard-coins-header.point-pop { animation: pointPulse .52s ease; display:inline-block; }
 @keyframes pointPulse { 0%{transform:scale(1)} 38%{transform:scale(1.45); color:#f59e0b} 100%{transform:scale(1)} }
 .drawing-workspace-top { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:18px; }
+.drawing-workspace-footer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-top: 18px;
+    padding: 0 4px 8px;
+}
 .drawing-title-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .drawing-mission-logo { font-size:1.15rem; padding:10px 18px; border-radius:999px; }
 .drawing-progress-chip { font-weight:900; color:#6d28d9; background:#f3e8ff; border:3px solid #e9d5ff; padding:9px 16px; border-radius:999px; }
 .drawing-template-picked { font-weight:900; color:#6d28d9; background:#faf5ff; border:3px dashed #d8b4fe; border-radius:18px; padding:10px; text-align:center; }
 .drawing-template-modal-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; max-height:65vh; overflow-y:auto; padding-right:4px; }
 @media (min-width:768px){ .drawing-template-modal-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
-@media (max-width:768px){ .drawing-workspace-top{ flex-direction:column; align-items:stretch; } .drawing-header-banner{ justify-content:flex-end; } }
+@media (max-width:768px){ .drawing-workspace-top{ flex-direction:column; align-items:stretch; } .drawing-header-banner{ justify-content:flex-end; } .drawing-workspace-footer-actions{ position:sticky; bottom:0; z-index:12; padding:12px 4px; background:rgba(255,255,255,.94); } .drawing-workspace-footer-actions button{ min-height:48px; flex:1; } }
 
 /* --- 2026 visual polish: calm depth, clearer hierarchy, purposeful motion --- */
 :root {

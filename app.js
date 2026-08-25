@@ -4711,6 +4711,7 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
     const isCompactMission = isShapeMission || aiQuiz;
     const badge = document.getElementById('drawing-workspace-badge');
     const backButton = document.getElementById('drawing-workspace-back-btn');
+    const newTemplateButton = document.getElementById('drawing-new-template-btn');
     const workspaceTitle = document.getElementById('drawing-workspace-title');
     const workspaceDesc = document.getElementById('drawing-workspace-desc');
     badge.innerText = aiQuiz ? '🤖 AI 그림' : (missionStep ? '그림 미션' : (isShapeMission ? '🔷 도형 미션' : title));
@@ -4719,6 +4720,7 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
     badge.classList.toggle('cursor-pointer', isCompactMission);
     badge.classList.toggle('cursor-default', !isCompactMission);
     if (backButton) backButton.classList.toggle('hidden', isCompactMission);
+    if (newTemplateButton) newTemplateButton.classList.toggle('hidden', !isInfiniteDrawing);
     workspaceTitle.innerText = title;
     workspaceDesc.innerText = desc;
     workspaceTitle.classList.toggle('hidden', isCompactMission);
@@ -4751,7 +4753,10 @@ window.openMyDrawingFromDashboard = function() {
 let drawingInfiniteMode = false;
 
 window.openDrawingInfiniteMode = function() {
-    const pool = drawingMissionPool;
+    const previousTemplate = drawingInfiniteMode && drawingWorkspaceMode === 'infinite-drawing'
+        ? drawingActiveTemplate
+        : '';
+    const pool = drawingMissionPool.filter((template) => template.key !== previousTemplate);
     const randomTemplate = pool[Math.floor(Math.random() * pool.length)];
     if (!randomTemplate) return;
 
@@ -4759,7 +4764,7 @@ window.openDrawingInfiniteMode = function() {
     configureDrawingWorkspace({
         mode: 'infinite-drawing',
         title: `그림 미션 [연장]`,
-        desc: '무한 랜덤 도안을 그려보아요!',
+        desc: '선을 따라 그려보아요.',
         template: randomTemplate.key,
         missionStep: null
     });

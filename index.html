@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260825-shape-starter-order-v44">
+    <meta name="aiedue-korean-build" content="20260825-drawing-new-template-v45">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -16,8 +16,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
-    <link rel="stylesheet" href="style.css?v=20260825-shape-starter-order-v44">
-    <link rel="stylesheet" href="app.css?v=20260825-shape-starter-order-v44">
+    <link rel="stylesheet" href="style.css?v=20260825-drawing-new-template-v45">
+    <link rel="stylesheet" href="app.css?v=20260825-drawing-new-template-v45">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -617,7 +617,6 @@
         <div id="drawing-workspace-section" class="fade-in hidden">
             <div class="drawing-workspace-top">
                 <div class="flex items-center gap-4">
-                    <button type="button" id="drawing-workspace-back-btn" class="btn-outline py-2 px-5" onclick="goDrawingDashboard()">뒤로 가기</button>
                     <div>
                         <div class="drawing-title-row">
                             <button id="drawing-workspace-badge" type="button" class="aiedu-badge bg-purple-500 drawing-mission-logo cursor-default" aria-label="그리기 활동">자유 그리기</button>
@@ -683,6 +682,10 @@
                         <canvas id="drawing-canvas" class="korean-embed-canvas"></canvas>
                     </div>
                 </div>
+            </div>
+            <div class="drawing-workspace-footer-actions">
+                <button type="button" id="drawing-workspace-back-btn" class="btn-outline py-3 px-7" onclick="goDrawingDashboard()">뒤로 가기</button>
+                <button type="button" id="drawing-new-template-btn" class="btn-primary bg-purple-500 shadow-purple-200 hidden py-3 px-7" onclick="openDrawingInfiniteMode()">새로운 그림</button>
             </div>
         </div>
 
@@ -1571,7 +1574,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260825-shape-starter-order-v44"></script>
+    <script type="module" src="app.js?v=20260825-drawing-new-template-v45"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
