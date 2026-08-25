@@ -685,6 +685,32 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     0%, 100% { transform: translateY(0) scale(1); }
     50% { transform: translateY(-4px) scale(1.045); }
 }
+.learning-activity-button-guide {
+    position: fixed;
+    z-index: 1400;
+    max-width: min(340px, calc(100vw - 24px));
+    padding: 11px 16px;
+    border: 2px solid #55b346;
+    border-radius: 15px;
+    background: #effbea;
+    color: #226b2b;
+    box-shadow: 0 10px 26px rgba(48, 132, 55, .2);
+    font-size: .98rem;
+    font-weight: 900;
+    text-align: center;
+    pointer-events: none;
+}
+.learning-activity-guided {
+    position: relative;
+    z-index: 45;
+    outline: 4px solid rgba(85, 179, 70, .42) !important;
+    outline-offset: 5px;
+    animation: learning-activity-guide-ring .85s ease-in-out 3;
+}
+@keyframes learning-activity-guide-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(85, 179, 70, 0); }
+    50% { box-shadow: 0 0 0 9px rgba(85, 179, 70, .22); }
+}
 #learning-detail-nav > .btn-outline,
 #learning-detail-next-btn,
 #learning-detail-complete-btn,
@@ -730,7 +756,8 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    #learning-detail-nav .learning-nav-guided {
+    #learning-detail-nav .learning-nav-guided,
+    .learning-activity-guided {
         animation: none;
     }
 }

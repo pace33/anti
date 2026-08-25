@@ -2511,12 +2511,118 @@ function isTraceWritingComplete(canvas) {
 let learningDetailCompletionObserver = null;
 let learningDetailNavGuideShownForPage = '';
 let learningDetailStaticGuideTimer = null;
+let learningDetailActivityGuideTimer = null;
+let learningDetailActivityGuideTarget = null;
+let learningDetailActivityClickHandler = null;
+let learningDetailActivityInteractionHandler = null;
+
+function getLearningDetailActionControls(root) {
+    if (!root) return [];
+    return [...root.querySelectorAll('button, [role="button"][tabindex]')].filter((control) => {
+        if (control.disabled || control.getAttribute('aria-disabled') === 'true' || control.offsetParent === null) return false;
+        const label = `${control.getAttribute('aria-label') || ''} ${control.textContent || ''}`.trim();
+        return !/다시 쓰기|지우기|초기화|처음으로|한 번 더 보기/.test(label);
+    });
+}
+
+function ensureLearningActivityGuide() {
+    let guide = document.getElementById('learning-activity-button-guide');
+    if (guide) return guide;
+    guide = document.createElement('div');
+    guide.id = 'learning-activity-button-guide';
+    guide.className = 'learning-activity-button-guide hidden';
+    guide.setAttribute('role', 'status');
+    guide.setAttribute('aria-live', 'polite');
+    document.body.appendChild(guide);
+    return guide;
+}
+
+function hideLearningActivityButtonGuide() {
+    window.clearTimeout(learningDetailActivityGuideTimer);
+    learningDetailActivityGuideTimer = null;
+    learningDetailActivityGuideTarget?.classList.remove('learning-activity-guided');
+    learningDetailActivityGuideTarget = null;
+    const guide = document.getElementById('learning-activity-button-guide');
+    guide?.classList.add('hidden');
+    if (guide) guide.textContent = '';
+}
+
+function getLearningActivityGuideText(control) {
+    const label = `${control?.getAttribute?.('aria-label') || ''} ${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
+    if (/소리|듣기|🔊/.test(label)) return '소리 듣기 버튼을 눌러 보세요.';
+    if (/읽었어요|읽기/.test(label)) return '읽은 횟수 버튼을 눌러 보세요.';
+    if (/완성|썼어요/.test(label)) return '활동을 마쳤다면 이 버튼을 눌러 보세요.';
+    if (label && label.length <= 12) return `“${label}” 버튼을 눌러 보세요.`;
+    return '이 버튼을 눌러 활동해 보세요.';
+}
+
+function positionLearningActivityButtonGuide() {
+    const target = learningDetailActivityGuideTarget;
+    const guide = document.getElementById('learning-activity-button-guide');
+    if (!target || !guide || guide.classList.contains('hidden')) return;
+    const rect = target.getBoundingClientRect();
+    const guideRect = guide.getBoundingClientRect();
+    const gap = 12;
+    const left = Math.min(
+        window.innerWidth - guideRect.width - 12,
+        Math.max(12, rect.left + (rect.width - guideRect.width) / 2)
+    );
+    const fitsBelow = rect.bottom + gap + guideRect.height <= window.innerHeight - 12;
+    const top = fitsBelow ? rect.bottom + gap : Math.max(12, rect.top - guideRect.height - gap);
+    guide.style.left = `${left}px`;
+    guide.style.top = `${top}px`;
+    guide.classList.toggle('is-above', !fitsBelow);
+}
+
+function showLearningActivityButtonGuide(content) {
+    const section = document.getElementById('learning-detail-section');
+    if (!content || !section || section.classList.contains('hidden') || learningDetailPageLooksComplete(content)) return;
+    const controls = getLearningDetailActionControls(content);
+    if (!controls.length) return;
+    const target = controls.find((control) => control.dataset.learningReviewed !== 'true') || controls[0];
+    hideLearningActivityButtonGuide();
+    learningDetailActivityGuideTarget = target;
+    target.classList.add('learning-activity-guided');
+    const guide = ensureLearningActivityGuide();
+    guide.textContent = getLearningActivityGuideText(target);
+    guide.classList.remove('hidden');
+    const rect = target.getBoundingClientRect();
+    if (rect.top < 12 || rect.bottom > window.innerHeight - 12) {
+        target.scrollIntoView({
+            behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+            block: 'center'
+        });
+        window.setTimeout(positionLearningActivityButtonGuide, 360);
+    } else {
+        requestAnimationFrame(positionLearningActivityButtonGuide);
+    }
+}
+
+function scheduleLearningActivityButtonGuide(content, delay = 4200) {
+    if (learningDetailActivityGuideTarget) return;
+    window.clearTimeout(learningDetailActivityGuideTimer);
+    learningDetailActivityGuideTimer = null;
+    if (!content || learningDetailPageLooksComplete(content)) return;
+    learningDetailActivityGuideTimer = window.setTimeout(() => {
+        learningDetailActivityGuideTimer = null;
+        showLearningActivityButtonGuide(content);
+    }, delay);
+}
 
 function resetLearningDetailNavigationGuide() {
     learningDetailCompletionObserver?.disconnect();
     learningDetailCompletionObserver = null;
     window.clearTimeout(learningDetailStaticGuideTimer);
     learningDetailStaticGuideTimer = null;
+    hideLearningActivityButtonGuide();
+    const content = document.getElementById('learning-detail-content');
+    if (content && learningDetailActivityClickHandler) content.removeEventListener('click', learningDetailActivityClickHandler);
+    if (content && learningDetailActivityInteractionHandler) {
+        content.removeEventListener('pointerdown', learningDetailActivityInteractionHandler);
+        content.removeEventListener('keydown', learningDetailActivityInteractionHandler);
+    }
+    learningDetailActivityClickHandler = null;
+    learningDetailActivityInteractionHandler = null;
     const guide = document.getElementById('learning-detail-nav-guide');
     const nav = document.getElementById('learning-detail-nav');
     guide?.classList.add('hidden');
@@ -2533,6 +2639,7 @@ function showLearningDetailNavigationGuide() {
     const nextButton = document.getElementById('learning-detail-next-btn');
     const target = completeButton && !completeButton.classList.contains('hidden') ? completeButton : nextButton;
     if (!target || target.disabled) return;
+    hideLearningActivityButtonGuide();
     const pageKey = `${section.dataset.currentStep || ''}:${section.dataset.currentSection || ''}`;
     if (learningDetailNavGuideShownForPage === pageKey) return;
     learningDetailNavGuideShownForPage = pageKey;
@@ -2583,8 +2690,17 @@ function setupLearningDetailCompletionGuide() {
     learningDetailNavGuideShownForPage = '';
     const content = document.getElementById('learning-detail-content');
     if (!content) return;
+    const trackedActivitySelector = 'canvas, [data-family-card], .choice-chip-button, .lesson25-question-card, .lesson25-reading-check, .lesson25-path-stage, .lesson26-find-card, .lesson21-m-pair, .lesson21-m-syllable-cell.is-target, .lesson21-b-word-item, .lesson21-m-picture-item';
+    const hasTrackedActivity = Boolean(content.querySelector(trackedActivitySelector));
+    const pageLooksComplete = () => {
+        if (learningDetailPageLooksComplete(content)) return true;
+        const controls = getLearningDetailActionControls(content);
+        return !hasTrackedActivity && controls.length > 0
+            && controls.every((control) => control.dataset.learningReviewed === 'true');
+    };
     const check = () => {
-        if (learningDetailPageLooksComplete(content)) showLearningDetailNavigationGuide();
+        if (pageLooksComplete()) showLearningDetailNavigationGuide();
+        else scheduleLearningActivityButtonGuide(content);
     };
     learningDetailCompletionObserver = new MutationObserver(check);
     learningDetailCompletionObserver.observe(content, {
@@ -2593,26 +2709,44 @@ function setupLearningDetailCompletionGuide() {
         attributes: true,
         attributeFilter: ['class', 'data-completed']
     });
-    const trackedActivitySelector = 'canvas, [data-family-card], .choice-chip-button, .lesson25-question-card, .lesson25-reading-check, .lesson25-path-stage, .lesson26-find-card, .lesson21-m-pair, .lesson21-m-syllable-cell.is-target, .lesson21-b-word-item, .lesson21-m-picture-item';
-    const hasTrackedActivity = Boolean(content.querySelector(trackedActivitySelector));
-    const reviewButtons = hasTrackedActivity ? [] : [...content.querySelectorAll('button')].filter((button) => {
-        const label = button.textContent?.trim() || '';
-        return !button.disabled && !/다시|지우기|초기화|한 번 더|다음 문제/.test(label);
-    });
-    if (reviewButtons.length) {
-        reviewButtons.forEach((button) => button.addEventListener('click', () => {
-            button.dataset.learningReviewed = 'true';
-            if (!learningDetailPageLooksComplete(content)
-                && reviewButtons.every((item) => item.dataset.learningReviewed === 'true')) {
-                showLearningDetailNavigationGuide();
-            }
-        }));
-    } else if (!hasTrackedActivity) {
+    const controls = getLearningDetailActionControls(content);
+    learningDetailActivityClickHandler = (event) => {
+        const control = event.target.closest('button, [role="button"][tabindex]');
+        if (!control || !content.contains(control)) return;
+        control.dataset.learningReviewed = 'true';
+        hideLearningActivityButtonGuide();
+        requestAnimationFrame(check);
+    };
+    learningDetailActivityInteractionHandler = () => {
+        hideLearningActivityButtonGuide();
+        scheduleLearningActivityButtonGuide(content);
+    };
+    content.addEventListener('click', learningDetailActivityClickHandler);
+    content.addEventListener('pointerdown', learningDetailActivityInteractionHandler, { passive: true });
+    content.addEventListener('keydown', learningDetailActivityInteractionHandler);
+    if (controls.length) {
+        scheduleLearningActivityButtonGuide(content);
+    } else if (!content.querySelector('canvas')) {
         learningDetailStaticGuideTimer = window.setTimeout(showLearningDetailNavigationGuide, 1200);
     }
 }
 
 window.showLearningDetailNavigationGuide = showLearningDetailNavigationGuide;
+
+const AIEDUE_RAPID_LEARNING_CLICK_GUARD_MS = 700;
+const aiedueLastLearningControlClick = new WeakMap();
+document.addEventListener('click', (event) => {
+    const control = event.target.closest?.('button, [role="button"][tabindex]');
+    if (!control || !control.closest('#learning-detail-section') || control.dataset.allowRapidClick === 'true') return;
+    const now = window.performance?.now?.() || Date.now();
+    const previous = aiedueLastLearningControlClick.get(control) || 0;
+    if (now - previous < AIEDUE_RAPID_LEARNING_CLICK_GUARD_MS) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+    }
+    aiedueLastLearningControlClick.set(control, now);
+}, true);
 
 function escapeKoreanShopHtml(value = '') {
     return escapeHtml(value);
@@ -6075,7 +6209,7 @@ function renderCardContent(card) {
                 <div class="combine-box combine-result" style="${d}">${c.res}</div>
             </div>`;
         }).join('');
-        return `<div class="combine-card" onclick="restartCombineAnim(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();restartCombineAnim(this)}" role="button" tabindex="0" data-combos="${combosData}" title="눌러서 다시 보기">${rows}<div class="combine-replay">🔄 눌러서 다시 보기</div></div>`;
+        return `<div class="combine-card" onclick="restartCombineAnim(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();restartCombineAnim(this)}" role="button" tabindex="0" data-combos="${combosData}" title="소리 듣기">${rows}<div class="combine-replay">🔊 소리 듣기</div></div>`;
     }
     // 3) 일반 텍스트 카드
     return `<div class="border-2 border-stone-200 rounded-2xl p-4 bg-white text-lg text-stone-700 leading-relaxed">${card}</div>`;
@@ -6087,7 +6221,7 @@ function renderVowelOriginScene(types = ['ground', 'person', 'sun']) {
         ? '땅, 사람, 둥근 해의 모습에서 모음을 찾는 그림'
         : '땅과 서 있는 사람의 모습에서 ㅡ와 ㅣ를 찾는 그림';
     return `<div class="vowel-origin-scene" style="--origin-card-count:${enabledTypes.size}" aria-label="${sceneLabel}">
-        ${enabledTypes.has('ground') ? `<button type="button" class="vowel-origin-card origin-ground-card" data-origin-type="ground" onclick="playVowelOriginCard('ground', { speak: true })" aria-label="땅에서 ㅡ가 되는 모습 다시 보기와 음성 듣기">
+        ${enabledTypes.has('ground') ? `<button type="button" class="vowel-origin-card origin-ground-card" data-origin-type="ground" onclick="playVowelOriginCard('ground', { speak: true })" aria-label="땅에서 ㅡ가 되는 모습 소리 듣기">
             <div class="origin-card-visual" aria-hidden="true">
                 <div class="origin-sky-band"><span class="origin-cloud cloud-one"></span><span class="origin-cloud cloud-two"></span></div>
                 <div class="origin-ground-band"><span class="origin-grass-blade grass-one"></span><span class="origin-grass-blade grass-two"></span><span class="origin-flower"></span></div>
@@ -6097,7 +6231,7 @@ function renderVowelOriginScene(types = ['ground', 'person', 'sun']) {
             </div>
             <div class="origin-card-label">땅</div>
         </button>` : ''}
-        ${enabledTypes.has('person') ? `<button type="button" class="vowel-origin-card origin-person-card" data-origin-type="person" onclick="playVowelOriginCard('person', { speak: true })" aria-label="서 있는 사람에서 ㅣ가 되는 모습 다시 보기와 음성 듣기">
+        ${enabledTypes.has('person') ? `<button type="button" class="vowel-origin-card origin-person-card" data-origin-type="person" onclick="playVowelOriginCard('person', { speak: true })" aria-label="서 있는 사람에서 ㅣ가 되는 모습 소리 듣기">
             <div class="origin-card-visual" aria-hidden="true">
                 <div class="origin-sky-band"></div>
                 <div class="origin-person-ground"></div>
@@ -6112,7 +6246,7 @@ function renderVowelOriginScene(types = ['ground', 'person', 'sun']) {
             </div>
             <div class="origin-card-label">서 있는 사람</div>
         </button>` : ''}
-        ${enabledTypes.has('sun') ? `<button type="button" class="vowel-origin-card origin-sun-card" data-origin-type="sun" onclick="playVowelOriginCard('sun', { speak: true })" aria-label="둥근 해에서 동그라미가 되는 모습 다시 보기와 음성 듣기">
+        ${enabledTypes.has('sun') ? `<button type="button" class="vowel-origin-card origin-sun-card" data-origin-type="sun" onclick="playVowelOriginCard('sun', { speak: true })" aria-label="둥근 해에서 동그라미가 되는 모습 소리 듣기">
             <div class="origin-card-visual" aria-hidden="true">
                 <div class="origin-sky-band"><span class="origin-cloud cloud-one"></span><span class="origin-cloud cloud-two"></span></div>
                 <div class="origin-sun-figure">
@@ -12226,7 +12360,7 @@ function completeLesson21MPracticeTrace(canvas) {
             target.classList.add('is-complete');
             target.querySelector('.lesson21-m-cell-letter').textContent = result;
             target.querySelector('.lesson21-m-cell-action').textContent = '✓ 완성';
-            target.setAttribute('aria-label', `${base}에서 ${result} 완성. 눌러서 다시 연습하기`);
+            target.setAttribute('aria-label', `${base}에서 ${result} 완성. 소리 듣기`);
             updateLesson21MPracticeProgress(page);
             const next = page.querySelector('.lesson21-m-syllable-cell.is-target:not(.is-complete)');
             next?.classList.add('is-next');
@@ -15479,7 +15613,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
                             const originAction = originType
                                 ? `playVowelOriginCard('${originType}', { speak: true })`
                                 : `speakChar('${word}')`;
-                            const ariaLabel = originType ? `${word} 모양이 만들어지는 모습 다시 보기` : `${word} 소리 듣기`;
+                            const ariaLabel = `${word} 소리 듣기`;
                             return `<button type="button" class="${wordChipClass}${originClass}" onclick="${originAction}" aria-label="${ariaLabel}">${renderLearningChipText(word)}</button>`;
                         }).join('')}
                     </div>
