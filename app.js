@@ -14946,7 +14946,7 @@ window.completeLesson27ChallengeWord = function completeLesson27ChallengeWord() 
 
 const REPRESENTATIVE_FAMILY_CONFIGS = {
     28: {
-        title:'ㄱ 받침가족', representative:'ㄱ', sound:'[ㄱ]', spokenSound:'그', family:[['ㄱ','기역'],['ㅋ','키읔'],['ㄲ','쌍기역']],
+        title:'ㄱ 받침가족', representative:'ㄱ', sound:'[ㄱ]', spokenSound:'그', playbackMode:'nameThenSound', family:[['ㄱ','기역','그'],['ㅋ','키읔','크'],['ㄲ','쌍기역','끄']],
         writing:[['밖','박','🏠'],['국','국','🍲'],['깎다','각다','🔪'],['부엌','부억','🍳'],['묶다','묵다','🪢'],['낚시터','낙시터','🎣']],
         reading:['복','넋','섞다','국자','싹','묶다','깎다','부엌','꺾다','볶다','떡볶이','식탁','깎다','새벽녘','꼭대기','안팎으로'],
         levels:[['약','박','곽','북','넋','깎','떡'],['엮다','식탁','창밖','북녘','섞다'],['새벽녘','연필깎이','볶습니다']]
@@ -14993,7 +14993,8 @@ function splitFamilyWritingWord(word, targetFinals) {
 
 function renderRepresentativeFamilyIntro(lessonId) {
     const config = REPRESENTATIVE_FAMILY_CONFIGS[lessonId];
-    return `<section class="lesson27-family-page representative-family-page" data-lesson27-family-page data-family-lesson="${lessonId}" data-family-expected="${config.family.length}" data-family-representative="${config.representative}" data-family-spoken="${config.spokenSound}"><header class="lesson27-family-header"><span class="lesson27-family-number">배움 ${lessonId}</span><div><h2>${config.title}</h2><p>이름은 달라도, 받침 소리는 같아요!</p></div></header><div class="lesson27-family-step"><span>이해하기</span><strong>${config.family.map(([letter]) => letter).join('·')}은 받침에서 모두 ${config.sound}, “${config.spokenSound}” 소리가 나요.</strong></div><div class="lesson27-family-cards">${config.family.map(([letter,name],index) => { const key=`family-${lessonId}-${index}`; return `<article class="lesson27-family-card state-idle" data-family-card="${key}" data-family-name="${name}" data-family-first="${name.slice(0,-1)}" data-family-ending="${config.spokenSound}" data-family-lesson-id="${lessonId}" data-family-answer="${config.sound}" data-animation-state="idle"><span class="lesson27-card-check" aria-hidden="true">확인했어요</span><span class="lesson27-family-letter">${letter}</span><span class="lesson27-name-stack" aria-label="${name}"><span class="lesson27-first-block">${name.slice(0,-1)}</span><span class="lesson27-ending-block">${name.slice(-1)}</span></span><span class="lesson27-hand-scene" aria-hidden="true"><span class="lesson27-hand-track">${renderLesson27HandMotion()}</span><span class="lesson27-stage-caption">손동작과 소리를 들어 보세요.</span></span><span class="lesson27-card-copy"><strong>${name}</strong><span>받침 소리 <b>${config.sound}</b> · ${config.spokenSound}</span><button type="button" class="lesson27-play-button" data-family-play="${key}" aria-label="${name} 손동작과 소리 듣기" aria-pressed="false" onclick="playLesson27FamilyCard('${key}')"><span aria-hidden="true">▶</span> <span class="lesson27-play-label">손동작과 소리 듣기</span></button></span></article>`; }).join('')}</div><div id="lesson27-family-summary" class="lesson27-family-summary" role="status" aria-live="polite">${config.family.map(([,name])=>name).join(', ')}의 손동작과 소리를 차례로 들어 보세요.</div></section>`;
+    const spokenSounds = [...new Set(config.family.map(([, , sound]) => sound || config.spokenSound))].join('·');
+    return `<section class="lesson27-family-page representative-family-page" data-lesson27-family-page data-family-lesson="${lessonId}" data-family-expected="${config.family.length}" data-family-representative="${config.representative}" data-family-spoken="${config.spokenSound}"><header class="lesson27-family-header"><span class="lesson27-family-number">배움 ${lessonId}</span><div><h2>${config.title}</h2><p>이름은 달라도, 받침 소리는 같아요!</p></div></header><div class="lesson27-family-step"><span>이해하기</span><strong>${config.family.map(([letter]) => letter).join('·')}은 받침에서 모두 ${config.sound} 소리가 나요. 이름과 소리(${spokenSounds})를 들어 보세요.</strong></div><div class="lesson27-family-cards">${config.family.map(([letter,name,memberSound],index) => { const key=`family-${lessonId}-${index}`; const endingSound=memberSound || config.spokenSound; return `<article class="lesson27-family-card state-idle" data-family-card="${key}" data-family-name="${name}" data-family-first="${name.slice(0,-1)}" data-family-ending="${endingSound}" data-family-playback-mode="${config.playbackMode || 'partsThenName'}" data-family-lesson-id="${lessonId}" data-family-answer="${config.sound}" data-animation-state="idle"><span class="lesson27-card-check" aria-hidden="true">확인했어요</span><span class="lesson27-family-letter">${letter}</span><span class="lesson27-name-stack" aria-label="${name}"><span class="lesson27-first-block">${name.slice(0,-1)}</span><span class="lesson27-ending-block">${name.slice(-1)}</span></span><span class="lesson27-hand-scene" aria-hidden="true"><span class="lesson27-hand-track">${renderLesson27HandMotion()}</span><span class="lesson27-stage-caption">손동작과 소리를 들어 보세요.</span></span><span class="lesson27-card-copy"><strong>${name}</strong><span>받침 소리 <b>${config.sound}</b> · ${endingSound}</span><button type="button" class="lesson27-play-button" data-family-play="${key}" aria-label="${name}, ${endingSound} 소리 듣기" aria-pressed="false" onclick="playLesson27FamilyCard('${key}')"><span aria-hidden="true">▶</span> <span class="lesson27-play-label">손동작과 소리 듣기</span></button></span></article>`; }).join('')}</div><div id="lesson27-family-summary" class="lesson27-family-summary" role="status" aria-live="polite">${config.family.map(([,name])=>name).join(', ')}의 이름과 소리를 차례로 들어 보세요.</div></section>`;
 }
 
 function renderRepresentativeWritingPage(lessonId) {
@@ -15394,6 +15395,7 @@ function getLessonFamilyCardConfig(card) {
             name: card.dataset.familyName,
             first: card.dataset.familyFirst,
             ending: card.dataset.familyEnding,
+            playbackMode: card.dataset.familyPlaybackMode || 'partsThenName',
             lessonId: Number(card.dataset.familyLessonId || 27),
             answer: card.dataset.familyAnswer || '[ㅂ]'
         };
@@ -15437,7 +15439,7 @@ window.playLesson27FamilyCard = async function playLesson27FamilyCard(kind) {
                 { transform: lesson27Transform(points.first, 3), offset: 0.45 },
                 { transform: lesson27Transform(points.first) }
             ], { duration: 230, easing: 'ease-in-out' }, playbackToken),
-            speakLesson27Step(config.first, playbackToken)
+            speakLesson27Step(config.playbackMode === 'nameThenSound' ? config.name : config.first, playbackToken)
         ]);
 
         setLesson27CardAnimationState(card, 'handMoving', config);
@@ -15456,7 +15458,7 @@ window.playLesson27FamilyCard = async function playLesson27FamilyCard(kind) {
             ], { duration: 280, easing: 'ease-in-out' }, playbackToken),
             speakLesson27Step(config.ending, playbackToken)
         ]);
-        await speakLesson27Step(config.name, playbackToken);
+        if (config.playbackMode !== 'nameThenSound') await speakLesson27Step(config.name, playbackToken);
 
         setLesson27CardAnimationState(card, 'handMoving', config);
         await animateLesson27UpperHand(hand, [
