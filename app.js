@@ -2538,9 +2538,11 @@ function getLearningDetailControlReviewKey(control, index) {
 
 function markLearningDetailControlReviewed(control) {
     if (!control) return;
-    control.dataset.learningReviewed = 'true';
-    control.dataset.learningReviewState = 'done';
-    control.classList.add('learning-activity-reviewed');
+    if (control.dataset.learningReviewed !== 'true') control.dataset.learningReviewed = 'true';
+    if (control.dataset.learningReviewState !== 'done') control.dataset.learningReviewState = 'done';
+    if (!control.classList.contains('learning-activity-reviewed')) {
+        control.classList.add('learning-activity-reviewed');
+    }
 }
 
 function syncLearningDetailReviewedControls(content) {
@@ -2553,8 +2555,10 @@ function syncLearningDetailReviewedControls(content) {
     }
     controls.forEach((control, index) => {
         const reviewKey = getLearningDetailControlReviewKey(control, index);
-        control.dataset.learningReviewKey = reviewKey;
-        if (reviewed.has(reviewKey)) markLearningDetailControlReviewed(control);
+        if (control.dataset.learningReviewKey !== reviewKey) control.dataset.learningReviewKey = reviewKey;
+        if (reviewed.has(reviewKey) && control.dataset.learningReviewed !== 'true') {
+            markLearningDetailControlReviewed(control);
+        }
     });
     return { controls, reviewed };
 }
@@ -2737,7 +2741,15 @@ function setupLearningDetailCompletionGuide() {
         if (pageLooksComplete()) showLearningDetailNavigationGuide();
         else scheduleLearningActivityButtonGuide(content);
     };
-    learningDetailCompletionObserver = new MutationObserver(check);
+    let completionCheckFrame = null;
+    const scheduleCheck = () => {
+        if (completionCheckFrame !== null) return;
+        completionCheckFrame = window.requestAnimationFrame(() => {
+            completionCheckFrame = null;
+            check();
+        });
+    };
+    learningDetailCompletionObserver = new MutationObserver(scheduleCheck);
     learningDetailCompletionObserver.observe(content, {
         subtree: true,
         childList: true,
@@ -2758,10 +2770,10 @@ function setupLearningDetailCompletionGuide() {
         const reviewKey = control.dataset.learningReviewKey
             || getLearningDetailControlReviewKey(control, Math.max(0, controlIndex));
         reviewed.add(reviewKey);
-        control.dataset.learningReviewKey = reviewKey;
+        if (control.dataset.learningReviewKey !== reviewKey) control.dataset.learningReviewKey = reviewKey;
         markLearningDetailControlReviewed(control);
         hideLearningActivityButtonGuide();
-        requestAnimationFrame(check);
+        scheduleCheck();
     };
     learningDetailActivityInteractionHandler = () => {
         hideLearningActivityButtonGuide();
@@ -5955,6 +5967,8 @@ const consonantSoundMap = {
 
 let globalTtsAudio = null;
 let isAudioUnlocked = false;
+let audioUnlockElement = null;
+let audioUnlockPromise = null;
 let activeTtsRequestId = 0;
 let activeTtsAbortController = null;
 let activeTtsObjectUrl = '';
@@ -5963,27 +5977,24 @@ const AIEDUE_TTS_CHUNK_LIMIT = 180;
 const AIEDUE_TTS_RATE_MULTIPLIER = 1.2;
 
 function unlockAudioAndSpeech() {
-    // 1. HTML5 Audio Unlock
-    if (!isAudioUnlocked) {
-        if (!globalTtsAudio) {
-            globalTtsAudio = new Audio();
-        }
-        const originalSrc = globalTtsAudio.src;
-        globalTtsAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA";
-        globalTtsAudio.play().then(() => {
+    if (isAudioUnlocked || audioUnlockPromise) return;
+    if (!audioUnlockElement) {
+        audioUnlockElement = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
+        audioUnlockElement.preload = 'auto';
+    }
+    audioUnlockElement.currentTime = 0;
+    audioUnlockPromise = audioUnlockElement.play()
+        .then(() => {
             isAudioUnlocked = true;
-            globalTtsAudio.src = originalSrc;
-            console.log("HTML5 Audio unlocked.");
-        }).catch((e) => {
-            console.log("HTML5 Audio unlock failed, will retry:", e);
+            window.removeEventListener('click', unlockAudioAndSpeech, true);
+            window.removeEventListener('touchstart', unlockAudioAndSpeech, true);
+        })
+        .catch(() => {
+            // 브라우저가 아직 재생을 허용하지 않으면 다음 일반 클릭에서 다시 시도한다.
+        })
+        .finally(() => {
+            audioUnlockPromise = null;
         });
-    }
-
-    // If HTML5 Audio is unlocked, we can remove the listeners
-    if (isAudioUnlocked) {
-        window.removeEventListener('click', unlockAudioAndSpeech, true);
-        window.removeEventListener('touchstart', unlockAudioAndSpeech, true);
-    }
 }
 window.addEventListener('click', unlockAudioAndSpeech, true);
 window.addEventListener('touchstart', unlockAudioAndSpeech, true);
