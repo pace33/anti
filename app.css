@@ -653,6 +653,14 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 #drawing-clear-btn { top: 14px; right: 14px; }
 #drawing-complete-mission-btn { right: 14px; bottom: 14px; }
+#drawing-workspace-back-btn {
+    left: 14px;
+    bottom: 14px;
+    min-width: 132px;
+    min-height: 52px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.96);
+}
 
 /* Component-specific overrides or small tweaks */
 #password-display {

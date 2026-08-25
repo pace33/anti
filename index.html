@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260825-curriculum-photo-copy-v56">
+    <meta name="aiedue-korean-build" content="20260825-drawing-back-button-v57">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -16,8 +16,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
-    <link rel="stylesheet" href="style.css?v=20260825-curriculum-photo-copy-v56">
-    <link rel="stylesheet" href="app.css?v=20260825-curriculum-photo-copy-v56">
+    <link rel="stylesheet" href="style.css?v=20260825-drawing-back-button-v57">
+    <link rel="stylesheet" href="app.css?v=20260825-drawing-back-button-v57">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -669,13 +669,11 @@
 
                     <div class="korean-embed-card p-3 h-[520px] relative overflow-hidden shadow-inner bg-white">
                         <button type="button" id="drawing-clear-btn" class="canvas-action-btn btn-outline py-2 px-4" onclick="clearDrawingCanvas()">지우기</button>
+                        <button type="button" id="drawing-workspace-back-btn" class="canvas-action-btn drawing-canvas-back-btn btn-outline" onclick="goDrawingDashboard()" aria-label="그리기 활동을 닫고 이전 화면으로 이동">← 뒤로 가기</button>
                         <button type="button" id="drawing-complete-mission-btn" class="canvas-action-btn btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden py-3 px-5" onclick="completeTodayDrawingMission()">완료하기</button>
                         <canvas id="drawing-canvas" class="korean-embed-canvas"></canvas>
                     </div>
                 </div>
-            </div>
-            <div class="drawing-workspace-footer-actions">
-                <button type="button" id="drawing-workspace-back-btn" class="btn-outline py-3 px-7" onclick="goDrawingDashboard()">뒤로 가기</button>
             </div>
         </div>
 
@@ -1564,7 +1562,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260825-curriculum-photo-copy-v56"></script>
+    <script type="module" src="app.js?v=20260825-drawing-back-button-v57"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

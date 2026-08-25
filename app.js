@@ -4751,7 +4751,7 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
     badge.setAttribute('aria-label', isCompactMission ? `${aiQuiz ? 'AI 그림' : '도형 미션'} 닫고 그리기 대시보드로 돌아가기` : '그리기 활동');
     badge.classList.toggle('cursor-pointer', isCompactMission);
     badge.classList.toggle('cursor-default', !isCompactMission);
-    if (backButton) backButton.classList.toggle('hidden', isCompactMission);
+    if (backButton) backButton.classList.remove('hidden');
     if (newTemplateButton) newTemplateButton.classList.toggle('hidden', !isInfiniteDrawing);
     workspaceTitle.innerText = title;
     workspaceDesc.innerText = desc;
