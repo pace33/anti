@@ -68,6 +68,9 @@ assert(!app.includes('from "./korean-data-adapter.js'), 'app.js must not route d
 ].forEach((marker) => assert(!app.includes(marker), `app.js에 제거된 저장 함수가 남아 있습니다: ${marker}`));
 
 assert(index.includes('<small>웹 카메라 화면에서 바로 찍어요</small>'), '사진 촬영 단어 은행 안내 문구가 올바르지 않습니다.');
+const curriculumPhotoCopy = '공부하고 싶은 내용을 사진 찍고 함께 공부해요.';
+assert(index.includes(curriculumPhotoCopy) && app.includes(curriculumPhotoCopy), '교과 맞춤쓰기 사진 학습 안내 문구가 올바르지 않습니다.');
+assert(!index.includes('쓰기 공부하고 싶은 내용을 사진 찍고, 에이두와 같이 공부해요.') && !app.includes('쓰기 공부하고 싶은 내용을 사진 찍고, 에이두와 같이 공부해요.'), '이전 교과 맞춤쓰기 안내 문구가 남아 있습니다.');
 assert(index.includes('id="word-bank-camera-modal"'), '오늘의 노트 사진 팝업이 없습니다.');
 assert(index.includes('id="word-bank-camera-capture-btn"') && index.includes('onclick="captureWordBankCameraPhoto()"'), '팝업 카메라 촬영 버튼이 올바르지 않습니다.');
 assert(index.includes('md:grid-cols-3 gap-6 w-full mb-4'), '교과 맞춤쓰기/문해력 하단 카드 3칸 레이아웃이 없습니다.');

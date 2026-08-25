@@ -6670,7 +6670,7 @@ function updateDictationDashboardPreview() {
     const badge = document.getElementById('dictation-lock-badge'); const desc = document.getElementById('dictation-mission-desc'); const card = document.getElementById('dictation-mission-card');
     const locked = isDictationMissionLocked();
     if (badge) badge.innerText = locked ? '잠겨 있음' : '오늘의 미션';
-    if (desc) desc.innerText = '쓰기 공부하고 싶은 내용을 사진 찍고, 에이두와 같이 공부해요.';
+    if (desc) desc.innerText = '공부하고 싶은 내용을 사진 찍고 함께 공부해요.';
     if (card) card.classList.toggle('opacity-70', locked);
     updateDictationDanDisplay();
 }
