@@ -14946,7 +14946,7 @@ window.completeLesson27ChallengeWord = function completeLesson27ChallengeWord() 
 
 const REPRESENTATIVE_FAMILY_CONFIGS = {
     28: {
-        title:'ㄱ 받침가족', representative:'ㄱ', sound:'[ㄱ]', spokenSound:'그', playbackMode:'nameThenSound', family:[['ㄱ','기역','그'],['ㅋ','키읔','크'],['ㄲ','쌍기역','끄']],
+        title:'ㄱ 받침가족', representative:'ㄱ', sound:'[ㄱ]', spokenSound:'그', playbackMode:'nameThenSound', family:[['ㄱ','기역','그'],['ㅋ','키읔','그'],['ㄲ','쌍기역','그']],
         writing:[['밖','박','🏠'],['국','국','🍲'],['깎다','각다','🔪'],['부엌','부억','🍳'],['묶다','묵다','🪢'],['낚시터','낙시터','🎣']],
         reading:['복','넋','섞다','국자','싹','묶다','깎다','부엌','꺾다','볶다','떡볶이','식탁','깎다','새벽녘','꼭대기','안팎으로'],
         levels:[['약','박','곽','북','넋','깎','떡'],['엮다','식탁','창밖','북녘','섞다'],['새벽녘','연필깎이','볶습니다']]
