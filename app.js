@@ -2012,7 +2012,7 @@ const unitMeta = {
 };
 
 const learningPracticeFlows = {
-    1: { listen: 'ㅡ, ㅣ, 둥근 해. 모음은 땅, 사람, 둥근 해에서 시작해요.', choices: ['ㅡ', 'ㅣ', '●'], writeLines: ['ㅡ ㅡ ㅡ ㅡ', 'ㅣ ㅣ ㅣ ㅣ', '● ● ● ●'] },
+    1: { listen: 'ㅡ, ㅣ, 점. 모음은 땅, 사람, 둥근 해에서 시작해요.', choices: ['ㅡ', 'ㅣ', '●'], writeLines: ['ㅡ ㅡ ㅡ ㅡ', 'ㅣ ㅣ ㅣ ㅣ', '● ● ● ●'] },
     2: { listen: 'ㅏ, ㅓ. ㅏ는 밝은 느낌, ㅓ는 어두운 느낌이에요.', choices: ['ㅏ', 'ㅓ', 'ㅡ', 'ㅣ'], writeLines: ['ㅏ ㅏ ㅏ ㅏ', 'ㅓ ㅓ ㅓ ㅓ'] },
     3: { listen: 'ㅗ, ㅜ. ㅗ는 올라가는 느낌, ㅜ는 내려가는 느낌이에요.', choices: ['ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'], writeLines: ['ㅗ ㅗ ㅗ ㅗ', 'ㅜ ㅜ ㅜ ㅜ'] },
     4: { listen: 'ㅡ, ㅣ. 가로선이 ㅡ, 세로선이 ㅣ예요.', choices: ['ㅡ', 'ㅣ', 'ㅗ', 'ㅏ'], writeLines: ['ㅡ ㅡ ㅡ ㅡ', 'ㅣ ㅣ ㅣ ㅣ'] },
@@ -6009,7 +6009,7 @@ function speakTextKo(text, onEndCallback, options = {}) {
 window.speakTextKo = speakTextKo;
 
 function spokenLabelForChar(char) {
-    return char === '●' || char === 'ㆍ' ? '둥근 해' : char;
+    return char === '●' || char === 'ㆍ' ? '점' : char;
 }
 
 window.speakChar = function(char) {
@@ -15593,7 +15593,9 @@ function renderLearningDetail(step, sectionIndex = 0) {
                             const originType = isVowelOriginIntro ? vowelOriginTypeByWord[word] : '';
                             const originClass = originType ? ` origin-learning-chip origin-${originType}-chip` : '';
                             const originAction = originType
-                                ? `playVowelOriginCard('${originType}', { speak: true })`
+                                ? word === '●'
+                                    ? `playVowelOriginCard('sun', { speak: false }); speakChar('●')`
+                                    : `playVowelOriginCard('${originType}', { speak: true })`
                                 : `speakChar('${word}')`;
                             const ariaLabel = `${word} 소리 듣기`;
                             return `<button type="button" class="${wordChipClass}${originClass}" onclick="${originAction}" aria-label="${ariaLabel}">${renderLearningChipText(word)}</button>`;
