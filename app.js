@@ -4747,7 +4747,7 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
     workspaceDesc.classList.toggle('hidden', isCompactMission || !desc);
     const progress = document.getElementById('drawing-workspace-progress');
     if (progress) {
-        const text = isShapeMission ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (aiQuiz ? `AI 그림 ${aiDrawingQuizIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : (isInfiniteDrawing ? `그림 미션 [연장] · ${drawingActiveTargetTemplate?.label || ''}` : '')));
+        const text = isShapeMission ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (aiQuiz ? `AI 그림 ${aiDrawingQuizIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : (isInfiniteDrawing ? `그림 미션 · ${drawingActiveTargetTemplate?.label || ''}` : '')));
         progress.innerText = text;
         progress.classList.toggle('hidden', !text);
     }
@@ -4783,7 +4783,7 @@ window.openDrawingInfiniteMode = function() {
     drawingInfiniteMode = true;
     configureDrawingWorkspace({
         mode: 'infinite-drawing',
-        title: `그림 미션 [연장]`,
+        title: '그림 미션',
         desc: '선을 따라 그려보아요.',
         template: randomTemplate.key,
         missionStep: null
@@ -5797,7 +5797,7 @@ window.completeTodayDrawingMission = async function() {
             }
         } else if (drawingWorkspaceMode === 'infinite-drawing') {
             rewardPoints = 0;
-            message = `그림 미션 [연장] 정확도 ${result.accuracy}%.`;
+            message = `그림 미션 정확도 ${result.accuracy}%.`;
         } else if (drawingWorkspaceMissionStep) {
             rewardPoints = result.accuracy >= 50 ? 5 : 0;
             const record = buildDrawingRecord({ image, kind: 'mission', missionStep: drawingWorkspaceMissionStep, savedAt: now, accuracy: result.accuracy, rewardedPoints: rewardPoints, shapeAccuracy: result.byShape });

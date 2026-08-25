@@ -71,6 +71,9 @@ assert(index.includes('<small>웹 카메라 화면에서 바로 찍어요</small
 assert(index.includes('id="word-bank-camera-modal"'), '오늘의 노트 사진 팝업이 없습니다.');
 assert(index.includes('id="word-bank-camera-capture-btn"') && index.includes('onclick="captureWordBankCameraPhoto()"'), '팝업 카메라 촬영 버튼이 올바르지 않습니다.');
 assert(index.includes('md:grid-cols-3 gap-6 w-full mb-4'), '교과 맞춤쓰기/문해력 하단 카드 3칸 레이아웃이 없습니다.');
+assert(!index.includes('[연장]') && !app.includes('[연장]'), '그림 미션에 제거된 연장 표기가 남아 있습니다.');
+assert(index.indexOf('id="drawing-new-template-btn"') < index.indexOf('id="drawing-eraser-btn"'), '새로운 그림 버튼이 지우개 버튼 위에 있지 않습니다.');
+assert(app.includes("drawingMissionPool.filter((template) => template.key !== previousTemplate)"), '새로운 그림이 현재 도안을 제외하지 않습니다.');
 const oldBankLabel = `국어 ${'은'}행`;
 assert(!index.includes(oldBankLabel) && !app.includes(oldBankLabel), '이전 은행 용어가 남아 있습니다.');
 assert(app.includes('openDictationBankCamera = function openDictationBankCamera(options = {})') && app.includes('word-bank-camera-modal'), '오늘의 노트 사진이 팝업 카메라를 열지 않습니다.');
