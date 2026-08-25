@@ -87,6 +87,7 @@ assert(app.includes("if (!control.classList.contains('learning-activity-reviewed
 assert(app.includes('new MutationObserver(scheduleCheck)') && !app.includes('new MutationObserver(check)'), '활동 완료 감시가 프레임당 한 번으로 제한되지 않았습니다.');
 assert(app.includes('let audioUnlockElement = null;') && app.includes('audioUnlockElement.play()'), '애니메이션 음성용 오디오 잠금 해제 장치가 없습니다.');
 assert(!app.includes('globalTtsAudio.src = "data:audio/wav;base64'), '오디오 잠금 해제가 실제 TTS 재생 객체와 다시 충돌합니다.');
+assert(appCss.includes('background-color: #ecfccb !important;') && appCss.includes('border-color: #84cc16 !important;'), '눌러 본 활동 버튼의 완료 음영이 밝은 연두색이 아닙니다.');
 
 const section = (source, startMarker, endMarker) => {
     const start = source.indexOf(startMarker);
