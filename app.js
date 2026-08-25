@@ -4583,9 +4583,17 @@ function getNextDrawingMission() {
 }
 
 function getNextShapeMissionTemplate() {
+    const starterShapeKeys = ['circle', 'triangle', 'square'];
+    if (shapeMissionIndex < starterShapeKeys.length) {
+        const starter = shapeMissionTemplates.find((item) => item.shapes[0].shape === starterShapeKeys[shapeMissionIndex]);
+        shapeMissionIndex += 1;
+        return starter || shapeMissionTemplates[0];
+    }
     const stats = drawingPortfolio.shapeStats || {};
-    const sorted = [...shapeMissionTemplates].sort((a, b) => (stats[a.shapes[0].shape]?.accuracy || 0) - (stats[b.shapes[0].shape]?.accuracy || 0));
-    const pick = sorted[shapeMissionIndex % Math.min(sorted.length, 5)];
+    const sorted = shapeMissionTemplates
+        .filter((item) => !starterShapeKeys.includes(item.shapes[0].shape))
+        .sort((a, b) => (stats[a.shapes[0].shape]?.accuracy || 0) - (stats[b.shapes[0].shape]?.accuracy || 0));
+    const pick = sorted[(shapeMissionIndex - starterShapeKeys.length) % Math.min(sorted.length, 5)];
     shapeMissionIndex += 1;
     return pick || shapeMissionTemplates[0];
 }
