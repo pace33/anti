@@ -13163,7 +13163,8 @@ function renderLesson12FinalCheck() {
 }
 
 function getLessonCompletionTileLayout(tile) {
-    return ['ㅗ', 'ㅜ', 'ㅡ', 'ㅛ', 'ㅠ'].includes(tile.vowel) ? 'horizontal' : 'vertical';
+    const horizontalVowels = ['ㅗ', 'ㅜ', 'ㅡ', 'ㅛ', 'ㅠ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ'];
+    return horizontalVowels.includes(tile.vowel) ? 'horizontal' : 'vertical';
 }
 
 function renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, tile, slot }) {
