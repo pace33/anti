@@ -6964,19 +6964,19 @@ body {
 .lesson27-writing-instruction { margin:14px 0; color:#526777; text-align:center; font-size:19px; font-weight:700; }
 .lesson27-writing-instruction b { color:#e85d22; }
 .lesson27-writing-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); border:1px solid #aeb8c0; border-radius:5px; overflow:hidden; }
-.lesson27-writing-card { grid-column:span 2; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:14px; min-width:0; min-height:258px; padding:18px 12px; border-right:1px solid #c3cbd0; border-bottom:1px solid #c3cbd0; background:#fff; }
+.lesson27-writing-card { grid-column:span 2; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:16px; min-width:0; min-height:310px; padding:18px 12px 22px; border-right:1px solid #c3cbd0; border-bottom:1px solid #c3cbd0; background:#fff; }
 .lesson27-writing-card:nth-child(4),.lesson27-writing-card:nth-child(6) { grid-column:2 / span 2; }
 .lesson27-writing-card:nth-child(5),.lesson27-writing-card:nth-child(7) { grid-column:4 / span 2; }
 .lesson27-picture-button { flex:0 0 124px; display:grid; place-items:center; align-content:center; gap:5px; width:100%; border:0; background:#fff; cursor:pointer; }
 .lesson27-picture-button > span { font-size:66px; line-height:1; }
 .lesson27-picture-button small { color:#526777; font-size:18px; font-weight:800; }
 .lesson27-tile-word { display:flex; flex:0 0 auto; align-items:stretch; justify-content:center; width:100%; }
-.lesson27-syllable { display:grid; grid-template-rows:62px 48px; min-width:68px; border:1px solid #aeb8c0; border-radius:5px; overflow:hidden; background:#fff; color:#102f50; text-align:center; }
+.lesson27-syllable { display:grid; grid-template-rows:68px 84px; min-width:92px; border:1px solid #aeb8c0; border-radius:5px; overflow:hidden; background:#fff; color:#102f50; text-align:center; }
 .lesson27-syllable b,.lesson27-syllable i { display:grid; place-items:center; font-style:normal; font-weight:800; }
 .lesson27-syllable b { background:#dcecf6; font-size:38px; }
 .lesson27-syllable i { font-size:28px; }
 .lesson27-syllable i.is-writing-batchim { background:#fff8ef; box-shadow:inset 0 0 0 3px #ffb466; }
-.lesson27-writing-canvas { display:block; width:100%; height:48px; touch-action:none; }
+.lesson27-writing-canvas { display:block; width:100%; min-width:90px; height:84px; touch-action:none; }
 .lesson27-writing-promise { display:flex; justify-content:center; align-items:center; gap:12px; margin-top:18px; color:#355568; font-weight:700; }
 .lesson27-writing-promise strong { padding:7px 14px; border-radius:3px; background:#55a8c2; color:#fff; }
 .lesson27-writing-promise b { color:#e85d22; }
@@ -7017,6 +7017,7 @@ body {
 @media (max-width:760px) { .lesson27-challenge-page { padding:16px; } .lesson27-challenge-heading { font-size:20px; } .lesson27-game-levels { grid-template-columns:1fr; } .lesson27-game-word { min-height:120px; font-size:46px; } .lesson27-game-actions { width:100%; flex-direction:column; } .lesson27-game-actions button { width:100%; } }
 @media (max-width:760px) { .lesson27-reading-page { padding:16px; } .lesson27-reading-grid { grid-template-columns:1fr; } .lesson27-reading-heading { font-size:19px; } .lesson27-reading-syllable { min-width:52px; } .lesson27-reading-syllable b { font-size:36px; } }
 @media (max-width:760px) { .lesson27-writing-page { padding:12px; } .lesson27-writing-grid { grid-template-columns:1fr; } .lesson27-writing-heading { font-size:18px; } .lesson27-writing-card,.lesson27-writing-card:nth-child(n) { grid-column:1; border-right:0; } .lesson27-writing-promise { align-items:flex-start; font-size:14px; } }
+@media (max-width:520px) { .lesson27-syllable { grid-template-rows:66px 78px; min-width:72px; } .lesson27-writing-canvas { min-width:70px; height:78px; } }
 .lesson27-family-card.state-final-sound .lesson27-hand-contact {opacity:1;animation:lesson27-contact-pulse .62s ease-out 1;}
 @keyframes lesson27-contact-pulse {0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}45%{opacity:.75;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.35)}}
 .lesson27-card-copy {display:grid;gap:9px;align-content:center;justify-items:stretch;}

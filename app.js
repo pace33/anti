@@ -14774,13 +14774,13 @@ function renderLesson27BatchimFamilyIntro() {
 
 function renderLesson27BatchimWritingPage() {
     const items = [
-        { word:'숲', heard:'숩', picture:'🌳', label:'숲 그림' },
-        { word:'집', heard:'집', picture:'🏠', label:'집 그림' },
-        { word:'앞', heard:'압', picture:'🧍↓', label:'앞을 나타내는 그림' },
-        { word:'접시', heard:'접시', picture:'🍽️', label:'접시 그림' },
-        { word:'무릎', heard:'무릅', picture:'🦵', label:'무릎 그림' },
-        { word:'덮밥', heard:'덥밥', picture:'🍛', label:'덮밥 그림' },
-        { word:'높다', heard:'놉다', picture:'🏢↕', label:'높다 그림' }
+        { word:'숲', picture:'🌳', label:'숲 그림' },
+        { word:'집', picture:'🏠', label:'집 그림' },
+        { word:'앞', picture:'🧍↓', label:'앞을 나타내는 그림' },
+        { word:'접시', picture:'🍽️', label:'접시 그림' },
+        { word:'무릎', picture:'🦵', label:'무릎 그림' },
+        { word:'덮밥', picture:'🍛', label:'덮밥 그림' },
+        { word:'높다', picture:'🏢↕', label:'높다 그림' }
     ];
     const finals = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
     const tiles = (word, cardIndex) => [...word].map((char, syllableIndex) => {
@@ -14789,12 +14789,13 @@ function renderLesson27BatchimWritingPage() {
         const finalIndex = code % 28;
         const base = String.fromCharCode(char.charCodeAt(0) - finalIndex);
         const final = finals[finalIndex];
-        const finalContent = final === 'ㅂ'
-            ? `<canvas id="lesson27-write-${cardIndex}-${syllableIndex}" class="trace-writing-canvas lesson27-writing-canvas" data-guide="ㅂ" data-trace-hide-label tabindex="0" aria-label="${base} 아래에 ㅂ 받침 쓰기"></canvas>`
+        const isWritingFinal = final === 'ㅂ' || final === 'ㅍ';
+        const finalContent = isWritingFinal
+            ? `<canvas id="lesson27-write-${cardIndex}-${syllableIndex}" class="trace-writing-canvas lesson27-writing-canvas" data-guide="${final}" data-trace-hide-label tabindex="0" aria-label="${base} 아래에 ${final} 받침 쓰기"></canvas>`
             : final;
-        return `<span class="lesson27-syllable"><b>${base}</b><i class="${final === 'ㅂ' ? 'is-writing-batchim' : ''}">${finalContent}</i></span>`;
+        return `<span class="lesson27-syllable"><b>${base}</b><i class="${isWritingFinal ? 'is-writing-batchim' : ''}">${finalContent}</i></span>`;
     }).join('');
-    return `<section class="lesson27-writing-page"><div class="lesson27-writing-heading"><strong>연습하기</strong><span>들리는 대로 받침쓰기</span></div><p class="lesson27-writing-instruction">낱말을 듣고 빈 받침 칸에 <b>ㅂ</b>을 직접 써 보세요.</p><div class="lesson27-writing-grid">${items.map((item, index) => `<article class="lesson27-writing-card"><button type="button" class="lesson27-picture-button" onclick="speakTextKo('${item.word}')" aria-label="${item.word} 소리 듣기"><span aria-hidden="true">${item.picture}</span><small>🔊 ${item.word}</small></button><div class="lesson27-tile-word" aria-label="${item.heard}의 ㅂ 받침 쓰기">${tiles(item.heard, index)}</div></article>`).join('')}</div><div class="lesson27-writing-promise"><strong>약속하기</strong><span>‘ㅍ’과 ‘ㅂ’은 글자는 다르지만 받침소리는 <b>/ㅂ/</b>으로 같아요.</span></div></section>`;
+    return `<section class="lesson27-writing-page"><div class="lesson27-writing-heading"><strong>연습하기</strong><span>들리는 대로 받침쓰기</span></div><p class="lesson27-writing-instruction">낱말을 듣고 빈 받침 칸에 알맞은 <b>ㅂ 또는 ㅍ</b>을 직접 써 보세요.</p><div class="lesson27-writing-grid">${items.map((item, index) => `<article class="lesson27-writing-card"><button type="button" class="lesson27-picture-button" onclick="speakTextKo('${item.word}')" aria-label="${item.word} 소리 듣기"><span aria-hidden="true">${item.picture}</span><small>🔊 ${item.word}</small></button><div class="lesson27-tile-word" aria-label="${item.word}의 ㅂ 또는 ㅍ 받침 쓰기">${tiles(item.word, index)}</div></article>`).join('')}</div><div class="lesson27-writing-promise"><strong>약속하기</strong><span>‘ㅍ’과 ‘ㅂ’은 글자는 다르지만 받침소리는 <b>/ㅂ/</b>으로 같아요.</span></div></section>`;
 }
 
 function renderLesson27ReadingPage() {
