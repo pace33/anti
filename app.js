@@ -6377,6 +6377,7 @@ function getCurricularWords(fallback = []) {
     return words.slice(0, 10);
 }
 const CURRICULAR_TRACE_CANVAS_MARKER = 'curricular-trace-coverage-20260825';
+const CURRICULAR_AI_CANVAS_GRADING_MARKER = 'curricular-ai-canvas-grading-20260825';
 function clampCurricularDan(value = 1) {
     const num = Math.floor(Number(value));
     return Math.max(1, Math.min(3, Number.isFinite(num) ? num : 1));
@@ -6546,12 +6547,12 @@ function createCurricularDifficultySession(difficulty = getCurrentCurricularDan(
     const items = words.map((word, index) => {
         const sentence = makeCurricularSentence(word, index);
         if (dan === 1) {
-            return { word, sentence: word, answer: word, canvasGuide: word, hintText: makeCircleHint(word), audioText: word, displayText: makeCircleHint(word), source: 'curricular-step1', difficulty: 1, coverage: 0 };
+            return { word, sentence: word, answer: word, canvasGuide: '', hintText: '', audioText: word, displayText: '', source: 'curricular-step1', difficulty: 1, coverage: 0, aiGraded: false };
         }
         if (dan === 2) {
-            return { word, sentence, answer: word, canvasGuide: word, hintText: makeBlankSentence(sentence, word), audioText: sentence, displayText: makeBlankSentence(sentence, word), source: 'curricular-step2', difficulty: 2, coverage: 0 };
+            return { word, sentence, answer: word, canvasGuide: '', hintText: '', audioText: sentence, displayText: '', source: 'curricular-step2', difficulty: 2, coverage: 0, aiGraded: false };
         }
-        return { word, sentence, answer: sentence, canvasGuide: sentence, hintText: makeCircleHint(sentence, true), audioText: sentence, displayText: escapeHtml(makeCircleHint(sentence, true)), source: 'curricular-step3', difficulty: 3, coverage: 0 };
+        return { word, sentence, answer: sentence, canvasGuide: '', hintText: '', audioText: sentence, displayText: '', source: 'curricular-step3', difficulty: 3, coverage: 0, aiGraded: false };
     });
     return { kind: 'mission', mode: 'curricular', marker: CURRICULAR_TRACE_CANVAS_MARKER, difficulty: dan, items, currentIndex: 0, graded: null, saved: false, autoSaved: false, startedAt: new Date().toISOString() };
 }
@@ -6559,26 +6560,46 @@ function createDictationMissionSession() {
     return createCurricularDifficultySession(getCurrentCurricularDan());
 }
 function getCurricularCanvasGuide(item = {}) {
+    if (activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular') return '';
     return String(item.canvasGuide || item.answer || item.word || item.sentence || '').trim();
 }
+function getCurricularMissionGradeResult(item = {}, index = 0) {
+    return item.aiResult || {
+        sentence: item.sentence || item.answer || item.word,
+        answer: item.answer || item.sentence || item.word,
+        word: item.word || cleanKoreanWord(item.answer || item.sentence),
+        difficulty: Number(item.difficulty || activeDictationSession?.difficulty || 1),
+        source: item.source || 'curricular-ai-canvas',
+        written: item.written || '',
+        correct: item.correct === true,
+        analysis: item.analysis || `${index + 1}번은 아직 AI 채점 전이에요.`
+    };
+}
 function renderCurricularWritingCanvasCard(item, index, { compact = false } = {}) {
+    const isMission = activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular';
     const guide = getCurricularCanvasGuide(item);
-    const status = item.traceComplete ? '✅ 완료' : (item.coverage ? `${Math.round(item.coverage * 100)}% 채움` : '아직 연습 전');
-    const hint = item.hintText || item.displayText || escapeHtml(guide);
     const active = index === Number(activeDictationSession?.currentIndex || 0);
-    return `<div class="rounded-3xl bg-white border-2 ${item.traceComplete ? 'border-green-200 bg-green-50/60' : (active ? 'border-red-300 shadow-lg shadow-red-100' : 'border-red-100')} p-5" data-curricular-card="${index}">
+    const status = isMission
+        ? (item.aiGrading ? 'AI 채점 중...' : (item.aiGraded ? (item.aiResult?.correct ? '✅ AI 정답' : '🟡 AI 확인 필요') : '아직 채점 전'))
+        : (item.traceComplete ? '✅ 완료' : (item.coverage ? `${Math.round(item.coverage * 100)}% 채움` : '아직 연습 전'));
+    const hint = isMission ? '' : (item.hintText || item.displayText || escapeHtml(guide));
+    const cardTitle = activeDictationSession?.kind === 'trace'
+        ? '단어 따라쓰기'
+        : `${Number(item.difficulty || activeDictationSession?.difficulty || 1)}단 받아쓰기`;
+    const confirmText = isMission ? (item.aiGrading ? '채점중' : (item.aiGraded ? '다시 확인' : '확인')) : '확인';
+    return `<div class="rounded-3xl bg-white border-2 ${item.aiGraded || item.traceComplete ? 'border-green-200 bg-green-50/60' : (active ? 'border-red-300 shadow-lg shadow-red-100' : 'border-red-100')} p-5" data-curricular-card="${index}">
         <div class="flex items-start justify-between gap-3 mb-3">
             <div>
-                <div class="text-sm font-black text-red-400">${index + 1}번 ${activeDictationSession?.kind === 'trace' ? '단어 따라쓰기' : `${Number(item.difficulty || activeDictationSession?.difficulty || 1)}단 받아쓰기`}</div>
-                <div class="mt-1 text-xl md:text-2xl font-black text-[#2c3e50]">${hint}</div>
+                <div class="text-sm font-black text-red-400">${index + 1}번 ${cardTitle}</div>
+                ${hint ? `<div class="mt-1 text-xl md:text-2xl font-black text-[#2c3e50]">${hint}</div>` : ''}
             </div>
-            <button type="button" class="btn-primary bg-red-500 shadow-red-200 px-5 py-3 whitespace-nowrap" onclick="confirmCurricularCanvasItem(${index})">확인</button>
+            <button type="button" id="curricular-confirm-btn-${index}" class="btn-primary bg-red-500 shadow-red-200 px-5 py-3 whitespace-nowrap" onclick="confirmCurricularCanvasItem(${index})" ${item.aiGrading ? 'disabled' : ''}>${confirmText}</button>
         </div>
         <div class="relative rounded-3xl border-4 border-red-100 bg-white overflow-hidden">
-            <canvas id="curricular-writing-canvas-${index}" class="w-full ${compact ? 'h-40' : 'h-56 md:h-64'} touch-none block" data-guide="${escapeHtml(guide)}"></canvas>
+            <canvas id="curricular-writing-canvas-${index}" class="w-full ${compact ? 'h-40' : 'h-64 md:h-[420px]'} touch-none block" data-guide="${escapeHtml(guide)}"></canvas>
         </div>
         <div class="mt-2 flex items-center justify-between gap-2 text-sm font-black">
-            <span id="curricular-trace-status-${index}" class="${item.traceComplete ? 'text-green-600' : 'text-gray-400'}">${status}</span>
+            <span id="curricular-trace-status-${index}" class="${item.aiGraded || item.traceComplete ? (item.aiResult?.correct === false ? 'text-yellow-600' : 'text-green-600') : 'text-gray-400'}">${status}</span>
             <button type="button" class="text-red-400 underline" onclick="clearCurricularCanvasItem(${index})">지우기</button>
         </div>
     </div>`;
@@ -6624,6 +6645,10 @@ function drawCurricularCanvasGuide(canvas, guideText) {
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, width, height);
+    if (!String(guideText || '').trim()) {
+        canvas._guideMask = buildCurricularGuideMask(width, height, [], 32, 40, height / 2);
+        return;
+    }
     ctx.strokeStyle = 'rgba(239, 154, 154, 0.85)';
     ctx.lineWidth = 1.2;
     ctx.setLineDash([8, 8]);
@@ -6762,7 +6787,11 @@ function updateCurricularWritingActionButtons() {
     if (!activeDictationSession) return;
     const saveBtn = document.getElementById('dictation-save-btn');
     const nextBtn = document.getElementById('dictation-next-btn');
+    const prevBtn = document.getElementById('dictation-prev-btn');
+    const completeBtn = document.getElementById('dictation-complete-btn');
     const gradeBtn = document.getElementById('dictation-grade-btn');
+    if (prevBtn) prevBtn.classList.add('hidden');
+    if (completeBtn) completeBtn.classList.add('hidden');
     if (activeDictationSession.kind === 'trace') {
         const complete = activeDictationSession.items.every((item) => item.traceComplete);
         if (saveBtn) { saveBtn.classList.remove('hidden'); saveBtn.disabled = !complete; saveBtn.innerText = complete ? '다음' : '모두 80% 이상 채우면 다음'; }
@@ -6770,16 +6799,74 @@ function updateCurricularWritingActionButtons() {
         if (gradeBtn) gradeBtn.classList.add('hidden');
         return;
     }
-    if (activeDictationSession.kind === 'mission' && activeDictationSession.mode === 'curricular' && !activeDictationSession.graded) {
+    if (activeDictationSession.kind === 'mission' && activeDictationSession.mode === 'curricular' && !activeDictationSession.autoSaved) {
         const current = Number(activeDictationSession.currentIndex || 0);
-        const currentDone = Boolean(activeDictationSession.items[current]?.traceComplete);
         const last = current >= activeDictationSession.items.length - 1;
-        if (nextBtn) { nextBtn.classList.toggle('hidden', last); nextBtn.disabled = !currentDone; nextBtn.innerText = '다음'; }
-        if (gradeBtn) { gradeBtn.classList.toggle('hidden', !last); gradeBtn.disabled = !currentDone; gradeBtn.innerText = '채점'; }
+        const allGraded = activeDictationSession.items.every((item) => item.aiGraded);
         if (saveBtn) saveBtn.classList.add('hidden');
+        if (gradeBtn) gradeBtn.classList.add('hidden');
+        if (prevBtn) { prevBtn.classList.toggle('hidden', current <= 0); prevBtn.disabled = current <= 0; }
+        if (nextBtn) { nextBtn.classList.toggle('hidden', last && !allGraded); nextBtn.disabled = last; nextBtn.innerText = '다음'; }
+        if (completeBtn) { completeBtn.classList.toggle('hidden', !allGraded); completeBtn.disabled = !allGraded; }
+    }
+}
+function hasCurricularCanvasInk(canvas) {
+    return Array.isArray(canvas?._curricularStrokes) && canvas._curricularStrokes.some((stroke) => Array.isArray(stroke) && stroke.length > 1);
+}
+async function gradeCurricularCanvasItemWithAi(index) {
+    const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
+    const item = activeDictationSession?.items?.[index];
+    if (!canvas || !item) return;
+    if (!hasCurricularCanvasInk(canvas)) { showModal('빈 칸에 먼저 받아쓴 뒤 확인을 눌러주세요.'); return; }
+    const button = document.getElementById(`curricular-confirm-btn-${index}`);
+    const status = document.getElementById(`curricular-trace-status-${index}`);
+    const original = button?.innerText || '확인';
+    item.aiGrading = true;
+    if (button) { button.disabled = true; button.innerText = 'AI 채점 중'; }
+    if (status) { status.innerText = 'AI가 손글씨 이미지를 채점하고 있어요...'; status.className = 'text-red-500'; }
+    try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const base64 = dataUrl.split(',')[1] || '';
+        const difficulty = Number(item.difficulty || activeDictationSession?.difficulty || 1);
+        const target = { index: index + 1, difficulty, answer: item.answer || item.sentence || item.word, sentence: item.sentence || '', word: item.word || '' };
+        const prompt = `초등학생이 태블릿 캔버스의 빈 칸에 손글씨로 받아쓴 이미지를 AI 시각 분석으로 채점하세요. 화면에는 정답 미리보기가 없었고, 학생은 스피커로 들은 내용을 썼습니다.\n- 1단: 정답 단어와 같으면 correct=true\n- 2단: 문장 속 빈칸 정답 단어와 같으면 correct=true\n- 3단: 정답 문장 전체와 의미/철자가 거의 같으면 correct=true\n흐린 획/삐뚤어진 초등학생 손글씨를 감안하되, 다른 단어나 누락이 있으면 false입니다.\n문제(JSON): ${JSON.stringify(target)}\n반드시 JSON만 출력하세요. 형식: {"written":"학생이 쓴 답","correct":true,"analysis":"판단 근거 1문장"}`;
+        const raw = await callKoreanAiGenerate(prompt, { imageBase64: base64, imageMime: 'image/png', printTimeout: '4m' });
+        const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
+        const result = {
+            sentence: item.sentence || item.answer || item.word,
+            answer: item.answer || item.sentence || item.word,
+            word: item.word || cleanKoreanWord(item.answer || item.sentence),
+            difficulty,
+            source: item.source || 'curricular-ai-canvas',
+            written: cleanKoreanSentence(parsed.written || parsed.studentAnswer || ''),
+            correct: parsed.correct === true,
+            analysis: String(parsed.analysis || parsed.reason || '').trim() || 'AI가 캔버스 손글씨를 확인했어요.'
+        };
+        item.aiResult = result;
+        item.aiGraded = true;
+        item.traceComplete = true;
+        item.coverage = 1;
+        activeDictationImageAnalysis = [activeDictationImageAnalysis, `${index + 1}번: ${raw || ''}`].filter(Boolean).join('\n---\n').slice(-12000);
+        if (status) {
+            status.innerText = result.correct ? `✅ AI 정답 · ${result.written || '손글씨 확인'}` : `🟡 다시 확인 · ${result.written || '읽기 어려움'} · ${result.analysis}`;
+            status.className = result.correct ? 'text-green-600' : 'text-yellow-600';
+        }
+        showAiedueAutoToast(result.correct ? '정답이에요!' : 'AI 채점 완료', result.analysis || `${index + 1}번 채점이 끝났어요.`, 2600);
+    } catch (error) {
+        console.error('curricular canvas AI grading failed', error);
+        if (status) { status.innerText = 'AI 채점에 실패했어요. 다시 확인을 눌러주세요.'; status.className = 'text-red-500'; }
+        showModal(`AI 채점에 실패했어요: ${escapeHtml(error.message || error)}`);
+    } finally {
+        item.aiGrading = false;
+        if (button) { button.disabled = false; button.innerText = item.aiGraded ? '다시 확인' : original; }
+        updateCurricularWritingActionButtons();
     }
 }
 window.confirmCurricularCanvasItem = function(index) {
+    if (activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular') {
+        gradeCurricularCanvasItemWithAi(index);
+        return;
+    }
     const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
     const item = activeDictationSession?.items?.[index];
     if (!canvas || !item) return;
@@ -6802,6 +6889,10 @@ window.clearCurricularCanvasItem = function(index) {
     item.strokes = [];
     item.coverage = 0;
     item.traceComplete = false;
+    item.aiGraded = false;
+    item.aiResult = null;
+    item.written = '';
+    item.correct = false;
     canvas._curricularStrokes = [];
     drawCurricularCanvasGuide(canvas, getCurricularCanvasGuide(item));
     const status = document.getElementById(`curricular-trace-status-${index}`);
@@ -6810,16 +6901,7 @@ window.clearCurricularCanvasItem = function(index) {
 }
 function gradeCurricularCanvasSession() {
     const items = activeDictationSession?.items || [];
-    return items.map((item, index) => ({
-        sentence: item.sentence || item.answer || item.word,
-        answer: item.answer || item.sentence || item.word,
-        word: item.word || cleanKoreanWord(item.answer || item.sentence),
-        difficulty: Number(item.difficulty || activeDictationSession?.difficulty || 1),
-        source: item.source || 'curricular-canvas',
-        written: '캔버스 손글씨',
-        correct: Number(item.coverage || 0) >= 0.8,
-        analysis: `${index + 1}번 회색 글자 영역의 ${Math.round(Number(item.coverage || 0) * 100)}%를 채웠어요.`
-    }));
+    return items.map((item, index) => getCurricularMissionGradeResult(item, index));
 }
 function configureDictationWorkspace(session, options = {}) {
     if (!session) { openDictationBankCamera({ afterSave: 'curricular-writing' }); return; }
@@ -6832,7 +6914,10 @@ function configureDictationWorkspace(session, options = {}) {
     if (session.kind === 'bank-camera') {
         if (qPanel) qPanel.classList.add('hidden');
         if (grid) grid.className = 'grid grid-cols-1 gap-6';
-    } else if (session.kind === 'practice' || session.kind === 'trace' || isCurricularCanvasMission) {
+    } else if (session.kind === 'trace' || isCurricularCanvasMission) {
+        if (qPanel) qPanel.classList.remove('hidden');
+        if (grid) grid.className = 'grid grid-cols-1 gap-6';
+    } else if (session.kind === 'practice') {
         if (qPanel) qPanel.classList.remove('hidden');
         if (grid) grid.className = 'grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6';
     } else {
@@ -6841,7 +6926,8 @@ function configureDictationWorkspace(session, options = {}) {
     }
 
     const isPhotoSession = session.kind === 'bank-camera';
-    const photoCard = document.getElementById('dictation-photo-card'); if (photoCard) photoCard.classList.toggle('hidden', false);
+    const hideSidePhotoCard = session.kind === 'trace' || isCurricularCanvasMission;
+    const photoCard = document.getElementById('dictation-photo-card'); if (photoCard) photoCard.classList.toggle('hidden', hideSidePhotoCard);
     const photoTitle = document.getElementById('dictation-photo-panel-title'); if (photoTitle) photoTitle.innerText = session.kind === 'bank-camera' ? '단어 은행 사진' : (isCurricularCanvasMission ? '진행 버튼' : '태블릿 카메라 / 공책 사진');
     const cameraPanel = document.getElementById('dictation-camera-panel'); if (cameraPanel) cameraPanel.classList.toggle('hidden', !isPhotoSession);
     const wordPreview = document.getElementById('dictation-ai-word-preview'); if (wordPreview) { wordPreview.classList.add('hidden'); wordPreview.innerText = ''; }
@@ -6852,28 +6938,36 @@ function configureDictationWorkspace(session, options = {}) {
     document.getElementById('dictation-workspace-badge').innerText = options.badge || (session.kind === 'trace' ? '2스텝 단어 따라쓰기' : (session.kind === 'practice' ? '교과 맞춤쓰기 연습하기' : difficultyTitle));
     document.getElementById('dictation-workspace-title').innerText = options.title || (session.kind === 'trace' ? '화면 글자 따라 채우기' : (session.kind === 'practice' ? '문장 따라 쓰기 연습' : `${danInfo.title} 받아쓰기`));
     document.getElementById('dictation-workspace-desc').innerText = options.desc || (session.kind === 'trace' ? '회색 점선 글자 위를 태블릿 터치나 마우스로 따라 채워요. 각 단어가 80% 이상이면 완료됩니다.' : (isCurricularCanvasMission ? `${danInfo.help} 10번까지 쓰고 채점해요.` : (session.kind === 'mission' ? `${getCurricularGateText()} · 다 쓴 노트를 사진 찍으면 AI가 채점해요.` : '오답/완료/단어 은행 기반 문장을 보고 따라 써요.')));
-    document.getElementById('dictation-session-kind').innerText = session.kind === 'trace' ? '2스텝: 화면 따라쓰기' : (session.kind === 'practice' ? '연습에서는 문장을 보고 따라 써요' : `${difficulty}단: TTS를 듣고 캔버스에 써요`);
-    document.getElementById('dictation-main-instruction').innerText = session.kind === 'bank-camera' ? '책이나 공책을 카메라에 비춰 단어를 모아요.' : (session.kind === 'trace' ? '회색 글자를 화면에서 직접 따라 채워요.' : (difficulty === 1 ? '스피커로 단어를 듣고 캔버스에 써요.' : (difficulty === 2 ? '문장 힌트를 보고 OOO 자리에 들어갈 단어를 써요.' : '문장을 듣고 OOO 힌트에 맞춰 전체 문장을 써요.')));
-    document.getElementById('dictation-sub-instruction').innerText = session.kind === 'bank-camera' ? 'OCR + AI 사진 분석 후 AI가 단어만 골라 단어 은행에 넣어요.' : (session.kind === 'trace' ? '확인을 눌러 80% 이상 채우면 체크가 떠요. 모두 완료하면 다음으로 넘어가요.' : (session.kind === 'practice' ? '연습에는 사진 촬영 채점이 필요 없어요.' : '오른쪽 아래 다음 버튼으로 10번까지 진행하고 마지막에 채점해요.'));
+    document.getElementById('dictation-session-kind').innerText = session.kind === 'trace' ? '2스텝: 화면 따라쓰기' : (session.kind === 'practice' ? '연습에서는 문장을 보고 따라 써요' : (isCurricularCanvasMission ? `${difficulty}단: 듣고 빈 칸에 받아쓰기` : `${difficulty}단: TTS를 듣고 캔버스에 써요`));
+    document.getElementById('dictation-main-instruction').innerText = session.kind === 'bank-camera' ? '책이나 공책을 카메라에 비춰 단어를 모아요.' : (session.kind === 'trace' ? '회색 글자를 화면에서 직접 따라 채워요.' : (isCurricularCanvasMission ? '듣기 버튼으로 문제를 듣고 빈 칸에 받아써요.' : (difficulty === 1 ? '스피커로 단어를 듣고 캔버스에 써요.' : (difficulty === 2 ? '문장 힌트를 보고 빈칸에 들어갈 단어를 써요.' : '문장을 듣고 전체 문장을 써요.'))));
+    document.getElementById('dictation-sub-instruction').innerText = session.kind === 'bank-camera' ? 'OCR + AI 사진 분석 후 AI가 단어만 골라 단어 은행에 넣어요.' : (session.kind === 'trace' ? '확인을 눌러 80% 이상 채우면 체크가 떠요. 모두 완료하면 다음으로 넘어가요.' : (session.kind === 'practice' ? '연습에는 사진 촬영 채점이 필요 없어요.' : '확인 버튼으로 문항별 AI 사진 채점을 완료하고, 아래 이전/다음으로 이동해요.'));
     const promptButton = document.getElementById('dictation-prompt-button');
     const promptCard = document.getElementById('dictation-prompt-card');
     if (promptButton) promptButton.classList.toggle('hidden', session.kind === 'trace');
-    if (promptCard) promptCard.classList.toggle('hidden', session.kind === 'trace');
+    if (promptCard) promptCard.classList.toggle('hidden', session.kind === 'trace' || isCurricularCanvasMission);
     const answerBox = document.getElementById('dictation-answer-box');
     const answerText = document.getElementById('dictation-answer-text');
     const saveBtn = document.getElementById('dictation-save-btn');
     const nextBtn = document.getElementById('dictation-next-btn');
     const bankBtn = document.getElementById('dictation-bank-save-btn');
     const gradeBtn = document.getElementById('dictation-grade-btn');
+    const prevBtn = document.getElementById('dictation-prev-btn');
+    const completeBtn = document.getElementById('dictation-complete-btn');
     answerBox.classList.add('hidden'); answerText.innerHTML = '';
     bankBtn.classList.add('hidden');
-    gradeBtn.classList.toggle('hidden', session.kind !== 'mission');
+    gradeBtn.classList.toggle('hidden', session.kind !== 'mission' || isCurricularCanvasMission);
     saveBtn.classList.toggle('hidden', session.kind !== 'trace');
     saveBtn.innerText = '다음';
     nextBtn.classList.add('hidden');
-    document.getElementById('dictation-photo-hint').innerText = session.kind === 'bank-camera' ? '카메라로 촬영하거나 파일을 선택해 단어를 추출하세요.' : (isCurricularCanvasMission ? '각 문제를 80% 이상 채운 뒤 다음/채점 버튼을 누르세요.' : (session.kind === 'mission' ? '태블릿 카메라 화면을 맞추고, 다 쓴 노트를 촬영하거나 파일을 선택하세요.' : '연습 모드에서는 공책 사진 탭을 사용하지 않아요.'));
+    if (prevBtn) prevBtn.classList.add('hidden');
+    if (completeBtn) completeBtn.classList.add('hidden');
+    const photoHint = document.getElementById('dictation-photo-hint');
+    if (photoHint) {
+        photoHint.classList.toggle('hidden', hideSidePhotoCard);
+        photoHint.innerText = session.kind === 'bank-camera' ? '카메라로 촬영하거나 파일을 선택해 단어를 추출하세요.' : (session.kind === 'mission' ? '태블릿 카메라 화면을 맞추고, 다 쓴 노트를 촬영하거나 파일을 선택하세요.' : '연습 모드에서는 공책 사진 탭을 사용하지 않아요.');
+    }
     const input = document.getElementById('dictation-photo-input'), preview = document.getElementById('dictation-photo-preview'), ocr = document.getElementById('dictation-ocr-text'); input.value = ''; preview.src = ''; preview.classList.add('hidden'); ocr.value = '';
-    renderDictationSessionList(); showTopLevelSection('dictation-workspace-section'); if (isPhotoSession) setTimeout(() => window.startDictationCamera(), 120); setTimeout(() => window.playDictationPrompt(), 300);
+    renderDictationSessionList(); showTopLevelSection('dictation-workspace-section'); if (isPhotoSession) setTimeout(() => window.startDictationCamera(), 120); if (!isCurricularCanvasMission) setTimeout(() => window.playDictationPrompt(), 300);
 }
 function renderBankList(rootId, items, emptyText) { const root = document.getElementById(rootId); if (!root) return; root.innerHTML = items.length ? items.map((item) => `<div class="rounded-2xl border-2 border-red-100 bg-red-50/40 p-4"><div class="text-lg font-black text-[#2c3e50]">${escapeHtml(item.sentence)}</div><div class="text-xs text-gray-500 font-bold mt-1">오답 ${Number(item.wrongCount || 0)}회 · 정답 ${Number(item.correctCount || 0)}회</div></div>`).join('') : `<div class="text-gray-400 font-bold text-center py-8">${escapeHtml(emptyText)}</div>`; }
 function renderCurricularWordBankStats() {
@@ -7567,7 +7661,7 @@ async function saveMissionGradingResult() {
     const state = getCurricularWritingState();
     dictationPortfolio.curricularWriting.history = [record, ...(state.history || [])].slice(0, 200);
     dictationPortfolio.curricularWriting.rewardedSessions = dictationPortfolio.curricularWriting.rewardedSessions || [];
-    if (difficulty === 3 && accuracy > 50 && !dictationPortfolio.curricularWriting.rewardedSessions.includes(sessionId)) {
+    if (difficulty === 3 && accuracy >= 50 && !dictationPortfolio.curricularWriting.rewardedSessions.includes(sessionId)) {
         applyAiedueExperienceReward(100, { source: '교과 맞춤쓰기 3단계 성공', sessionId, accuracy, baseReward: 100, stageMultiplier: 1 });
         dictationPortfolio.curricularWriting.rewardedSessions.unshift(sessionId);
         showAiedueAutoToast('🎉 교과 맞춤쓰기 3단계 성공!', '경험치 100% 보상으로 돈 1000점 지급 및 주의토큰 1개 감소 조건을 적용했어요.', 5500);
@@ -7579,8 +7673,8 @@ async function saveMissionGradingResult() {
 window.revealDictationAnswer = async function() {
     if (!activeDictationSession || activeDictationSession.kind !== 'mission') return;
     const isCanvasMission = activeDictationSession.mode === 'curricular';
-    if (isCanvasMission && activeDictationSession.items.some((item) => !item.traceComplete)) {
-        showModal('현재 문제를 80% 이상 채운 뒤 채점할 수 있어요.');
+    if (isCanvasMission) {
+        window.completeCurricularMission();
         return;
     }
     const preview = document.getElementById('dictation-photo-preview');
@@ -7620,21 +7714,41 @@ function upsertWrongOrCompleted(result, now) {
     dictationPortfolio.wrongBank = wrongBank.sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0)).slice(0, 100); dictationPortfolio.completedBank = completedBank.slice(0, 150);
 }
 window.startNextDictationMission = function() {
-    if (activeDictationSession?.kind === 'mission' && activeDictationSession.mode === 'curricular' && !activeDictationSession.graded) {
+    if (activeDictationSession?.kind === 'mission' && activeDictationSession.mode === 'curricular' && !activeDictationSession.autoSaved) {
         const current = Number(activeDictationSession.currentIndex || 0);
-        if (!activeDictationSession.items[current]?.traceComplete) {
-            showModal('현재 문제를 80% 이상 채운 뒤 다음으로 갈 수 있어요.');
-            return;
-        }
         if (current < activeDictationSession.items.length - 1) {
             activeDictationSession.currentIndex = current + 1;
             activeDictationItem = { prompt: activeDictationSession.items[activeDictationSession.currentIndex].audioText || activeDictationSession.items[activeDictationSession.currentIndex].sentence, step: 'curricular' };
             renderDictationSessionList();
-            setTimeout(() => window.playDictationPrompt(), 120);
             return;
         }
     }
     configureDictationWorkspace(createDictationMissionSession(), { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
+}
+window.previousDictationMissionProblem = function() {
+    if (!(activeDictationSession?.kind === 'mission' && activeDictationSession.mode === 'curricular')) return;
+    const current = Number(activeDictationSession.currentIndex || 0);
+    if (current <= 0) return;
+    activeDictationSession.currentIndex = current - 1;
+    activeDictationItem = { prompt: activeDictationSession.items[activeDictationSession.currentIndex].audioText || activeDictationSession.items[activeDictationSession.currentIndex].sentence, step: 'curricular' };
+    renderDictationSessionList();
+}
+window.completeCurricularMission = async function() {
+    if (!(activeDictationSession?.kind === 'mission' && activeDictationSession.mode === 'curricular')) return;
+    if (!activeDictationSession.items.every((item) => item.aiGraded)) {
+        showModal('1번부터 10번까지 모두 확인 버튼으로 AI 채점을 완료한 뒤 완료할 수 있어요.');
+        return;
+    }
+    activeDictationSession.graded = gradeCurricularCanvasSession();
+    const correctCount = activeDictationSession.graded.filter((item) => item.correct).length;
+    document.getElementById('dictation-answer-box').classList.remove('hidden');
+    document.getElementById('dictation-answer-text').innerHTML = `<div class="text-red-500 font-black">총 ${correctCount}/${activeDictationSession.graded.length}개 정답</div><p class="mt-2 text-sm text-gray-500 font-bold">확인 버튼으로 받은 AI 사진 채점 결과를 나의 기록과 단어 은행 통계에 저장했어요. 3단 총점 50% 이상이면 경험치 100% 보상이 적용됩니다.</p>`;
+    await saveMissionGradingResult();
+    updateCurricularWritingActionButtons();
+    const completeBtn = document.getElementById('dictation-complete-btn');
+    if (completeBtn) completeBtn.classList.add('hidden');
+    const nextBtn = document.getElementById('dictation-next-btn');
+    if (nextBtn) { nextBtn.classList.remove('hidden'); nextBtn.disabled = false; nextBtn.innerText = '새 미션'; }
 }
 window.completeDictationItem = async function() {
     if (activeDictationSession?.kind === 'trace') {

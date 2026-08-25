@@ -771,6 +771,17 @@
                             <div class="text-sm font-black text-green-500 mb-2">채점 결과</div>
                             <div id="dictation-answer-text" class="text-lg font-bold text-[#2c3e50]"></div>
                         </div>
+                        <div id="dictation-bottom-actions" class="mt-8 flex items-center justify-between gap-3">
+                            <button type="button" id="dictation-prev-btn" class="btn-outline px-6 py-3 hidden" onclick="previousDictationMissionProblem()">이전</button>
+                            <span class="flex-1"></span>
+                            <div class="flex items-center justify-end gap-3">
+                                <button type="button" id="dictation-grade-btn" class="btn-primary bg-[#ff9d76] shadow-[#ff9d7633] hidden" onclick="revealDictationAnswer()">사진 촬영 후 AI 채점하기</button>
+                                <button type="button" id="dictation-save-btn" class="btn-primary hidden" onclick="completeDictationItem()">연습 기록 저장</button>
+                                <button type="button" id="dictation-complete-btn" class="btn-primary bg-green-500 shadow-green-200 hidden" onclick="completeCurricularMission()">완료</button>
+                                <button type="button" id="dictation-next-btn" class="btn-primary bg-red-500 shadow-red-200 hidden" onclick="startNextDictationMission()">다음</button>
+                            </div>
+                        </div>
+                        <p id="dictation-photo-hint" class="text-sm text-gray-400 font-bold mt-4 text-right">사진을 올려야 채점할 수 있어요.</p>
                     </div>
 
                     <div id="dictation-photo-card" class="korean-embed-card p-6">
@@ -789,10 +800,6 @@
                         <textarea id="dictation-ocr-text" class="premium-input bg-white text-sm mt-4 min-h-[120px]" placeholder="AI 사진 분석 결과가 여기에 들어와요. 단어 은행 촬영에서만 OCR 보조 결과를 함께 보여줘요."></textarea>
                         <div id="dictation-ai-word-preview" class="hidden mt-3 p-3 rounded-2xl bg-red-50 text-sm font-bold text-red-500"></div>
                         <button type="button" id="dictation-bank-save-btn" class="btn-primary w-full mt-4 bg-red-500 shadow-red-200 hidden" onclick="saveDictationBankPhoto()">AI로 단어 골라 은행에 저장</button>
-                        <button type="button" id="dictation-grade-btn" class="btn-primary w-full mt-5 bg-[#ff9d76] shadow-[#ff9d7633]" onclick="revealDictationAnswer()">사진 촬영 후 AI 채점하기</button>
-                        <button type="button" id="dictation-save-btn" class="btn-primary w-full mt-3 hidden" onclick="completeDictationItem()">연습 기록 저장</button>
-                        <button type="button" id="dictation-next-btn" class="btn-primary w-full mt-3 bg-red-500 shadow-red-200 hidden" onclick="startNextDictationMission()">다음 문제 풀기</button>
-                        <p id="dictation-photo-hint" class="text-sm text-gray-400 font-bold mt-4">사진을 올려야 채점할 수 있어요.</p>
                     </div>
                 </div>
             </div>
