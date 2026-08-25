@@ -14592,14 +14592,13 @@ window.nextLessonMouthSoundQuiz = function(step) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
     if (!config) return;
     stopLessonMouthPlayback(step);
-    window.lessonMouthQuizTarget[step] = config.quizChoices[Math.floor(Math.random() * config.quizChoices.length)];
-    window.lessonMouthQuizPlayed[step] = false;
     document.querySelectorAll('.lesson15-choice-btn').forEach(btn => btn.classList.remove('correct', 'wrong'));
     const feedback = document.getElementById(`lesson-mouth-quiz-feedback-${step}`);
     if (feedback) {
         feedback.className = 'text-center text-orange-500 font-black mt-3 min-h-[1.6rem]';
         feedback.textContent = '소리를 듣고 알맞은 글자를 골라요.';
     }
+    window.playLessonMouthQuizSound(step);
 };
 
 window.selectLessonMouthSoundAnswer = async function(step, btn, userAnswer) {

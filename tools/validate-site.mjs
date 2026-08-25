@@ -101,6 +101,9 @@ const section = (source, startMarker, endMarker) => {
     assert(start >= 0 && end > start, `검증 구간을 찾지 못했습니다: ${startMarker}`);
     return source.slice(start, end);
 };
+const mouthQuizNext = section(app, 'window.nextLessonMouthSoundQuiz = function(step)', 'window.selectLessonMouthSoundAnswer = async function');
+assert(mouthQuizNext.includes('window.playLessonMouthQuizSound(step);'), '입 모양 퀴즈의 다음 문제가 자동으로 소리와 애니메이션을 재생하지 않습니다.');
+assert(!mouthQuizNext.includes('window.lessonMouthQuizPlayed[step] = false'), '입 모양 퀴즈의 다음 문제가 직전 소리를 다시 고를 수 있습니다.');
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
 const modalSafetyApi = new Function(`${modalSafety}\nreturn { isSafeModalAction };`)();
 assert(modalSafetyApi.isSafeModalAction('enterAiedueCraftAsTeacher()'), '교사 상점의 크래프트 접속 동작이 팝업 안전 처리 과정에서 제거됩니다.');
