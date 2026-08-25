@@ -750,12 +750,12 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     animation: learning-activity-guide-ring .85s ease-in-out 3;
 }
 #learning-detail-content .learning-activity-reviewed:not(.correct):not(.wrong):not(.is-correct):not(.is-complete):not(.is-heard) {
-    border-color: #84cc16 !important;
-    outline: 2px solid rgba(132, 204, 22, .24);
+    border-color: #54c7a2 !important;
+    outline: 2px solid rgba(84, 199, 162, .22);
     outline-offset: 1px;
-    background-color: #ecfccb !important;
-    color: #356314 !important;
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .72), 0 3px 9px rgba(101, 163, 13, .12) !important;
+    background-color: #dafae9 !important;
+    color: #176b55 !important;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .72), 0 3px 9px rgba(45, 154, 121, .12) !important;
     filter: none;
 }
 #learning-detail-content .learning-activity-reviewed:not(.correct):not(.wrong):not(.is-correct):not(.is-complete):not(.is-heard) * {
