@@ -76,7 +76,9 @@ assert(!index.includes(oldBankLabel) && !app.includes(oldBankLabel), '이전 은
 assert(app.includes('openDictationBankCamera = function openDictationBankCamera(options = {})') && app.includes('word-bank-camera-modal'), '오늘의 노트 사진이 팝업 카메라를 열지 않습니다.');
 assert(app.includes("setWordBankCameraStatus('로딩중~', true)") && app.includes("setWordBankCameraStatus('OCR+AI 분석중~~', true)"), '사진 촬영 단계별 로딩 문구가 없습니다.');
 assert(app.includes('사람 이름, 학생 이름, 교사 이름'), '단어 선별 프롬프트에서 이름 제외 규칙이 없습니다.');
-assert(index.includes('class="rpg-profile-portrait" onclick="openIconModal()" aria-label="프로필 아이콘 변경"'), '하단 프로필 아이콘이 아이콘 변경창을 열지 않습니다.');
+assert(index.includes('class="rpg-profile-portrait" onclick="toggleRpgHudPanel(this)" aria-label="메뉴 펼치기"'), '곰 얼굴이 메뉴 펼치기 기능과 연결되지 않았습니다.');
+assert(index.includes('onclick="openDashboard()" aria-label="홈으로 이동"') && index.includes('<span>홈</span>'), '상태창 홈 버튼이 올바르지 않습니다.');
+assert(app.includes('window.toggleRpgHudPanel = function toggleRpgHudPanel(button)') && app.includes("hud.classList.toggle('rpg-collapsed')"), '상태창 접기·펼치기 로직이 없습니다.');
 assert(index.includes('class="rpg-profile-copy" onclick="toggleInfoDrawer()"'), '하단 프로필 정보 영역이 회원 정보창을 열지 않습니다.');
 
 const section = (source, startMarker, endMarker) => {

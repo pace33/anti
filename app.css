@@ -55,6 +55,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 
 .rpg-profile-banner {
     position: relative;
+    width: 430px;
     min-width: 420px;
     height: 84px;
     display: flex;
@@ -67,6 +68,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     box-shadow: 0 14px 36px rgba(50, 91, 69, .18), 0 0 0 2px rgba(183, 228, 161, .5);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+    transition: width .36s cubic-bezier(.16, 1, .3, 1), min-width .36s cubic-bezier(.16, 1, .3, 1), height .36s cubic-bezier(.16, 1, .3, 1), padding .36s cubic-bezier(.16, 1, .3, 1), border-radius .36s ease;
 }
 
 .rpg-profile-portrait {
@@ -104,11 +106,12 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     align-items: flex-start;
     gap: 1px;
     text-align: left;
+    transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease;
 }
 .rpg-profile-copy strong { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #2c3e50; font-size: 1rem; }
 .rpg-role-label { color: #62a958; font-size: .68rem; font-weight: 900; }
 .rpg-wallet-line { display: flex; gap: 9px; margin-top: 2px; color: #72806f; font-size: .7rem; font-weight: 900; }
-.rpg-profile-tools { margin-left: auto; display: flex; gap: 6px; transform: translateY(-4px); }
+.rpg-profile-tools { margin-left: auto; display: flex; gap: 6px; transform: translateY(-4px); transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease; }
 .rpg-tool-button {
     min-width: 48px;
     height: 48px;
@@ -196,6 +199,37 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 }
 .rpg-experience-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #81cf70, #a9e28b); box-shadow: 0 0 8px rgba(111, 201, 93, .45); transition: width .35s ease; }
 .rpg-experience-label { position: absolute; right: 14px; bottom: 16px; color: #68a95f; font: 900 9px/1 Outfit, sans-serif; }
+
+/* 학습 중에는 곰 얼굴만 남기고, 눌렀을 때 상태창이 옆으로 펼쳐진다. */
+.aiedue-rpg-hud.rpg-collapsed {
+    width: auto;
+    max-width: none;
+}
+.aiedue-rpg-hud.rpg-collapsed .rpg-profile-banner {
+    width: 72px;
+    min-width: 72px;
+    height: 72px;
+    padding: 0;
+    border-radius: 24px;
+}
+.aiedue-rpg-hud.rpg-collapsed .rpg-profile-portrait {
+    left: 5px;
+    bottom: 5px;
+}
+.aiedue-rpg-hud.rpg-collapsed .rpg-profile-copy,
+.aiedue-rpg-hud.rpg-collapsed .rpg-profile-tools,
+.aiedue-rpg-hud.rpg-collapsed .rpg-experience-track,
+.aiedue-rpg-hud.rpg-collapsed .rpg-experience-label {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+.aiedue-rpg-hud.rpg-collapsed .rpg-profile-copy {
+    transform: translateX(-16px);
+}
+.aiedue-rpg-hud.rpg-collapsed .rpg-profile-tools {
+    transform: translate(-20px, -4px);
+}
 
 .aiedue-rpg-hud.experience-received .rpg-experience-track { animation: experienceTrackReceive .65s ease; }
 @keyframes experienceTrackReceive { 45% { box-shadow: 0 0 0 6px rgba(129, 207, 112, .18), 0 0 18px rgba(129, 207, 112, .45); } }
