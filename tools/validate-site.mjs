@@ -136,6 +136,13 @@ const unit9WritingHelpers = section(app, 'function getUnit9WordWritingGuide', 'f
 const unit9WritingApi = new Function(`${unit9WritingHelpers}\nreturn { getUnit9WordWritingGuide, getUnit9WordWritingColumnCount };`)();
 assert(unit9WritingApi.getUnit9WordWritingGuide('닭') === '닭/닭' && unit9WritingApi.getUnit9WordWritingGuide('많다') === '많/다' && unit9WritingApi.getUnit9WordWritingGuide('괜찮다') === '괜/찮/다', '한·두·세 글자 낱말의 쓰기 칸 분리가 올바르지 않습니다.');
 assert(unit9WritingApi.getUnit9WordWritingColumnCount('괜찮다') === 3, '세 글자 낱말이 세 칸으로 배치되지 않습니다.');
+assert(app.includes('function normalizeUnit9WritingCanvas(canvas)') && app.includes("classList?.contains('unit9-word-writing-canvas')"), '9단원 전체 쓰기 칸의 공통 정규화가 없습니다.');
+assert((app.match(/unit9-word-writing-canvas/g) || []).length >= 3 && app.includes('normalizeUnit9WritingCanvas(canvas);'), '9단원 쓰기 캔버스 전체가 글자별 칸 분리 초기화와 연결되지 않았습니다.');
+const unit9NormalizerSource = section(app, 'function normalizeUnit9WritingCanvas', 'function renderUnit9DoubleFinalIntro');
+const normalizeUnit9WritingCanvas = new Function(`${unit9WritingHelpers}\n${unit9NormalizerSource}\nreturn normalizeUnit9WritingCanvas;`)();
+const unit9ThreeLetterCanvas = { classList: { contains: () => true }, dataset: { guide: '괜찮다/괜찮다' } };
+normalizeUnit9WritingCanvas(unit9ThreeLetterCanvas);
+assert(unit9ThreeLetterCanvas.dataset.guide === '괜/찮/다' && unit9ThreeLetterCanvas.dataset.gridCols === '3', '9단원 기존 세 글자 쓰기 칸이 세 칸으로 정규화되지 않습니다.');
 assert(app.includes("([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\\s*\\+\\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\\s*[→=]\\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])"), '글자 결합 결과 뒤의 조사가 결과 글자에 포함될 수 있습니다.');
 assert(!app.includes("return hasListenChoiceQuiz ? [quizListenButton] : controls"), '선택형 문제에서 소리 듣기 안내가 다시 표시될 수 있습니다.');
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
