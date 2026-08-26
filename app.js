@@ -6260,7 +6260,7 @@ window.restartCombineAnim = function(card, options = {}) {
 
 // 글자 결합 패턴 감지 및 애니메이션 카드 생성
 function parseCombinations(text) {
-    const re = /([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ]+)\s*\+\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ]+)\s*[→=]\s*([가-힣ㄱ-ㅎㅏ-ㅣ●]+)/g;
+    const re = /([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\s*\+\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\s*[→=]\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])/g;
     const out = [];
     let m;
     while ((m = re.exec(text)) !== null) out.push({ l: m[1].trim(), r: m[2].trim(), res: m[3].trim() });
