@@ -2518,10 +2518,19 @@ function getLearningDetailActionControls(root) {
 }
 
 function getLearningDetailGuideControls(root) {
+    if (learningDetailHasAnswerChoices(root)) return [];
     const controls = getLearningDetailActionControls(root);
-    const quizListenButton = root?.querySelector('.listen-quiz-play-btn');
-    const hasListenChoiceQuiz = Boolean(quizListenButton && root.querySelector('.choice-chip-button'));
-    return hasListenChoiceQuiz ? [quizListenButton] : controls;
+    return controls;
+}
+
+function learningDetailHasAnswerChoices(root) {
+    if (!root) return false;
+    if (root.querySelector('[class*="choice"], [role="radiogroup"], input[type="radio"]')) return true;
+    const selectingControls = getLearningDetailActionControls(root).filter((control) => {
+        const handler = control.getAttribute('onclick') || '';
+        return /(?:select|choose|check).*(?:answer|choice|word|picture|find|match|path)|selectLesson|selectUnit/i.test(handler);
+    });
+    return selectingControls.length >= 2;
 }
 
 function getLearningDetailReviewPageKey() {
@@ -2649,15 +2658,16 @@ function showLearningActivityButtonGuide(content) {
     }
 }
 
-function scheduleLearningActivityButtonGuide(content, delay = 4200) {
-    if (learningDetailActivityGuideTarget) return;
-    window.clearTimeout(learningDetailActivityGuideTimer);
-    learningDetailActivityGuideTimer = null;
-    if (!content || learningDetailPageLooksComplete(content)) return;
+function scheduleLearningActivityButtonGuide(content, delay) {
+    if (learningDetailActivityGuideTarget || learningDetailActivityGuideTimer) return;
+    if (!content || learningDetailPageLooksComplete(content) || !getLearningDetailGuideControls(content).length) return;
+    const guideDelay = Number.isFinite(delay)
+        ? delay
+        : (window.matchMedia?.('(pointer: coarse)').matches ? 2200 : 4200);
     learningDetailActivityGuideTimer = window.setTimeout(() => {
         learningDetailActivityGuideTimer = null;
         showLearningActivityButtonGuide(content);
-    }, delay);
+    }, guideDelay);
 }
 
 function resetLearningDetailNavigationGuide() {
