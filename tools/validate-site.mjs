@@ -87,8 +87,9 @@ assert(index.includes('onclick="openDashboard()" aria-label="홈으로 이동"')
 assert(app.includes('window.toggleRpgHudPanel = function toggleRpgHudPanel(button)') && app.includes("hud.classList.toggle('rpg-collapsed')"), '상태창 접기·펼치기 로직이 없습니다.');
 assert(index.includes('class="rpg-profile-copy" onclick="toggleInfoDrawer()"'), '하단 프로필 정보 영역이 회원 정보창을 열지 않습니다.');
 assert(index.includes('id="drawing-workspace-back-btn"') && index.includes('aria-label="그리기 활동을 닫고 이전 화면으로 이동"'), '그리기 활동의 뒤로 가기 버튼이 없습니다.');
+assert(index.indexOf('id="drawing-workspace-back-btn"') < index.indexOf('id="drawing-canvas"'), '그리기 뒤로 가기 버튼이 왼쪽 도구 영역에 배치되지 않았습니다.');
 assert(app.includes("backButton.classList.remove('hidden')"), '도형 미션에서 뒤로 가기 버튼이 표시되지 않습니다.');
-assert(appCss.includes('#drawing-workspace-back-btn') && appCss.includes('min-height: 52px;'), '그리기 뒤로 가기 버튼의 위치 또는 터치 크기가 올바르지 않습니다.');
+assert(appCss.includes('.drawing-tool-sidebar') && appCss.includes('margin-top: auto !important;') && appCss.includes('min-height: 52px;'), '그리기 뒤로 가기 버튼이 연두색 도구 영역 하단에 배치되지 않았습니다.');
 assert(app.includes("if (!control.classList.contains('learning-activity-reviewed'))"), '활동 완료 표시가 같은 class를 반복 기록해 화면을 멈출 수 있습니다.');
 assert(app.includes('new MutationObserver(scheduleCheck)') && !app.includes('new MutationObserver(check)'), '활동 완료 감시가 프레임당 한 번으로 제한되지 않았습니다.');
 assert(app.includes('let audioUnlockElement = null;') && app.includes('audioUnlockElement.play()'), '애니메이션 음성용 오디오 잠금 해제 장치가 없습니다.');
