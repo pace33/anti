@@ -3617,13 +3617,63 @@ document.getElementById('korean-cloud-student-upload-input')?.addEventListener('
 document.getElementById('korean-cloud-student-search')?.addEventListener('input', (event) => renderAiedueKoreanCloudStudentList(event.target.value));
 
 async function openAiedueKoreanPdfEditor(filePath, ownerId) {
-    const modal = document.getElementById('korean-cloud-pdf-editor-modal'); const canvas = document.getElementById('korean-cloud-pdf-canvas'); const drawCanvas = document.getElementById('korean-cloud-draw-canvas'); const loading = document.getElementById('korean-cloud-pdf-loading'); if (!modal || !canvas || !drawCanvas) return;
-    modal.classList.remove('hidden'); loading?.classList.remove('hidden'); const ctx = canvas.getContext('2d'); const drawCtx = drawCanvas.getContext('2d');
-    try { const ref = storageRef(storage, filePath); const url = await getDownloadURL(ref); const pdf = await pdfjsLib.getDocument(url).promise; koreanCloudState.editor = { filePath, ownerId, ref, url, pdf, page: 1, total: pdf.numPages, scale: 1.2, mode: 'pen', drawing: false, overlays: {}, canvas, drawCanvas, ctx, drawCtx }; setupAiedueKoreanPdfCanvasEvents(); await renderAiedueKoreanPdfPage(); }
-    catch (error) { console.error('Aiedue Korean PDF open failed:', error); showModal('PDF를 열 수 없어요.'); closeAiedueKoreanPdfEditor(); }
-    finally { loading?.classList.add('hidden'); }
+    const modal = document.getElementById('korean-cloud-pdf-editor-modal');
+    const canvas = document.getElementById('korean-cloud-pdf-canvas');
+    const drawCanvas = document.getElementById('korean-cloud-draw-canvas');
+    const loading = document.getElementById('korean-cloud-pdf-loading');
+    if (!modal || !canvas || !drawCanvas) return;
+    modal.classList.remove('hidden');
+    loading?.classList.remove('hidden');
+    if (loading) loading.textContent = 'PDF를 불러오는 중...';
+    const ctx = canvas.getContext('2d');
+    const drawCtx = drawCanvas.getContext('2d');
+    try {
+        const ref = storageRef(storage, filePath);
+        const url = await getDownloadURL(ref);
+        const response = await fetch(url, { mode: 'cors', cache: 'no-store' });
+        if (!response.ok) throw new Error(`PDF 다운로드 실패 ${response.status}`);
+        const originalBytes = await response.arrayBuffer();
+        const pdfBytes = new Uint8Array(originalBytes.slice(0));
+        const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        koreanCloudState.editor = {
+            filePath, ownerId, ref, url, originalBytes, pdf, page: 1, total: pdf.numPages, scale: 1.2,
+            mode: 'pen', drawing: false, overlays: {}, canvas, drawCanvas, ctx, drawCtx
+        };
+        setupAiedueKoreanPdfCanvasEvents();
+        await renderAiedueKoreanPdfPage();
+    } catch (error) {
+        console.error('Aiedue Korean PDF open failed:', error);
+        showModal(`PDF를 열 수 없어요.<br><span class="text-sm text-gray-400">${escapeHtml(error.message || String(error))}</span>`);
+        closeAiedueKoreanPdfEditor();
+    } finally {
+        loading?.classList.add('hidden');
+    }
 }
-async function renderAiedueKoreanPdfPage() { const ed = koreanCloudState.editor; if (!ed) return; const page = await ed.pdf.getPage(ed.page); const area = document.getElementById('korean-cloud-pdf-area'); const baseViewport = page.getViewport({ scale: 1 }); const fitScale = area ? Math.min(1.6, Math.max(0.75, (area.clientWidth - 36) / baseViewport.width)) : 1.2; ed.scale = fitScale; const viewport = page.getViewport({ scale: ed.scale }); ed.canvas.width = ed.drawCanvas.width = viewport.width; ed.canvas.height = ed.drawCanvas.height = viewport.height; await page.render({ canvasContext: ed.ctx, viewport }).promise; redrawAiedueKoreanPdfOverlay(); const pageInfo = document.getElementById('korean-cloud-page-info'); if (pageInfo) pageInfo.textContent = `${ed.page} / ${ed.total}`; }
+async function renderAiedueKoreanPdfPage() {
+    const ed = koreanCloudState.editor;
+    if (!ed) return;
+    const loading = document.getElementById('korean-cloud-pdf-loading');
+    try {
+        loading?.classList.remove('hidden');
+        if (loading) loading.textContent = `${ed.page}쪽을 그리는 중...`;
+        const page = await ed.pdf.getPage(ed.page);
+        const area = document.getElementById('korean-cloud-pdf-area');
+        const baseViewport = page.getViewport({ scale: 1 });
+        const fitScale = area ? Math.min(1.6, Math.max(0.75, (area.clientWidth - 36) / baseViewport.width)) : 1.2;
+        ed.scale = fitScale;
+        const viewport = page.getViewport({ scale: ed.scale });
+        ed.canvas.width = ed.drawCanvas.width = Math.floor(viewport.width);
+        ed.canvas.height = ed.drawCanvas.height = Math.floor(viewport.height);
+        ed.drawCanvas.style.width = ed.canvas.style.width = `${Math.floor(viewport.width)}px`;
+        ed.drawCanvas.style.height = ed.canvas.style.height = `${Math.floor(viewport.height)}px`;
+        await page.render({ canvasContext: ed.ctx, viewport }).promise;
+        redrawAiedueKoreanPdfOverlay();
+        const pageInfo = document.getElementById('korean-cloud-page-info');
+        if (pageInfo) pageInfo.textContent = `${ed.page} / ${ed.total}`;
+    } finally {
+        loading?.classList.add('hidden');
+    }
+}
 function setupAiedueKoreanPdfCanvasEvents() {
     const ed = koreanCloudState.editor; if (!ed || ed.drawCanvas.dataset.ready === '1') return; ed.drawCanvas.dataset.ready = '1';
     const getPos = (event) => { const touch = event.touches?.[0] || event.changedTouches?.[0]; const src = touch || event; const rect = ed.drawCanvas.getBoundingClientRect(); return { x: (src.clientX - rect.left) / ed.scale, y: (src.clientY - rect.top) / ed.scale }; };
@@ -3639,7 +3689,7 @@ window.nextAiedueKoreanPdfPage = async function nextAiedueKoreanPdfPage() { cons
 window.clearAiedueKoreanPdfPage = function clearAiedueKoreanPdfPage() { const ed = koreanCloudState.editor; if (!ed) return; ed.overlays[ed.page] = { paths: [], texts: [] }; redrawAiedueKoreanPdfOverlay(); }
 window.saveAiedueKoreanPdfEditor = async function saveAiedueKoreanPdfEditor() {
     const ed = koreanCloudState.editor; if (!ed) return; const saveBtn = document.getElementById('korean-cloud-pdf-save'); if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
-    try { const originalBytes = await fetch(ed.url).then((r) => r.arrayBuffer()); const pdfDoc = await PDFDocument.load(originalBytes); const pages = pdfDoc.getPages(); for (const [pageNumStr, overlay] of Object.entries(ed.overlays)) { if (!overlay.paths?.length && !overlay.texts?.length) continue; const pageNum = Number(pageNumStr); const page = pages[pageNum - 1]; const pdfPage = await ed.pdf.getPage(pageNum); const viewport = pdfPage.getViewport({ scale: 2 }); const tmp = document.createElement('canvas'); tmp.width = viewport.width; tmp.height = viewport.height; const tmpCtx = tmp.getContext('2d'); const scale = 2; tmpCtx.clearRect(0, 0, tmp.width, tmp.height); overlay.paths.forEach((path) => { tmpCtx.beginPath(); tmpCtx.strokeStyle = path.color; tmpCtx.lineWidth = path.width * scale; tmpCtx.lineCap = 'round'; tmpCtx.lineJoin = 'round'; tmpCtx.moveTo(path.points[0].x * scale, path.points[0].y * scale); path.points.slice(1).forEach((p) => tmpCtx.lineTo(p.x * scale, p.y * scale)); tmpCtx.stroke(); }); overlay.texts.forEach((t) => { tmpCtx.fillStyle = t.color; tmpCtx.font = `${t.size * scale}px "Noto Sans KR", sans-serif`; tmpCtx.fillText(t.text, t.x * scale, t.y * scale); }); const png = await pdfDoc.embedPng(tmp.toDataURL('image/png')); page.drawImage(png, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() }); } const bytes = await pdfDoc.save(); await uploadBytes(ed.ref, new Blob([bytes], { type: 'application/pdf' }), { contentType: 'application/pdf' }); ed.overlays = {}; showModal('PDF가 저장되었어요.'); await refreshAiedueKoreanCloudListForOwner(ed.ownerId); }
+    try { const originalBytes = ed.originalBytes ? ed.originalBytes.slice(0) : await fetch(ed.url, { mode: 'cors', cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error(`PDF 다운로드 실패 ${r.status}`); return r.arrayBuffer(); }); const pdfDoc = await PDFDocument.load(originalBytes); const pages = pdfDoc.getPages(); for (const [pageNumStr, overlay] of Object.entries(ed.overlays)) { if (!overlay.paths?.length && !overlay.texts?.length) continue; const pageNum = Number(pageNumStr); const page = pages[pageNum - 1]; const pdfPage = await ed.pdf.getPage(pageNum); const viewport = pdfPage.getViewport({ scale: 2 }); const tmp = document.createElement('canvas'); tmp.width = viewport.width; tmp.height = viewport.height; const tmpCtx = tmp.getContext('2d'); const scale = 2; tmpCtx.clearRect(0, 0, tmp.width, tmp.height); overlay.paths.forEach((path) => { tmpCtx.beginPath(); tmpCtx.strokeStyle = path.color; tmpCtx.lineWidth = path.width * scale; tmpCtx.lineCap = 'round'; tmpCtx.lineJoin = 'round'; tmpCtx.moveTo(path.points[0].x * scale, path.points[0].y * scale); path.points.slice(1).forEach((p) => tmpCtx.lineTo(p.x * scale, p.y * scale)); tmpCtx.stroke(); }); overlay.texts.forEach((t) => { tmpCtx.fillStyle = t.color; tmpCtx.font = `${t.size * scale}px "Noto Sans KR", sans-serif`; tmpCtx.fillText(t.text, t.x * scale, t.y * scale); }); const png = await pdfDoc.embedPng(tmp.toDataURL('image/png')); page.drawImage(png, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() }); } const bytes = await pdfDoc.save(); await uploadBytes(ed.ref, new Blob([bytes], { type: 'application/pdf' }), { contentType: 'application/pdf' }); ed.originalBytes = bytes.buffer?.slice ? bytes.buffer.slice(0) : bytes; ed.overlays = {}; showModal('PDF가 저장되었어요.'); await refreshAiedueKoreanCloudListForOwner(ed.ownerId); }
     catch (error) { console.error('Aiedue Korean PDF save failed:', error); showModal('PDF 저장 중 오류가 발생했어요.'); }
     finally { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; } }
 }
@@ -6778,8 +6828,20 @@ function createDictationMissionSession() {
     return createCurricularDifficultySession(getCurrentCurricularDan());
 }
 function getCurricularCanvasGuide(item = {}) {
-    if (activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular') return '';
+    if (activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular') {
+        return item.retryMode ? String(item.answer || item.sentence || item.word || '').trim() : '';
+    }
     return String(item.canvasGuide || item.answer || item.word || item.sentence || '').trim();
+}
+function getCurricularItemScore(item = {}) {
+    if (Number.isFinite(Number(item.score))) return Math.max(0, Math.min(1, Number(item.score)));
+    if (item.correct === true) return 1;
+    if (item.retryCorrect === true) return 0.5;
+    return 0;
+}
+function formatCurricularScore(value = 0) {
+    const num = Math.max(0, Number(value) || 0);
+    return Number.isInteger(num) ? String(num) : num.toFixed(1).replace(/\.0$/, '');
 }
 function getCurricularMissionGradeResult(item = {}, index = 0) {
     return item.aiResult || {
@@ -6798,18 +6860,20 @@ function renderCurricularWritingCanvasCard(item, index, { compact = false } = {}
     const guide = getCurricularCanvasGuide(item);
     const active = index === Number(activeDictationSession?.currentIndex || 0);
     const status = isMission
-        ? (item.aiGrading ? 'AI 채점 중...' : (item.aiGraded ? (item.aiResult?.correct ? '✅ AI 정답' : '🟡 AI 확인 필요') : '아직 채점 전'))
+        ? (item.aiGrading ? 'AI 채점 중...' : (item.retryMode ? '📝 정답을 보고 한 번 다시 써요' : (item.aiGraded ? (getCurricularItemScore(item.aiResult || item) > 0 ? `✅ ${formatCurricularScore(getCurricularItemScore(item.aiResult || item))}점` : '🟡 오답') : '아직 채점 전')))
         : (item.traceComplete ? '✅ 완료' : (item.coverage ? `${Math.round(item.coverage * 100)}% 채움` : '아직 연습 전'));
+    const retryAnswer = isMission && item.retryMode ? String(item.answer || item.sentence || item.word || '').trim() : '';
     const hint = isMission ? '' : (item.hintText || item.displayText || escapeHtml(guide));
     const cardTitle = activeDictationSession?.kind === 'trace'
         ? '단어 따라쓰기'
         : `${Number(item.difficulty || activeDictationSession?.difficulty || 1)}단 받아쓰기`;
-    const confirmText = isMission ? (item.aiGrading ? '채점중' : (item.aiGraded ? '다시 확인' : '확인')) : '확인';
-    return `<div class="rounded-3xl bg-white border-2 ${item.aiGraded || item.traceComplete ? 'border-green-200 bg-green-50/60' : (active ? 'border-red-300 shadow-lg shadow-red-100' : 'border-red-100')} p-5" data-curricular-card="${index}">
+    const confirmText = isMission ? (item.aiGrading ? '채점중' : (item.retryMode ? '다시 채점' : (item.aiGraded ? '다시 확인' : '확인'))) : '확인';
+    return `<div class="rounded-3xl bg-white border-2 ${item.retryMode ? 'border-orange-300 bg-orange-50/70 shadow-lg shadow-orange-100' : (item.aiGraded || item.traceComplete ? 'border-green-200 bg-green-50/60' : (active ? 'border-red-300 shadow-lg shadow-red-100' : 'border-red-100'))} p-5" data-curricular-card="${index}">
         <div class="flex items-start justify-between gap-3 mb-3">
             <div>
                 <div class="text-sm font-black text-red-400">${index + 1}번 ${cardTitle}</div>
                 ${hint ? `<div class="mt-1 text-xl md:text-2xl font-black text-[#2c3e50]">${hint}</div>` : ''}
+                ${retryAnswer ? `<div class="mt-2 rounded-2xl bg-white border-2 border-orange-200 px-4 py-3 text-lg md:text-xl font-black text-orange-700">정답: ${escapeHtml(retryAnswer)}</div>` : ''}
             </div>
             <button type="button" id="curricular-confirm-btn-${index}" class="btn-primary bg-red-500 shadow-red-200 px-5 py-3 whitespace-nowrap" onclick="confirmCurricularCanvasItem(${index})" ${item.aiGrading ? 'disabled' : ''}>${confirmText}</button>
         </div>
@@ -6835,7 +6899,9 @@ function renderDictationSessionList() {
             const graded = activeDictationSession.graded?.[index];
             const difficulty = Number(activeDictationSession.difficulty || item.difficulty || 1);
             if (graded) {
-                return `<div class="rounded-3xl border-2 ${graded.correct ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'} p-4"><div class="flex items-center justify-between gap-2"><div class="font-black text-red-500">${index + 1}번 ${graded.correct ? '⭕ 정답' : '🟡 오답'}</div><div class="text-xs font-bold text-gray-400">${difficulty}단</div></div><div class="mt-3 text-sm font-bold text-gray-500">정답</div><div class="text-xl font-black text-[#2c3e50]">${escapeHtml(graded.answer || graded.sentence)}</div><div class="mt-3 text-sm font-bold text-gray-500">학생이 쓴 답</div><div class="text-lg font-black ${graded.correct ? 'text-green-700' : 'text-yellow-700'}">${escapeHtml(graded.written || '캔버스 채움 기록')}</div><p class="mt-2 text-sm text-gray-500 font-bold">${escapeHtml(graded.analysis || '')}</p></div>`;
+                const score = getCurricularItemScore(graded);
+                const label = graded.correct ? '⭕ 정답' : (graded.retryCorrect ? '🟢 재도전 0.5점' : '🟡 오답');
+                return `<div class="rounded-3xl border-2 ${score > 0 ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'} p-4"><div class="flex items-center justify-between gap-2"><div class="font-black text-red-500">${index + 1}번 ${label}</div><div class="text-xs font-bold text-gray-400">${difficulty}단 · ${formatCurricularScore(score)}점</div></div><div class="mt-3 text-sm font-bold text-gray-500">정답</div><div class="text-xl font-black text-[#2c3e50]">${escapeHtml(graded.answer || graded.sentence)}</div><div class="mt-3 text-sm font-bold text-gray-500">학생이 쓴 답</div><div class="text-lg font-black ${score > 0 ? 'text-green-700' : 'text-yellow-700'}">${escapeHtml(graded.written || '캔버스 채움 기록')}</div><p class="mt-2 text-sm text-gray-500 font-bold">${escapeHtml(graded.analysis || '')}</p></div>`;
             }
             const label = activeDictationSession.mode === 'curricular'
                 ? (difficulty === 1 ? '단어 듣고 쓰기' : (difficulty === 2 ? '힌트 보고 단어 쓰기' : '문장 전체 받아쓰기'))
@@ -7020,16 +7086,37 @@ function updateCurricularWritingActionButtons() {
     if (activeDictationSession.kind === 'mission' && activeDictationSession.mode === 'curricular' && !activeDictationSession.autoSaved) {
         const current = Number(activeDictationSession.currentIndex || 0);
         const last = current >= activeDictationSession.items.length - 1;
+        const currentItem = activeDictationSession.items[current];
+        const currentGraded = Boolean(currentItem?.aiGraded);
         const allGraded = activeDictationSession.items.every((item) => item.aiGraded);
         if (saveBtn) saveBtn.classList.add('hidden');
         if (gradeBtn) gradeBtn.classList.add('hidden');
         if (prevBtn) { prevBtn.classList.toggle('hidden', current <= 0); prevBtn.disabled = current <= 0; }
-        if (nextBtn) { nextBtn.classList.toggle('hidden', last && !allGraded); nextBtn.disabled = last; nextBtn.innerText = '다음'; }
+        if (nextBtn) { nextBtn.classList.toggle('hidden', last); nextBtn.disabled = !currentGraded || last; nextBtn.innerText = currentItem?.retryMode ? '재채점 후 다음' : '다음'; }
         if (completeBtn) { completeBtn.classList.toggle('hidden', !allGraded); completeBtn.disabled = !allGraded; }
     }
 }
 function hasCurricularCanvasInk(canvas) {
     return Array.isArray(canvas?._curricularStrokes) && canvas._curricularStrokes.some((stroke) => Array.isArray(stroke) && stroke.length > 1);
+}
+function clearCurricularCanvasStrokesOnly(index) {
+    const item = activeDictationSession?.items?.[index];
+    const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
+    if (!item || !canvas) return;
+    item.strokes = [];
+    canvas._curricularStrokes = [];
+    drawCurricularCanvasGuide(canvas, getCurricularCanvasGuide(item));
+}
+function startCurricularRetryMode(item, index, firstResult = {}) {
+    item.retryMode = true;
+    item.retryUsed = false;
+    item.firstAiResult = firstResult;
+    item.aiGraded = false;
+    item.traceComplete = false;
+    item.aiResult = { ...firstResult, correct: false, retryPending: true, score: 0 };
+    clearCurricularCanvasStrokesOnly(index);
+    showAiedueAutoToast('한 번 더 써봐요', '정답을 보고 따라 쓴 뒤 다시 채점할 수 있어요. 점수는 맞으면 0.5점이에요.', 4200);
+    renderDictationSessionList();
 }
 async function gradeCurricularCanvasItemWithAi(index) {
     const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
@@ -7050,6 +7137,8 @@ async function gradeCurricularCanvasItemWithAi(index) {
         const prompt = `초등학생이 태블릿 캔버스의 빈 칸에 손글씨로 받아쓴 이미지를 AI 시각 분석으로 채점하세요. 화면에는 정답 미리보기가 없었고, 학생은 스피커로 들은 내용을 썼습니다.\n- 1단: 정답 단어와 같으면 correct=true\n- 2단: 문장 속 빈칸 정답 단어와 같으면 correct=true\n- 3단: 정답 문장 전체와 의미/철자가 거의 같으면 correct=true\n흐린 획/삐뚤어진 초등학생 손글씨를 감안하되, 다른 단어나 누락이 있으면 false입니다.\n문제(JSON): ${JSON.stringify(target)}\n반드시 JSON만 출력하세요. 형식: {"written":"학생이 쓴 답","correct":true,"analysis":"판단 근거 1문장"}`;
         const raw = await callKoreanAiGenerate(prompt, { imageBase64: base64, imageMime: 'image/png', printTimeout: '4m' });
         const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
+        const isRetryAttempt = item.retryMode === true;
+        const rawCorrect = parsed.correct === true;
         const result = {
             sentence: item.sentence || item.answer || item.word,
             answer: item.answer || item.sentence || item.word,
@@ -7057,26 +7146,36 @@ async function gradeCurricularCanvasItemWithAi(index) {
             difficulty,
             source: item.source || 'curricular-ai-canvas',
             written: cleanKoreanSentence(parsed.written || parsed.studentAnswer || ''),
-            correct: parsed.correct === true,
+            correct: !isRetryAttempt && rawCorrect,
+            retryCorrect: isRetryAttempt && rawCorrect,
+            retryAttempted: isRetryAttempt,
+            score: isRetryAttempt ? (rawCorrect ? 0.5 : 0) : (rawCorrect ? 1 : 0),
             analysis: String(parsed.analysis || parsed.reason || '').trim() || 'AI가 캔버스 손글씨를 확인했어요.'
         };
+        if (!isRetryAttempt && !rawCorrect) {
+            startCurricularRetryMode(item, index, result);
+            return;
+        }
         item.aiResult = result;
         item.aiGraded = true;
+        item.retryMode = false;
+        item.retryUsed = isRetryAttempt || item.retryUsed;
         item.traceComplete = true;
         item.coverage = 1;
         activeDictationImageAnalysis = [activeDictationImageAnalysis, `${index + 1}번: ${raw || ''}`].filter(Boolean).join('\n---\n').slice(-12000);
         if (status) {
-            status.innerText = result.correct ? `✅ AI 정답 · ${result.written || '손글씨 확인'}` : `🟡 다시 확인 · ${result.written || '읽기 어려움'} · ${result.analysis}`;
-            status.className = result.correct ? 'text-green-600' : 'text-yellow-600';
+            const score = getCurricularItemScore(result);
+            status.innerText = score > 0 ? `✅ ${formatCurricularScore(score)}점 · ${result.written || '손글씨 확인'}` : `🟡 오답 · ${result.written || '읽기 어려움'} · ${result.analysis}`;
+            status.className = score > 0 ? 'text-green-600' : 'text-yellow-600';
         }
-        showAiedueAutoToast(result.correct ? '정답이에요!' : 'AI 채점 완료', result.analysis || `${index + 1}번 채점이 끝났어요.`, 2600);
+        showAiedueAutoToast(getCurricularItemScore(result) > 0 ? (result.retryCorrect ? '재도전 성공! 0.5점' : '정답이에요!') : '오답으로 기록돼요', result.analysis || `${index + 1}번 채점이 끝났어요.`, 2600);
     } catch (error) {
         console.error('curricular canvas AI grading failed', error);
         if (status) { status.innerText = 'AI 채점에 실패했어요. 다시 확인을 눌러주세요.'; status.className = 'text-red-500'; }
         showModal(`AI 채점에 실패했어요: ${escapeHtml(error.message || error)}`);
     } finally {
         item.aiGrading = false;
-        if (button) { button.disabled = false; button.innerText = item.aiGraded ? '다시 확인' : original; }
+        if (button) { button.disabled = false; button.innerText = item.retryMode ? '다시 채점' : (item.aiGraded ? '다시 확인' : original); }
         updateCurricularWritingActionButtons();
     }
 }
@@ -7107,14 +7206,18 @@ window.clearCurricularCanvasItem = function(index) {
     item.strokes = [];
     item.coverage = 0;
     item.traceComplete = false;
-    item.aiGraded = false;
-    item.aiResult = null;
-    item.written = '';
-    item.correct = false;
+    if (!item.retryMode) {
+        item.aiGraded = false;
+        item.aiResult = null;
+        item.written = '';
+        item.correct = false;
+        item.retryCorrect = false;
+        item.score = 0;
+    }
     canvas._curricularStrokes = [];
     drawCurricularCanvasGuide(canvas, getCurricularCanvasGuide(item));
     const status = document.getElementById(`curricular-trace-status-${index}`);
-    if (status) { status.innerText = '다시 연습해요.'; status.className = 'text-gray-400'; }
+    if (status) { status.innerText = item.retryMode ? '정답을 보고 다시 써요.' : '다시 연습해요.'; status.className = item.retryMode ? 'text-orange-600' : 'text-gray-400'; }
     updateCurricularWritingActionButtons();
 }
 function gradeCurricularCanvasSession() {
@@ -7457,7 +7560,23 @@ window.openDictationBankCamera = function openDictationBankCamera(options = {}) 
     setTimeout(() => window.startWordBankCamera(), 80);
 }
 
-window.closeWordBankCameraModal = function closeWordBankCameraModal() {
+async function finalizeWordBankCameraResultOnClose() {
+    const afterSave = pendingWordBankCameraAfterSave;
+    if (!pendingWordBankCameraReward?.ready) return afterSave;
+    pendingWordBankCameraReward.ready = false;
+    try {
+        setWordBankCameraStatus('포인트 지급중~', true);
+        await awardLessonPhotoPoints();
+    } catch (error) {
+        console.error('lesson photo reward failed on close', error);
+        showAiedueAutoToast('단어는 저장됐어요', '포인트 지급 확인은 잠시 후 다시 확인해주세요.', 2600);
+    } finally {
+        pendingWordBankCameraReward = null;
+    }
+    return afterSave;
+}
+window.closeWordBankCameraModal = async function closeWordBankCameraModal() {
+    const afterSave = await finalizeWordBankCameraResultOnClose();
     stopWordBankCamera();
     const modal = document.getElementById('word-bank-camera-modal');
     if (modal) {
@@ -7465,6 +7584,10 @@ window.closeWordBankCameraModal = function closeWordBankCameraModal() {
         modal.setAttribute('aria-hidden', 'true');
     }
     document.body.classList.remove('modal-open');
+    pendingWordBankCameraAfterSave = null;
+    if (afterSave === 'curricular-writing') {
+        window.startCurricularTraceStep();
+    }
 }
 
 function renderWordBankCameraResult(words, duplicateCount = 0) {
@@ -7473,9 +7596,12 @@ function renderWordBankCameraResult(words, duplicateCount = 0) {
     const retry = document.getElementById('word-bank-camera-retry-btn');
     if (!result) return;
     const chips = words.map((word) => `<span>${escapeHtml(word)}</span>`).join('');
-    result.innerHTML = `<h4>AI 2차 선별 완료</h4><p class="mb-3">아래 단어들을 단어 은행에 저장했어요.</p><div class="word-bank-camera-chip-list">${chips}</div>${duplicateCount ? `<p class="mt-3 text-xs text-emerald-700">중복 단어 ${duplicateCount}개는 제외했어요.</p>` : ''}<p class="mt-4 text-sm text-emerald-800">확인을 누르면 팝업을 닫고 포인트를 지급해요.</p>`;
+    const closeHelp = pendingWordBankCameraAfterSave === 'curricular-writing'
+        ? '오른쪽 위 X나 바깥을 누르면 2스텝 따라쓰기로 넘어가요.'
+        : '오른쪽 위 X나 바깥을 누르면 닫혀요.';
+    result.innerHTML = `<h4>AI 2차 선별 완료</h4><p class="mb-3">아래 단어들을 단어 은행에 저장했어요.</p><div class="word-bank-camera-chip-list word-bank-camera-chip-grid">${chips}</div>${duplicateCount ? `<p class="mt-3 text-xs text-emerald-700">중복 단어 ${duplicateCount}개는 제외했어요.</p>` : ''}<p class="mt-4 text-sm text-emerald-800">${closeHelp}</p>`;
     result.classList.remove('hidden');
-    confirm?.classList.remove('hidden');
+    confirm?.classList.add('hidden');
     retry?.classList.remove('hidden');
 }
 
@@ -7561,26 +7687,8 @@ window.retryWordBankCamera = function retryWordBankCamera() {
     window.startWordBankCamera();
 }
 
-window.confirmWordBankCameraResult = async function confirmWordBankCameraResult() {
-    const confirm = document.getElementById('word-bank-camera-confirm-btn');
-    if (confirm) confirm.disabled = true;
-    try {
-        if (pendingWordBankCameraReward?.ready) {
-            setWordBankCameraStatus('포인트 지급중~', true);
-            await awardLessonPhotoPoints();
-            pendingWordBankCameraReward = null;
-        }
-        const afterSave = pendingWordBankCameraAfterSave;
-        window.closeWordBankCameraModal();
-        if (afterSave === 'curricular-writing') {
-            window.startCurricularTraceStep();
-        }
-    } catch (error) {
-        console.error('lesson photo reward failed', error);
-        setWordBankCameraStatus('단어는 저장됐지만 포인트 지급 확인에 실패했어요. 잠시 후 다시 확인을 눌러주세요.');
-    } finally {
-        if (confirm) confirm.disabled = false;
-    }
+window.confirmWordBankCameraResult = function confirmWordBankCameraResult() {
+    window.closeWordBankCameraModal();
 }
 
 async function runDictationOcr(file) {
@@ -7873,6 +7981,12 @@ document.getElementById('word-bank-photo-input')?.addEventListener('change', asy
     const file = event.target.files?.[0]; if (!file) return;
     await processWordBankCameraPhoto(file);
 });
+const wordBankCameraModal = document.getElementById('word-bank-camera-modal');
+if (wordBankCameraModal) {
+    wordBankCameraModal.addEventListener('click', (event) => {
+        if (event.target === wordBankCameraModal) window.closeWordBankCameraModal();
+    });
+}
 
 window.saveDictationBankPhoto = async function() {
     const text = document.getElementById('dictation-ocr-text').value;
@@ -7930,7 +8044,7 @@ function applyCurricularWritingStats(graded, difficulty, now) {
     const step = normalizeCurricularStepStats(state.stepStats?.[stepKey]);
     step.rounds += 1;
     step.attempts += graded.length;
-    step.corrects += graded.filter((item) => item.correct).length;
+    step.corrects += graded.reduce((sum, item) => sum + getCurricularItemScore(item), 0);
     step.wrongs = Math.max(0, step.attempts - step.corrects);
     const wordStats = { ...(state.wordStats || {}), ...(dictationPortfolio.koreanBank?.wordStats || {}) };
     graded.forEach((item) => {
@@ -7939,7 +8053,7 @@ function applyCurricularWritingStats(graded, difficulty, now) {
         const current = wordStats[word] || { word, step1: normalizeCurricularStepStats(), step2: normalizeCurricularStepStats(), step3: normalizeCurricularStepStats(), savedAt: now };
         const target = normalizeCurricularStepStats(current[stepKey]);
         target.attempts += 1;
-        target.corrects += item.correct ? 1 : 0;
+        target.corrects += getCurricularItemScore(item);
         target.wrongs = Math.max(0, target.attempts - target.corrects);
         current[stepKey] = target;
         current.lastTriedAt = now;
@@ -7955,14 +8069,14 @@ async function saveMissionGradingResult() {
     const difficulty = Number(activeDictationSession.difficulty || 1);
     upsertWrongOrCompleted(activeDictationSession.graded, now);
     applyCurricularWritingStats(activeDictationSession.graded, difficulty, now);
-    const correctCount = activeDictationSession.graded.filter((item) => item.correct).length;
+    const correctCount = activeDictationSession.graded.reduce((sum, item) => sum + getCurricularItemScore(item), 0);
     const total = activeDictationSession.graded.length;
     const accuracy = total ? (correctCount / total) * 100 : 0;
     currentUserDictationStep += 1;
     dictationPortfolio.hasCompletedOnce = true;
     dictationPortfolio.dictationLocked = false;
     const sessionId = activeDictationSession.startedAt || now;
-    const record = { id: sessionId, mode: activeDictationSession.mode || 'curricular', practiceReview: !!activeDictationSession.practiceReview, difficulty, total, correctCount, wrongCount: total - correctCount, accuracy: Math.round(accuracy), items: activeDictationSession.graded, words: activeDictationSession.items?.map((item) => item.word).filter(Boolean) || getCurricularWords(), aiAnalysis: activeDictationImageAnalysis, photo, savedAt: now };
+    const record = { id: sessionId, mode: activeDictationSession.mode || 'curricular', practiceReview: !!activeDictationSession.practiceReview, difficulty, total, correctCount, wrongCount: Math.max(0, total - correctCount), accuracy: Math.round(accuracy), items: activeDictationSession.graded, words: activeDictationSession.items?.map((item) => item.word).filter(Boolean) || getCurricularWords(), aiAnalysis: activeDictationImageAnalysis, photo, savedAt: now };
     dictationPortfolio.missions = { ...(dictationPortfolio.missions || {}), [now]: record };
     const state = getCurricularWritingState();
     dictationPortfolio.curricularWriting.history = [record, ...(state.history || [])].slice(0, 200);
@@ -8015,13 +8129,15 @@ function upsertWrongOrCompleted(result, now) {
     const wrongBank = [...(dictationPortfolio.wrongBank || [])]; const completedBank = [...(dictationPortfolio.completedBank || [])]; const removeFrom = (arr, sentence) => arr.filter((item) => item.sentence !== sentence);
     for (const graded of result) { const sentence = cleanKoreanSentence(graded.sentence); const existingWrong = wrongBank.find((item) => item.sentence === sentence); const existingDone = completedBank.find((item) => item.sentence === sentence);
         if (graded.correct) { const item = existingWrong || existingDone || { sentence, source: graded.source, wrongCount: 0, correctCount: 0, savedAt: now }; item.correctCount = (item.correctCount || 0) + 1; item.lastTriedAt = now; if (item.correctCount >= 3 || !existingWrong) { completedBank.splice(0, completedBank.length, ...removeFrom(completedBank, sentence)); completedBank.unshift(item); wrongBank.splice(0, wrongBank.length, ...removeFrom(wrongBank, sentence)); } else if (existingWrong) { existingWrong.correctCount = item.correctCount; existingWrong.lastTriedAt = now; } }
-        else { const item = existingWrong || { sentence, source: graded.source, wrongCount: 0, correctCount: 0, savedAt: now }; item.wrongCount = (item.wrongCount || 0) + 1; item.lastTriedAt = now; if (!existingWrong) wrongBank.unshift(item); completedBank.splice(0, completedBank.length, ...removeFrom(completedBank, sentence)); }
+        else { const item = existingWrong || { sentence, source: graded.source, wrongCount: 0, correctCount: 0, savedAt: now }; item.wrongCount = (item.wrongCount || 0) + 1; if (graded.retryCorrect) item.correctCount = (item.correctCount || 0) + 0.5; item.lastTriedAt = now; if (!existingWrong) wrongBank.unshift(item); completedBank.splice(0, completedBank.length, ...removeFrom(completedBank, sentence)); }
     }
     dictationPortfolio.wrongBank = wrongBank.sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0)).slice(0, 100); dictationPortfolio.completedBank = completedBank.slice(0, 150);
 }
 window.startNextDictationMission = function() {
     if (activeDictationSession?.kind === 'mission' && activeDictationSession.mode === 'curricular' && !activeDictationSession.autoSaved) {
         const current = Number(activeDictationSession.currentIndex || 0);
+        const currentItem = activeDictationSession.items[current];
+        if (!currentItem?.aiGraded) { showModal(currentItem?.retryMode ? '다시 채점을 먼저 해주세요.' : '확인 버튼으로 이 문제를 먼저 채점해주세요.'); return; }
         if (current < activeDictationSession.items.length - 1) {
             activeDictationSession.currentIndex = current + 1;
             activeDictationItem = { prompt: activeDictationSession.items[activeDictationSession.currentIndex].audioText || activeDictationSession.items[activeDictationSession.currentIndex].sentence, step: 'curricular' };
@@ -8046,9 +8162,9 @@ window.completeCurricularMission = async function() {
         return;
     }
     activeDictationSession.graded = gradeCurricularCanvasSession();
-    const correctCount = activeDictationSession.graded.filter((item) => item.correct).length;
+    const correctCount = activeDictationSession.graded.reduce((sum, item) => sum + getCurricularItemScore(item), 0);
     document.getElementById('dictation-answer-box').classList.remove('hidden');
-    document.getElementById('dictation-answer-text').innerHTML = `<div class="text-red-500 font-black">총 ${correctCount}/${activeDictationSession.graded.length}개 정답</div><p class="mt-2 text-sm text-gray-500 font-bold">확인 버튼으로 받은 AI 사진 채점 결과를 나의 기록과 단어 은행 통계에 저장했어요. 3단 총점 50% 이상이면 경험치 100% 보상이 적용됩니다.</p>`;
+    document.getElementById('dictation-answer-text').innerHTML = `<div class="text-red-500 font-black">총 ${formatCurricularScore(correctCount)}/${activeDictationSession.graded.length}점</div><p class="mt-2 text-sm text-gray-500 font-bold">첫 채점 오답 뒤 재도전으로 맞힌 문항은 오답 기록은 유지하고 0.5점만 반영했어요. 3단 총점 50% 이상이면 경험치 100% 보상이 적용됩니다.</p>`;
     await saveMissionGradingResult();
     updateCurricularWritingActionButtons();
     const completeBtn = document.getElementById('dictation-complete-btn');
@@ -8065,16 +8181,22 @@ window.completeDictationItem = async function() {
         const traceWords = activeDictationSession.items.map((item) => item.word).filter(Boolean);
         mergeKoreanBank({ words: traceWords.length ? traceWords : getCurricularWords() });
         await persistDictationData();
-        if (activeDictationSession.practiceReview && activeDictationSession.nextMissionSession) {
-            configureDictationWorkspace(activeDictationSession.nextMissionSession, { badge: '교과 맞춤쓰기 연습하기', title: '오답 3스텝 받아쓰기', desc: '새 문장을 만들지 않고 기존에 틀렸던 단어/문장을 그대로 듣고 빈 칸에 다시 써요.' });
-        } else {
-            configureDictationWorkspace(createDictationMissionSession(), { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
+        showActivityLoading('3스텝 받아쓰기 문제를 준비하는 중...');
+        await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 40)));
+        try {
+            if (activeDictationSession.practiceReview && activeDictationSession.nextMissionSession) {
+                configureDictationWorkspace(activeDictationSession.nextMissionSession, { badge: '교과 맞춤쓰기 연습하기', title: '오답 3스텝 받아쓰기', desc: '새 문장을 만들지 않고 기존에 틀렸던 단어/문장을 그대로 듣고 빈 칸에 다시 써요.' });
+            } else {
+                configureDictationWorkspace(createDictationMissionSession(), { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
+            }
+        } finally {
+            setTimeout(hideActivityLoading, 220);
         }
         return;
     }
     showModal('미션 채점 결과는 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
 }
-window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto">${renderCurricularWordBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">각 단어에는 교과 맞춤쓰기 1·2·3단계별 정답률/오답률이 저장됩니다. 2회차부터는 오답률 높은 단어 3개를 자동 복습으로 섞어요.</p></div></div>`); }
+window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left relative pr-8"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[62vh] overflow-y-auto pr-1">${renderCurricularWordBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">각 단어에는 교과 맞춤쓰기 1·2·3단계별 정답률/오답률이 저장됩니다. 2회차부터는 오답률 높은 단어 3개를 자동 복습으로 섞어요.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
 
 window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
 window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button type="button" class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${escapeHtml(text)}</button>`).join(''); }
@@ -8490,14 +8612,26 @@ window.openTodayLiteracyMission = function() {
 window.startTodayLiteracyMission = async function(diff, type) {
     showActivityLoading('문해력 문제 로딩중...');
     try {
-        const bankWords = (dictationPortfolio.koreanBank?.words || []).slice(0, 8);
-        const prompt = generateLiteracyPrompt(diff, type, bankWords);
-        const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
-        const questionData = parseAiQuestionResponse(responseText);
+        const generationContext = buildLiteracyGenerationContext(diff, type);
+        let responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, generationContext), { printTimeout: '3m' });
+        let questionData = parseAiQuestionResponse(responseText);
         if (!questionData || !questionData.passage || !questionData.question) throw new Error("AI가 문해력 문제를 올바르게 생성하지 못했습니다.");
+
+        const coverage = countLiteracyBankWordCoverage(questionData, generationContext.primaryWords);
+        if (generationContext.primaryWords.length >= 3 && coverage < 2) {
+            const retryContext = { ...generationContext, forceDiversityRetry: true };
+            responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, retryContext), { printTimeout: '3m' });
+            const retryQuestionData = parseAiQuestionResponse(responseText);
+            if (retryQuestionData?.passage && retryQuestionData?.question) {
+                questionData = retryQuestionData;
+            }
+        }
+
         questionData.difficulty = diff;
         questionData.type = type;
         questionData.literacyDan = getLiteracyDanPlan().dan;
+        questionData.sourceBankWords = generationContext.primaryWords;
+        questionData.diversityFrame = generationContext.frame;
         hideActivityLoading();
         setupLiteracyWorkspace(questionData, false);
     } catch (e) {
@@ -8514,9 +8648,15 @@ window.nextLiteracyQuestion = function() {
 
 const AIEDUE_LITERACY_FALLBACK_TOPICS = [
     '학교 방송', '비 오는 등굣길', '도서관 약속', '운동회 준비', '잃어버린 물건 찾기',
-    '친구에게 사과하기', '동아리 발표', '가족 여행 일기', '시장 심부름', '새 전학생 맞이'
+    '친구에게 사과하기', '동아리 발표', '가족 여행 일기', '시장 심부름', '새 전학생 맞이',
+    '과학 관찰 기록', '마을 쓰레기 줄이기', '급식실 예절', '반려동물 돌보기', '텃밭 식물 기르기',
+    '안전한 횡단보도', '박물관 체험학습', '학급 회의', '환경 보호 약속', '운동장 놀이 규칙'
+];
+const AIEDUE_LITERACY_TEXT_FRAMES = [
+    '생활문', '관찰 기록', '안내문', '일기', '설명문', '짧은 기사', '토론 전 글', '편지', '체험학습 기록', '학급 회의록'
 ];
 let literacyFallbackTopicIndex = Math.floor(Math.random() * AIEDUE_LITERACY_FALLBACK_TOPICS.length);
+let literacyTextFrameIndex = Math.floor(Math.random() * AIEDUE_LITERACY_TEXT_FRAMES.length);
 
 function pickLiteracyFallbackTopic() {
     const topic = AIEDUE_LITERACY_FALLBACK_TOPICS[literacyFallbackTopicIndex % AIEDUE_LITERACY_FALLBACK_TOPICS.length];
@@ -8524,11 +8664,72 @@ function pickLiteracyFallbackTopic() {
     return topic;
 }
 
-function generateLiteracyPrompt(difficulty, type, bankWords) {
-    const hasBankWords = bankWords.length > 0;
+function pickLiteracyTextFrame() {
+    const frame = AIEDUE_LITERACY_TEXT_FRAMES[literacyTextFrameIndex % AIEDUE_LITERACY_TEXT_FRAMES.length];
+    literacyTextFrameIndex += 1;
+    return frame;
+}
+
+function shuffleLiteracyItems(items = []) {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
+function getRecentLiteracyTexts(limit = 8) {
+    const history = Array.isArray(literacyPortfolio?.history) ? literacyPortfolio.history : [];
+    return history.slice(0, limit)
+        .map((item) => `${item?.passage || ''} ${item?.question || ''}`.replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+}
+
+function pickDiverseLiteracyWords(words, count, recentTexts = []) {
+    const cleanWords = Array.from(new Set((words || []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)));
+    const recentJoined = recentTexts.join(' ');
+    const recentSet = new Set(cleanWords.filter((word) => recentJoined.includes(word)));
+    const freshWords = shuffleLiteracyItems(cleanWords.filter((word) => !recentSet.has(word)));
+    const recentWords = shuffleLiteracyItems(cleanWords.filter((word) => recentSet.has(word)));
+    return [...freshWords, ...recentWords].slice(0, Math.min(count, cleanWords.length));
+}
+
+function buildLiteracyGenerationContext(difficulty, type) {
+    const allBankWords = Array.from(new Set((dictationPortfolio.koreanBank?.words || []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, 300);
+    const recentTexts = getRecentLiteracyTexts(8);
+    const primaryCounts = { easy: 3, normal: 4, hard: 5, expert: 6 };
+    const primaryCount = primaryCounts[difficulty] || 4;
+    const primaryWords = pickDiverseLiteracyWords(allBankWords, primaryCount, recentTexts);
+    const primarySet = new Set(primaryWords);
+    const supportWords = pickDiverseLiteracyWords(allBankWords.filter((word) => !primarySet.has(word)), 12, recentTexts);
+    const frame = pickLiteracyTextFrame();
+    const fallbackTopic = pickLiteracyFallbackTopic();
+    const recentAvoidList = recentTexts.slice(0, 5).map((text) => text.slice(0, 140));
+    const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    return { difficulty, type, allBankWords, primaryWords, supportWords, frame, fallbackTopic, recentAvoidList, seed, forceDiversityRetry: false };
+}
+
+function countLiteracyBankWordCoverage(questionData = {}, words = []) {
+    const text = `${questionData.passage || ''} ${questionData.question || ''} ${(questionData.options || []).join(' ')} ${questionData.answer || ''} ${questionData.sampleAnswer || ''}`;
+    return (words || []).filter((word) => word && text.includes(word)).length;
+}
+
+function generateLiteracyPrompt(difficulty, type, generationContext = {}) {
+    const primaryWords = Array.isArray(generationContext.primaryWords) ? generationContext.primaryWords : [];
+    const supportWords = Array.isArray(generationContext.supportWords) ? generationContext.supportWords : [];
+    const recentAvoidList = Array.isArray(generationContext.recentAvoidList) ? generationContext.recentAvoidList : [];
+    const hasBankWords = primaryWords.length > 0 || supportWords.length > 0;
+    const mustUseCount = Math.min(primaryWords.length, difficulty === 'easy' ? 2 : 3);
+    const recentGuide = recentAvoidList.length
+        ? `\n4. 최근 나온 지문/문제와 반복 금지: 아래 최근 소재·문장 흐름과 비슷한 상황, 제목, 결말, 질문을 피하세요.\n   최근 기록: ${recentAvoidList.map((text, idx) => `${idx + 1}) ${text}`).join(' / ')}`
+        : '';
+    const retryGuide = generationContext.forceDiversityRetry
+        ? `\n5. 재생성 사유: 직전 결과가 단어 은행을 거의 반영하지 못했습니다. 이번에는 핵심 단어를 지문 본문에 직접 넣고, 이전과 완전히 다른 장소·상황·질문으로 만드세요.`
+        : '';
     const sourceGuide = hasBankWords
-        ? `3. 단어 은행 반영: 아래 단어를 지문의 중심 소재로 자연스럽게 사용해 주세요.\n   단어 은행: ${bankWords.join(', ')}`
-        : `3. 생성 주제: ${pickLiteracyFallbackTopic()}\n   단어 은행이 비어 있으므로 위 주제를 중심 소재로 사용하되, 문제 양식은 현재 에이두 한글 문해력 양식을 그대로 따르세요.`;
+        ? `3. 단어 은행 다채로운 반영\n   - 이번 문제의 핵심 단어: ${primaryWords.join(', ') || '없음'}\n   - 보조로 섞을 수 있는 단어: ${supportWords.join(', ') || '없음'}\n   - 지문 본문에 핵심 단어를 최소 ${mustUseCount || 1}개 이상 자연스럽게 포함하세요.\n   - 보조 단어도 1~3개 섞어 단어 은행의 다양한 낱말이 보이게 하세요.\n   - 단어를 단순 나열하지 말고 서로 다른 사건/정보/인물 행동 속에 녹이세요.\n   - 매번 같은 학교생활 이야기로 가지 말고, 아래 글 형식에 맞춰 소재와 배경을 바꾸세요.\n   - 이번 글 형식: ${generationContext.frame || pickLiteracyTextFrame()}${recentGuide}${retryGuide}`
+        : `3. 생성 주제: ${generationContext.fallbackTopic || pickLiteracyFallbackTopic()}\n   - 단어 은행이 비어 있으므로 위 주제를 중심 소재로 사용하되, 문제 양식은 현재 에이두 한글 문해력 양식을 그대로 따르세요.\n   - 이번 글 형식: ${generationContext.frame || pickLiteracyTextFrame()}${recentGuide}${retryGuide}`;
     let difficultyGuide = '';
     if (difficulty === 'easy') {
         difficultyGuide = '쉬움: 짧은 한 문단 지문으로, 초등학교 1~2학년이 읽기 쉬운 3문장 내외와 아주 친숙한 단어로 구성해 주세요.';
@@ -8567,6 +8768,8 @@ function generateLiteracyPrompt(difficulty, type, bankWords) {
 2. 문제 유형: ${type === 'multipleChoice' ? '객관식' : type === 'shortAnswer' ? '단답형' : '서술형'}
    - 문제 유형 기준: ${typeGuide}
 ${sourceGuide}
+6. 다양성 시드: ${generationContext.seed || Math.random().toString(36).slice(2)}
+   - 이 시드는 매번 다른 지문을 만들기 위한 값입니다. 같은 시드처럼 같은 줄거리/질문을 반복하지 마세요.
 
 반드시 백틱(\`\`\`)이나 JSON 이외의 잡다한 설명은 포함하지 말고, 순수한 JSON 텍스트만 출력하세요.`;
 }
