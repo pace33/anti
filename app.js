@@ -6662,6 +6662,7 @@ function getCurricularWords(fallback = []) {
 }
 const CURRICULAR_TRACE_CANVAS_MARKER = 'curricular-trace-coverage-20260825';
 const CURRICULAR_AI_CANVAS_GRADING_MARKER = 'curricular-ai-canvas-grading-20260825';
+const CURRICULAR_TRACE_NEXT_RESILIENT_MARKER = 'curricular-trace-next-dom-score-v74-20260826';
 function clampCurricularDan(value = 1) {
     const num = Math.floor(Number(value));
     return Math.max(1, Math.min(3, Number.isFinite(num) ? num : 1));
@@ -7098,9 +7099,21 @@ function measureCurricularCanvasCoverage(canvas) {
     }
     return guidePixels ? covered / guidePixels : 0;
 }
-function isCurricularTraceItemComplete(item = {}) {
+function isCurricularTraceItemComplete(item = {}, index = -1) {
     const coverage = Math.max(0, Number(item.coverage || 0));
-    return item.traceComplete === true || coverage >= 0.8 || Math.round(coverage * 100) >= 80;
+    return item.traceComplete === true || coverage >= 0.8 || Math.round(coverage * 100) >= 80 || getCurricularTraceDomCompletion(index).complete;
+}
+function getCurricularTraceDomCompletion(index = -1) {
+    if (index < 0 || typeof document === 'undefined') return { complete: false, percent: 0, text: '' };
+    const status = document.getElementById(`curricular-trace-status-${index}`);
+    const text = String(status?.textContent || status?.innerText || '').trim();
+    if (!text) return { complete: false, percent: 0, text };
+    const explicitComplete = /✅|완료|통과/.test(text);
+    const scores = Array.from(text.matchAll(/(\d{1,3})(?:\.\d+)?\s*(?:%|점|점수)?/g))
+        .map((match) => Number(match[1]))
+        .filter((num) => Number.isFinite(num));
+    const percent = scores.length ? Math.max(...scores) : 0;
+    return { complete: explicitComplete || percent >= 80, percent, text };
 }
 function refreshCurricularTraceCompletionFromCanvases() {
     if (activeDictationSession?.kind !== 'trace') return false;
@@ -7114,7 +7127,7 @@ function refreshCurricularTraceCompletionFromCanvases() {
                 changed = true;
             }
         }
-        const complete = isCurricularTraceItemComplete(item);
+        const complete = isCurricularTraceItemComplete(item, index);
         if (item.traceComplete !== complete) {
             item.traceComplete = complete;
             changed = true;
@@ -7133,7 +7146,7 @@ function updateCurricularWritingActionButtons() {
     if (completeBtn) completeBtn.classList.add('hidden');
     if (activeDictationSession.kind === 'trace') {
         refreshCurricularTraceCompletionFromCanvases();
-        const complete = activeDictationSession.items.every(isCurricularTraceItemComplete);
+        const complete = activeDictationSession.items.every((item, index) => isCurricularTraceItemComplete(item, index));
         if (saveBtn) { saveBtn.classList.remove('hidden'); saveBtn.disabled = false; saveBtn.innerText = complete ? '다음' : '확인하고 다음'; }
         if (nextBtn) nextBtn.classList.add('hidden');
         if (gradeBtn) gradeBtn.classList.add('hidden');
@@ -7247,7 +7260,7 @@ window.confirmCurricularCanvasItem = function(index) {
     if (!canvas || !item) return;
     const coverage = measureCurricularCanvasCoverage(canvas);
     item.coverage = coverage;
-    const ok = isCurricularTraceItemComplete(item);
+    const ok = isCurricularTraceItemComplete(item, index);
     item.traceComplete = ok;
     const status = document.getElementById(`curricular-trace-status-${index}`);
     if (status) {
@@ -8283,8 +8296,8 @@ window.completeDictationItem = async function() {
     if (activeDictationSession?.kind === 'trace') {
         const traceItems = Array.isArray(activeDictationSession.items) ? activeDictationSession.items : [];
         refreshCurricularTraceCompletionFromCanvases();
-        if (!traceItems.length || !traceItems.every(isCurricularTraceItemComplete)) {
-            const doneCount = traceItems.filter(isCurricularTraceItemComplete).length;
+        if (!traceItems.length || !traceItems.every((item, index) => isCurricularTraceItemComplete(item, index))) {
+            const doneCount = traceItems.filter((item, index) => isCurricularTraceItemComplete(item, index)).length;
             showModal(`아직 ${doneCount}/${traceItems.length || 10}개만 완료됐어요. 각 단어의 확인 버튼을 눌러 80% 이상 완료 표시가 뜨면 다음으로 갈 수 있어요.`);
             updateCurricularWritingActionButtons();
             return;
