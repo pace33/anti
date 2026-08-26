@@ -213,6 +213,7 @@ let activeDictationCameraStream = null;
 let activeWordBankCameraStream = null;
 let pendingWordBankCameraReward = null;
 let pendingWordBankCameraAfterSave = null;
+let pendingCurricularWritingRoundStart = null;
 let activeDictationPhotoFile = null;
 let activeDictationPhotoDataUrl = '';
 let activeDictationImageAnalysis = '';
@@ -6573,7 +6574,10 @@ function normalizeCurricularWriting(raw = {}) {
         },
         wordStats: normalizedWordStats,
         history: Array.isArray(raw?.history) ? raw.history.slice(0, 200) : [],
-        rewardedSessions: Array.isArray(raw?.rewardedSessions) ? raw.rewardedSessions.slice(0, 200) : []
+        rewardedSessions: Array.isArray(raw?.rewardedSessions) ? raw.rewardedSessions.slice(0, 200) : [],
+        activeRoundId: String(raw?.activeRoundId || ''),
+        photoCapturedAt: String(raw?.photoCapturedAt || ''),
+        roundReadyFromPhoto: raw?.roundReadyFromPhoto === true
     };
 }
 function normalizeDictationPortfolio(raw = {}) {
@@ -6653,7 +6657,7 @@ function getCurricularWritingState() {
 }
 function getCurricularWords(fallback = []) {
     const state = getCurricularWritingState();
-    const words = Array.from(new Set([...(state.activeWords || []), ...fallback, ...(dictationPortfolio.koreanBank?.words || [])].map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)));
+    const words = Array.from(new Set([...(state.activeWords || []), ...fallback].map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)));
     return words.slice(0, 10);
 }
 const CURRICULAR_TRACE_CANVAS_MARKER = 'curricular-trace-coverage-20260825';
@@ -6767,6 +6771,8 @@ function prepareCurricularWritingRound(candidateWords = [], newWords = []) {
     const filler = Array.from(new Set([...cleanCandidates, ...newWords, ...(dictationPortfolio.koreanBank?.words || [])].map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)))
         .filter((word) => !photoWords.includes(word) && !reviewWords.includes(word));
     const activeWords = Array.from(new Set([...photoWords, ...reviewWords, ...filler])).slice(0, 10);
+    const activeRoundId = `curricular-photo-${Date.now()}`;
+    const photoCapturedAt = new Date().toISOString();
     dictationPortfolio.curricularWriting = normalizeCurricularWriting({
         ...state,
         activeWords,
@@ -6776,6 +6782,9 @@ function prepareCurricularWritingRound(candidateWords = [], newWords = []) {
         dan: getCurrentCurricularDan(),
         wordStats: { ...(dictationPortfolio.koreanBank?.wordStats || {}), ...(state.wordStats || {}) }
     });
+    dictationPortfolio.curricularWriting.activeRoundId = activeRoundId;
+    dictationPortfolio.curricularWriting.photoCapturedAt = photoCapturedAt;
+    dictationPortfolio.curricularWriting.roundReadyFromPhoto = true;
     dictationPortfolio.koreanBank.wordStats = dictationPortfolio.curricularWriting.wordStats;
     return dictationPortfolio.curricularWriting;
 }
@@ -6844,7 +6853,7 @@ function createCurricularDifficultySession(difficulty = getCurrentCurricularDan(
         }
         return { word, sentence, answer: sentence, canvasGuide: '', hintText: '', audioText: sentence, displayText: maskCurricularKoreanUnits(sentence), source: 'curricular-step3', difficulty: 3, coverage: 0, aiGraded: false };
     });
-    return { kind: 'mission', mode: 'curricular', marker: CURRICULAR_TRACE_CANVAS_MARKER, difficulty: dan, items, currentIndex: 0, graded: null, saved: false, autoSaved: false, startedAt: new Date().toISOString() };
+    return { kind: 'mission', mode: 'curricular', marker: CURRICULAR_AI_CANVAS_GRADING_MARKER, difficulty: dan, items, currentIndex: 0, graded: null, saved: false, autoSaved: false, startedAt: new Date().toISOString() };
 }
 function createDictationMissionSession() {
     return createCurricularDifficultySession(getCurrentCurricularDan());
@@ -7341,11 +7350,33 @@ function renderMyDictationSection() {
     }).join('') : '<div class="text-center text-gray-400 font-bold py-10 md:col-span-2">아직 미션 기록이 없어요.</div>';
 }
 window.openMyDictationFromDashboard = function() { renderMyDictationSection(); showTopLevelSection('my-dictation-section'); }
-window.startCurricularTraceStep = function startCurricularTraceStep() {
-    const words = getCurricularWords();
-    if (!words.length) { openDictationBankCamera({ afterSave: 'curricular-writing' }); return; }
+window.startCurricularTraceStep = function startCurricularTraceStep(roundStart = null) {
+    const state = getCurricularWritingState();
+    const prepared = roundStart || (pendingCurricularWritingRoundStart?.ready ? pendingCurricularWritingRoundStart : null);
+    const words = Array.from(new Set((prepared?.words || []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, 10);
+    if (!prepared?.ready || !words.length) {
+        pendingCurricularWritingRoundStart = null;
+        openDictationBankCamera({ afterSave: 'curricular-writing' });
+        showAiedueAutoToast('사진부터 찍어주세요', '교과 맞춤쓰기는 새 노트 사진 분석이 끝난 뒤 2스텝이 시작돼요.', 3600);
+        return;
+    }
+    pendingCurricularWritingRoundStart = null;
     mergeKoreanBank({ words });
-    configureDictationWorkspace({ kind: 'trace', mode: 'curricular', marker: CURRICULAR_TRACE_CANVAS_MARKER, items: words.map((word) => ({ word, sentence: word, answer: word, canvasGuide: word, source: 'curricular-trace', coverage: 0, traceComplete: false })), currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString() }, { badge: '2스텝 단어 따라쓰기', title: '화면 글자 따라 채우기', desc: `추천 단어 ${words.length}개를 회색 글자 위에 따라 채운 뒤 3스텝 받아쓰기로 넘어가요.` });
+    configureDictationWorkspace({
+        kind: 'trace',
+        mode: 'curricular',
+        marker: CURRICULAR_TRACE_CANVAS_MARKER,
+        fromPhoto: true,
+        curricularRoundId: prepared.roundId || state.activeRoundId || '',
+        photoCapturedAt: prepared.photoCapturedAt || state.photoCapturedAt || '',
+        photoWords: prepared.photoWords || state.photoWords || [],
+        reviewWords: prepared.reviewWords || state.reviewWords || [],
+        items: words.map((word) => ({ word, sentence: word, answer: word, canvasGuide: word, source: 'curricular-trace', coverage: 0, traceComplete: false })),
+        currentIndex: 0,
+        graded: null,
+        saved: false,
+        startedAt: new Date().toISOString()
+    }, { badge: '2스텝 단어 따라쓰기', title: '화면 글자 따라 채우기', desc: `방금 찍은 사진에서 고른 단어 ${words.length}개를 회색 글자 위에 따라 채운 뒤 3스텝 받아쓰기로 넘어가요.` });
 }
 window.openTodayDictationActivity = function() { openDictationBankCamera({ afterSave: 'curricular-writing' }); }
 window.openLevelDictationActivity = function() { window.openTodayDictationActivity(); }
@@ -7522,6 +7553,7 @@ function stopWordBankCamera() {
 function resetWordBankCameraModal() {
     pendingWordBankCameraReward = null;
     pendingWordBankCameraAfterSave = null;
+    pendingCurricularWritingRoundStart = null;
     const preview = document.getElementById('word-bank-camera-preview');
     const video = document.getElementById('word-bank-camera-video');
     const result = document.getElementById('word-bank-camera-result');
@@ -7576,6 +7608,19 @@ window.openDictationBankCamera = function openDictationBankCamera(options = {}) 
     }
     resetWordBankCameraModal();
     pendingWordBankCameraAfterSave = options.afterSave || null;
+    if (pendingWordBankCameraAfterSave === 'curricular-writing') {
+        activeDictationSession = null;
+        activeDictationItem = null;
+        const sessionList = document.getElementById('dictation-session-list');
+        if (sessionList) sessionList.innerHTML = '';
+        const saveBtn = document.getElementById('dictation-save-btn');
+        const nextBtn = document.getElementById('dictation-next-btn');
+        const completeBtn = document.getElementById('dictation-complete-btn');
+        saveBtn?.classList.add('hidden');
+        nextBtn?.classList.add('hidden');
+        completeBtn?.classList.add('hidden');
+        if (typeof window.goDictationDashboard === 'function') window.goDictationDashboard();
+    }
     const title = modal.querySelector?.('h3');
     if (title && pendingWordBankCameraAfterSave === 'curricular-writing') title.innerText = '📷 교과 맞춤쓰기 노트 사진';
     modal.classList.remove('hidden');
@@ -7586,7 +7631,7 @@ window.openDictationBankCamera = function openDictationBankCamera(options = {}) 
 
 async function finalizeWordBankCameraResultOnClose() {
     const afterSave = pendingWordBankCameraAfterSave;
-    if (!pendingWordBankCameraReward?.ready) return afterSave;
+    if (!pendingWordBankCameraReward?.ready) return null;
     pendingWordBankCameraReward.ready = false;
     try {
         setWordBankCameraStatus('포인트 지급중~', true);
@@ -7610,7 +7655,11 @@ window.closeWordBankCameraModal = async function closeWordBankCameraModal() {
     document.body.classList.remove('modal-open');
     pendingWordBankCameraAfterSave = null;
     if (afterSave === 'curricular-writing') {
-        window.startCurricularTraceStep();
+        if (pendingCurricularWritingRoundStart?.ready) {
+            window.startCurricularTraceStep(pendingCurricularWritingRoundStart);
+        } else {
+            pendingCurricularWritingRoundStart = null;
+        }
     }
 }
 
@@ -7657,8 +7706,17 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         const duplicateCount = candidateWords.length - newWords.length;
         if (!candidateWords.length) throw new Error('사진에서 저장할 단어를 찾지 못했어요. 글자가 잘 보이게 다시 찍어주세요.');
         mergeKoreanBank({ words: candidateWords });
+        let curricularRound = null;
         if (pendingWordBankCameraAfterSave === 'curricular-writing') {
-            prepareCurricularWritingRound(candidateWords, newWords);
+            curricularRound = prepareCurricularWritingRound(candidateWords, newWords);
+            pendingCurricularWritingRoundStart = {
+                ready: true,
+                roundId: curricularRound.activeRoundId,
+                photoCapturedAt: curricularRound.photoCapturedAt,
+                words: curricularRound.activeWords || [],
+                photoWords: curricularRound.photoWords || [],
+                reviewWords: curricularRound.reviewWords || []
+            };
         }
         dictationPortfolio.captures = [{
             source: pendingWordBankCameraAfterSave === 'curricular-writing' ? 'curricular-writing-photo' : 'today-note-photo',
@@ -8198,21 +8256,35 @@ window.completeCurricularMission = async function() {
 }
 window.completeDictationItem = async function() {
     if (activeDictationSession?.kind === 'trace') {
-        if (!activeDictationSession.items.every((item) => item.traceComplete)) {
+        const traceItems = Array.isArray(activeDictationSession.items) ? activeDictationSession.items : [];
+        if (!traceItems.length || !traceItems.every((item) => item.traceComplete)) {
             showModal('1번부터 10번까지 모두 80% 이상 따라 쓴 뒤 다음으로 갈 수 있어요.');
             return;
         }
-        const traceWords = activeDictationSession.items.map((item) => item.word).filter(Boolean);
-        mergeKoreanBank({ words: traceWords.length ? traceWords : getCurricularWords() });
-        await persistDictationData();
+        const saveBtn = document.getElementById('dictation-save-btn');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = '로딩중...'; }
         showActivityLoading('3스텝 받아쓰기 문제를 준비하는 중...');
         await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 40)));
         try {
+            const traceWords = traceItems.map((item) => item.word).filter(Boolean);
+            mergeKoreanBank({ words: traceWords.length ? traceWords : getCurricularWords() });
+            await persistDictationData();
             if (activeDictationSession.practiceReview && activeDictationSession.nextMissionSession) {
                 configureDictationWorkspace(activeDictationSession.nextMissionSession, { badge: '교과 맞춤쓰기 연습하기', title: '오답 3스텝 받아쓰기', desc: '새 문장을 만들지 않고 기존에 틀렸던 단어/문장을 그대로 듣고 빈 칸에 다시 써요.' });
             } else {
-                configureDictationWorkspace(createDictationMissionSession(), { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
+                const nextSession = createDictationMissionSession();
+                if (!nextSession) {
+                    hideActivityLoading();
+                    openDictationBankCamera({ afterSave: 'curricular-writing' });
+                    showModal('새 사진에서 고른 단어를 찾지 못했어요. 1스텝 사진을 다시 찍어주세요.');
+                    return;
+                }
+                configureDictationWorkspace(nextSession, { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
             }
+        } catch (error) {
+            console.error('curricular trace next failed', error);
+            showModal(`3스텝 준비에 실패했어요: ${escapeHtml(error.message || error)}`);
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = '다음'; }
         } finally {
             setTimeout(hideActivityLoading, 220);
         }
