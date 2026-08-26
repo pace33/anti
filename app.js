@@ -7098,6 +7098,30 @@ function measureCurricularCanvasCoverage(canvas) {
     }
     return guidePixels ? covered / guidePixels : 0;
 }
+function isCurricularTraceItemComplete(item = {}) {
+    const coverage = Math.max(0, Number(item.coverage || 0));
+    return item.traceComplete === true || coverage >= 0.8 || Math.round(coverage * 100) >= 80;
+}
+function refreshCurricularTraceCompletionFromCanvases() {
+    if (activeDictationSession?.kind !== 'trace') return false;
+    let changed = false;
+    (activeDictationSession.items || []).forEach((item, index) => {
+        const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
+        if (canvas?._guideMask && hasCurricularCanvasInk(canvas)) {
+            const coverage = measureCurricularCanvasCoverage(canvas);
+            if (Number.isFinite(coverage) && Math.abs(coverage - Number(item.coverage || 0)) > 0.001) {
+                item.coverage = coverage;
+                changed = true;
+            }
+        }
+        const complete = isCurricularTraceItemComplete(item);
+        if (item.traceComplete !== complete) {
+            item.traceComplete = complete;
+            changed = true;
+        }
+    });
+    return changed;
+}
 function updateCurricularWritingActionButtons() {
     if (!activeDictationSession) return;
     const saveBtn = document.getElementById('dictation-save-btn');
@@ -7108,8 +7132,9 @@ function updateCurricularWritingActionButtons() {
     if (prevBtn) prevBtn.classList.add('hidden');
     if (completeBtn) completeBtn.classList.add('hidden');
     if (activeDictationSession.kind === 'trace') {
-        const complete = activeDictationSession.items.every((item) => item.traceComplete);
-        if (saveBtn) { saveBtn.classList.remove('hidden'); saveBtn.disabled = !complete; saveBtn.innerText = complete ? '다음' : '모두 80% 이상 채우면 다음'; }
+        refreshCurricularTraceCompletionFromCanvases();
+        const complete = activeDictationSession.items.every(isCurricularTraceItemComplete);
+        if (saveBtn) { saveBtn.classList.remove('hidden'); saveBtn.disabled = false; saveBtn.innerText = complete ? '다음' : '확인하고 다음'; }
         if (nextBtn) nextBtn.classList.add('hidden');
         if (gradeBtn) gradeBtn.classList.add('hidden');
         return;
@@ -7222,7 +7247,7 @@ window.confirmCurricularCanvasItem = function(index) {
     if (!canvas || !item) return;
     const coverage = measureCurricularCanvasCoverage(canvas);
     item.coverage = coverage;
-    const ok = coverage >= 0.8;
+    const ok = isCurricularTraceItemComplete(item);
     item.traceComplete = ok;
     const status = document.getElementById(`curricular-trace-status-${index}`);
     if (status) {
@@ -8257,8 +8282,11 @@ window.completeCurricularMission = async function() {
 window.completeDictationItem = async function() {
     if (activeDictationSession?.kind === 'trace') {
         const traceItems = Array.isArray(activeDictationSession.items) ? activeDictationSession.items : [];
-        if (!traceItems.length || !traceItems.every((item) => item.traceComplete)) {
-            showModal('1번부터 10번까지 모두 80% 이상 따라 쓴 뒤 다음으로 갈 수 있어요.');
+        refreshCurricularTraceCompletionFromCanvases();
+        if (!traceItems.length || !traceItems.every(isCurricularTraceItemComplete)) {
+            const doneCount = traceItems.filter(isCurricularTraceItemComplete).length;
+            showModal(`아직 ${doneCount}/${traceItems.length || 10}개만 완료됐어요. 각 단어의 확인 버튼을 눌러 80% 이상 완료 표시가 뜨면 다음으로 갈 수 있어요.`);
+            updateCurricularWritingActionButtons();
             return;
         }
         const saveBtn = document.getElementById('dictation-save-btn');
