@@ -6084,6 +6084,9 @@ const consonantSoundMap = {
 };
 
 let globalTtsAudio = null;
+let globalTtsAudioContext = null;
+let globalTtsAudioSourceNode = null;
+let globalTtsAudioGainNode = null;
 let isAudioUnlocked = false;
 let audioUnlockElement = null;
 let audioUnlockPromise = null;
@@ -6189,11 +6192,40 @@ async function playGoogleTtsFallback(text, playbackRate, requestId) {
     await waitForAiedueTtsAudio(globalTtsAudio, requestId);
 }
 
-async function playAiedueSchoolTts(text, { playbackRate = 0.85 } = {}) {
+async function configureAiedueTtsVolumeGain(volumeGain = 1) {
+    if (!globalTtsAudio) return;
+    globalTtsAudio.volume = 1;
+    const safeGain = Math.min(2, Math.max(1, Number(volumeGain) || 1));
+    if (!globalTtsAudioGainNode && safeGain > 1) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        try {
+            globalTtsAudioContext = new AudioContextClass();
+            globalTtsAudioSourceNode = globalTtsAudioContext.createMediaElementSource(globalTtsAudio);
+            globalTtsAudioGainNode = globalTtsAudioContext.createGain();
+            globalTtsAudioSourceNode.connect(globalTtsAudioGainNode);
+            globalTtsAudioGainNode.connect(globalTtsAudioContext.destination);
+        } catch (error) {
+            console.warn('TTS 음량 증폭 장치를 준비하지 못했습니다.', error);
+            globalTtsAudioContext = null;
+            globalTtsAudioSourceNode = null;
+            globalTtsAudioGainNode = null;
+            return;
+        }
+    }
+    if (!globalTtsAudioGainNode) return;
+    if (globalTtsAudioContext?.state === 'suspended') {
+        try { await globalTtsAudioContext.resume(); } catch {}
+    }
+    globalTtsAudioGainNode.gain.setValueAtTime(safeGain, globalTtsAudioContext.currentTime);
+}
+
+async function playAiedueSchoolTts(text, { playbackRate = 0.85, volumeGain = 1 } = {}) {
     cancelSpeech();
     const requestId = activeTtsRequestId;
     activeTtsAbortController = new AbortController();
     if (!globalTtsAudio) globalTtsAudio = new Audio();
+    await configureAiedueTtsVolumeGain(volumeGain);
     const chunks = splitAiedueTtsText(text);
     for (const chunk of chunks) {
         try {
@@ -6215,7 +6247,7 @@ function speakTextKo(text, onEndCallback, options = {}) {
     }
     const requestedRate = Number(options.playbackRate ?? 0.85);
     const playbackRate = Math.min(2, Math.max(0.5, requestedRate * AIEDUE_TTS_RATE_MULTIPLIER));
-    playAiedueSchoolTts(processedText, { ...options, playbackRate })
+    playAiedueSchoolTts(processedText, { ...options, playbackRate, volumeGain: options.volumeGain ?? 1 })
         .then(() => onEndCallback?.())
         .catch((error) => {
             if (error?.name === 'AbortError') return;
@@ -15539,23 +15571,27 @@ const UNIT9_FIND_SETS = [
     [['🦵','무릎',['무릎','무름']],['👟','짚신',['짐신','짚신']],['🥄','숟가락',['숟가락','술가락']],['🍲','가마솥',['가마술','가마솥']],['🏖️','모래밭',['모래밭','모래방']],['🐄','젖소',['젖소','전소']],['1️⃣','첫째',['청째','첫째']],['⛵','돛단배',['돋단배','돛단배']],['🧵','헝겊',['헝겊','헌겊']],['😴','낮잠',['난잠','낮잠']]]
 ];
 const UNIT9_BOARD_WORDS = ['저녁','과녁','부엌','낚시','극장','묶음','해질녘','들녘','달력','떡볶이','볶음밥','김밥','입술','팝콘','은행잎','무릎','숲속','낙엽','옆구리','덮밥','숟가락','가마솥','젖소','첫째','돛단배','좋다','낮잠','별빛'];
+const UNIT9_TTS_VOLUME_GAIN = 1.55;
+window.speakUnit9Text = function speakUnit9Text(text, onEndCallback) {
+    speakTextKo(text, onEndCallback, { volumeGain: UNIT9_TTS_VOLUME_GAIN });
+};
 
 function renderUnit9ReadingPage(pageIndex) {
     const page=UNIT9_READING_PAGES[pageIndex];
-    return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>받침 ${page.family} 단어</span></div><p class="unit9-guide">그림과 낱말을 누르고 받침소리를 생각하며 읽어 보세요.</p><div class="unit9-picture-grid">${page.pictures.map(([icon,word])=>`<button type="button" onclick="speakTextKo('${word}')"><span>${icon}</span><strong>${word}</strong><small>🔊 소리 듣기</small></button>`).join('')}</div><div class="unit9-word-grid">${page.rows.flat().map(word=>`<button type="button" onclick="speakTextKo('${word}')">${word}</button>`).join('')}</div></section>`;
+    return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>받침 ${page.family} 단어</span></div><p class="unit9-guide">그림과 낱말을 누르고 받침소리를 생각하며 읽어 보세요.</p><div class="unit9-picture-grid">${page.pictures.map(([icon,word])=>`<button type="button" onclick="speakUnit9Text('${word}')"><span>${icon}</span><strong>${word}</strong><small>🔊 소리 듣기</small></button>`).join('')}</div><div class="unit9-word-grid">${page.rows.flat().map(word=>`<button type="button" onclick="speakUnit9Text('${word}')">${word}</button>`).join('')}</div></section>`;
 }
-function renderUnit9NonsensePage(){return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 4</strong><span>3가지 받침가족 무의미 단어</span></div><p class="unit9-guide">처음 보는 말도 받침소리를 생각하며 천천히 읽어요.</p><div class="unit9-nonsense-grid">${UNIT9_NONSENSE_WORDS.map(word=>`<button type="button" onclick="speakTextKo('${word}')">${word}</button>`).join('')}</div></section>`;}
+function renderUnit9NonsensePage(){return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 4</strong><span>3가지 받침가족 무의미 단어</span></div><p class="unit9-guide">처음 보는 말도 받침소리를 생각하며 천천히 읽어요.</p><div class="unit9-nonsense-grid">${UNIT9_NONSENSE_WORDS.map(word=>`<button type="button" onclick="speakUnit9Text('${word}')">${word}</button>`).join('')}</div></section>`;}
 
 const unit9FindState={set:0,index:0,score:0,locked:false};
 function renderUnit9FindPage(setIndex){unit9FindState.set=setIndex;unit9FindState.index=0;unit9FindState.score=0;unit9FindState.locked=false;const [icon,answer,choices]=UNIT9_FIND_SETS[setIndex][0];return `<section class="unit9-find-game" data-unit9-find="${setIndex}" data-answer="${answer}"><div class="unit9-heading"><strong>확인하기 ${setIndex+1}</strong><span>읽고 알맞은 그림 찾기</span></div><div class="unit9-game-status"><span>문제 <b data-u9-number>1</b> / 10</span><span>⭐ <b data-u9-score>0</b>점</span></div><div class="unit9-find-arena"><div class="unit9-find-icon" data-u9-icon>${icon}</div><button type="button" class="unit9-listen" onclick="speakUnit9FindAnswer()">🔊 낱말 소리 듣기</button><p data-u9-feedback>그림에 알맞은 낱말을 골라요.</p><div class="unit9-find-choices">${choices.map(choice=>`<button type="button" onclick="selectUnit9Find(this,'${choice}')">${choice}</button>`).join('')}</div></div></section>`;}
-window.speakUnit9FindAnswer=function(){const item=UNIT9_FIND_SETS[unit9FindState.set][unit9FindState.index];if(item)speakTextKo(item[1]);};
-window.selectUnit9Find=function(button,selected){if(unit9FindState.locked)return;const game=button.closest('[data-unit9-find]'),answer=game.dataset.answer,feedback=game.querySelector('[data-u9-feedback]');if(selected!==answer){button.classList.add('is-wrong');feedback.textContent='다시 선택해 보아요.';speakTextKo('다시 선택해 보아요.');return;}unit9FindState.locked=true;unit9FindState.score+=10;button.classList.add('is-correct');feedback.textContent=`정답이에요! ${answer}`;speakTextKo(`정답이에요. ${answer}.`);game.querySelectorAll('.unit9-find-choices button').forEach(item=>item.disabled=true);window.setTimeout(updateUnit9Find,850);};
+window.speakUnit9FindAnswer=function(){const item=UNIT9_FIND_SETS[unit9FindState.set][unit9FindState.index];if(item)speakUnit9Text(item[1]);};
+window.selectUnit9Find=function(button,selected){if(unit9FindState.locked)return;const game=button.closest('[data-unit9-find]'),answer=game.dataset.answer,feedback=game.querySelector('[data-u9-feedback]');if(selected!==answer){button.classList.add('is-wrong');feedback.textContent='다시 선택해 보아요.';speakUnit9Text('다시 선택해 보아요.');return;}unit9FindState.locked=true;unit9FindState.score+=10;button.classList.add('is-correct');feedback.textContent=`정답이에요! ${answer}`;speakUnit9Text(`정답이에요. ${answer}.`);game.querySelectorAll('.unit9-find-choices button').forEach(item=>item.disabled=true);window.setTimeout(updateUnit9Find,850);};
 function updateUnit9Find(){const game=document.querySelector(`[data-unit9-find="${unit9FindState.set}"]`);if(!game)return;unit9FindState.index+=1;if(unit9FindState.index>=10){game.classList.add('is-complete');game.querySelector('.unit9-find-arena').innerHTML=`<div class="unit9-finish">참 잘했어요!</div><p>10개 낱말을 모두 찾았어요. ${unit9FindState.score}점!</p>`;game.querySelector('[data-u9-number]').textContent='10';game.querySelector('[data-u9-score]').textContent=unit9FindState.score;return;}const [icon,answer,choices]=UNIT9_FIND_SETS[unit9FindState.set][unit9FindState.index];game.dataset.answer=answer;game.querySelector('[data-u9-number]').textContent=unit9FindState.index+1;game.querySelector('[data-u9-score]').textContent=unit9FindState.score;game.querySelector('[data-u9-icon]').textContent=icon;game.querySelector('[data-u9-feedback]').textContent='그림에 알맞은 낱말을 골라요.';game.querySelector('.unit9-find-choices').innerHTML=choices.map(choice=>`<button type="button" onclick="selectUnit9Find(this,'${choice}')">${choice}</button>`).join('');unit9FindState.locked=false;}
 
 const unit9BoardState={index:0,score:0};
 function renderUnit9BoardGame(){unit9BoardState.index=0;unit9BoardState.score=0;return `<section class="unit9-board-game" data-unit9-board><div class="unit9-heading"><strong>놀이</strong><span>혼자 하는 받침가족 단어 여행</span></div><div class="unit9-board-track">${UNIT9_BOARD_WORDS.map((word,index)=>`<span class="${index===0?'is-current':''}" data-u9-cell="${index}">${index+1}</span>`).join('')}</div><div class="unit9-board-arena"><p>낱말을 읽고 확인하면 다음 칸으로 이동해요.</p><strong data-u9-board-word>${UNIT9_BOARD_WORDS[0]}</strong><div><button type="button" onclick="listenUnit9Board()">🔊 소리 확인</button><button type="button" class="unit9-read-button" onclick="advanceUnit9Board()">✓ 읽었어요</button></div><small data-u9-board-progress>1 / ${UNIT9_BOARD_WORDS.length}</small></div></section>`;}
-window.listenUnit9Board=function(){speakTextKo(UNIT9_BOARD_WORDS[unit9BoardState.index]);};
-window.advanceUnit9Board=function(){const game=document.querySelector('[data-unit9-board]');if(!game)return;game.querySelector(`[data-u9-cell="${unit9BoardState.index}"]`)?.classList.replace('is-current','is-done');unit9BoardState.score+=10;unit9BoardState.index+=1;if(unit9BoardState.index>=UNIT9_BOARD_WORDS.length){game.querySelector('.unit9-board-arena').innerHTML=`<div class="unit9-finish">🏁 도착했어요!</div><p>받침가족 낱말을 모두 읽었어요.</p>`;speakTextKo('참 잘했어요. 도착했어요.');return;}game.querySelector(`[data-u9-cell="${unit9BoardState.index}"]`)?.classList.add('is-current');game.querySelector('[data-u9-board-word]').textContent=UNIT9_BOARD_WORDS[unit9BoardState.index];game.querySelector('[data-u9-board-progress]').textContent=`${unit9BoardState.index+1} / ${UNIT9_BOARD_WORDS.length}`;};
+window.listenUnit9Board=function(){speakUnit9Text(UNIT9_BOARD_WORDS[unit9BoardState.index]);};
+window.advanceUnit9Board=function(){const game=document.querySelector('[data-unit9-board]');if(!game)return;game.querySelector(`[data-u9-cell="${unit9BoardState.index}"]`)?.classList.replace('is-current','is-done');unit9BoardState.score+=10;unit9BoardState.index+=1;if(unit9BoardState.index>=UNIT9_BOARD_WORDS.length){game.querySelector('.unit9-board-arena').innerHTML=`<div class="unit9-finish">🏁 도착했어요!</div><p>받침가족 낱말을 모두 읽었어요.</p>`;speakUnit9Text('참 잘했어요. 도착했어요.');return;}game.querySelector(`[data-u9-cell="${unit9BoardState.index}"]`)?.classList.add('is-current');game.querySelector('[data-u9-board-word]').textContent=UNIT9_BOARD_WORDS[unit9BoardState.index];game.querySelector('[data-u9-board-progress]').textContent=`${unit9BoardState.index+1} / ${UNIT9_BOARD_WORDS.length}`;};
 
 const UNIT9_DOUBLE_FINAL_WORDS=[[['📖','읽다','익따'],['🐔','닭','닥'],['🌱','흙','흑'],['💡','밝다','박따']],[['🙋','많다','만타'],['😊','괜찮다','괜찬타'],['↔️','넓다','널따'],['📏','짧다','짤따']],[['👵','늙다','늑따'],['😣','싫다','실타'],['🪑','앉다','안따'],['🫙','없다','업따']]];
 function getUnit9WordWritingGuide(word) {
@@ -15579,14 +15615,14 @@ function normalizeUnit9WritingCanvas(canvas) {
     const normalizedCells = canvas.dataset.guide.split('/').map((cell) => cell.trim()).filter(Boolean);
     canvas.dataset.gridCols = String(normalizedCells.length);
 }
-function renderUnit9DoubleFinalIntro(){return `<section class="unit9-double-intro"><div class="unit9-heading"><strong>이해하기</strong><span>겹받침 있는 단어 읽기</span></div><p class="unit9-guide">겹받침은 두 글자를 쓰지만 대표소리로 읽어요.</p><div class="unit9-intro-example"><span>📖</span><strong>읽다</strong><i>→</i><button type="button" onclick="speakTextKo('익따')">🔊 익따</button></div><div class="unit9-write-practice"><div><strong>읽으면서 직접 써 보세요.</strong><button type="button" onclick="resetTraceWritingCanvas()">다시 쓰기</button></div><canvas id="trace-writing-canvas" class="trace-writing-canvas unit9-writing-canvas unit9-word-writing-canvas" data-grid-cols="${getUnit9WordWritingColumnCount('읽다')}" data-guide="${getUnit9WordWritingGuide('읽다')}" aria-label="${getUnit9WordWritingLabel('읽다')}"></canvas></div><div class="unit9-intro-steps"><span>그림과 단어 연결하기</span><span>소리 내어 읽기</span><span>읽으면서 써 보기</span><span>표기와 소리 구분하기</span></div></section>`;}
-function renderUnit9DoubleFinalReading(pageIndex){const words=UNIT9_DOUBLE_FINAL_WORDS[pageIndex];return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>겹받침 단어</span></div><p class="unit9-guide">단어를 소리 내어 읽고 회색 글자 위에 직접 써 보세요.</p><div class="unit9-double-grid">${words.map(([icon,word,sound])=>`<article><span>${icon}</span><strong>${word}</strong><div class="unit9-trace-words"><canvas class="trace-writing-canvas unit9-card-writing-canvas unit9-word-writing-canvas" data-grid-cols="${getUnit9WordWritingColumnCount(word)}" data-guide="${getUnit9WordWritingGuide(word)}" aria-label="${getUnit9WordWritingLabel(word)}"></canvas></div><button type="button" onclick="speakTextKo('${sound}')">🔊 ${sound}</button></article>`).join('')}</div><button type="button" class="unit9-reset-writing" onclick="document.querySelectorAll('.view-section:not(.hidden) .unit9-card-writing-canvas').forEach(canvas=>resetTraceWritingCanvas(canvas))">전체 다시 쓰기</button></section>`;}
+function renderUnit9DoubleFinalIntro(){return `<section class="unit9-double-intro"><div class="unit9-heading"><strong>이해하기</strong><span>겹받침 있는 단어 읽기</span></div><p class="unit9-guide">겹받침은 두 글자를 쓰지만 대표소리로 읽어요.</p><div class="unit9-intro-example"><span>📖</span><strong>읽다</strong><i>→</i><button type="button" onclick="speakUnit9Text('익따')">🔊 익따</button></div><div class="unit9-write-practice"><div><strong>읽으면서 직접 써 보세요.</strong><button type="button" onclick="resetTraceWritingCanvas()">다시 쓰기</button></div><canvas id="trace-writing-canvas" class="trace-writing-canvas unit9-writing-canvas unit9-word-writing-canvas" data-grid-cols="${getUnit9WordWritingColumnCount('읽다')}" data-guide="${getUnit9WordWritingGuide('읽다')}" aria-label="${getUnit9WordWritingLabel('읽다')}"></canvas></div><div class="unit9-intro-steps"><span>그림과 단어 연결하기</span><span>소리 내어 읽기</span><span>읽으면서 써 보기</span><span>표기와 소리 구분하기</span></div></section>`;}
+function renderUnit9DoubleFinalReading(pageIndex){const words=UNIT9_DOUBLE_FINAL_WORDS[pageIndex];return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>겹받침 단어</span></div><p class="unit9-guide">단어를 소리 내어 읽고 회색 글자 위에 직접 써 보세요.</p><div class="unit9-double-grid">${words.map(([icon,word,sound])=>`<article><span>${icon}</span><strong>${word}</strong><div class="unit9-trace-words"><canvas class="trace-writing-canvas unit9-card-writing-canvas unit9-word-writing-canvas" data-grid-cols="${getUnit9WordWritingColumnCount(word)}" data-guide="${getUnit9WordWritingGuide(word)}" aria-label="${getUnit9WordWritingLabel(word)}"></canvas></div><button type="button" onclick="speakUnit9Text('${sound}')">🔊 ${sound}</button></article>`).join('')}</div><button type="button" class="unit9-reset-writing" onclick="document.querySelectorAll('.view-section:not(.hidden) .unit9-card-writing-canvas').forEach(canvas=>resetTraceWritingCanvas(canvas))">전체 다시 쓰기</button></section>`;}
 const UNIT9_DOUBLE_MATCH=[
     [['읽다','📖'],['흙','🌱'],['싫다','😣'],['없다','🫙'],['닭','🐔']],
     [['앉다','🪑'],['많다','🙋'],['밝다','💡'],['괜찮다','😊'],['넓다','↔️']]
 ];
-function renderUnit9DoubleMatch(setIndex){const items=UNIT9_DOUBLE_MATCH[setIndex];return `<section class="unit9-match-page"><div class="unit9-heading"><strong>확인하기 ${setIndex+1}</strong><span>읽고 알맞은 그림 찾기</span></div><p class="unit9-guide">낱말을 누른 다음 알맞은 그림을 골라 보세요.</p><div class="unit9-match-grid">${items.map(([word,icon],index)=>{const choices=[items[index],items[(index+2)%items.length],items[(index+4)%items.length]];return `<article data-u9-match data-answer="${icon}"><button type="button" class="unit9-match-word" onclick="speakTextKo('${word}')">🔊 ${word}</button><div>${choices.map(([,choiceIcon])=>`<button type="button" onclick="selectUnit9Match(this,'${choiceIcon}')">${choiceIcon}</button>`).join('')}</div><small>그림을 골라요.</small></article>`;}).join('')}</div></section>`;}
-window.selectUnit9Match=function(button,selected){const card=button.closest('[data-u9-match]'),feedback=card.querySelector('small');if(card.classList.contains('is-correct'))return;if(selected!==card.dataset.answer){button.classList.add('is-wrong');feedback.textContent='다시 선택해 보아요.';speakTextKo('다시 선택해 보아요.');return;}card.classList.add('is-correct');button.classList.add('is-correct');card.querySelectorAll('div button').forEach(item=>item.disabled=true);feedback.textContent='정답이에요!';speakTextKo('정답이에요.');};
+function renderUnit9DoubleMatch(setIndex){const items=UNIT9_DOUBLE_MATCH[setIndex];return `<section class="unit9-match-page"><div class="unit9-heading"><strong>확인하기 ${setIndex+1}</strong><span>읽고 알맞은 그림 찾기</span></div><p class="unit9-guide">낱말을 누른 다음 알맞은 그림을 골라 보세요.</p><div class="unit9-match-grid">${items.map(([word,icon],index)=>{const choices=[items[index],items[(index+2)%items.length],items[(index+4)%items.length]];return `<article data-u9-match data-answer="${icon}"><button type="button" class="unit9-match-word" onclick="speakUnit9Text('${word}')">🔊 ${word}</button><div>${choices.map(([,choiceIcon])=>`<button type="button" onclick="selectUnit9Match(this,'${choiceIcon}')">${choiceIcon}</button>`).join('')}</div><small>그림을 골라요.</small></article>`;}).join('')}</div></section>`;}
+window.selectUnit9Match=function(button,selected){const card=button.closest('[data-u9-match]'),feedback=card.querySelector('small');if(card.classList.contains('is-correct'))return;if(selected!==card.dataset.answer){button.classList.add('is-wrong');feedback.textContent='다시 선택해 보아요.';speakUnit9Text('다시 선택해 보아요.');return;}card.classList.add('is-correct');button.classList.add('is-correct');card.querySelectorAll('div button').forEach(item=>item.disabled=true);feedback.textContent='정답이에요!';speakUnit9Text('정답이에요.');};
 
 function syncLesson27FamilyPage() {
     const page = document.querySelector('[data-lesson27-family-page]');

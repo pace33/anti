@@ -101,6 +101,8 @@ assert(app.includes("canvas.dataset.completed = 'true';") && !app.includes('if (
 assert(app.includes('hideLearningDetailNavigationGuide();\n            scheduleLearningActivityButtonGuide(content);'), '본문 활동이 미완료 상태로 돌아갔을 때 다음 안내가 숨겨지지 않습니다.');
 assert(app.includes('if (hasBodyActivities && !learningDetailBodyActivitiesComplete(content))'), '다음 안내 함수가 미완료 본문에서 직접 실행되는 것을 막지 않습니다.');
 assert(app.includes('let audioUnlockElement = null;') && app.includes('audioUnlockElement.play()'), '애니메이션 음성용 오디오 잠금 해제 장치가 없습니다.');
+assert(app.includes('async function configureAiedueTtsVolumeGain(volumeGain = 1)') && app.includes('globalTtsAudioContext.createGain()'), '9단원 음성을 기본 최대치보다 증폭하는 장치가 없습니다.');
+assert(app.includes('const UNIT9_TTS_VOLUME_GAIN = 1.55;') && app.includes('window.speakUnit9Text = function speakUnit9Text'), '9단원 전용 큰 음량 음성 함수가 없습니다.');
 assert(!app.includes('globalTtsAudio.src = "data:audio/wav;base64'), '오디오 잠금 해제가 실제 TTS 재생 객체와 다시 충돌합니다.');
 assert(appCss.includes('background-color: #dafae9 !important;') && appCss.includes('border-color: #54c7a2 !important;'), '눌러 본 활동 버튼의 완료 음영이 밝은 민트색이 아닙니다.');
 
@@ -110,6 +112,8 @@ const section = (source, startMarker, endMarker) => {
     assert(start >= 0 && end > start, `검증 구간을 찾지 못했습니다: ${startMarker}`);
     return source.slice(start, end);
 };
+const unit9AudioSection = section(app, 'const UNIT9_TTS_VOLUME_GAIN', 'function syncLesson27FamilyPage');
+assert((unit9AudioSection.match(/speakUnit9Text\(/g) || []).length >= 10 && !unit9AudioSection.includes('onclick="speakTextKo('), '9단원 전체 소리 버튼에 큰 음량이 적용되지 않았습니다.');
 const mouthQuizNext = section(app, 'window.nextLessonMouthSoundQuiz = function(step)', 'window.selectLessonMouthSoundAnswer = async function');
 assert(mouthQuizNext.includes('window.playLessonMouthQuizSound(step);'), '입 모양 퀴즈의 다음 문제가 자동으로 소리와 애니메이션을 재생하지 않습니다.');
 assert(!mouthQuizNext.includes('window.lessonMouthQuizPlayed[step] = false'), '입 모양 퀴즈의 다음 문제가 직전 소리를 다시 고를 수 있습니다.');
