@@ -95,6 +95,11 @@ assert(app.includes("backButton.classList.remove('hidden')"), '도형 미션에�
 assert(appCss.includes('.drawing-tool-sidebar') && appCss.includes('margin-top: auto !important;') && appCss.includes('min-height: 52px;'), '그리기 뒤로 가기 버튼이 연두색 도구 영역 하단에 배치되지 않았습니다.');
 assert(app.includes("if (!control.classList.contains('learning-activity-reviewed'))"), '활동 완료 표시가 같은 class를 반복 기록해 화면을 멈출 수 있습니다.');
 assert(app.includes('new MutationObserver(scheduleCheck)') && !app.includes('new MutationObserver(check)'), '활동 완료 감시가 프레임당 한 번으로 제한되지 않았습니다.');
+assert(app.includes('function learningDetailBodyActivitiesComplete(root)') && app.includes('structuredActivitiesComplete && allBodyButtonsReviewed'), '본문 활동과 버튼 전체 확인 전 다음 안내를 막는 완료 조건이 없습니다.');
+assert(app.includes('if (learningDetailHasAnswerChoices(root)) return structuredActivitiesComplete;'), '선택형 문제에서 모든 오답 버튼까지 누르게 할 수 있습니다.');
+assert(app.includes("canvas.dataset.completed = 'true';") && !app.includes('if (isTraceWritingComplete(canvas)) {\n            showLearningDetailNavigationGuide();'), '쓰기 하나를 마친 직후 다음 안내가 직접 표시될 수 있습니다.');
+assert(app.includes('hideLearningDetailNavigationGuide();\n            scheduleLearningActivityButtonGuide(content);'), '본문 활동이 미완료 상태로 돌아갔을 때 다음 안내가 숨겨지지 않습니다.');
+assert(app.includes('if (hasBodyActivities && !learningDetailBodyActivitiesComplete(content))'), '다음 안내 함수가 미완료 본문에서 직접 실행되는 것을 막지 않습니다.');
 assert(app.includes('let audioUnlockElement = null;') && app.includes('audioUnlockElement.play()'), '애니메이션 음성용 오디오 잠금 해제 장치가 없습니다.');
 assert(!app.includes('globalTtsAudio.src = "data:audio/wav;base64'), '오디오 잠금 해제가 실제 TTS 재생 객체와 다시 충돌합니다.');
 assert(appCss.includes('background-color: #dafae9 !important;') && appCss.includes('border-color: #54c7a2 !important;'), '눌러 본 활동 버튼의 완료 음영이 밝은 민트색이 아닙니다.');

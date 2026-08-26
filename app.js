@@ -2602,6 +2602,15 @@ function hideLearningActivityButtonGuide() {
     if (guide) guide.textContent = '';
 }
 
+function hideLearningDetailNavigationGuide() {
+    const guide = document.getElementById('learning-detail-nav-guide');
+    const nav = document.getElementById('learning-detail-nav');
+    guide?.classList.add('hidden');
+    if (guide) guide.textContent = '';
+    nav?.querySelectorAll('.learning-nav-guided').forEach((button) => button.classList.remove('learning-nav-guided'));
+    learningDetailNavGuideShownForPage = '';
+}
+
 function getLearningActivityGuideText(control) {
     const label = `${control?.getAttribute?.('aria-label') || ''} ${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
     if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';
@@ -2636,7 +2645,7 @@ function positionLearningActivityButtonGuide() {
 
 function showLearningActivityButtonGuide(content) {
     const section = document.getElementById('learning-detail-section');
-    if (!content || !section || section.classList.contains('hidden') || learningDetailPageLooksComplete(content)) return;
+    if (!content || !section || section.classList.contains('hidden') || learningDetailBodyActivitiesComplete(content)) return;
     const controls = getLearningDetailGuideControls(content);
     if (!controls.length) return;
     const target = controls.find((control) => control.dataset.learningReviewed !== 'true') || controls[0];
@@ -2660,7 +2669,7 @@ function showLearningActivityButtonGuide(content) {
 
 function scheduleLearningActivityButtonGuide(content, delay) {
     if (learningDetailActivityGuideTarget || learningDetailActivityGuideTimer) return;
-    if (!content || learningDetailPageLooksComplete(content) || !getLearningDetailGuideControls(content).length) return;
+    if (!content || learningDetailBodyActivitiesComplete(content) || !getLearningDetailGuideControls(content).length) return;
     const guideDelay = Number.isFinite(delay)
         ? delay
         : (window.matchMedia?.('(pointer: coarse)').matches ? 2200 : 4200);
@@ -2684,11 +2693,7 @@ function resetLearningDetailNavigationGuide() {
     }
     learningDetailActivityClickHandler = null;
     learningDetailActivityInteractionHandler = null;
-    const guide = document.getElementById('learning-detail-nav-guide');
-    const nav = document.getElementById('learning-detail-nav');
-    guide?.classList.add('hidden');
-    if (guide) guide.textContent = '';
-    nav?.querySelectorAll('.learning-nav-guided').forEach((button) => button.classList.remove('learning-nav-guided'));
+    hideLearningDetailNavigationGuide();
 }
 
 function showLearningDetailNavigationGuide() {
@@ -2696,6 +2701,15 @@ function showLearningDetailNavigationGuide() {
     const nav = document.getElementById('learning-detail-nav');
     const guide = document.getElementById('learning-detail-nav-guide');
     if (!section || section.classList.contains('hidden') || !nav || !guide) return;
+    const content = document.getElementById('learning-detail-content');
+    const hasBodyActivities = Boolean(content && (
+        content.querySelector(LEARNING_DETAIL_TRACKED_ACTIVITY_SELECTOR)
+        || getLearningDetailActionControls(content).length
+    ));
+    if (hasBodyActivities && !learningDetailBodyActivitiesComplete(content)) {
+        hideLearningDetailNavigationGuide();
+        return;
+    }
     const completeButton = document.getElementById('learning-detail-complete-btn');
     const nextButton = document.getElementById('learning-detail-next-btn');
     const target = completeButton && !completeButton.classList.contains('hidden') ? completeButton : nextButton;
@@ -2746,23 +2760,34 @@ function learningDetailPageLooksComplete(root) {
     return foundRequirements;
 }
 
+const LEARNING_DETAIL_TRACKED_ACTIVITY_SELECTOR = 'canvas, [data-family-card], .choice-chip-button, .lesson25-question-card, .lesson25-reading-check, .lesson25-path-stage, .lesson26-find-card, .lesson21-m-pair, .lesson21-m-syllable-cell.is-target, .lesson21-b-word-item, .lesson21-m-picture-item';
+
+function learningDetailBodyActivitiesComplete(root) {
+    if (!root) return false;
+    const structuredActivitiesComplete = learningDetailPageLooksComplete(root);
+    if (learningDetailHasAnswerChoices(root)) return structuredActivitiesComplete;
+    const controls = getLearningDetailActionControls(root);
+    const allBodyButtonsReviewed = controls.length === 0
+        || controls.every((control) => control.dataset.learningReviewed === 'true');
+    const hasTrackedActivity = Boolean(root.querySelector(LEARNING_DETAIL_TRACKED_ACTIVITY_SELECTOR));
+    return hasTrackedActivity
+        ? structuredActivitiesComplete && allBodyButtonsReviewed
+        : controls.length > 0 && allBodyButtonsReviewed;
+}
+
 function setupLearningDetailCompletionGuide() {
     resetLearningDetailNavigationGuide();
     learningDetailNavGuideShownForPage = '';
     const content = document.getElementById('learning-detail-content');
     if (!content) return;
-    const trackedActivitySelector = 'canvas, [data-family-card], .choice-chip-button, .lesson25-question-card, .lesson25-reading-check, .lesson25-path-stage, .lesson26-find-card, .lesson21-m-pair, .lesson21-m-syllable-cell.is-target, .lesson21-b-word-item, .lesson21-m-picture-item';
-    const hasTrackedActivity = Boolean(content.querySelector(trackedActivitySelector));
-    const pageLooksComplete = () => {
-        if (learningDetailPageLooksComplete(content)) return true;
-        const controls = getLearningDetailActionControls(content);
-        return !hasTrackedActivity && controls.length > 0
-            && controls.every((control) => control.dataset.learningReviewed === 'true');
-    };
     const check = () => {
         syncLearningDetailReviewedControls(content);
-        if (pageLooksComplete()) showLearningDetailNavigationGuide();
-        else scheduleLearningActivityButtonGuide(content);
+        if (learningDetailBodyActivitiesComplete(content)) {
+            showLearningDetailNavigationGuide();
+        } else {
+            hideLearningDetailNavigationGuide();
+            scheduleLearningActivityButtonGuide(content);
+        }
     };
     let completionCheckFrame = null;
     const scheduleCheck = () => {
@@ -17168,7 +17193,7 @@ function initializeTraceWritingCanvas(target) {
         activePointerId = null;
         refreshGuide();
         if (isTraceWritingComplete(canvas)) {
-            showLearningDetailNavigationGuide();
+            canvas.dataset.completed = 'true';
             if (canvas.dataset.traceCompletionNotified !== 'true') {
                 canvas.dataset.traceCompletionNotified = 'true';
                 canvas.dispatchEvent(new CustomEvent('tracewritingcomplete'));
@@ -17213,6 +17238,7 @@ window.resetTraceWritingCanvas = function resetTraceWritingCanvas(target) {
         delete canvas.dataset.rewarded;
         delete canvas.dataset.traceCompletionNotified;
         delete canvas.dataset.fillRecorded;
+        delete canvas.dataset.completed;
     }
     drawTraceWritingGuide(canvas);
 }
