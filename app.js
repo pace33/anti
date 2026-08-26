@@ -4144,7 +4144,25 @@ function setTopLevelSectionVisible(sectionId, isVisible) {
     section.style.zIndex = '';
 }
 
+let isMuted = true;
+
+function stopAiedueBackgroundMusic() {
+    const bgm = document.getElementById('bg-music');
+    if (bgm) {
+        bgm.pause();
+        bgm.currentTime = 0;
+    }
+    isMuted = true;
+    document.querySelectorAll('.mute-control-btn span').forEach((icon) => { icon.textContent = '🔇'; });
+    document.querySelectorAll('.mute-control-btn').forEach((button) => button.classList.remove('playing'));
+    const settingsButton = document.getElementById('settings-mute-toggle');
+    if (settingsButton) settingsButton.textContent = '켜기';
+}
+
 function showTopLevelSection(sectionId) {
+    if (!['start-screen', 'login-section'].includes(sectionId)) {
+        stopAiedueBackgroundMusic();
+    }
     if (sectionId !== 'learning-detail-section') {
         resetLearningDetailNavigationGuide();
     }
@@ -4283,8 +4301,6 @@ window.showLoginFromStart = function() {
     // 만약 이미 음악이 켜져 있다면 계속 유지, 꺼져 있다면 그대로 유지
 }
 
-let isMuted = true;
-
 window.playClickSound = function() {
     if (!isMuted) {
         const sound = document.getElementById('click-sound');
@@ -4379,15 +4395,6 @@ function showDashboardOnly() {
 function openDashboard() {
     showDashboardOnly();
     document.getElementById('main-container').style.maxWidth = '1100px';
-    // 로그인 후 대시보드 진입 시 배경음악 정지
-    const bgm = document.getElementById('bg-music');
-    if (bgm) {
-        bgm.pause();
-        bgm.currentTime = 0;
-    }
-    isMuted = true;
-    document.querySelectorAll('.mute-control-btn span').forEach(icon => icon.textContent = '🔇');
-    document.querySelectorAll('.mute-control-btn').forEach(btn => btn.classList.remove('playing'));
 }
 
 window.showDashboardOnly = showDashboardOnly;

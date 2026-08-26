@@ -50,6 +50,8 @@ assert(/id=["']result-modal["'][^>]*z-\[1300\]/i.test(index), '상세 결과 모
 assert(app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";'), 'app.js must use Firebase Firestore directly.');
 assert(app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";'), 'app.js must use Firebase Storage directly.');
 assert(app.includes("const AIEDUE_CRAFT_URL = 'https://aiedue.ddns.net/Aiedue_Craft.html';"), '에이두 크래프트가 운영 서버 주소를 사용하지 않습니다.');
+assert(app.includes('function stopAiedueBackgroundMusic()') && app.includes("if (!['start-screen', 'login-section'].includes(sectionId))"), '한글 활동 시작 시 배경음악을 멈추는 공통 처리가 없습니다.');
+assert(app.includes('bgm.pause();') && app.includes('bgm.currentTime = 0;') && app.includes("settingsButton.textContent = '켜기';"), '활동 시작 시 배경음악 상태가 완전히 초기화되지 않습니다.');
 assert(!app.includes('aiedue.netlify.app'), '폐기된 Netlify 크래프트 주소가 남아 있습니다.');
 assert(!app.includes('from "./korean-data-adapter.js'), 'app.js must not route data through the self-hosted adapter.');
 [
