@@ -57,11 +57,11 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     position: relative;
     width: 430px;
     min-width: 420px;
-    height: 84px;
+    height: 90px;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 10px 18px 76px;
+    padding: 10px 12px 18px 86px;
     border: 2px solid rgba(255,255,255,.98);
     border-radius: 24px;
     background: rgba(255,255,255,.94);
@@ -73,8 +73,10 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 
 .rpg-profile-portrait {
     position: absolute;
-    left: 7px;
-    bottom: 13px;
+    left: 12px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
     width: 62px;
     height: 62px;
     display: grid;
@@ -111,7 +113,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .rpg-profile-copy strong { max-width: 128px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #2c3e50; font-size: .94rem; }
 .rpg-role-label { color: #62a958; font-size: .64rem; font-weight: 900; }
 .rpg-wallet-line { display: flex; gap: 7px; margin-top: 2px; color: #72806f; font-size: .66rem; font-weight: 900; }
-.rpg-profile-tools { margin-left: 4px; display: flex; gap: 4px; transform: translate(-8px, -4px); transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease; }
+.rpg-profile-tools { margin-left: 4px; display: flex; align-items: center; gap: 4px; transform: translateX(-4px); transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease; }
 .rpg-tool-button {
     min-width: 42px;
     width: 42px;
@@ -184,7 +186,6 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .rpg-cloud-button { color: #397da4; border-color: #cfeaf5; background: linear-gradient(135deg, #f3fbff, #e7f7fd); }
 .rpg-shop-button { color: #3d8d64; border-color: #ccebd7; background: linear-gradient(135deg, #f3fcf5, #e4f7e9); }
 .rpg-settings-button { color: #6b7280; border-color: #e2e8f0; background: linear-gradient(135deg, #fff, #f7f8fa); }
-.rpg-bank-button { color: #b45309; border-color: #fde3b3; background: linear-gradient(135deg, #fffaf0, #fff2cf); }
 .rpg-math-button { color: #137ac0; border-color: #bde3fb; background: linear-gradient(135deg, #f4fbff, #e2f4ff); }
 
 .rpg-experience-track {
@@ -207,15 +208,22 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     max-width: none;
 }
 .aiedue-rpg-hud.rpg-collapsed .rpg-profile-banner {
-    width: 72px;
-    min-width: 72px;
-    height: 72px;
+    width: 86px;
+    min-width: 86px;
+    height: 86px;
+    display: grid;
+    place-items: center;
     padding: 0;
-    border-radius: 24px;
+    border-radius: 28px;
 }
 .aiedue-rpg-hud.rpg-collapsed .rpg-profile-portrait {
-    left: 5px;
-    bottom: 5px;
+    position: relative;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+    width: 58px;
+    height: 58px;
 }
 .aiedue-rpg-hud.rpg-collapsed .rpg-profile-copy,
 .aiedue-rpg-hud.rpg-collapsed .rpg-profile-tools,
@@ -229,7 +237,14 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     transform: translateX(-16px);
 }
 .aiedue-rpg-hud.rpg-collapsed .rpg-profile-tools {
-    transform: translate(-20px, -4px);
+    transform: translateX(-20px);
+}
+
+/* v69: 하단 HUD 메뉴 버튼이 상태바 테두리에 걸치지 않도록 중앙 정렬하고,
+   단어 은행은 하단 펼침 메뉴가 아니라 각 단계 화면/전용 팝업에서만 연다. */
+.aiedue-rpg-hud .rpg-action-tray .rpg-bank-button,
+.aiedue-rpg-hud .rpg-action-tray [data-action="word-bank"] {
+    display: none !important;
 }
 
 .aiedue-rpg-hud.experience-received .rpg-experience-track { animation: experienceTrackReceive .65s ease; }
@@ -260,7 +275,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 
 @media (max-width: 860px) {
     .aiedue-rpg-hud { left: 18px; bottom: 18px; }
-    .rpg-profile-banner { min-width: 390px; padding-left: 72px; }
+    .rpg-profile-banner { min-width: 390px; padding-left: 82px; }
     .rpg-profile-copy { min-width: 92px; }
     .rpg-profile-copy strong { max-width: 105px; }
     .aiedue-rpg-hud.actions-open .rpg-action-tray { width: 560px; }
@@ -272,8 +287,8 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 
 @media (max-width: 640px) {
     .aiedue-rpg-hud { right: 9px; }
-    .rpg-profile-banner { width: 100%; min-width: 0; height: 82px; padding: 6px 5px 17px 62px; gap: 4px; }
-    .rpg-profile-portrait { left: 5px; bottom: 13px; width: 56px; height: 56px; }
+    .rpg-profile-banner { width: 100%; min-width: 0; height: 86px; padding: 8px 6px 18px 72px; gap: 4px; }
+    .rpg-profile-portrait { left: 8px; top: 50%; bottom: auto; width: 56px; height: 56px; }
     .rpg-profile-portrait .sync-user-icon { font-size: 1.65rem; }
     .rpg-profile-copy { min-width: 65px; }
     .rpg-profile-copy strong { max-width: 92px; font-size: .8rem; }
@@ -7353,6 +7368,47 @@ body.modal-open { overflow: hidden; }
     box-shadow: inset 0 0 0 1px rgba(4, 120, 87, .12);
     font-size: .95rem;
     font-weight: 1000;
+}
+
+.dictation-bank-modal-shell {
+    width: min(92vw, 980px);
+    margin-inline: auto;
+}
+.modal-content:has(.dictation-bank-modal-shell),
+.modal-content.modal-content-wide {
+    width: min(96vw, 1040px);
+    max-width: 1040px;
+}
+.dictation-bank-word-grid,
+.lesson-photo-word-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    align-items: stretch;
+}
+.dictation-bank-word-grid {
+    max-height: min(62vh, 560px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.lesson-photo-word-grid {
+    max-height: 16rem;
+    overflow-y: auto;
+}
+.lesson-photo-word-grid > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    text-align: center;
+}
+@media (max-width: 860px) {
+    .dictation-bank-word-grid,
+    .lesson-photo-word-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 520px) {
+    .dictation-bank-word-grid,
+    .lesson-photo-word-grid { grid-template-columns: 1fr !important; }
 }
 @media (max-width: 860px) {
     .word-bank-camera-modal { padding: 10px; align-items: center; }

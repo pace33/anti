@@ -4112,6 +4112,7 @@ function setRpgHudVisible(isVisible) {
     const hud = document.getElementById('aiedue-rpg-hud');
     hud?.classList.toggle('hidden', !isVisible);
     if (hud) {
+        removeDeprecatedRpgWordBankActions(hud);
         hud.classList.add('rpg-collapsed');
         const portrait = hud.querySelector('.rpg-profile-portrait');
         portrait?.setAttribute('aria-expanded', 'false');
@@ -4124,6 +4125,15 @@ function setRpgHudVisible(isVisible) {
         if (tray) tray.inert = true;
     }
     document.body.classList.toggle('rpg-hud-active', isVisible);
+}
+
+function removeDeprecatedRpgWordBankActions(hud = document.getElementById('aiedue-rpg-hud')) {
+    const tray = hud?.querySelector('#rpg-action-tray, .rpg-action-tray');
+    if (!tray) return;
+    tray.querySelectorAll('.rpg-bank-button, [data-action="word-bank"]').forEach((button) => button.remove());
+    tray.querySelectorAll('button').forEach((button) => {
+        if (/단어\s*은행/.test(button.textContent || '')) button.remove();
+    });
 }
 
 window.toggleRpgHudPanel = function toggleRpgHudPanel(button) {
@@ -4146,6 +4156,7 @@ window.toggleRpgHudActions = function toggleRpgHudActions(button) {
     const hud = document.getElementById('aiedue-rpg-hud');
     const tray = document.getElementById('rpg-action-tray');
     if (!hud || !tray) return;
+    removeDeprecatedRpgWordBankActions(hud);
     const isOpen = hud.classList.toggle('actions-open');
     button?.setAttribute('aria-expanded', String(isOpen));
     button?.setAttribute('aria-label', isOpen ? '하단 메뉴 접기' : '하단 메뉴 펼치기');
@@ -7926,7 +7937,7 @@ window.handleLessonPhotoCapture = async function handleLessonPhotoCapture(input)
         const savedText = newWords.length ? `새 단어 ${newWords.length}개를 단어 은행에 저장했어요.` : '이미 단어 은행에 있는 단어들이에요.';
         const candidatePreview = visibleCandidates.slice(0, 40).map((word) => `<span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-xs">${escapeHtml(word)}</span>`).join('') || '<span class="text-gray-400 text-sm font-bold">후보 단어 없음</span>';
         const finalPreview = candidateWords.map((word) => `<span class="px-3 py-2 rounded-full bg-emerald-50 text-emerald-700 font-black">${escapeHtml(word)}</span>`).join('');
-        showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-2">📷 오늘의 노트 사진 분석 완료</h3><p class="text-gray-500 font-bold mb-4">${savedText}</p><div class="mb-4 rounded-2xl bg-slate-50 p-4"><div class="text-sm font-black text-slate-500 mb-2">OCR 단어 + AI 사진 분석 단어</div><div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">${candidatePreview}</div></div><div class="rounded-2xl bg-emerald-50/40 p-4"><div class="text-sm font-black text-emerald-700 mb-2">AI가 최종 추출한 명사 단어</div><div class="flex flex-wrap gap-2 max-h-64 overflow-y-auto">${finalPreview}</div></div>${rewardText}</div>`);
+        showModal(`<div class="text-left dictation-bank-modal-shell"><h3 class="text-2xl font-black text-[#2c3e50] mb-2">📷 오늘의 노트 사진 분석 완료</h3><p class="text-gray-500 font-bold mb-4">${savedText}</p><div class="mb-4 rounded-2xl bg-slate-50 p-4"><div class="text-sm font-black text-slate-500 mb-2">OCR 단어 + AI 사진 분석 단어</div><div class="lesson-photo-word-grid">${candidatePreview}</div></div><div class="rounded-2xl bg-emerald-50/40 p-4"><div class="text-sm font-black text-emerald-700 mb-2">AI가 최종 추출한 명사 단어</div><div class="lesson-photo-word-grid">${finalPreview}</div></div>${rewardText}</div>`);
     } catch (error) {
         console.error('lesson photo capture failed', error);
         hideActivityLoading();
@@ -8196,7 +8207,7 @@ window.completeDictationItem = async function() {
     }
     showModal('미션 채점 결과는 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
 }
-window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left relative pr-8"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[62vh] overflow-y-auto pr-1">${renderCurricularWordBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">각 단어에는 교과 맞춤쓰기 1·2·3단계별 정답률/오답률이 저장됩니다. 2회차부터는 오답률 높은 단어 3개를 자동 복습으로 섞어요.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
+window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left relative pr-8 dictation-bank-modal-shell"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="dictation-bank-word-grid">${renderCurricularWordBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">각 단어에는 교과 맞춤쓰기 1·2·3단계별 정답률/오답률이 저장됩니다. 2회차부터는 오답률 높은 단어 3개를 자동 복습으로 섞어요.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
 
 window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
 window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button type="button" class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${escapeHtml(text)}</button>`).join(''); }
@@ -17381,6 +17392,8 @@ window.showModal = function showModal(msg, options = {}) {
     lastModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     message.innerHTML = sanitizeModalHtml(msg);
     const modal = document.getElementById('result-modal');
+    const modalContent = modal?.querySelector('.modal-content');
+    modalContent?.classList.toggle('modal-content-wide', /dictation-bank-modal-shell|lesson-photo-word-grid/.test(String(msg)));
     modal.dataset.plainClose = options.plainClose ? 'true' : '';
     confirmBtn.classList.toggle('hidden', Boolean(options.hideConfirm));
     icon?.classList.toggle('hidden', Boolean(options.hideIcon));
