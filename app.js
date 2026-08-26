@@ -4391,16 +4391,22 @@ async function ensureTeacherProfile(user, fallbackName) {
 }
 
 
+function renderStudentLoginNumber() {
+    const display = document.getElementById('password-display');
+    if (display) display.innerText = inputPassword;
+    document.getElementById('student-test-login-guide')?.classList.toggle('hidden', Boolean(inputPassword));
+}
+
 window.addNumber = function addNumber(num) {
     if (inputPassword.length < 8) {
         inputPassword += num;
-        document.getElementById('password-display').innerText = inputPassword;
+        renderStudentLoginNumber();
     }
 }
 
 window.backspace = function backspace() {
     inputPassword = inputPassword.slice(0, -1);
-    document.getElementById('password-display').innerText = inputPassword;
+    renderStudentLoginNumber();
 }
 
 window.goHomeDashboard = function goHomeDashboard() {
@@ -17309,7 +17315,7 @@ window.handleLogout = async function handleLogout() {
         showTopLevelSection('login-section');
         document.getElementById('main-container').style.maxWidth = '1000px';
         inputPassword = '';
-        document.getElementById('password-display').innerText = '';
+        renderStudentLoginNumber();
         switchLoginView('student');
     } catch (error) {
         console.error('Logout error:', error);
@@ -17334,7 +17340,7 @@ window.checkStudentLogin = async function checkStudentLogin() {
         console.error('Student login error:', error);
         showModal("로그인 번호가 올바르지 않거나 해당 학생을 찾을 수 없어요.<br>다시 한 번 해봐요!");
         inputPassword = "";
-        document.getElementById('password-display').innerText = "";
+        renderStudentLoginNumber();
     }
 }
 
@@ -17522,8 +17528,7 @@ async function signInOrCreateTestAccount(account) {
 window.testLoginStudent = async function testLoginStudent() {
     try {
         inputPassword = '';
-        const display = document.getElementById('password-display');
-        if (display) display.innerText = '';
+        renderStudentLoginNumber();
         const { profile } = await signInOrCreateTestAccount(TEST_LOGIN_ACCOUNTS.student);
         updateAccountName(profile.name);
     } catch (error) {
@@ -17673,7 +17678,7 @@ window.createStudentAccount = async function createStudentAccount() {
         closeStudentSignupModal();
         showModal(`계정이 만들어졌어요!<br><strong>${escapeHtml(name)}</strong> 학생의 로그인 번호는 <strong class="text-teal-600">${newCode}</strong> 입니다.`);
         inputPassword = '';
-        document.getElementById('password-display').innerText = '';
+        renderStudentLoginNumber();
     } catch (error) {
         console.error('Student sign-up error:', error);
         showModal('회원가입 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.');

@@ -96,9 +96,12 @@
 
                         <div class="border-t pt-6 text-center">
                             <p class="text-gray-400 text-sm mb-3">새로 가입해야 하나요?</p>
-                            <div class="flex justify-center gap-2 flex-wrap">
+                            <div class="flex justify-center items-end gap-2 flex-wrap">
                                 <button type="button" onclick="openStudentSignupModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-8 py-2 rounded-full font-bold transition-all shadow-sm">회원가입</button>
-                                <button type="button" onclick="testLoginStudent()" class="bg-[#55b346] hover:bg-[#45963a] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">학생 테스트</button>
+                                <div class="student-test-login-wrap">
+                                    <p id="student-test-login-guide" class="student-test-login-guide" role="status">번호 입력이 없으면 학생 테스트 버튼을 눌러 주세요.</p>
+                                    <button type="button" onclick="testLoginStudent()" class="bg-[#55b346] hover:bg-[#45963a] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">학생 테스트</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1558,7 +1561,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260826-drawing-back-layout-v79"></script>
+    <script type="module" src="app.js?v=20260826-student-test-guide-v80"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
