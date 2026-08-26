@@ -120,6 +120,7 @@ assert(app.includes("'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ'") && app.in
 assert(app.includes("completeEmbeddedWriting('word', { autoAdvance: true })") && app.includes("completeEmbeddedWriting('sentence', { autoAdvance: true })"), '2단계 낱말·문장 쓰기가 완료 후 자동 전환되지 않습니다.');
 assert(app.includes('canvas.dataset.promptVersion = String(Number(canvas.dataset.promptVersion || 0) + 1)') && app.includes('if (targetCanvas.dataset.promptVersion === promptVersion)'), '자동 전환과 비동기 저장의 문제 구분 처리가 없습니다.');
 assert(app.includes("([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\\s*\\+\\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\\s*[→=]\\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])"), '글자 결합 결과 뒤의 조사가 결과 글자에 포함될 수 있습니다.');
+assert(app.includes("const quizListenButton = root?.querySelector('.listen-quiz-play-btn')") && app.includes("return hasListenChoiceQuiz ? [quizListenButton] : controls"), '듣고 고르기 활동의 안내가 소리 듣기 버튼으로 제한되지 않았습니다.');
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
 const modalSafetyApi = new Function(`${modalSafety}\nreturn { isSafeModalAction };`)();
 assert(modalSafetyApi.isSafeModalAction('enterAiedueCraftAsTeacher()'), '교사 상점의 크래프트 접속 동작이 팝업 안전 처리 과정에서 제거됩니다.');

@@ -2517,6 +2517,13 @@ function getLearningDetailActionControls(root) {
     });
 }
 
+function getLearningDetailGuideControls(root) {
+    const controls = getLearningDetailActionControls(root);
+    const quizListenButton = root?.querySelector('.listen-quiz-play-btn');
+    const hasListenChoiceQuiz = Boolean(quizListenButton && root.querySelector('.choice-chip-button'));
+    return hasListenChoiceQuiz ? [quizListenButton] : controls;
+}
+
 function getLearningDetailReviewPageKey() {
     const section = document.getElementById('learning-detail-section');
     return `${section?.dataset.currentStep || ''}:${section?.dataset.currentSection || ''}`;
@@ -2616,7 +2623,7 @@ function positionLearningActivityButtonGuide() {
 function showLearningActivityButtonGuide(content) {
     const section = document.getElementById('learning-detail-section');
     if (!content || !section || section.classList.contains('hidden') || learningDetailPageLooksComplete(content)) return;
-    const controls = getLearningDetailActionControls(content);
+    const controls = getLearningDetailGuideControls(content);
     if (!controls.length) return;
     const target = controls.find((control) => control.dataset.learningReviewed !== 'true') || controls[0];
     hideLearningActivityButtonGuide();
