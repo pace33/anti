@@ -111,6 +111,8 @@ assert(combinationRenderer.includes('const comboData = JSON.stringify([combos[in
 assert(appCss.includes('.combine-card-list') && appCss.includes('flex-direction: column;'), '글자 결합 카드가 한 줄씩 세로 배치되지 않습니다.');
 assert(app.includes("if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';"), '소리 듣기 활동의 안내 문구가 간단한 표현으로 변경되지 않았습니다.');
 assert(!app.includes('소리 듣기 버튼을 눌러 보세요.'), '이전 소리 듣기 안내 문구가 남아 있습니다.');
+assert(app.includes("if (sectionId !== 'learning-detail-section')") && app.includes('resetLearningDetailNavigationGuide();'), '학습 화면을 벗어날 때 안내 말풍선이 정리되지 않습니다.');
+assert(app.includes('!target.isConnected || !section || section.classList.contains(\'hidden\') || !section.contains(target)'), '화면 전환 후 지연된 안내 말풍선이 다시 표시될 수 있습니다.');
 assert(index.includes('class="my-korean-logo-link pointer-events-auto cursor-pointer"') && index.includes('class="my-korean-profile-banner pointer-events-auto'), '나의 한글 상단 영역의 로고 또는 프로필 구분 클래스가 없습니다.');
 assert(appCss.includes('grid-template-columns:180px minmax(0,1fr)') && appCss.includes('.my-korean-unit-bar {position:static;'), 'PC 나의 한글 상단 로고와 단원 메뉴가 독립된 그리드 영역으로 배치되지 않습니다.');
 assert(appCss.includes('.my-korean-profile-banner {display:none !important;}') && appCss.includes('overflow:hidden;'), '단원 메뉴가 비어 있는 오른쪽 공간을 모두 사용하지 못합니다.');

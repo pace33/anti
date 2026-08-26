@@ -2606,6 +2606,11 @@ function positionLearningActivityButtonGuide() {
     const target = learningDetailActivityGuideTarget;
     const guide = document.getElementById('learning-activity-button-guide');
     if (!target || !guide || guide.classList.contains('hidden')) return;
+    const section = document.getElementById('learning-detail-section');
+    if (!target.isConnected || !section || section.classList.contains('hidden') || !section.contains(target)) {
+        hideLearningActivityButtonGuide();
+        return;
+    }
     const rect = target.getBoundingClientRect();
     const guideRect = guide.getBoundingClientRect();
     const gap = 12;
@@ -4105,6 +4110,9 @@ function setTopLevelSectionVisible(sectionId, isVisible) {
 }
 
 function showTopLevelSection(sectionId) {
+    if (sectionId !== 'learning-detail-section') {
+        resetLearningDetailNavigationGuide();
+    }
     topLevelSectionIds.forEach((id) => {
         setTopLevelSectionVisible(id, id === sectionId);
     });
