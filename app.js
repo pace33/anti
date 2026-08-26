@@ -15537,11 +15537,14 @@ function getUnit9WordWritingGuide(word) {
     const letters = Array.from(word);
     return letters.length === 1 ? `${word}/${word}` : letters.join('/');
 }
+function getUnit9WordWritingColumnCount(word) {
+    return Math.max(2, Array.from(word).length);
+}
 function getUnit9WordWritingLabel(word) {
     return Array.from(word).length === 1 ? `${word} 두 번 직접 쓰기` : `${word}를 한 칸에 한 글자씩 직접 쓰기`;
 }
-function renderUnit9DoubleFinalIntro(){return `<section class="unit9-double-intro"><div class="unit9-heading"><strong>이해하기</strong><span>겹받침 있는 단어 읽기</span></div><p class="unit9-guide">겹받침은 두 글자를 쓰지만 대표소리로 읽어요.</p><div class="unit9-intro-example"><span>📖</span><strong>읽다</strong><i>→</i><button type="button" onclick="speakTextKo('익따')">🔊 익따</button></div><div class="unit9-write-practice"><div><strong>읽으면서 직접 써 보세요.</strong><button type="button" onclick="resetTraceWritingCanvas()">다시 쓰기</button></div><canvas id="trace-writing-canvas" class="trace-writing-canvas unit9-writing-canvas" data-guide="${getUnit9WordWritingGuide('읽다')}" aria-label="${getUnit9WordWritingLabel('읽다')}"></canvas></div><div class="unit9-intro-steps"><span>그림과 단어 연결하기</span><span>소리 내어 읽기</span><span>읽으면서 써 보기</span><span>표기와 소리 구분하기</span></div></section>`;}
-function renderUnit9DoubleFinalReading(pageIndex){const words=UNIT9_DOUBLE_FINAL_WORDS[pageIndex];return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>겹받침 단어</span></div><p class="unit9-guide">단어를 소리 내어 읽고 회색 글자 위에 직접 써 보세요.</p><div class="unit9-double-grid">${words.map(([icon,word,sound])=>`<article><span>${icon}</span><strong>${word}</strong><div class="unit9-trace-words"><canvas class="trace-writing-canvas unit9-card-writing-canvas" data-guide="${getUnit9WordWritingGuide(word)}" aria-label="${getUnit9WordWritingLabel(word)}"></canvas></div><button type="button" onclick="speakTextKo('${sound}')">🔊 ${sound}</button></article>`).join('')}</div><button type="button" class="unit9-reset-writing" onclick="document.querySelectorAll('.view-section:not(.hidden) .unit9-card-writing-canvas').forEach(canvas=>resetTraceWritingCanvas(canvas))">전체 다시 쓰기</button></section>`;}
+function renderUnit9DoubleFinalIntro(){return `<section class="unit9-double-intro"><div class="unit9-heading"><strong>이해하기</strong><span>겹받침 있는 단어 읽기</span></div><p class="unit9-guide">겹받침은 두 글자를 쓰지만 대표소리로 읽어요.</p><div class="unit9-intro-example"><span>📖</span><strong>읽다</strong><i>→</i><button type="button" onclick="speakTextKo('익따')">🔊 익따</button></div><div class="unit9-write-practice"><div><strong>읽으면서 직접 써 보세요.</strong><button type="button" onclick="resetTraceWritingCanvas()">다시 쓰기</button></div><canvas id="trace-writing-canvas" class="trace-writing-canvas unit9-writing-canvas" data-grid-cols="${getUnit9WordWritingColumnCount('읽다')}" data-guide="${getUnit9WordWritingGuide('읽다')}" aria-label="${getUnit9WordWritingLabel('읽다')}"></canvas></div><div class="unit9-intro-steps"><span>그림과 단어 연결하기</span><span>소리 내어 읽기</span><span>읽으면서 써 보기</span><span>표기와 소리 구분하기</span></div></section>`;}
+function renderUnit9DoubleFinalReading(pageIndex){const words=UNIT9_DOUBLE_FINAL_WORDS[pageIndex];return `<section class="unit9-page"><div class="unit9-heading"><strong>읽기 ${pageIndex+1}</strong><span>겹받침 단어</span></div><p class="unit9-guide">단어를 소리 내어 읽고 회색 글자 위에 직접 써 보세요.</p><div class="unit9-double-grid">${words.map(([icon,word,sound])=>`<article><span>${icon}</span><strong>${word}</strong><div class="unit9-trace-words"><canvas class="trace-writing-canvas unit9-card-writing-canvas" data-grid-cols="${getUnit9WordWritingColumnCount(word)}" data-guide="${getUnit9WordWritingGuide(word)}" aria-label="${getUnit9WordWritingLabel(word)}"></canvas></div><button type="button" onclick="speakTextKo('${sound}')">🔊 ${sound}</button></article>`).join('')}</div><button type="button" class="unit9-reset-writing" onclick="document.querySelectorAll('.view-section:not(.hidden) .unit9-card-writing-canvas').forEach(canvas=>resetTraceWritingCanvas(canvas))">전체 다시 쓰기</button></section>`;}
 const UNIT9_DOUBLE_MATCH=[
     [['읽다','📖'],['흙','🌱'],['싫다','😣'],['없다','🫙'],['닭','🐔']],
     [['앉다','🪑'],['많다','🙋'],['밝다','💡'],['괜찮다','😊'],['넓다','↔️']]
@@ -16729,10 +16732,10 @@ function getTraceGridLayout(canvas, chars) {
     const configuredCols = Number(canvas?.dataset?.gridCols || 0);
     const cols = isSentenceLines
         ? 1
-        : (isMakeLetterGrid ? (configuredCols || 5) : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length)));
+        : (configuredCols || (isMakeLetterGrid ? 5 : (isDoubleRow ? 5 : (isWordDoubleRow ? 2 : chars.length))));
     const rows = isSentenceLines
         ? Math.max(1, chars.length)
-        : (isMakeLetterGrid ? Math.ceil(chars.length / cols) : (isDoubleRow || isWordDoubleRow ? 2 : 1));
+        : ((configuredCols || isMakeLetterGrid) ? Math.ceil(chars.length / cols) : (isDoubleRow || isWordDoubleRow ? 2 : 1));
     return { cols, rows };
 }
 

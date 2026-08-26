@@ -130,6 +130,12 @@ assert(app.includes("completeEmbeddedWriting('word', { autoAdvance: true })") &&
 assert(app.includes('canvas.dataset.promptVersion = String(Number(canvas.dataset.promptVersion || 0) + 1)') && app.includes('if (targetCanvas.dataset.promptVersion === promptVersion)'), '자동 전환과 비동기 저장의 문제 구분 처리가 없습니다.');
 assert(app.includes('function getUnit9WordWritingGuide(word)') && app.includes("letters.length === 1 ? `${word}/${word}` : letters.join('/')"), '겹받침 낱말 쓰기가 글자 수에 맞게 칸을 나누지 않습니다.');
 assert(app.includes('data-guide="${getUnit9WordWritingGuide(word)}"') && !app.includes('data-guide="${word}/${word}"'), '두 글자 이상인 겹받침 낱말이 한 칸에 통째로 반복됩니다.');
+assert(app.includes('function getUnit9WordWritingColumnCount(word)') && app.includes('data-grid-cols="${getUnit9WordWritingColumnCount(word)}"'), '세 글자 겹받침 낱말의 쓰기 칸 수가 명시되지 않았습니다.');
+assert(app.includes(': (configuredCols || (isMakeLetterGrid ? 5') && app.includes('(configuredCols || isMakeLetterGrid) ? Math.ceil(chars.length / cols)'), '쓰기 캔버스가 지정된 열 수를 우선 적용하지 않습니다.');
+const unit9WritingHelpers = section(app, 'function getUnit9WordWritingGuide', 'function getUnit9WordWritingLabel');
+const unit9WritingApi = new Function(`${unit9WritingHelpers}\nreturn { getUnit9WordWritingGuide, getUnit9WordWritingColumnCount };`)();
+assert(unit9WritingApi.getUnit9WordWritingGuide('닭') === '닭/닭' && unit9WritingApi.getUnit9WordWritingGuide('많다') === '많/다' && unit9WritingApi.getUnit9WordWritingGuide('괜찮다') === '괜/찮/다', '한·두·세 글자 낱말의 쓰기 칸 분리가 올바르지 않습니다.');
+assert(unit9WritingApi.getUnit9WordWritingColumnCount('괜찮다') === 3, '세 글자 낱말이 세 칸으로 배치되지 않습니다.');
 assert(app.includes("([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\\s*\\+\\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])\\s*[→=]\\s*([가-힣ㄱ-ㅎㅏ-ㅣ●ㆍ])"), '글자 결합 결과 뒤의 조사가 결과 글자에 포함될 수 있습니다.');
 assert(!app.includes("return hasListenChoiceQuiz ? [quizListenButton] : controls"), '선택형 문제에서 소리 듣기 안내가 다시 표시될 수 있습니다.');
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
