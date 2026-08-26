@@ -117,6 +117,8 @@ assert(appCss.includes('.my-korean-profile-banner {display:none !important;}') &
 assert(appCss.includes('.my-korean-unit-tab {flex:1 1 0;') && appCss.includes('flex-wrap:wrap;overflow:visible;'), '단원 탭이 PC와 모바일에서 스크롤 없이 배치되지 않습니다.');
 assert(appCss.includes('#my-korean-section .stitched {margin-top:calc(10rem - 1cm) !important;}'), '단원 메뉴와 내용 사이의 간격이 1cm 줄어들지 않았습니다.');
 assert(app.includes("'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ'") && app.includes("horizontalVowels.includes(tile.vowel) ? 'horizontal' : 'vertical'"), '복합 모음 쓰기 칸이 초성 아래에 배치되지 않습니다.');
+assert(app.includes("completeEmbeddedWriting('word', { autoAdvance: true })") && app.includes("completeEmbeddedWriting('sentence', { autoAdvance: true })"), '2단계 낱말·문장 쓰기가 완료 후 자동 전환되지 않습니다.');
+assert(app.includes('canvas.dataset.promptVersion = String(Number(canvas.dataset.promptVersion || 0) + 1)') && app.includes('if (targetCanvas.dataset.promptVersion === promptVersion)'), '자동 전환과 비동기 저장의 문제 구분 처리가 없습니다.');
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
 const modalSafetyApi = new Function(`${modalSafety}\nreturn { isSafeModalAction };`)();
 assert(modalSafetyApi.isSafeModalAction('enterAiedueCraftAsTeacher()'), '교사 상점의 크래프트 접속 동작이 팝업 안전 처리 과정에서 제거됩니다.');
