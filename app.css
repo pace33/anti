@@ -113,7 +113,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .rpg-profile-copy strong { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #2c3e50; font-size: .94rem; }
 .rpg-role-label { color: #62a958; font-size: .64rem; font-weight: 900; }
 .rpg-wallet-line { display: flex; gap: 7px; margin-top: 2px; color: #72806f; font-size: .66rem; font-weight: 900; }
-.rpg-profile-tools { margin-left: -18px; display: flex; align-items: center; gap: 3px; transform: translateX(-14px); transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease; }
+.rpg-profile-tools { margin-left: -8px; display: flex; align-items: center; gap: 3px; transform: translateX(-8px); transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease; }
 .rpg-tool-button {
     min-width: 38px;
     width: 38px;
@@ -158,7 +158,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
     -webkit-backdrop-filter: blur(16px);
 }
 .aiedue-rpg-hud.actions-open .rpg-action-tray {
-    width: 480px;
+    width: 540px;
     padding-inline: 7px;
     opacity: 1;
     pointer-events: auto;
@@ -185,7 +185,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .rpg-action-button:active, .rpg-tool-button:active { transform: translateY(0); }
 .rpg-action-button > span:last-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rpg-action-icon { font-size: 1.35rem; }
-.rpg-cloud-button { color: #397da4; border-color: #cfeaf5; background: linear-gradient(135deg, #f3fbff, #e7f7fd); }
+.rpg-cloud-button { flex-grow: 1.35; color: #397da4; border-color: #cfeaf5; background: linear-gradient(135deg, #f3fbff, #e7f7fd); }
 .rpg-shop-button { color: #3d8d64; border-color: #ccebd7; background: linear-gradient(135deg, #f3fcf5, #e4f7e9); }
 .rpg-settings-button { color: #6b7280; border-color: #e2e8f0; background: linear-gradient(135deg, #fff, #f7f8fa); }
 .rpg-math-button { color: #137ac0; border-color: #bde3fb; background: linear-gradient(135deg, #f4fbff, #e2f4ff); }
@@ -279,7 +279,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     .rpg-profile-banner { min-width: 390px; padding-left: 82px; }
     .rpg-profile-copy { min-width: 92px; }
     .rpg-profile-copy strong { max-width: 105px; }
-    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: 480px; }
+    .aiedue-rpg-hud.actions-open .rpg-action-tray { width: 540px; }
     .rpg-action-button { min-width: 0; }
     .rpg-action-button > span:last-child { font-size: .76rem; }
     .lesson-photo-button { max-width: 270px; padding: 10px 13px; }
@@ -342,7 +342,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
         transform-origin: top right;
     }
     .aiedue-rpg-hud.actions-open .rpg-action-tray {
-        width: min(480px, calc(100vw - 24px));
+        width: min(540px, calc(100vw - 24px));
         height: 68px;
         transform: translateY(0) scale(1);
     }

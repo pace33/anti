@@ -6819,6 +6819,17 @@ function getCurricularGateText() {
     if (info.dan === 2) return `${info.title} · 문장 힌트 단어 받아쓰기 · ${Number(step2.attempts || 0)}문항 · 정답률 ${step2Rate}%`;
     return `${info.title} · 문장 전체 받아쓰기`;
 }
+function maskCurricularKoreanUnits(text = '') {
+    return Array.from(String(text || '')).map((char) => /[가-힣A-Za-z0-9]/.test(char) ? 'O' : char).join('');
+}
+function maskCurricularTargetInSentence(sentence = '', word = '') {
+    const rawSentence = String(sentence || '').trim();
+    const rawWord = String(word || '').trim();
+    if (!rawSentence) return maskCurricularKoreanUnits(rawWord);
+    if (!rawWord) return maskCurricularKoreanUnits(rawSentence);
+    const maskedWord = maskCurricularKoreanUnits(rawWord);
+    return rawSentence.includes(rawWord) ? rawSentence.split(rawWord).join(maskedWord) : maskCurricularKoreanUnits(rawSentence);
+}
 function createCurricularDifficultySession(difficulty = getCurrentCurricularDan()) {
     const dan = clampCurricularDan(difficulty);
     const words = getCurricularWords();
@@ -6826,12 +6837,12 @@ function createCurricularDifficultySession(difficulty = getCurrentCurricularDan(
     const items = words.map((word, index) => {
         const sentence = makeCurricularSentence(word, index);
         if (dan === 1) {
-            return { word, sentence: word, answer: word, canvasGuide: '', hintText: '', audioText: word, displayText: '', source: 'curricular-step1', difficulty: 1, coverage: 0, aiGraded: false };
+            return { word, sentence: word, answer: word, canvasGuide: '', hintText: '', audioText: word, displayText: maskCurricularKoreanUnits(word), source: 'curricular-step1', difficulty: 1, coverage: 0, aiGraded: false };
         }
         if (dan === 2) {
-            return { word, sentence, answer: word, canvasGuide: '', hintText: '', audioText: sentence, displayText: '', source: 'curricular-step2', difficulty: 2, coverage: 0, aiGraded: false };
+            return { word, sentence, answer: word, canvasGuide: '', hintText: '', audioText: sentence, displayText: maskCurricularTargetInSentence(sentence, word), source: 'curricular-step2', difficulty: 2, coverage: 0, aiGraded: false };
         }
-        return { word, sentence, answer: sentence, canvasGuide: '', hintText: '', audioText: sentence, displayText: '', source: 'curricular-step3', difficulty: 3, coverage: 0, aiGraded: false };
+        return { word, sentence, answer: sentence, canvasGuide: '', hintText: '', audioText: sentence, displayText: maskCurricularKoreanUnits(sentence), source: 'curricular-step3', difficulty: 3, coverage: 0, aiGraded: false };
     });
     return { kind: 'mission', mode: 'curricular', marker: CURRICULAR_TRACE_CANVAS_MARKER, difficulty: dan, items, currentIndex: 0, graded: null, saved: false, autoSaved: false, startedAt: new Date().toISOString() };
 }
@@ -6840,7 +6851,7 @@ function createDictationMissionSession() {
 }
 function getCurricularCanvasGuide(item = {}) {
     if (activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular') {
-        return item.retryMode ? String(item.answer || item.sentence || item.word || '').trim() : '';
+        return '';
     }
     return String(item.canvasGuide || item.answer || item.word || item.sentence || '').trim();
 }
@@ -6871,14 +6882,14 @@ function renderCurricularWritingCanvasCard(item, index, { compact = false } = {}
     const guide = getCurricularCanvasGuide(item);
     const active = index === Number(activeDictationSession?.currentIndex || 0);
     const status = isMission
-        ? (item.aiGrading ? 'AI 채점 중...' : (item.retryMode ? '📝 정답을 보고 한 번 다시 써요' : (item.aiGraded ? (getCurricularItemScore(item.aiResult || item) > 0 ? `✅ ${formatCurricularScore(getCurricularItemScore(item.aiResult || item))}점` : '🟡 오답') : '아직 채점 전')))
+        ? (item.aiGrading ? 'AI 채점 중...' : (item.retryMode ? '다시 적어서 확인 버튼을 눌러요' : (item.aiGraded ? (getCurricularItemScore(item.aiResult || item) > 0 ? `✅ ${formatCurricularScore(getCurricularItemScore(item.aiResult || item))}점` : '🟡 오답') : '아직 채점 전')))
         : (item.traceComplete ? '✅ 완료' : (item.coverage ? `${Math.round(item.coverage * 100)}% 채움` : '아직 연습 전'));
     const retryAnswer = isMission && item.retryMode ? String(item.answer || item.sentence || item.word || '').trim() : '';
-    const hint = isMission ? '' : (item.hintText || item.displayText || escapeHtml(guide));
+    const hint = isMission ? (item.displayText ? escapeHtml(item.displayText) : '') : (item.hintText || item.displayText || escapeHtml(guide));
     const cardTitle = activeDictationSession?.kind === 'trace'
         ? '단어 따라쓰기'
         : `${Number(item.difficulty || activeDictationSession?.difficulty || 1)}단 받아쓰기`;
-    const confirmText = isMission ? (item.aiGrading ? '채점중' : (item.retryMode ? '다시 채점' : (item.aiGraded ? '다시 확인' : '확인'))) : '확인';
+    const confirmText = isMission ? (item.aiGrading ? '채점중' : '확인') : '확인';
     return `<div class="rounded-3xl bg-white border-2 ${item.retryMode ? 'border-orange-300 bg-orange-50/70 shadow-lg shadow-orange-100' : (item.aiGraded || item.traceComplete ? 'border-green-200 bg-green-50/60' : (active ? 'border-red-300 shadow-lg shadow-red-100' : 'border-red-100'))} p-5" data-curricular-card="${index}">
         <div class="flex items-start justify-between gap-3 mb-3">
             <div>
@@ -7103,7 +7114,7 @@ function updateCurricularWritingActionButtons() {
         if (saveBtn) saveBtn.classList.add('hidden');
         if (gradeBtn) gradeBtn.classList.add('hidden');
         if (prevBtn) { prevBtn.classList.toggle('hidden', current <= 0); prevBtn.disabled = current <= 0; }
-        if (nextBtn) { nextBtn.classList.toggle('hidden', last); nextBtn.disabled = !currentGraded || last; nextBtn.innerText = currentItem?.retryMode ? '재채점 후 다음' : '다음'; }
+        if (nextBtn) { nextBtn.classList.toggle('hidden', last); nextBtn.disabled = !currentGraded || last; nextBtn.innerText = '다음'; }
         if (completeBtn) { completeBtn.classList.toggle('hidden', !allGraded); completeBtn.disabled = !allGraded; }
     }
 }
@@ -7123,10 +7134,11 @@ function startCurricularRetryMode(item, index, firstResult = {}) {
     item.retryUsed = false;
     item.firstAiResult = firstResult;
     item.aiGraded = false;
+    item.aiGrading = false;
     item.traceComplete = false;
     item.aiResult = { ...firstResult, correct: false, retryPending: true, score: 0 };
     clearCurricularCanvasStrokesOnly(index);
-    showAiedueAutoToast('한 번 더 써봐요', '정답을 보고 따라 쓴 뒤 다시 채점할 수 있어요. 점수는 맞으면 0.5점이에요.', 4200);
+    showAiedueAutoToast('한 번 더 써봐요', '다시 적어서 확인 버튼을 눌러요.', 4200);
     renderDictationSessionList();
 }
 async function gradeCurricularCanvasItemWithAi(index) {
@@ -7164,6 +7176,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
             analysis: String(parsed.analysis || parsed.reason || '').trim() || 'AI가 캔버스 손글씨를 확인했어요.'
         };
         if (!isRetryAttempt && !rawCorrect) {
+            item.aiGrading = false;
             startCurricularRetryMode(item, index, result);
             return;
         }
@@ -7186,7 +7199,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
         showModal(`AI 채점에 실패했어요: ${escapeHtml(error.message || error)}`);
     } finally {
         item.aiGrading = false;
-        if (button) { button.disabled = false; button.innerText = item.retryMode ? '다시 채점' : (item.aiGraded ? '다시 확인' : original); }
+        if (button) { button.disabled = false; button.innerText = '확인'; }
         updateCurricularWritingActionButtons();
     }
 }
@@ -7228,7 +7241,7 @@ window.clearCurricularCanvasItem = function(index) {
     canvas._curricularStrokes = [];
     drawCurricularCanvasGuide(canvas, getCurricularCanvasGuide(item));
     const status = document.getElementById(`curricular-trace-status-${index}`);
-    if (status) { status.innerText = item.retryMode ? '정답을 보고 다시 써요.' : '다시 연습해요.'; status.className = item.retryMode ? 'text-orange-600' : 'text-gray-400'; }
+    if (status) { status.innerText = item.retryMode ? '다시 적어서 확인 버튼을 눌러요' : '다시 연습해요.'; status.className = item.retryMode ? 'text-orange-600' : 'text-gray-400'; }
     updateCurricularWritingActionButtons();
 }
 function gradeCurricularCanvasSession() {
