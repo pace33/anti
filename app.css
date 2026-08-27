@@ -1717,6 +1717,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     height: 1.18em;
     object-fit: contain;
 }
+.jeogori-picture-asset {
+    width: 1.2em;
+    height: 1.2em;
+    object-fit: contain;
+}
 .lesson13-picture-card .word {
     font-size: clamp(2rem, 4vw, 3.3rem);
     font-weight: 1000;

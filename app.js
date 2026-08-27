@@ -322,7 +322,7 @@ const CHANCHAN_LESSONS = [
             { word: "꼬마", icon: "🧒" },
             { word: "소나무", icon: "🌲" },
             { word: "거미", icon: "🕷️" },
-            { word: "저고리", icon: "👘" }
+            { word: "저고리", icon: '<img class="word-picture-asset jeogori-picture-asset" src="hanbok-jeogori.png" alt="">' }
         ]
     },
     {
@@ -13414,7 +13414,7 @@ const LESSON14_READING_GROUPS = [
             { word: '꼬마', icon: '🧒' },
             { word: '소나무', icon: '🌲' },
             { word: '거미', icon: '🕷️' },
-            { word: '저고리', icon: '👘' }
+            { word: '저고리', icon: '<img class="word-picture-asset jeogori-picture-asset" src="hanbok-jeogori.png" alt="">' }
         ],
         wordRows: [
             ['파도', '도로', '기도', '수저'],
@@ -13561,7 +13561,7 @@ const LESSON14_COMPLETION_WRITING_SETS = [
             { word: '꼬마', icon: '🧒', tiles: [{ syllable: '꼬', initial: 'ㄲ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '마', initial: 'ㅁ', vowel: 'ㅏ', givenSlot: 'initial' }] },
             { word: '소나무', icon: '🌲', tiles: [{ syllable: '소', initial: 'ㅅ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '나', initial: 'ㄴ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '무', initial: 'ㅁ', vowel: 'ㅜ', givenSlot: 'initial' }] },
             { word: '거미', icon: '🕷️', tiles: [{ syllable: '거', initial: 'ㄱ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '미', initial: 'ㅁ', vowel: 'ㅣ', givenSlot: 'initial' }] },
-            { word: '저고리', icon: '👘', tiles: [{ syllable: '저', initial: 'ㅈ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '고', initial: 'ㄱ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] }
+            { word: '저고리', icon: '<img class="word-picture-asset jeogori-picture-asset" src="hanbok-jeogori.png" alt="">', tiles: [{ syllable: '저', initial: 'ㅈ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '고', initial: 'ㄱ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] }
         ]
     }
 ];
