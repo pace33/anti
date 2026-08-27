@@ -790,6 +790,9 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     outline-offset: 5px;
     animation: learning-activity-guide-ring .85s ease-in-out 3;
 }
+.learning-activity-guided.learning-activity-sound-guided {
+    animation-iteration-count: 1;
+}
 #learning-detail-content .learning-activity-reviewed:not(.correct):not(.wrong):not(.is-correct):not(.is-complete):not(.is-heard) {
     border-color: #54c7a2 !important;
     outline: 2px solid rgba(84, 199, 162, .22);

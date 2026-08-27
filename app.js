@@ -2503,6 +2503,7 @@ let learningDetailCompletionObserver = null;
 let learningDetailNavGuideShownForPage = '';
 let learningDetailStaticGuideTimer = null;
 let learningDetailActivityGuideTimer = null;
+let learningDetailActivityGuideVoiceTimer = null;
 let learningDetailActivityGuideTarget = null;
 let learningDetailActivityClickHandler = null;
 let learningDetailActivityInteractionHandler = null;
@@ -2521,6 +2522,7 @@ function getLearningDetailGuideControls(root) {
     const controls = getLearningDetailActionControls(root);
     return controls.filter((control) => {
         if (learningDetailControlIsAnswerChoice(control)) return false;
+        if (isLearningDetailSoundControl(control)) return true;
         const region = control.closest('.practice-step-box, [data-question], [data-answer], [role="group"], article, section') || root;
         return !getLearningDetailActionControls(region).some(learningDetailControlIsAnswerChoice);
     });
@@ -2601,8 +2603,10 @@ function ensureLearningActivityGuide() {
 
 function hideLearningActivityButtonGuide() {
     window.clearTimeout(learningDetailActivityGuideTimer);
+    window.clearTimeout(learningDetailActivityGuideVoiceTimer);
     learningDetailActivityGuideTimer = null;
-    learningDetailActivityGuideTarget?.classList.remove('learning-activity-guided');
+    learningDetailActivityGuideVoiceTimer = null;
+    learningDetailActivityGuideTarget?.classList.remove('learning-activity-guided', 'learning-activity-sound-guided');
     learningDetailActivityGuideTarget = null;
     const guide = document.getElementById('learning-activity-button-guide');
     guide?.classList.add('hidden');
@@ -2625,6 +2629,21 @@ function getLearningActivityGuideText(control) {
     if (/완성|썼어요/.test(label)) return '활동을 마쳤다면 이 버튼을 눌러 보세요.';
     if (label && label.length <= 12) return `“${label}” 버튼을 눌러 보세요.`;
     return '이 버튼을 눌러 활동해 보세요.';
+}
+
+function isLearningDetailSoundControl(control) {
+    const label = `${control?.getAttribute?.('aria-label') || ''} ${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
+    return /소리|듣기|🔊/.test(label);
+}
+
+function announceLearningDetailSoundGuide(target) {
+    if (!isLearningDetailSoundControl(target) || target.dataset.learningSoundGuideSpoken === 'true') return;
+    target.dataset.learningSoundGuideSpoken = 'true';
+    learningDetailActivityGuideVoiceTimer = window.setTimeout(() => {
+        learningDetailActivityGuideVoiceTimer = null;
+        if (learningDetailActivityGuideTarget !== target || !target.isConnected) return;
+        speakTextKo('소리 듣기 버튼을 눌러 주세요.');
+    }, 120);
 }
 
 function positionLearningActivityButtonGuide() {
@@ -2660,6 +2679,10 @@ function showLearningActivityButtonGuide(content) {
     hideLearningActivityButtonGuide();
     learningDetailActivityGuideTarget = target;
     target.classList.add('learning-activity-guided');
+    if (isLearningDetailSoundControl(target)) {
+        target.classList.add('learning-activity-sound-guided');
+        announceLearningDetailSoundGuide(target);
+    }
     const guide = ensureLearningActivityGuide();
     guide.textContent = getLearningActivityGuideText(target);
     guide.classList.remove('hidden');
