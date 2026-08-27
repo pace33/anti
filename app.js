@@ -13548,7 +13548,7 @@ const LESSON20_READ_FIND_ITEMS = [
     { word: '거위', icon: '🪿', choices: ['거우', '거위'] },
     { word: '더위', icon: '🥵', choices: ['더우', '더위'] },
     { word: '교과서', icon: '📘', choices: ['교과서', '교과스'] },
-    { word: '야채', icon: '🥕', choices: ['야처', '야채'] },
+    { word: '야채', icon: '<img class="word-picture-asset vegetable-picture-asset" src="mixed-vegetables.webp" alt="">', choices: ['야처', '야채'] },
     { word: '의자', icon: '🪑', choices: ['의자', '으자'] },
     { word: '추위', icon: '🥶', choices: ['추위', '추이'] },
     { word: '우표', icon: '<img class="word-picture-asset" src="assets/word-postage-stamp.svg" alt="">', choices: ['오표', '우표'] }
@@ -13640,7 +13640,7 @@ const LESSON20_COMPLETION_WRITING_SETS = [
             { word: '여우', icon: '🦊', tiles: [{ syllable: '여', initial: 'ㅇ', vowel: 'ㅕ', givenSlot: 'initial' }, { syllable: '우', initial: 'ㅇ', vowel: 'ㅜ', givenSlot: 'initial' }] },
             { word: '과자', icon: '🍪', tiles: [{ syllable: '과', initial: 'ㄱ', vowel: 'ㅘ', givenSlot: 'initial' }, { syllable: '자', initial: 'ㅈ', vowel: 'ㅏ', givenSlot: 'initial' }] },
             { word: '비녀', icon: '<img class="word-picture-asset binyeo-picture-asset" src="traditional-binyeo.webp" alt="">', tiles: [{ syllable: '비', initial: 'ㅂ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '녀', initial: 'ㄴ', vowel: 'ㅕ', givenSlot: 'initial' }] },
-            { word: '야채', icon: '🥕', tiles: [{ syllable: '야', initial: 'ㅇ', vowel: 'ㅑ', givenSlot: 'initial' }, { syllable: '채', initial: 'ㅊ', vowel: 'ㅐ', givenSlot: 'initial' }] }
+            { word: '야채', icon: '<img class="word-picture-asset vegetable-picture-asset" src="mixed-vegetables.webp" alt="">', tiles: [{ syllable: '야', initial: 'ㅇ', vowel: 'ㅑ', givenSlot: 'initial' }, { syllable: '채', initial: 'ㅊ', vowel: 'ㅐ', givenSlot: 'initial' }] }
         ]
     },
     {

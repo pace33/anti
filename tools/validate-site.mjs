@@ -31,6 +31,7 @@ const requiredFiles = [
     'polite-bowing-child.webp',
     'traditional-binyeo.webp',
     'kimchi-plate.webp',
+    'mixed-vegetables.webp',
     'baby_giyeok.webp',
     'mom_ah.webp'
 ];
@@ -58,6 +59,8 @@ assert((app.match(/word:\s*['"]비녀['"],\s*icon:\s*'<img class="word-picture-a
 assert(appCss.includes('.binyeo-picture-asset'), '비녀 단독 이미지의 카드 표시 스타일이 없습니다.');
 assert((app.match(/word:\s*['"]김치['"],\s*icon:\s*'<img class="word-picture-asset kimchi-picture-asset" src="kimchi-plate\.webp"/g) || []).length === 2 && !/word:\s*['"]김치['"],\s*icon:\s*['"]🥬['"]/.test(app), '김치 그림이 배추김치 이미지로 통일되지 않았습니다.');
 assert(appCss.includes('.kimchi-picture-asset'), '김치 이미지의 카드 표시 스타일이 없습니다.');
+assert((app.match(/word:\s*['"]야채['"],\s*icon:\s*'<img class="word-picture-asset vegetable-picture-asset" src="mixed-vegetables\.webp"/g) || []).length === 2 && !/word:\s*['"]야채['"],\s*icon:\s*['"]🥕['"]/.test(app), '야채 그림이 여러 채소 이미지로 통일되지 않았습니다.');
+assert(appCss.includes('.vegetable-picture-asset'), '야채 이미지의 카드 표시 스타일이 없습니다.');
 assert(app.includes('class="trace-clear-button lesson-complete-submit') && app.includes('disabled>완료</button>'), '단어 완성 버튼이 완료 문구의 비활성 상태로 시작하지 않습니다.');
 assert(app.includes('function lessonCompletionCardHasWriting(card)') && app.includes("canvases.every((canvas) => canvas.dataset.hasWriting === 'true')"), '모든 쓰기 칸을 채운 뒤 완료 버튼을 활성화하는 조건이 없습니다.');
 assert(app.includes("syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));") && app.includes('button.disabled = completed || !lessonCompletionCardHasWriting(card);'), '쓰기 입력과 완료 버튼 활성화 상태가 연결되지 않았습니다.');
