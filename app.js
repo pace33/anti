@@ -2520,12 +2520,48 @@ function getLearningDetailActionControls(root) {
 
 function getLearningDetailGuideControls(root) {
     const controls = getLearningDetailActionControls(root);
+    const questionRegions = getLearningDetailSoundQuestionRegions(root, controls);
+    const activeQuestionRegion = questionRegions.find((region) => !learningDetailQuestionRegionComplete(region)) || null;
     return controls.filter((control) => {
         if (learningDetailControlIsAnswerChoice(control)) return false;
-        if (isLearningDetailSoundControl(control)) return true;
+        if (isLearningDetailSoundControl(control)) {
+            const questionRegion = findLearningDetailSoundQuestionRegion(control, root);
+            return !questionRegion || questionRegion === activeQuestionRegion;
+        }
         const region = control.closest('.practice-step-box, [data-question], [data-answer], [role="group"], article, section') || root;
         return !getLearningDetailActionControls(region).some(learningDetailControlIsAnswerChoice);
     });
+}
+
+function findLearningDetailSoundQuestionRegion(control, root) {
+    if (!control || !root) return null;
+    let region = control.parentElement;
+    while (region && root.contains(region)) {
+        const regionControls = getLearningDetailActionControls(region);
+        const hasSoundControl = regionControls.some(isLearningDetailSoundControl);
+        const hasAnswerChoices = regionControls.some(learningDetailControlIsAnswerChoice);
+        if (hasSoundControl && hasAnswerChoices) return region;
+        if (region === root) break;
+        region = region.parentElement;
+    }
+    return null;
+}
+
+function getLearningDetailSoundQuestionRegions(root, controls = getLearningDetailActionControls(root)) {
+    const regions = [];
+    controls.filter(isLearningDetailSoundControl).forEach((control) => {
+        const region = findLearningDetailSoundQuestionRegion(control, root);
+        if (region && !regions.includes(region)) regions.push(region);
+    });
+    return regions;
+}
+
+function learningDetailQuestionRegionComplete(region) {
+    if (!region) return false;
+    if (region.matches('.is-complete, [data-completed="true"]')) return true;
+    return getLearningDetailActionControls(region)
+        .filter(learningDetailControlIsAnswerChoice)
+        .some((control) => control.matches('.correct, .is-correct'));
 }
 
 function learningDetailControlIsAnswerChoice(control) {
@@ -2782,6 +2818,11 @@ function learningDetailPageLooksComplete(root) {
         if (!items.length) continue;
         foundRequirements = true;
         if (!items.every((item) => item.classList.contains(completedClass))) return false;
+    }
+    const soundQuestionRegions = getLearningDetailSoundQuestionRegions(root);
+    if (soundQuestionRegions.length > 1) {
+        foundRequirements = true;
+        if (!soundQuestionRegions.every(learningDetailQuestionRegionComplete)) return false;
     }
     const traceCanvases = [...root.querySelectorAll('.trace-writing-canvas')];
     if (traceCanvases.length) {
