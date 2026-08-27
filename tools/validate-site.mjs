@@ -28,6 +28,7 @@ const requiredFiles = [
     'aiedu_korean_dashboard_nature_bg.webp',
     'hanbok-jeogori.png',
     'waist-highlight-person.png',
+    'polite-bowing-child.webp',
     'baby_giyeok.webp',
     'mom_ah.webp'
 ];
@@ -154,6 +155,8 @@ assert(app.includes("board.addEventListener('pointermove'") && app.includes("doc
 assert(appCss.includes('.lesson-line-match-drag-line') && appCss.includes('touch-action: none;'), '드래그 중인 연결선 표시 또는 태블릿 터치 설정이 없습니다.');
 assert(app.includes("key: '얘기', word: '얘기', icon: '<span class=\"conversation-picture\"") && !app.includes("key: '얘기', word: '얘기', icon: '💬'"), '얘기 그림이 두 사람이 대화하는 모습으로 바뀌지 않았습니다.');
 assert(appCss.includes('.conversation-picture-bubble'), '두 사람 사이 말풍선 그림 스타일이 없습니다.');
+assert(app.includes("key: '예의', word: '예의', icon: '<img class=\"lesson-line-picture-asset bowing-picture-asset\" src=\"polite-bowing-child.webp\"") && !app.includes("key: '예의', word: '예의', icon: '🙇'"), '예의 그림이 고개 숙여 인사하는 모습으로 바뀌지 않았습니다.');
+assert(appCss.includes('.bowing-picture-asset'), '고개 숙여 인사하는 그림의 카드 표시 스타일이 없습니다.');
 assert(app.includes('data-no-button-guide') && app.includes('window.selectMakeLetterResult = function') && app.includes('data-make-consonant'), '글자 결합표의 안내 제외 또는 자음·모음 연동 표시가 없습니다.');
 assert(appCss.includes('.make-letter-cell.is-make-letter-linked') && appCss.includes('background: #d9f8e8;'), '선택한 결합 글자의 자음·모음 연두색 표시가 없습니다.');
 assert(app.includes('function syncChoiceQuizSoundButtonBlink') && app.includes('introComplete && !quizComplete'), '1번 듣기 완료 뒤 선택 문제 소리 버튼을 끝까지 강조하지 않습니다.');

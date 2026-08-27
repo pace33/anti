@@ -13986,7 +13986,7 @@ const LESSON_LINE_MATCH_CONFIGS = {
         items: [
             { key: '얘기', word: '얘기', icon: '<span class="conversation-picture"><span>🧑</span><span class="conversation-picture-bubble">💬</span><span>👩</span></span>' },
             { key: '시계', word: '시계', icon: '🕒' },
-            { key: '예의', word: '예의', icon: '🙇' }
+            { key: '예의', word: '예의', icon: '<img class="lesson-line-picture-asset bowing-picture-asset" src="polite-bowing-child.webp" alt="">' }
         ]
     },
     17: {

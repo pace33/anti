@@ -3750,6 +3750,17 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     background: #dcfce7;
 }
 .lesson-line-match-picture { font-size: 2rem; }
+.lesson-line-picture-asset {
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto;
+    object-fit: contain;
+}
+.bowing-picture-asset {
+    transform: scale(1.08);
+    transform-origin: center;
+}
 .conversation-picture {
     display: inline-flex;
     align-items: center;
