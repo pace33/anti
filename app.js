@@ -11132,7 +11132,7 @@ const LESSON21_BATCHIM_CONFIGS = {
         ],
         writeItems: ['감', '남', '담', '람', '맘', '범', '섬', '점', '텀', '펌', '검', '넘', '덤', '럼', '멈', '봄', '솜', '줌', '춤', '콤'],
         wordFind: [
-            { word: '참외', icon: '🍈', choices: ['참외', '차외'] },
+            { word: '참외', icon: '<img class="word-picture-asset chamoe-picture-asset" src="yellow-chamoe.webp" alt="">', choices: ['참외', '차외'] },
             { word: '김치', icon: '<img class="word-picture-asset kimchi-picture-asset" src="kimchi-plate.webp" alt="">', choices: ['김치', '기치'] },
             { word: '구름', icon: '☁️', choices: ['구름', '구룸'] },
             { word: '그림', icon: '🖼️', choices: ['그림', '그리'] }
@@ -11683,7 +11683,7 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
     'ㅁ': {
         bank: ['름', '림', '김', '참'],
         items: [
-            { word: '참외', icon: '🍈', parts: [{ text: '참', write: true }, { text: '외' }] },
+            { word: '참외', icon: '<img class="word-picture-asset chamoe-picture-asset" src="yellow-chamoe.webp" alt="">', parts: [{ text: '참', write: true }, { text: '외' }] },
             { word: '그림', icon: '🖼️', parts: [{ text: '그' }, { text: '림', write: true }] },
             { word: '김치', icon: '<img class="word-picture-asset kimchi-picture-asset" src="kimchi-plate.webp" alt="">', parts: [{ text: '김', write: true }, { text: '치' }] },
             { word: '구름', icon: '☁️', parts: [{ text: '구' }, { text: '름', write: true }] }
