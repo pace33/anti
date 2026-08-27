@@ -6632,6 +6632,66 @@ function normalizeDictationBankItem(item) {
     if (!sentence) return null;
     return { sentence, source: item?.source || 'dictation', wrongCount: Math.max(0, Number(item?.wrongCount || 0)), correctCount: Math.max(0, Number(item?.correctCount || 0)), lastTriedAt: item?.lastTriedAt || item?.savedAt || null, savedAt: item?.savedAt || new Date().toISOString() };
 }
+const DICTATION_FIRESTORE_SAFE_MARKER = 'dictation-firestore-safe-no-photo-v88-20260827';
+function trimDictationStorageText(text = '', limit = 1200) {
+    const value = String(text || '').trim();
+    return value.length > limit ? `${value.slice(0, limit)}…` : value;
+}
+function sanitizeDictationWordArray(words = [], limit = 40) {
+    return Array.from(new Set((Array.isArray(words) ? words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, limit);
+}
+function sanitizeCurricularResultItem(item = {}) {
+    return {
+        sentence: cleanKoreanSentence(item.sentence || item.answer || item.word || ''),
+        answer: cleanKoreanSentence(item.answer || item.sentence || item.word || ''),
+        word: cleanKoreanWord(item.word || item.answer || item.sentence || ''),
+        difficulty: clampCurricularDan(item.difficulty),
+        source: String(item.source || 'curricular-ai-canvas'),
+        written: cleanKoreanSentence(item.written || ''),
+        correct: item.correct === true,
+        retryCorrect: item.retryCorrect === true,
+        retryAttempted: item.retryAttempted === true,
+        score: Math.max(0, Math.min(1, Number(item.score ?? (item.correct ? 1 : (item.retryCorrect ? 0.5 : 0))) || 0)),
+        analysis: trimDictationStorageText(item.analysis || '', 360)
+    };
+}
+function sanitizeDictationCaptureRecord(capture = {}) {
+    return {
+        source: String(capture.source || 'today-note-photo'),
+        ocrText: trimDictationStorageText(capture.ocrText || '', 900),
+        aiAnalysis: trimDictationStorageText(capture.aiAnalysis || '', 900),
+        words: sanitizeDictationWordArray(capture.words, 20),
+        newWords: sanitizeDictationWordArray(capture.newWords, 20),
+        skippedDuplicateWords: Math.max(0, Number(capture.skippedDuplicateWords || 0)),
+        activeCurricularWords: sanitizeDictationWordArray(capture.activeCurricularWords, 10),
+        reviewWords: sanitizeDictationWordArray(capture.reviewWords, 3),
+        photoSaved: false,
+        savedAt: String(capture.savedAt || new Date().toISOString())
+    };
+}
+function sanitizeDictationMissionRecord(record = {}) {
+    const items = Array.isArray(record.items) ? record.items.map(sanitizeCurricularResultItem).filter((item) => item.sentence || item.answer || item.word).slice(0, 10) : [];
+    const words = sanitizeDictationWordArray(record.words || items.map((item) => item.word), 10);
+    return {
+        id: String(record.id || record.startedAt || record.savedAt || ''),
+        mode: String(record.mode || 'curricular'),
+        practiceReview: record.practiceReview === true,
+        difficulty: clampCurricularDan(record.difficulty),
+        total: Math.max(0, Number(record.total || items.length || words.length || 0)),
+        correctCount: Math.max(0, Number(record.correctCount || 0)),
+        wrongCount: Math.max(0, Number(record.wrongCount || 0)),
+        accuracy: Math.max(0, Math.min(100, Number(record.accuracy || 0))),
+        items,
+        words,
+        aiAnalysis: trimDictationStorageText(record.aiAnalysis || '', 1000),
+        photoSaved: false,
+        savedAt: String(record.savedAt || new Date().toISOString())
+    };
+}
+function sanitizeDictationMissionsMap(missions = {}) {
+    const entries = Object.entries(missions && typeof missions === 'object' ? missions : {}).slice(-80);
+    return Object.fromEntries(entries.map(([key, record]) => [key, sanitizeDictationMissionRecord(record)]));
+}
 function normalizeCurricularStepStats(raw = {}) {
     return {
         rounds: Math.max(0, Number(raw?.rounds || 0)),
@@ -6668,8 +6728,8 @@ function normalizeCurricularWriting(raw = {}) {
             step3: normalizeCurricularStepStats(stepStats.step3)
         },
         wordStats: normalizedWordStats,
-        history: Array.isArray(raw?.history) ? raw.history.slice(0, 200) : [],
-        rewardedSessions: Array.isArray(raw?.rewardedSessions) ? raw.rewardedSessions.slice(0, 200) : [],
+        history: Array.isArray(raw?.history) ? raw.history.map(sanitizeDictationMissionRecord).slice(0, 80) : [],
+        rewardedSessions: Array.isArray(raw?.rewardedSessions) ? raw.rewardedSessions.slice(0, 120) : [],
         activeRoundId: String(raw?.activeRoundId || ''),
         photoCapturedAt: String(raw?.photoCapturedAt || ''),
         roundReadyFromPhoto: raw?.roundReadyFromPhoto === true
@@ -6681,7 +6741,7 @@ function normalizeDictationPortfolio(raw = {}) {
     const legacyWordStats = bank.wordStats && typeof bank.wordStats === 'object' ? bank.wordStats : {};
     curricular.wordStats = { ...normalizeCurricularWriting({ wordStats: legacyWordStats }).wordStats, ...curricular.wordStats };
     return {
-        missions: raw?.missions || {},
+        missions: sanitizeDictationMissionsMap(raw?.missions || {}),
         aiWords: Array.isArray(raw?.aiWords) ? raw.aiWords : [],
         koreanBank: {
             words: Array.from(new Set((Array.isArray(bank.words) ? bank.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, 300),
@@ -6689,7 +6749,7 @@ function normalizeDictationPortfolio(raw = {}) {
         },
         wrongBank: Array.isArray(raw?.wrongBank) ? raw.wrongBank.map(normalizeDictationBankItem).filter(Boolean) : [],
         completedBank: Array.isArray(raw?.completedBank) ? raw.completedBank.map(normalizeDictationBankItem).filter(Boolean) : [],
-        captures: Array.isArray(raw?.captures) ? raw.captures.slice(0, 20) : [],
+        captures: Array.isArray(raw?.captures) ? raw.captures.map(sanitizeDictationCaptureRecord).slice(0, 5) : [],
         dictationLocked: raw?.dictationLocked !== false,
         hasCompletedOnce: Boolean(raw?.hasCompletedOnce),
         curricularWriting: curricular
@@ -7744,6 +7804,7 @@ window.openDictationBankCamera = function openDictationBankCamera(options = {}) 
     if (pendingWordBankCameraAfterSave === 'curricular-writing') {
         activeDictationSession = null;
         activeDictationItem = null;
+        activeDictationImageAnalysis = '';
         const sessionList = document.getElementById('dictation-session-list');
         if (sessionList) sessionList.innerHTML = '';
         const saveBtn = document.getElementById('dictation-save-btn');
@@ -7762,12 +7823,10 @@ window.openDictationBankCamera = function openDictationBankCamera(options = {}) 
     setTimeout(() => window.startWordBankCamera(), 80);
 }
 
-async function finalizeWordBankCameraResultOnClose() {
-    const afterSave = pendingWordBankCameraAfterSave;
-    if (!pendingWordBankCameraReward?.ready) return null;
+async function finalizeWordBankCameraRewardAfterClose() {
+    if (!pendingWordBankCameraReward?.ready) return;
     pendingWordBankCameraReward.ready = false;
     try {
-        setWordBankCameraStatus('포인트 지급중~', true);
         await awardLessonPhotoPoints();
     } catch (error) {
         console.error('lesson photo reward failed on close', error);
@@ -7775,10 +7834,13 @@ async function finalizeWordBankCameraResultOnClose() {
     } finally {
         pendingWordBankCameraReward = null;
     }
-    return afterSave;
 }
 window.closeWordBankCameraModal = async function closeWordBankCameraModal() {
-    const afterSave = await finalizeWordBankCameraResultOnClose();
+    const afterSave = pendingWordBankCameraAfterSave;
+    const roundStart = afterSave === 'curricular-writing' && pendingCurricularWritingRoundStart?.ready
+        ? { ...pendingCurricularWritingRoundStart, words: [...(pendingCurricularWritingRoundStart.words || [])] }
+        : null;
+    pendingCurricularWritingRoundStart = null;
     stopWordBankCamera();
     const modal = document.getElementById('word-bank-camera-modal');
     if (modal) {
@@ -7787,13 +7849,12 @@ window.closeWordBankCameraModal = async function closeWordBankCameraModal() {
     }
     document.body.classList.remove('modal-open');
     pendingWordBankCameraAfterSave = null;
-    if (afterSave === 'curricular-writing') {
-        if (pendingCurricularWritingRoundStart?.ready) {
-            window.startCurricularTraceStep(pendingCurricularWritingRoundStart);
-        } else {
-            pendingCurricularWritingRoundStart = null;
-        }
+    if (roundStart) {
+        window.startCurricularTraceStep(roundStart);
+    } else if (afterSave === 'curricular-writing') {
+        pendingCurricularWritingRoundStart = null;
     }
+    finalizeWordBankCameraRewardAfterClose();
 }
 
 function renderWordBankCameraResult(words, duplicateCount = 0) {
@@ -7803,7 +7864,7 @@ function renderWordBankCameraResult(words, duplicateCount = 0) {
     if (!result) return;
     const chips = words.map((word) => `<span>${escapeHtml(word)}</span>`).join('');
     const closeHelp = pendingWordBankCameraAfterSave === 'curricular-writing'
-        ? '오른쪽 위 X나 바깥을 누르면 2스텝 따라쓰기로 넘어가요.'
+        ? '곧 2스텝 따라쓰기로 자동 이동해요. 바로 시작하려면 이 창을 닫아도 돼요.'
         : '오른쪽 위 X나 바깥을 누르면 닫혀요.';
     result.innerHTML = `<h4>AI 2차 선별 완료</h4><p class="mb-3">아래 단어들을 단어 은행에 저장했어요.</p><div class="word-bank-camera-chip-list word-bank-camera-chip-grid">${chips}</div>${duplicateCount ? `<p class="mt-3 text-xs text-emerald-700">중복 단어 ${duplicateCount}개는 제외했어요.</p>` : ''}<p class="mt-4 text-sm text-emerald-800">${closeHelp}</p>`;
     result.classList.remove('hidden');
@@ -7832,8 +7893,12 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         setWordBankCameraStatus('OCR+AI 분석중~~', true);
         const [ocrText, aiText] = await Promise.all([runDictationOcr(analysisFile), analyzeDictationImageWithAi(dataUrl)]);
         const combined = ['[OCR]', ocrText, '[AI 사진 분석]', aiText].filter(Boolean).join('\n');
-        const aiExtracted = await extractDictationWordsWithAi(combined);
-        const candidateWords = Array.from(new Set((aiExtracted.words || []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord)));
+        const aiExtracted = await extractDictationWordsWithAi(combined, { limit: pendingWordBankCameraAfterSave === 'curricular-writing' ? 10 : 40 });
+        const targetWordLimit = pendingWordBankCameraAfterSave === 'curricular-writing' ? 10 : 40;
+        const sourceWords = pendingWordBankCameraAfterSave === 'curricular-writing'
+            ? [...(aiExtracted.words || []), ...(aiExtracted.visibleCandidates || [])]
+            : (aiExtracted.words || []);
+        const candidateWords = Array.from(new Set(sourceWords.map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, targetWordLimit);
         const existing = new Set(dictationPortfolio.koreanBank?.words || []);
         const newWords = candidateWords.filter((word) => !existing.has(word));
         const duplicateCount = candidateWords.length - newWords.length;
@@ -7851,7 +7916,7 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
                 reviewWords: curricularRound.reviewWords || []
             };
         }
-        dictationPortfolio.captures = [{
+        dictationPortfolio.captures = [sanitizeDictationCaptureRecord({
             source: pendingWordBankCameraAfterSave === 'curricular-writing' ? 'curricular-writing-photo' : 'today-note-photo',
             ocrText,
             aiAnalysis: aiText,
@@ -7860,15 +7925,24 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
             skippedDuplicateWords: duplicateCount,
             activeCurricularWords: dictationPortfolio.curricularWriting?.activeWords || [],
             reviewWords: dictationPortfolio.curricularWriting?.reviewWords || [],
-            photo: dataUrl,
             savedAt: new Date().toISOString()
-        }, ...(dictationPortfolio.captures || [])].slice(0, 20);
+        }), ...(dictationPortfolio.captures || [])].slice(0, 5);
         dictationPortfolio.dictationLocked = false;
         await persistDictationData();
         updateDictationDashboardPreview();
         pendingWordBankCameraReward = { ready: true };
-        setWordBankCameraStatus('AI 2차 선별이 끝났어요!');
+        if (pendingWordBankCameraAfterSave === 'curricular-writing') {
+            setWordBankCameraStatus('AI 2차 선별 완료! 2스텝으로 이동합니다.');
+        } else {
+            setWordBankCameraStatus('AI 2차 선별이 끝났어요!');
+        }
         renderWordBankCameraResult(pendingWordBankCameraAfterSave === 'curricular-writing' ? (dictationPortfolio.curricularWriting?.activeWords || candidateWords) : newWords, duplicateCount);
+        if (pendingWordBankCameraAfterSave === 'curricular-writing') {
+            setTimeout(() => {
+                const modal = document.getElementById('word-bank-camera-modal');
+                if (!modal?.classList.contains('hidden') && pendingCurricularWritingRoundStart?.ready) window.closeWordBankCameraModal();
+            }, 1400);
+        }
     } catch (error) {
         console.error('word bank camera photo failed', error);
         setWordBankCameraStatus(error.message || '사진 분석에 실패했어요. 다시 찍어주세요.');
@@ -7959,7 +8033,8 @@ function splitDictationCandidateWords(text) {
         .slice(0, 120);
 }
 
-async function extractDictationWordsWithAi(text) {
+async function extractDictationWordsWithAi(text, options = {}) {
+    const limit = Math.max(1, Math.min(40, Number(options.limit || 10)));
     const existingWords = (dictationPortfolio.koreanBank?.words || []).join(', ');
     const visibleCandidates = splitDictationCandidateWords(text).join(', ') || '없음';
     const prompt = `다음은 오늘의 노트 사진에서 얻은 전체 후보입니다.
@@ -7973,7 +8048,8 @@ async function extractDictationWordsWithAi(text) {
 3. 동사, 형용사, 문장, 조사, 어미, 감탄사, 설명 문구는 제외합니다.
 4. 한 글자 조각, 숫자만 있는 값, 의미 없는 OCR 조각은 제외합니다.
 5. 중복은 제거합니다.
-6. 이미 단어 은행에 있는 단어는 제외합니다.
+6. 이미 단어 은행에 있는 단어라도 이번 사진의 교과 맞춤쓰기 단어로 필요하면 후보에 유지합니다.
+7. 최종 단어는 가장 유용한 순서로 최대 ${limit}개만 고릅니다.
 
 기존 단어 은행: ${existingWords || '없음'}
 화면 후보 단어: ${visibleCandidates}
@@ -7985,9 +8061,9 @@ ${text}
     const raw = await callKoreanAiGenerate(prompt, { printTimeout: '3m' }) || '{}';
     const parsed = parseAiJsonObject(raw, { words: [] });
     return {
-        words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))),
+        words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, limit),
         raw,
-        visibleCandidates: splitDictationCandidateWords(text)
+        visibleCandidates: splitDictationCandidateWords(text).slice(0, limit)
     };
 }
 
@@ -8213,7 +8289,7 @@ window.saveDictationBankPhoto = async function() {
     if (!candidateWords.length) { showModal('AI가 최종 추출한 명사 단어가 없어요. OCR 단어와 AI 사진 분석 단어를 확인하거나 사진을 다시 찍어주세요.'); return; }
     if (!words.length) { showModal(`AI가 추출한 명사 ${candidateWords.length}개는 이미 단어 은행에 있어요. 중복 저장하지 않았어요.`); return; }
     mergeKoreanBank({ words });
-    dictationPortfolio.captures = [{ source: 'today-note-photo', text, aiAnalysis: activeDictationImageAnalysis, allCandidateWords: splitDictationCandidateWords(text), words: candidateWords, newWords: words, skippedDuplicateWords: duplicateCount, photo: document.getElementById('dictation-photo-preview').src || '', savedAt: new Date().toISOString() }, ...(dictationPortfolio.captures || [])].slice(0, 20);
+    dictationPortfolio.captures = [sanitizeDictationCaptureRecord({ source: 'today-note-photo', ocrText: text, aiAnalysis: activeDictationImageAnalysis, words: candidateWords, newWords: words, skippedDuplicateWords: duplicateCount, savedAt: new Date().toISOString() }), ...(dictationPortfolio.captures || [])].slice(0, 5);
     dictationPortfolio.dictationLocked = false;
     await persistDictationData();
     stopDictationCamera();
@@ -8280,7 +8356,7 @@ function applyCurricularWritingStats(graded, difficulty, now) {
 async function saveMissionGradingResult() {
     if (!activeDictationSession?.graded || activeDictationSession.autoSaved) return;
     const now = new Date().toISOString();
-    const photo = document.getElementById('dictation-photo-preview').src;
+    const photo = '';
     const difficulty = Number(activeDictationSession.difficulty || 1);
     upsertWrongOrCompleted(activeDictationSession.graded, now);
     applyCurricularWritingStats(activeDictationSession.graded, difficulty, now);
@@ -8291,10 +8367,10 @@ async function saveMissionGradingResult() {
     dictationPortfolio.hasCompletedOnce = true;
     dictationPortfolio.dictationLocked = false;
     const sessionId = activeDictationSession.startedAt || now;
-    const record = { id: sessionId, mode: activeDictationSession.mode || 'curricular', practiceReview: !!activeDictationSession.practiceReview, difficulty, total, correctCount, wrongCount: Math.max(0, total - correctCount), accuracy: Math.round(accuracy), items: activeDictationSession.graded, words: activeDictationSession.items?.map((item) => item.word).filter(Boolean) || getCurricularWords(), aiAnalysis: activeDictationImageAnalysis, photo, savedAt: now };
+    const record = sanitizeDictationMissionRecord({ id: sessionId, mode: activeDictationSession.mode || 'curricular', practiceReview: !!activeDictationSession.practiceReview, difficulty, total, correctCount, wrongCount: Math.max(0, total - correctCount), accuracy: Math.round(accuracy), items: activeDictationSession.graded, words: activeDictationSession.items?.map((item) => item.word).filter(Boolean) || getCurricularWords(), aiAnalysis: activeDictationImageAnalysis, photo, savedAt: now });
     dictationPortfolio.missions = { ...(dictationPortfolio.missions || {}), [now]: record };
     const state = getCurricularWritingState();
-    dictationPortfolio.curricularWriting.history = [record, ...(state.history || [])].slice(0, 200);
+    dictationPortfolio.curricularWriting.history = [record, ...(state.history || [])].map(sanitizeDictationMissionRecord).slice(0, 80);
     dictationPortfolio.curricularWriting.rewardedSessions = dictationPortfolio.curricularWriting.rewardedSessions || [];
     if (difficulty === 3 && !activeDictationSession.practiceReview && accuracy >= 50 && !dictationPortfolio.curricularWriting.rewardedSessions.includes(sessionId)) {
         applyAiedueExperienceReward(100, { source: '교과 맞춤쓰기 3단계 성공', sessionId, accuracy, baseReward: 100, stageMultiplier: 1 });
