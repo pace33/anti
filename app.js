@@ -13537,7 +13537,7 @@ const LESSON20_READ_FIND_ITEMS = [
     { word: '야구', icon: '⚾', choices: ['야구', '여구'] },
     { word: '우유', icon: '🥛', choices: ['우구', '우유'] },
     { word: '요리사', icon: '🧑‍🍳', choices: ['요리사', '여리사'] },
-    { word: '비녀', icon: '💇', choices: ['바녀', '비녀'] },
+    { word: '비녀', icon: '<img class="word-picture-asset binyeo-picture-asset" src="traditional-binyeo.webp" alt="">', choices: ['바녀', '비녀'] },
     { word: '소녀', icon: '👧', choices: ['서녀', '소녀'] },
     { word: '돼지', icon: '🐷', choices: ['돼지', '데지'] },
     { word: '튜브', icon: '🛟', choices: ['튜브', '투브'] },
@@ -13639,7 +13639,7 @@ const LESSON20_COMPLETION_WRITING_SETS = [
             { word: '의사', icon: '🧑‍⚕️', tiles: [{ syllable: '의', initial: 'ㅇ', vowel: 'ㅢ', givenSlot: 'initial' }, { syllable: '사', initial: 'ㅅ', vowel: 'ㅏ', givenSlot: 'vowel' }] },
             { word: '여우', icon: '🦊', tiles: [{ syllable: '여', initial: 'ㅇ', vowel: 'ㅕ', givenSlot: 'initial' }, { syllable: '우', initial: 'ㅇ', vowel: 'ㅜ', givenSlot: 'initial' }] },
             { word: '과자', icon: '🍪', tiles: [{ syllable: '과', initial: 'ㄱ', vowel: 'ㅘ', givenSlot: 'initial' }, { syllable: '자', initial: 'ㅈ', vowel: 'ㅏ', givenSlot: 'initial' }] },
-            { word: '비녀', icon: '💇', tiles: [{ syllable: '비', initial: 'ㅂ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '녀', initial: 'ㄴ', vowel: 'ㅕ', givenSlot: 'initial' }] },
+            { word: '비녀', icon: '<img class="word-picture-asset binyeo-picture-asset" src="traditional-binyeo.webp" alt="">', tiles: [{ syllable: '비', initial: 'ㅂ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '녀', initial: 'ㄴ', vowel: 'ㅕ', givenSlot: 'initial' }] },
             { word: '야채', icon: '🥕', tiles: [{ syllable: '야', initial: 'ㅇ', vowel: 'ㅑ', givenSlot: 'initial' }, { syllable: '채', initial: 'ㅊ', vowel: 'ㅐ', givenSlot: 'initial' }] }
         ]
     },

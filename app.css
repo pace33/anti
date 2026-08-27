@@ -3937,6 +3937,10 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     object-fit: contain;
     vertical-align: middle;
 }
+.binyeo-picture-asset {
+    width: 1.8em;
+    height: .9em;
+}
 @media (prefers-color-scheme: dark) and (pointer: coarse) {
     .lesson-complete-writing-canvas {
         --lesson-completion-ink: rgba(255, 255, 255, 0.96);
