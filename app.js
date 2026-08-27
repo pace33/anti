@@ -2521,6 +2521,7 @@ function getLearningDetailActionControls(root) {
 
 function getLearningDetailGuideControls(root) {
     const controls = getLearningDetailActionControls(root);
+    if (root?.querySelector?.('[data-no-button-guide]')) return [];
     const boardGame = root?.querySelector?.('[data-board-game]');
     if (boardGame) {
         return controls.filter((control) => control.matches('.lesson13-move-button') && boardGame.contains(control));
@@ -6618,11 +6619,11 @@ function renderVowelOriginExplanations(types = ['ground', 'person', 'sun']) {
 
 const vowelOriginStages = {
     ground: {
-        duration: 6000,
+        duration: 10500,
         speech: '땅은 옆으로 길게 펼쳐져 있어요. 땅의 모양에서 ㅡ가 태어났어요. 소리는 으 예요.'
     },
     person: {
-        duration: 5800,
+        duration: 10500,
         speech: '사람은 땅 위에 곧게 서 있어요. 서 있는 사람의 모양에서 ㅣ가 태어났어요. 소리는 이 예요.'
     },
     sun: {
@@ -6700,7 +6701,7 @@ window.playVowelOriginSequence = function playVowelOriginSequence() {
         .filter((type) => vowelOriginStages[type]);
     visibleTypes.forEach((type) => {
         const duration = reducedMotion ? 1700 : vowelOriginStages[type].duration;
-        const timer = window.setTimeout(() => runVowelOriginStage(type, { speak: false, token }), startAt);
+        const timer = window.setTimeout(() => runVowelOriginStage(type, { speak: true, token }), startAt);
         vowelOriginTimers.push(timer);
         startAt += duration + pause;
     });
@@ -11438,7 +11439,21 @@ function createLesson21MixedPracticeLayout(practiceBatchim = 'ㅁ') {
         });
     });
     return {
-        rows: displayedRowIndexes.map((rowIndex) => ({ rowIndex, syllables: LESSON21_MIXED_PRACTICE_ROWS[rowIndex] })),
+        rows: (() => {
+            const cells = displayedRowIndexes.flatMap((rowIndex) => LESSON21_MIXED_PRACTICE_ROWS[rowIndex].map((base, colIndex) => ({
+                rowIndex,
+                colIndex,
+                base,
+                target: targets.get(`${rowIndex}-${colIndex}`) || null
+            })));
+            const rowSizes = [9, 9, 8, 8, 8];
+            let offset = 0;
+            return rowSizes.map((size) => {
+                const row = cells.slice(offset, offset + size);
+                offset += size;
+                return row;
+            });
+        })(),
         targets
     };
 }
@@ -11446,9 +11461,8 @@ function createLesson21MixedPracticeLayout(practiceBatchim = 'ㅁ') {
 function renderLesson21MPracticePage(lessonId, practiceBatchim = 'ㅁ') {
     const selectedBatchim = normalizeLessonBatchim(practiceBatchim);
     const layout = createLesson21MixedPracticeLayout(selectedBatchim);
-    const targets = layout.targets;
     const instruction = `소리를 듣고 빈칸에 ${selectedBatchim} 받침을 써 보세요.`;
-    const detail = `${selectedBatchim} 받침을 쓰는 칸 20개가 세 줄에 숨어 있어요.`;
+    const detail = `${selectedBatchim} 받침을 쓰는 칸 20개가 다섯 줄에 숨어 있어요.`;
     const boardLabel = `${selectedBatchim} 받침`;
     const progressInstruction = `색칠된 칸을 눌러 소리를 듣고, 빈칸에 ${selectedBatchim} 받침을 써 보세요.`;
     return `
@@ -11457,12 +11471,11 @@ function renderLesson21MPracticePage(lessonId, practiceBatchim = 'ㅁ') {
                 <span><strong>${instruction}</strong><small>${detail}</small></span>
                 <button type="button" class="lesson21-m-shuffle-button" onclick="restartLesson21MixedPractice()" aria-label="받침 연습 칸 다시 섞기">↻ <span>다시 섞기</span></button>
             </div>
-            <div class="lesson21-m-board-scroller" tabindex="0" aria-label="받침 연습표, 화면이 좁으면 좌우로 이동할 수 있습니다">
-            <div class="lesson21-m-syllable-board" role="grid" aria-label="무작위 세 줄로 제시된 ${boardLabel} 연습 음절 42개">
-                ${layout.rows.map(({ rowIndex, syllables: row }) => `
-                    <div class="lesson21-m-syllable-row" role="row" aria-label="${['ㅏ', 'ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'][rowIndex]} 계열">
-                        ${row.map((base, colIndex) => {
-                            const target = targets.get(`${rowIndex}-${colIndex}`);
+            <div class="lesson21-m-board-scroller">
+            <div class="lesson21-m-syllable-board" role="grid" aria-label="다섯 줄로 제시된 ${boardLabel} 연습 음절 42개">
+                ${layout.rows.map((row, displayRowIndex) => `
+                    <div class="lesson21-m-syllable-row" role="row" aria-label="받침 연습 ${displayRowIndex + 1}번째 줄">
+                        ${row.map(({ rowIndex, colIndex, base, target }) => {
                             const batchim = target?.batchim || selectedBatchim;
                             const result = addLesson21FinalBatchim(base, batchim);
                             if (!target) return `<button type="button" class="lesson21-m-syllable-cell is-reading" role="gridcell" aria-label="${result} 소리 듣기" onclick="speakLesson13Word('${result}', this)"><span class="lesson21-m-cell-letter">${result}</span><span class="lesson21-m-read-label">읽기</span></button>`;
@@ -11796,24 +11809,52 @@ function renderLesson21WordFindPage(lessonId, batchim) {
 
 function renderLesson21ChallengePage(lessonId, batchim) {
     const config = getLesson21BatchimConfig(batchim);
+    const totalWords = config.challenge.reduce((sum, level) => sum + level.words.length, 0);
     return `
-        <div class="lesson21-page lesson21-challenge-page">
-            <div class="lesson21-instruction"><strong>도전하기</strong> · 스스로 정확하게 읽고, 읽은 낱말을 눌러 표시해요.</div>
+        <div class="lesson21-page lesson21-challenge-page" data-lesson21-challenge-game data-total-words="${totalWords}" data-score="0">
+            <div class="lesson21-instruction"><strong>낱말 읽기 게임</strong> · 낱말을 소리 내어 읽고 눌러 별을 모아요.</div>
+            <div class="lesson21-challenge-scoreboard" aria-live="polite">
+                <span>⭐ 점수 <strong data-challenge-score>0</strong></span>
+                <span>읽은 낱말 <strong data-challenge-total-progress>0 / ${totalWords}</strong></span>
+            </div>
             <div class="lesson21-challenge-list">
                 ${config.challenge.map((level, levelIndex) => `
-                    <div class="lesson21-challenge-row">
-                        <span class="lesson21-challenge-level">${level.label}</span>
+                    <div class="lesson21-challenge-row ${levelIndex === 0 ? 'is-active' : 'is-locked'}" data-challenge-level="${levelIndex}">
+                        <span class="lesson21-challenge-level">${level.label}<small>${levelIndex === 0 ? '도전 중' : '잠김'}</small></span>
                         <div class="lesson21-challenge-words">
-                            ${level.words.map((word, wordIndex) => `<button type="button" class="lesson21-challenge-word" onclick="speakLesson13Word('${word}', this)">${word}</button>`).join('')}
+                            ${level.words.map((word) => `<button type="button" class="lesson21-challenge-word" onclick="playLesson21ChallengeWord(this, '${word}')" ${levelIndex === 0 ? '' : 'disabled'}>${word}</button>`).join('')}
                         </div>
-                        <button type="button" class="lesson21-challenge-done" onclick="recordLesson21ChallengeRead('${lessonId}', '${batchim}', '${level.label}', this)">${level.count}개 읽었어요</button>
+                        <div class="lesson21-challenge-level-progress"><span data-level-progress>0 / ${level.count}</span><i><b></b></i></div>
+                        <button type="button" class="lesson21-challenge-done" onclick="recordLesson21ChallengeRead('${lessonId}', '${batchim}', '${level.label}', this)" disabled>단계 완료</button>
                     </div>
                 `).join('')}
             </div>
-            <div class="lesson21-challenge-tip">단계별 낱말을 천천히 읽고, 자신 있게 읽었을 때 확인해요.</div>
+            <div class="lesson21-challenge-tip">낱말을 모두 읽으면 단계 완료 버튼이 열려요. 3단계까지 도전해 보세요.</div>
         </div>
     `;
 }
+
+window.playLesson21ChallengeWord = function playLesson21ChallengeWord(button, word) {
+    if (!button || button.disabled) return;
+    speakLesson13Word(word, button);
+    if (button.classList.contains('is-read')) return;
+    button.classList.add('is-read');
+    button.setAttribute('aria-pressed', 'true');
+    const game = button.closest('[data-lesson21-challenge-game]');
+    const level = button.closest('[data-challenge-level]');
+    const levelButtons = [...level.querySelectorAll('.lesson21-challenge-word')];
+    const readCount = levelButtons.filter((item) => item.classList.contains('is-read')).length;
+    const totalRead = game.querySelectorAll('.lesson21-challenge-word.is-read').length;
+    const score = totalRead * 10;
+    game.dataset.score = String(score);
+    game.querySelector('[data-challenge-score]').textContent = String(score);
+    game.querySelector('[data-challenge-total-progress]').textContent = `${totalRead} / ${game.dataset.totalWords}`;
+    level.querySelector('[data-level-progress]').textContent = `${readCount} / ${levelButtons.length}`;
+    level.querySelector('.lesson21-challenge-level-progress b').style.width = `${Math.round((readCount / levelButtons.length) * 100)}%`;
+    const doneButton = level.querySelector('.lesson21-challenge-done');
+    doneButton.disabled = readCount !== levelButtons.length;
+    if (!doneButton.disabled) level.classList.add('is-ready');
+};
 
 function renderLesson21Page(lessonId, batchim, pageIndex) {
     if (pageIndex === 0) return renderLesson21MBatchimIntroPage(lessonId, batchim);
@@ -13233,20 +13274,43 @@ window.selectLesson21Word = async function selectLesson21Word(lessonId, batchim,
 };
 
 window.recordLesson21ChallengeRead = async function recordLesson21ChallengeRead(lessonId, batchim, level, btn) {
+    const levelRow = btn?.closest('[data-challenge-level]');
+    const levelWords = [...(levelRow?.querySelectorAll('.lesson21-challenge-word') || [])];
+    if (!levelWords.length || levelWords.some((word) => !word.classList.contains('is-read'))) return;
     const lesson = getChanchanLesson(lessonId);
-    await recordKoreanAttempt({
-        lessonId,
-        lessonTitle: lesson?.title || 'ㅁ, ㅂ 받침',
-        unitId: lesson?.unit || getUnitIdForLesson(lessonId),
-        activityType: 'finalAssessment',
-        word: `${batchim}-${level}`,
-        answer: level,
-        userAnswer: `${level} 정확히 읽기 완료`,
-        isCorrect: true,
-        errorType: null
-    });
+    try {
+        await recordKoreanAttempt({
+            lessonId,
+            lessonTitle: lesson?.title || 'ㅁ, ㅂ 받침',
+            unitId: lesson?.unit || getUnitIdForLesson(lessonId),
+            activityType: 'finalAssessment',
+            word: `${batchim}-${level}`,
+            answer: level,
+            userAnswer: `${level} 정확히 읽기 완료`,
+            isCorrect: true,
+            errorType: null
+        });
+    } catch (error) {
+        console.warn('받침 낱말 게임 기록 저장 실패', error);
+    }
     btn.textContent = '잘 읽었어요';
     btn.classList.add('is-complete');
+    btn.disabled = true;
+    levelRow?.classList.remove('is-active', 'is-ready');
+    levelRow?.classList.add('is-cleared');
+    const levelLabel = levelRow?.querySelector('.lesson21-challenge-level small');
+    if (levelLabel) levelLabel.textContent = '완료';
+    const nextLevel = levelRow?.nextElementSibling;
+    if (nextLevel?.matches('[data-challenge-level]')) {
+        nextLevel.classList.remove('is-locked');
+        nextLevel.classList.add('is-active');
+        nextLevel.querySelectorAll('.lesson21-challenge-word').forEach((word) => { word.disabled = false; });
+        const nextLabel = nextLevel.querySelector('.lesson21-challenge-level small');
+        if (nextLabel) nextLabel.textContent = '도전 중';
+    } else {
+        btn.closest('[data-lesson21-challenge-game]')?.classList.add('is-complete');
+        speakTextKo('모든 단계를 완료했어요. 정말 잘했어요!');
+    }
 };
 
 function renderListenAndFindActivity(lesson) {
@@ -14393,10 +14457,10 @@ function renderMakeLettersActivity(step) {
     const matrixHtml = config.rows ? `
         <div class="make-letter-guide-grid" aria-label="배움 ${step} 글자 만들기 표">
             <div class="make-letter-cell header"></div>
-            ${config.vowels.map((vowel) => `<button type="button" class="make-letter-cell header" onclick="speakChar('${vowel}')">${vowel}</button>`).join('')}
+            ${config.vowels.map((vowel) => `<button type="button" class="make-letter-cell header" data-make-vowel="${vowel}" onclick="speakChar('${vowel}')">${vowel}</button>`).join('')}
             ${config.rows.map((row) => `
-                <button type="button" class="make-letter-cell row-head" onclick="speakChar('${row.consonant}')">${row.consonant}</button>
-                ${row.letters.map((letter) => `<button type="button" class="make-letter-cell result" onclick="speakChar('${letter}')">${letter}</button>`).join('')}
+                <button type="button" class="make-letter-cell row-head" data-make-consonant="${row.consonant}" onclick="speakChar('${row.consonant}')">${row.consonant}</button>
+                ${row.letters.map((letter, index) => `<button type="button" class="make-letter-cell result" onclick="selectMakeLetterResult(this, '${row.consonant}', '${config.vowels[index]}', '${letter}')">${letter}</button>`).join('')}
             `).join('')}
         </div>
     ` : '';
@@ -14404,9 +14468,9 @@ function renderMakeLettersActivity(step) {
         <div class="make-letter-group-grid" aria-label="배움 ${step} 글자 만들기 표">
             ${config.groups.map((group) => `
                 <div class="make-letter-group">
-                    <button type="button" class="make-letter-group-title" onclick="speakChar('${group.vowel}')">${group.vowel}</button>
+                    <button type="button" class="make-letter-group-title" data-make-vowel="${group.vowel}" onclick="speakChar('${group.vowel}')">${group.vowel}</button>
                     ${group.letters.map((letter, index) => `
-                        <button type="button" class="make-letter-pair" onclick="speakChar('${letter}')">
+                        <button type="button" class="make-letter-pair" data-make-consonant="${group.consonants[index]}" onclick="selectMakeLetterResult(this, '${group.consonants[index]}', '${group.vowel}', '${letter}')">
                             <span class="consonant">${group.consonants[index]}</span>
                             <span class="result">${letter}</span>
                         </button>
@@ -14418,7 +14482,7 @@ function renderMakeLettersActivity(step) {
     return `
         <div class="learning-practice-card">
             <div class="learning-card-label practice-label">글자 만들기</div>
-            <div class="make-letter-board">
+            <div class="make-letter-board" data-no-button-guide>
                 <div class="border-2 border-green-100 rounded-2xl p-4 bg-white text-lg font-bold text-stone-700 leading-relaxed">
                     자음과 모음을 붙여 글자를 만들어요. 만든 글자를 눌러 소리를 듣고, 아래 칸에 직접 따라 써요.
                 </div>
@@ -14434,6 +14498,15 @@ function renderMakeLettersActivity(step) {
         </div>
     `;
 }
+
+window.selectMakeLetterResult = function selectMakeLetterResult(button, consonant, vowel, letter) {
+    const board = button?.closest('.make-letter-board');
+    board?.querySelectorAll('.is-make-letter-linked').forEach((item) => item.classList.remove('is-make-letter-linked'));
+    button?.classList.add('is-make-letter-linked');
+    board?.querySelector(`.make-letter-cell[data-make-consonant="${consonant}"]`)?.classList.add('is-make-letter-linked');
+    board?.querySelector(`[data-make-vowel="${vowel}"]`)?.classList.add('is-make-letter-linked');
+    speakChar(letter);
+};
 
 const LESSON_MOUTH_ACTIVITY_CONFIGS = {
     15: {
@@ -15423,6 +15496,22 @@ window.playChoiceQuizSound = function() {
     }
 };
 
+window.handleChoiceQuizIntroListen = function handleChoiceQuizIntroListen(button, word) {
+    speakChar(word);
+    window.requestAnimationFrame(() => syncChoiceQuizSoundButtonBlink(button?.closest('.learning-practice-card')));
+};
+
+function syncChoiceQuizSoundButtonBlink(root = document) {
+    const activity = root?.querySelector?.('[data-choice-quiz-activity]') || root?.closest?.('[data-choice-quiz-activity]');
+    if (!activity) return;
+    const introButtons = [...activity.querySelectorAll('[data-choice-quiz-intro] .listen-chip-button')];
+    const answerButtons = [...activity.querySelectorAll('[data-choice-quiz-answers] .choice-chip-button')];
+    const soundButton = activity.querySelector('.listen-quiz-play-btn');
+    const introComplete = introButtons.length > 0 && introButtons.every((button) => button.dataset.learningReviewed === 'true');
+    const quizComplete = answerButtons.length > 0 && answerButtons.every((button) => button.classList.contains('correct'));
+    soundButton?.classList.toggle('is-quiz-guide-blinking', introComplete && !quizComplete);
+}
+
 window.selectChoiceBtn = function(btn, word) {
     // 이미 맞춘 글자는 터치 무시
     if (window.completedChoices && window.completedChoices.includes(word)) {
@@ -15504,6 +15593,7 @@ window.selectChoiceBtn = function(btn, word) {
             }
             setTimeout(() => { speakTextKo("정답! 다음 소리를 들으려면 소리 듣기 버튼을 눌러주세요."); }, 300);
         }
+        syncChoiceQuizSoundButtonBlink(btn.closest('.learning-practice-card'));
     } else {
         // 오답!
         const retryIndex = nextKoreanRetryIndex({
@@ -16583,7 +16673,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
                             const originAction = originType
                                 ? word === '●'
                                     ? `playVowelOriginCard('sun', { speak: false }); speakChar('●')`
-                                    : `playVowelOriginCard('${originType}', { speak: true })`
+                                    : `speakChar('${word}')`
                                 : `speakChar('${word}')`;
                             const ariaLabel = `${word} 소리 듣기`;
                             return `<button type="button" class="${wordChipClass}${originClass}" onclick="${originAction}" aria-label="${ariaLabel}">${renderLearningChipText(word)}</button>`;
@@ -16604,16 +16694,16 @@ function renderLearningDetail(step, sectionIndex = 0) {
                     <button type="button" class="trace-clear-button mt-3" onclick="resetTraceWritingCanvas()">다시 쓰기</button>
                 </div>
             ` : `
-                <div class="learning-practice-card">
+                <div class="learning-practice-card" data-choice-quiz-activity>
                     <div class="learning-card-label practice-label">문제 활동</div>
                     <div class="grid gap-3">
-                        <div class="practice-step-box">
+                        <div class="practice-step-box" data-choice-quiz-intro>
                             <div class="practice-step-title"><span class="practice-step-number">1</span> 듣기</div>
                             <div class="${practiceFlow.choices.length > 4 ? 'choice-grid-wide' : practiceFlow.choices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
-                                ${practiceFlow.choices.map((word) => `<button type="button" class="listen-chip-button" onclick="speakChar('${word}')">${renderLearningChipText(word)}</button>`).join('')}
+                                ${practiceFlow.choices.map((word) => `<button type="button" class="listen-chip-button" onclick="handleChoiceQuizIntroListen(this, '${word}')">${renderLearningChipText(word)}</button>`).join('')}
                             </div>
                         </div>
-                        <div class="practice-step-box">
+                        <div class="practice-step-box" data-choice-quiz-answers>
                             <div class="practice-step-title">
                                 <span><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</span>
                             </div>
@@ -16716,6 +16806,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeLesson13BoardGames();
         initializeLessonLineMatchDragBoards();
         redrawLessonLineMatchLines();
+        syncChoiceQuizSoundButtonBlink(document.getElementById('learning-detail-content'));
         if ((isCustomLesson27 || isCustomRepresentativeFamily) && safeIndex === 0) {
             initializeLesson27HandMotionCards();
             syncLesson27FamilyPage();
@@ -17143,6 +17234,7 @@ function drawTraceWritingGuide(target) {
 
     if (canvas.dataset.lesson21MixedTarget !== undefined || canvas.dataset.lesson21CompactGuide !== undefined) {
         const char = chars[0];
+        const isMixedPracticeGuide = canvas.dataset.lesson21MixedTarget !== undefined;
         const completedCount = canvas._traceCompleted?.[0] || 0;
         ctx.fillStyle = '#fffdf9';
         ctx.fillRect(0, 0, W, H);
@@ -17173,7 +17265,7 @@ function drawTraceWritingGuide(target) {
         } else {
             ctx.save();
             ctx.fillStyle = '#f1cfad';
-            ctx.font = `900 ${Math.max(30, H * 0.72)}px 'Noto Sans KR', sans-serif`;
+            ctx.font = `900 ${Math.max(30, H * (isMixedPracticeGuide ? 0.86 : 0.72))}px 'Noto Sans KR', sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(char, W / 2, H * 0.54);
@@ -17181,7 +17273,11 @@ function drawTraceWritingGuide(target) {
         }
 
         const strokes = [];
-        collectSingleTraceChar(char, { x: W * 0.14, y: H * 0.08, w: W * 0.72, h: H * 0.84 }, strokes);
+        collectSingleTraceChar(char, isMixedPracticeGuide
+            ? (char === 'ㅁ'
+                ? { x: W * -0.18, y: H * -0.12, w: W * 1.36, h: H * 1.24 }
+                : { x: W * 0.07, y: H * 0.04, w: W * 0.86, h: H * 0.92 })
+            : { x: W * 0.14, y: H * 0.08, w: W * 0.72, h: H * 0.84 }, strokes);
         strokes.forEach((item, strokeIndex) => {
             const points = item.stroke.points?.map((point) => tracePointForStroke(item, point)) || [];
             if (points.length < 2) return;
