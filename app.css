@@ -3941,6 +3941,10 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     width: 1.8em;
     height: .9em;
 }
+.kimchi-picture-asset {
+    width: 1.4em;
+    height: 1.1em;
+}
 @media (prefers-color-scheme: dark) and (pointer: coarse) {
     .lesson-complete-writing-canvas {
         --lesson-completion-ink: rgba(255, 255, 255, 0.96);
