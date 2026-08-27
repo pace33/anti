@@ -47,6 +47,10 @@ assert((app.match(/word:\s*["']가수["'],\s*icon:\s*["']🧑‍🎤["']/g) || [
 assert((app.match(/word:\s*["']마차["'],\s*icon:\s*["']🐎🛒["']/g) || []).length === 2 && !/word:\s*["']마차["'],\s*icon:\s*["']🐴["']/.test(app), '마차 그림이 말이 마차를 끄는 모습으로 통일되지 않았습니다.');
 assert((app.match(/word:\s*["']허리["'],\s*icon:\s*'<span class="waist-highlight-icon">/g) || []).length === 3, '허리 그림이 사람의 허리 부분을 강조하는 모습으로 통일되지 않았습니다.');
 assert(appCss.includes('.waist-highlight-icon > i') && appCss.includes('border: 3px solid #ef4444;'), '허리 위치를 표시하는 강조 스타일이 없습니다.');
+assert(app.includes('class="trace-clear-button lesson-complete-submit') && app.includes('disabled>완료</button>'), '단어 완성 버튼이 완료 문구의 비활성 상태로 시작하지 않습니다.');
+assert(app.includes('function lessonCompletionCardHasWriting(card)') && app.includes("canvases.every((canvas) => canvas.dataset.hasWriting === 'true')"), '모든 쓰기 칸을 채운 뒤 완료 버튼을 활성화하는 조건이 없습니다.');
+assert(app.includes("syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));") && app.includes('button.disabled = completed || !lessonCompletionCardHasWriting(card);'), '쓰기 입력과 완료 버튼 활성화 상태가 연결되지 않았습니다.');
+assert(!app.includes("button.textContent = '완성 완료';"), '이전 완성 완료 버튼 문구가 남아 있습니다.');
 assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.test(index), 'index.html이 app.css를 불러오지 않습니다.');
 assert(![excludedEntry, excludedBrand, excludedFolder].some((marker) => index.includes(marker)), '에이두 한글 루트 화면에 분리 제외 자료 링크/표시가 남아 있습니다.');
 assert(!/<script\s+type=["']module["']\s*>/i.test(index), 'index.html에 인라인 모듈 스크립트가 다시 들어왔습니다.');

@@ -13831,8 +13831,8 @@ function renderLesson13CompletionWriting(lessonId, setIndex) {
                                 <div class="lesson-complete-actions">
                                     <button type="button" class="btn-outline lesson-complete-listen-button" onclick="speakChar('${item.word}')" aria-label="${item.word} 소리 듣기" title="${item.word} 소리 듣기">🔊</button>
                                     <button type="button" class="btn-outline py-2 px-4" onclick="clearLesson13WordWriting(this)">다시 쓰기</button>
-                                    <button type="button" class="trace-clear-button !mt-0 !py-2 !px-4"
-                                        onclick="completeLesson13WordWriting(${lessonId}, ${setIndex}, ${itemIndex}, this)">완성했어요</button>
+                                    <button type="button" class="trace-clear-button lesson-complete-submit !mt-0 !py-2 !px-4"
+                                        onclick="completeLesson13WordWriting(${lessonId}, ${setIndex}, ${itemIndex}, this)" disabled>완료</button>
                                 </div>
                                 <div id="lesson13-complete-feedback-${globalIndex}" class="lesson-complete-feedback"></div>
                             </div>
@@ -14598,10 +14598,18 @@ window.selectLesson12FinalCheck = async function selectLesson12FinalCheck(index,
 window.completeLesson13WordWriting = async function completeLesson13WordWriting(lessonId, setIndex, itemIndex, button) {
     const item = getLessonCompletionWritingSets(lessonId)[setIndex]?.items?.[itemIndex];
     if (!item) return;
+    const card = button.closest('.lesson-complete-card');
+    if (!lessonCompletionCardHasWriting(card) || button.dataset.completed === 'true') {
+        syncLessonCompletionSubmitButton(card);
+        return;
+    }
     const globalIndex = setIndex * 10 + itemIndex;
     const feedback = document.getElementById(`lesson13-complete-feedback-${globalIndex}`);
-    button.textContent = '완성 완료';
+    button.textContent = '완료';
+    button.dataset.completed = 'true';
+    button.disabled = true;
     button.classList.add('active');
+    card?.classList.add('is-complete');
     if (feedback) feedback.textContent = `${item.word} 완성했어요. 소리 내어 한 번 더 읽어요.`;
     speakTextKo(`${item.word}. 잘했어요.`);
     await recordKoreanAttempt({
@@ -14839,7 +14847,6 @@ function initializeLessonCompletionCanvas(canvas) {
         drawing = true;
         lastX = p.x;
         lastY = p.y;
-        canvas.dataset.hasWriting = 'true';
         const target = canvas.dataset.target || canvas.dataset.word || '';
         if (target && (window.lastSpokenChar !== target || Date.now() - window.lastSpokenTime > 1200)) {
             window.speakChar(target);
@@ -14860,6 +14867,10 @@ function initializeLessonCompletionCanvas(canvas) {
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(p.x, p.y);
         ctx.stroke();
+        if (canvas.dataset.hasWriting !== 'true') {
+            canvas.dataset.hasWriting = 'true';
+            syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));
+        }
         lastX = p.x;
         lastY = p.y;
     };
@@ -14884,6 +14895,21 @@ function initializeLessonCompletionCanvas(canvas) {
         canvas.addEventListener('touchcancel', stop);
     }
     canvas.dataset.ready = 'true';
+    syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));
+}
+
+function lessonCompletionCardHasWriting(card) {
+    if (!card) return false;
+    const canvases = [...card.querySelectorAll('.lesson-complete-writing-canvas')];
+    return canvases.length > 0 && canvases.every((canvas) => canvas.dataset.hasWriting === 'true');
+}
+
+function syncLessonCompletionSubmitButton(card) {
+    if (!card) return;
+    const button = card.querySelector('.lesson-complete-submit');
+    if (!button) return;
+    const completed = button.dataset.completed === 'true';
+    button.disabled = completed || !lessonCompletionCardHasWriting(card);
 }
 
 function initializeLessonCompletionCanvases() {
@@ -14899,6 +14925,16 @@ window.clearLesson13WordWriting = function clearLesson13WordWriting(button) {
         ctx.clearRect(0, 0, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
         delete canvas.dataset.hasWriting;
     });
+    const submitButton = card?.querySelector('.lesson-complete-submit');
+    if (submitButton) {
+        delete submitButton.dataset.completed;
+        submitButton.textContent = '완료';
+        submitButton.classList.remove('active');
+    }
+    card?.classList.remove('is-complete');
+    const feedback = card?.querySelector('.lesson-complete-feedback');
+    if (feedback) feedback.textContent = '';
+    syncLessonCompletionSubmitButton(card);
 };
 
 window.showNextPictureWordMatchBatch = function showNextPictureWordMatchBatch(lessonId) {

@@ -3855,6 +3855,18 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     min-width: 120px;
     flex: 1 1 120px;
 }
+.lesson-complete-actions .lesson-complete-submit:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+    filter: grayscale(.25);
+}
+.lesson-complete-actions .lesson-complete-submit.active:disabled {
+    border-color: #56c596;
+    background: #dcfce7;
+    color: #166534;
+    opacity: 1;
+    filter: none;
+}
 .lesson-complete-actions .btn-outline {
     flex: 1 1 96px;
 }
