@@ -143,6 +143,7 @@ assert(appCss.includes('.learning-activity-guided.learning-activity-sound-guided
 assert(app.includes('function learningDetailControlIsAnswerChoice(control)') && app.includes('getLearningDetailActionControls(region).some(learningDetailControlIsAnswerChoice)'), '혼합 화면에서 정답 선택 영역만 안내 대상에서 제외되지 않습니다.');
 assert(app.includes("control.closest('.practice-step-box, [data-question], [data-answer], [role=\"group\"], article, section')"), '듣기 영역과 정답 선택 영역을 구분하는 기준이 없습니다.');
 assert(app.includes('function findLearningDetailSoundQuestionRegion(control, root)') && app.includes('questionRegion === activeQuestionRegion'), '문제 순서에 맞춰 소리 듣기 버튼 하나만 안내하는 조건이 없습니다.');
+assert(app.includes("const boardGame = root?.querySelector?.('[data-board-game]');") && app.includes("control.matches('.lesson13-move-button') && boardGame.contains(control)"), '단어 놀이 화면에서 한 칸 이동 버튼만 안내 대상으로 제한되지 않았습니다.');
 assert(app.includes('soundQuestionRegions.every(learningDetailQuestionRegionComplete)'), '여러 문제의 정답을 모두 맞혔는지 확인하는 완료 조건이 없습니다.');
 assert(app.includes("const target = controls.find((control) => control.dataset.learningReviewed !== 'true');") && !app.includes("|| controls[0]"), '모든 일반 버튼을 확인한 뒤 이미 누른 버튼 안내가 반복될 수 있습니다.');
 assert(app.includes('learningDetailActivityGuideTarget || learningDetailActivityGuideTimer') && app.includes("window.matchMedia?.('(pointer: coarse)').matches ? 2200 : 4200"), '태블릿에서 안내 타이머가 반복 초기화되거나 지나치게 늦게 표시될 수 있습니다.');

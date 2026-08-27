@@ -2521,6 +2521,10 @@ function getLearningDetailActionControls(root) {
 
 function getLearningDetailGuideControls(root) {
     const controls = getLearningDetailActionControls(root);
+    const boardGame = root?.querySelector?.('[data-board-game]');
+    if (boardGame) {
+        return controls.filter((control) => control.matches('.lesson13-move-button') && boardGame.contains(control));
+    }
     const questionRegions = getLearningDetailSoundQuestionRegions(root, controls);
     const activeQuestionRegion = questionRegions.find((region) => !learningDetailQuestionRegionComplete(region)) || null;
     return controls.filter((control) => {
