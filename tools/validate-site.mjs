@@ -98,7 +98,7 @@ assert(appCss.includes('.drawing-tool-sidebar') && appCss.includes('margin-top: 
 assert(app.includes("if (!control.classList.contains('learning-activity-reviewed'))"), '활동 완료 표시가 같은 class를 반복 기록해 화면을 멈출 수 있습니다.');
 assert(app.includes('new MutationObserver(scheduleCheck)') && !app.includes('new MutationObserver(check)'), '활동 완료 감시가 프레임당 한 번으로 제한되지 않았습니다.');
 assert(app.includes('function learningDetailBodyActivitiesComplete(root)') && app.includes('structuredActivitiesComplete && allBodyButtonsReviewed'), '본문 활동과 버튼 전체 확인 전 다음 안내를 막는 완료 조건이 없습니다.');
-assert(app.includes('if (learningDetailHasAnswerChoices(root)) return structuredActivitiesComplete;'), '선택형 문제에서 모든 오답 버튼까지 누르게 할 수 있습니다.');
+assert(app.includes('return structuredActivitiesComplete && allGuidedButtonsReviewed;'), '선택형 혼합 화면의 일반 학습 버튼을 모두 확인하기 전에 다음 안내가 나올 수 있습니다.');
 assert(app.includes("canvas.dataset.completed = 'true';") && !app.includes('if (isTraceWritingComplete(canvas)) {\n            showLearningDetailNavigationGuide();'), '쓰기 하나를 마친 직후 다음 안내가 직접 표시될 수 있습니다.');
 assert(app.includes('hideLearningDetailNavigationGuide();\n            scheduleLearningActivityButtonGuide(content);'), '본문 활동이 미완료 상태로 돌아갔을 때 다음 안내가 숨겨지지 않습니다.');
 assert(app.includes('if (hasBodyActivities && !learningDetailBodyActivitiesComplete(content))'), '다음 안내 함수가 미완료 본문에서 직접 실행되는 것을 막지 않습니다.');
@@ -126,8 +126,9 @@ assert(combinationRenderer.includes('const comboData = JSON.stringify([combos[in
 assert(appCss.includes('.combine-card-list') && appCss.includes('flex-direction: column;'), '글자 결합 카드가 한 줄씩 세로 배치되지 않습니다.');
 assert(app.includes("if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';"), '소리 듣기 활동의 안내 문구가 간단한 표현으로 변경되지 않았습니다.');
 assert(!app.includes('소리 듣기 버튼을 눌러 보세요.'), '이전 소리 듣기 안내 문구가 남아 있습니다.');
-assert(app.includes('function learningDetailHasAnswerChoices(root)') && app.includes('if (learningDetailHasAnswerChoices(root)) return [];'), '정답 선택형 학습에서 안내 말풍선이 차단되지 않습니다.');
-assert(app.includes("root.querySelector('[class*=\"choice\"], [role=\"radiogroup\"], input[type=\"radio\"]')"), '선택지 영역을 공통 판별하는 안내 차단 조건이 없습니다.');
+assert(app.includes('function learningDetailControlIsAnswerChoice(control)') && app.includes('getLearningDetailActionControls(region).some(learningDetailControlIsAnswerChoice)'), '혼합 화면에서 정답 선택 영역만 안내 대상에서 제외되지 않습니다.');
+assert(app.includes("control.closest('.practice-step-box, [data-question], [data-answer], [role=\"group\"], article, section')"), '듣기 영역과 정답 선택 영역을 구분하는 기준이 없습니다.');
+assert(app.includes("const target = controls.find((control) => control.dataset.learningReviewed !== 'true');") && !app.includes("|| controls[0]"), '모든 일반 버튼을 확인한 뒤 이미 누른 버튼 안내가 반복될 수 있습니다.');
 assert(app.includes('learningDetailActivityGuideTarget || learningDetailActivityGuideTimer') && app.includes("window.matchMedia?.('(pointer: coarse)').matches ? 2200 : 4200"), '태블릿에서 안내 타이머가 반복 초기화되거나 지나치게 늦게 표시될 수 있습니다.');
 assert(app.includes("if (sectionId !== 'learning-detail-section')") && app.includes('resetLearningDetailNavigationGuide();'), '학습 화면을 벗어날 때 안내 말풍선이 정리되지 않습니다.');
 assert(app.includes('!target.isConnected || !section || section.classList.contains(\'hidden\') || !section.contains(target)'), '화면 전환 후 지연된 안내 말풍선이 다시 표시될 수 있습니다.');

@@ -2518,19 +2518,26 @@ function getLearningDetailActionControls(root) {
 }
 
 function getLearningDetailGuideControls(root) {
-    if (learningDetailHasAnswerChoices(root)) return [];
     const controls = getLearningDetailActionControls(root);
-    return controls;
+    return controls.filter((control) => {
+        if (learningDetailControlIsAnswerChoice(control)) return false;
+        const region = control.closest('.practice-step-box, [data-question], [data-answer], [role="group"], article, section') || root;
+        return !getLearningDetailActionControls(region).some(learningDetailControlIsAnswerChoice);
+    });
+}
+
+function learningDetailControlIsAnswerChoice(control) {
+    if (!control) return false;
+    const hasChoiceClass = [...control.classList].some((name) => /(?:^|-)choice(?:-|$)/.test(name));
+    if (hasChoiceClass || control.matches('input[type="radio"], input[type="checkbox"]')) return true;
+    const handler = control.getAttribute('onclick') || '';
+    return /(?:^|[;\s])(?:window\.)?(?:select|choose|check)[A-Z_]/i.test(handler);
 }
 
 function learningDetailHasAnswerChoices(root) {
     if (!root) return false;
-    if (root.querySelector('[class*="choice"], [role="radiogroup"], input[type="radio"]')) return true;
-    const selectingControls = getLearningDetailActionControls(root).filter((control) => {
-        const handler = control.getAttribute('onclick') || '';
-        return /(?:select|choose|check).*(?:answer|choice|word|picture|find|match|path)|selectLesson|selectUnit/i.test(handler);
-    });
-    return selectingControls.length >= 2;
+    if (root.querySelector('[role="radiogroup"], input[type="radio"], input[type="checkbox"]')) return true;
+    return getLearningDetailActionControls(root).some(learningDetailControlIsAnswerChoice);
 }
 
 function getLearningDetailReviewPageKey() {
@@ -2648,7 +2655,8 @@ function showLearningActivityButtonGuide(content) {
     if (!content || !section || section.classList.contains('hidden') || learningDetailBodyActivitiesComplete(content)) return;
     const controls = getLearningDetailGuideControls(content);
     if (!controls.length) return;
-    const target = controls.find((control) => control.dataset.learningReviewed !== 'true') || controls[0];
+    const target = controls.find((control) => control.dataset.learningReviewed !== 'true');
+    if (!target) return;
     hideLearningActivityButtonGuide();
     learningDetailActivityGuideTarget = target;
     target.classList.add('learning-activity-guided');
@@ -2765,7 +2773,11 @@ const LEARNING_DETAIL_TRACKED_ACTIVITY_SELECTOR = 'canvas, [data-family-card], .
 function learningDetailBodyActivitiesComplete(root) {
     if (!root) return false;
     const structuredActivitiesComplete = learningDetailPageLooksComplete(root);
-    if (learningDetailHasAnswerChoices(root)) return structuredActivitiesComplete;
+    const guideControls = getLearningDetailGuideControls(root);
+    const allGuidedButtonsReviewed = guideControls.every((control) => control.dataset.learningReviewed === 'true');
+    if (learningDetailHasAnswerChoices(root)) {
+        return structuredActivitiesComplete && allGuidedButtonsReviewed;
+    }
     const controls = getLearningDetailActionControls(root);
     const allBodyButtonsReviewed = controls.length === 0
         || controls.every((control) => control.dataset.learningReviewed === 'true');
