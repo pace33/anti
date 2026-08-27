@@ -1712,6 +1712,26 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     font-size: 4.5rem;
     line-height: 1;
 }
+.waist-highlight-icon {
+    position: relative;
+    display: inline-block;
+    line-height: 1;
+}
+.waist-highlight-icon > span {
+    display: block;
+}
+.waist-highlight-icon > i {
+    position: absolute;
+    top: 43%;
+    left: 24%;
+    width: 52%;
+    height: 15%;
+    border: 3px solid #ef4444;
+    border-radius: 999px;
+    background: rgba(254, 202, 202, .48);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .78);
+    pointer-events: none;
+}
 .lesson13-picture-card .word {
     font-size: clamp(2rem, 4vw, 3.3rem);
     font-weight: 1000;

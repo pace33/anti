@@ -294,7 +294,7 @@ const CHANCHAN_LESSONS = [
             { word: "다리", icon: "🦵" },
             { word: "나비", icon: "🦋" },
             { word: "파리", icon: "🪰" },
-            { word: "허리", icon: "🧍" }
+            { word: "허리", icon: '<span class="waist-highlight-icon"><span>🧍</span><i></i></span>' }
         ]
     },
     {
@@ -13356,7 +13356,7 @@ const LESSON13_READING_GROUPS = [
             { word: '다리', icon: '🦵' },
             { word: '나비', icon: '🦋' },
             { word: '파리', icon: '🪰' },
-            { word: '허리', icon: '🧍' }
+            { word: '허리', icon: '<span class="waist-highlight-icon"><span>🧍</span><i></i></span>' }
         ],
         wordRows: [
             ['오리', '느끼', '바구니'],
@@ -13511,7 +13511,7 @@ const LESSON13_COMPLETION_WRITING_SETS = [
         prompt: '그림 단어를 듣고 빈칸에 알맞은 글자를 완성해요.',
         items: [
             { word: '가수', icon: '🧑‍🎤', tiles: [{ syllable: '가', initial: 'ㄱ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '수', initial: 'ㅅ', vowel: 'ㅜ', givenSlot: 'initial' }] },
-            { word: '허리', icon: '👕', tiles: [{ syllable: '허', initial: 'ㅎ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+            { word: '허리', icon: '<span class="waist-highlight-icon"><span>🧍</span><i></i></span>', tiles: [{ syllable: '허', initial: 'ㅎ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
             { word: '기타', icon: '🎸', tiles: [{ syllable: '기', initial: 'ㄱ', vowel: 'ㅣ', givenSlot: 'vowel' }, { syllable: '타', initial: 'ㅌ', vowel: 'ㅏ', givenSlot: 'vowel' }] },
             { word: '바구니', icon: '🧺', tiles: [{ syllable: '바', initial: 'ㅂ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '구', initial: 'ㄱ', vowel: 'ㅜ', givenSlot: 'vowel' }, { syllable: '니', initial: 'ㄴ', vowel: 'ㅣ', givenSlot: 'initial' }] },
             { word: '코끼리', icon: '🐘', tiles: [{ syllable: '코', initial: 'ㅋ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '끼', initial: 'ㄲ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
