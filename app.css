@@ -3750,6 +3750,20 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     background: #dcfce7;
 }
 .lesson-line-match-picture { font-size: 2rem; }
+.conversation-picture {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    direction: ltr;
+    font-size: 1.85rem;
+    line-height: 1;
+}
+.conversation-picture-bubble {
+    align-self: flex-start;
+    margin: -3px -4px 0;
+    font-size: 1.3rem;
+}
 .lesson-line-match-word.is-selected,
 .lesson-line-match-picture.is-target {
     border-color: #fb923c;

@@ -152,6 +152,8 @@ assert(app.includes("word === '●'") && app.includes(": `speakChar('${word}')`"
 assert(app.includes('function initializeLessonLineMatchDragBoards()') && app.includes("window.selectLessonLineMatch(lessonId, 'picture', target.dataset.linePictureKey, target);"), '선긋기에서 직접 드래그해 그림을 선택하는 기능이 없습니다.');
 assert(app.includes("board.addEventListener('pointermove'") && app.includes("document.elementFromPoint(event.clientX, event.clientY)"), '태블릿과 마우스의 선긋기 위치를 추적하지 않습니다.');
 assert(appCss.includes('.lesson-line-match-drag-line') && appCss.includes('touch-action: none;'), '드래그 중인 연결선 표시 또는 태블릿 터치 설정이 없습니다.');
+assert(app.includes("key: '얘기', word: '얘기', icon: '<span class=\"conversation-picture\"") && !app.includes("key: '얘기', word: '얘기', icon: '💬'"), '얘기 그림이 두 사람이 대화하는 모습으로 바뀌지 않았습니다.');
+assert(appCss.includes('.conversation-picture-bubble'), '두 사람 사이 말풍선 그림 스타일이 없습니다.');
 assert(app.includes('data-no-button-guide') && app.includes('window.selectMakeLetterResult = function') && app.includes('data-make-consonant'), '글자 결합표의 안내 제외 또는 자음·모음 연동 표시가 없습니다.');
 assert(appCss.includes('.make-letter-cell.is-make-letter-linked') && appCss.includes('background: #d9f8e8;'), '선택한 결합 글자의 자음·모음 연두색 표시가 없습니다.');
 assert(app.includes('function syncChoiceQuizSoundButtonBlink') && app.includes('introComplete && !quizComplete'), '1번 듣기 완료 뒤 선택 문제 소리 버튼을 끝까지 강조하지 않습니다.');

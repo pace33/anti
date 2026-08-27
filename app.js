@@ -13984,7 +13984,7 @@ const LESSON_LINE_MATCH_CONFIGS = {
         title: 'ㅖ·ㅒ 단어 선긋기',
         prompt: '단어를 누른 다음 알맞은 그림을 눌러 선으로 이어요.',
         items: [
-            { key: '얘기', word: '얘기', icon: '💬' },
+            { key: '얘기', word: '얘기', icon: '<span class="conversation-picture"><span>🧑</span><span class="conversation-picture-bubble">💬</span><span>👩</span></span>' },
             { key: '시계', word: '시계', icon: '🕒' },
             { key: '예의', word: '예의', icon: '🙇' }
         ]
