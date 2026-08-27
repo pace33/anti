@@ -285,7 +285,7 @@ const CHANCHAN_LESSONS = [
         pictureItems: [
             { word: "아이", icon: "👧" },
             { word: "아버지", icon: "👨‍👧" },
-            { word: "가수", icon: "🎤" },
+            { word: "가수", icon: "🧑‍🎤" },
             { word: "가지", icon: "🍆" },
             { word: "나무", icon: "🌳" },
             { word: "마차", icon: "🐴" },
@@ -13334,7 +13334,7 @@ const LESSON13_READING_GROUPS = [
         pictureItems: [
             { word: '아이', icon: '👧' },
             { word: '아버지', icon: '👨‍👧' },
-            { word: '가수', icon: '🎤' },
+            { word: '가수', icon: '🧑‍🎤' },
             { word: '가지', icon: '🍆' },
             { word: '나무', icon: '🌳' },
             { word: '마차', icon: '🐴' }
@@ -13510,7 +13510,7 @@ const LESSON13_COMPLETION_WRITING_SETS = [
         title: '쓰기 2 · 완성해 보기',
         prompt: '그림 단어를 듣고 빈칸에 알맞은 글자를 완성해요.',
         items: [
-            { word: '가수', icon: '🎤', tiles: [{ syllable: '가', initial: 'ㄱ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '수', initial: 'ㅅ', vowel: 'ㅜ', givenSlot: 'initial' }] },
+            { word: '가수', icon: '🧑‍🎤', tiles: [{ syllable: '가', initial: 'ㄱ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '수', initial: 'ㅅ', vowel: 'ㅜ', givenSlot: 'initial' }] },
             { word: '허리', icon: '👕', tiles: [{ syllable: '허', initial: 'ㅎ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
             { word: '기타', icon: '🎸', tiles: [{ syllable: '기', initial: 'ㄱ', vowel: 'ㅣ', givenSlot: 'vowel' }, { syllable: '타', initial: 'ㅌ', vowel: 'ㅏ', givenSlot: 'vowel' }] },
             { word: '바구니', icon: '🧺', tiles: [{ syllable: '바', initial: 'ㅂ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '구', initial: 'ㄱ', vowel: 'ㅜ', givenSlot: 'vowel' }, { syllable: '니', initial: 'ㄴ', vowel: 'ㅣ', givenSlot: 'initial' }] },
