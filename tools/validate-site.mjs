@@ -153,6 +153,8 @@ assert(app.includes("word === '●'") && app.includes(": `speakChar('${word}')`"
 assert(app.includes('function initializeLessonLineMatchDragBoards()') && app.includes("window.selectLessonLineMatch(lessonId, 'picture', target.dataset.linePictureKey, target);"), '선긋기에서 직접 드래그해 그림을 선택하는 기능이 없습니다.');
 assert(app.includes("board.addEventListener('pointermove'") && app.includes("document.elementFromPoint(event.clientX, event.clientY)"), '태블릿과 마우스의 선긋기 위치를 추적하지 않습니다.');
 assert(appCss.includes('.lesson-line-match-drag-line') && appCss.includes('touch-action: none;'), '드래그 중인 연결선 표시 또는 태블릿 터치 설정이 없습니다.');
+assert(appCss.includes('grid-auto-rows: minmax(72px, 1fr);') && appCss.includes('.lesson-line-match-picture { font-size: 2.8rem; }'), '전체 선긋기 그림과 행 높이가 크게 조정되지 않았습니다.');
+assert(appCss.includes('width: 76px;') && appCss.includes('height: 76px;'), '선긋기 전용 그림 파일이 큰 크기로 표시되지 않습니다.');
 assert(app.includes("key: '얘기', word: '얘기', icon: '<span class=\"conversation-picture\"") && !app.includes("key: '얘기', word: '얘기', icon: '💬'"), '얘기 그림이 두 사람이 대화하는 모습으로 바뀌지 않았습니다.');
 assert(appCss.includes('.conversation-picture-bubble'), '두 사람 사이 말풍선 그림 스타일이 없습니다.');
 assert(app.includes("key: '예의', word: '예의', icon: '<img class=\"lesson-line-picture-asset bowing-picture-asset\" src=\"polite-bowing-child.webp\"") && !app.includes("key: '예의', word: '예의', icon: '🙇'"), '예의 그림이 고개 숙여 인사하는 모습으로 바뀌지 않았습니다.');
