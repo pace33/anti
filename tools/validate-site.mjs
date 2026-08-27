@@ -26,6 +26,7 @@ const requiredFiles = [
     'aiedu_korean_logo.webp',
     'aiedu_korean_nature_bg.webp',
     'aiedu_korean_dashboard_nature_bg.webp',
+    'waist-highlight-person.png',
     'baby_giyeok.webp',
     'mom_ah.webp'
 ];
@@ -45,8 +46,8 @@ assert(!existsSync(resolve(root, excludedEntry)), '분리 제외 자료 진입 �
 assert(/<script\s+type=["']module["']\s+src=["']app\.js(?:\?[^"']*)?["']\s*>/i.test(index), 'index.html이 app.js 모듈을 불러오지 않습니다.');
 assert((app.match(/word:\s*["']가수["'],\s*icon:\s*["']🧑‍🎤["']/g) || []).length === 3 && !/word:\s*["']가수["'],\s*icon:\s*["']🎤["']/.test(app), '가수 그림이 마이크를 든 가수 모습으로 통일되지 않았습니다.');
 assert((app.match(/word:\s*["']마차["'],\s*icon:\s*["']🐎🛒["']/g) || []).length === 2 && !/word:\s*["']마차["'],\s*icon:\s*["']🐴["']/.test(app), '마차 그림이 말이 마차를 끄는 모습으로 통일되지 않았습니다.');
-assert((app.match(/word:\s*["']허리["'],\s*icon:\s*'<span class="waist-highlight-icon">/g) || []).length === 3, '허리 그림이 사람의 허리 부분을 강조하는 모습으로 통일되지 않았습니다.');
-assert(appCss.includes('.waist-highlight-icon > i') && appCss.includes('border: 3px solid #ef4444;'), '허리 위치를 표시하는 강조 스타일이 없습니다.');
+assert((app.match(/word:\s*["']허리["'],\s*icon:\s*'<img class="word-picture-asset waist-picture-asset" src="waist-highlight-person\.png"/g) || []).length === 3, '허리 그림이 전신 사람의 허리 부분을 강조한 이미지로 통일되지 않았습니다.');
+assert(appCss.includes('.waist-picture-asset') && appCss.includes('object-fit: contain;'), '허리 전신 이미지의 카드 표시 스타일이 없습니다.');
 assert(app.includes('class="trace-clear-button lesson-complete-submit') && app.includes('disabled>완료</button>'), '단어 완성 버튼이 완료 문구의 비활성 상태로 시작하지 않습니다.');
 assert(app.includes('function lessonCompletionCardHasWriting(card)') && app.includes("canvases.every((canvas) => canvas.dataset.hasWriting === 'true')"), '모든 쓰기 칸을 채운 뒤 완료 버튼을 활성화하는 조건이 없습니다.');
 assert(app.includes("syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));") && app.includes('button.disabled = completed || !lessonCompletionCardHasWriting(card);'), '쓰기 입력과 완료 버튼 활성화 상태가 연결되지 않았습니다.');
@@ -132,9 +133,12 @@ assert(app.includes("event.target?.closest?.('button')") && app.includes("event.
 const combinationRenderer = section(app, 'function renderCardContent(card)', 'function renderVowelOriginScene');
 assert(combinationRenderer.includes('const comboData = JSON.stringify([combos[index]])') && combinationRenderer.includes('return `<div class="combine-card-list">${cards}</div>`'), '글자 결합 예시가 한 줄씩 독립된 영역으로 분리되지 않습니다.');
 assert(appCss.includes('.combine-card-list') && appCss.includes('flex-direction: column;'), '글자 결합 카드가 한 줄씩 세로 배치되지 않습니다.');
-assert(app.includes("if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';"), '소리 듣기 활동의 안내 문구가 간단한 표현으로 변경되지 않았습니다.');
+assert(app.includes("if (isLearningDetailSoundControl(control)) return '여기를 눌러 보세요.';"), '실제로 보이는 소리 듣기 버튼의 안내 문구가 간단한 표현으로 설정되지 않았습니다.');
 assert(!app.includes('소리 듣기 버튼을 눌러 보세요.'), '이전 소리 듣기 안내 문구가 남아 있습니다.');
 assert(app.includes("speakTextKo('소리 듣기 버튼을 눌러 주세요.');") && app.includes("target.dataset.learningSoundGuideSpoken === 'true'"), '소리 듣기 버튼의 한 번짜리 음성 안내가 없습니다.');
+assert(app.includes('const learningDetailSoundGuideVoicePages = new Set();') && app.includes('learningDetailSoundGuideVoicePages.has(pageKey)'), '일반 배움에서 소리 듣기 음성 안내가 페이지마다 반복될 수 있습니다.');
+assert(app.includes('function isRepeatLearningDetailSoundGuideActivity(target)') && app.includes("return /^2\\s*듣고\\s*알맞은\\s*글자\\s*선택/.test(title);"), '듣고 알맞은 글자 선택 활동의 반복 안내 예외가 없습니다.');
+assert(app.includes("const visibleLabel = `${control.textContent || ''}`") && !app.includes("const label = `${control?.getAttribute?.('aria-label') || ''} ${control?.textContent || ''}`"), '숨은 설명만으로 소리 듣기 버튼을 잘못 판별할 수 있습니다.');
 assert(appCss.includes('.learning-activity-guided.learning-activity-sound-guided') && appCss.includes('animation-iteration-count: 1;'), '소리 듣기 버튼의 한 번짜리 깜빡임 효과가 없습니다.');
 assert(app.includes('function learningDetailControlIsAnswerChoice(control)') && app.includes('getLearningDetailActionControls(region).some(learningDetailControlIsAnswerChoice)'), '혼합 화면에서 정답 선택 영역만 안내 대상에서 제외되지 않습니다.');
 assert(app.includes("control.closest('.practice-step-box, [data-question], [data-answer], [role=\"group\"], article, section')"), '듣기 영역과 정답 선택 영역을 구분하는 기준이 없습니다.');

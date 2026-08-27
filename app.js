@@ -294,7 +294,7 @@ const CHANCHAN_LESSONS = [
             { word: "다리", icon: "🦵" },
             { word: "나비", icon: "🦋" },
             { word: "파리", icon: "🪰" },
-            { word: "허리", icon: '<span class="waist-highlight-icon"><span>🧍</span><i></i></span>' }
+            { word: "허리", icon: '<img class="word-picture-asset waist-picture-asset" src="waist-highlight-person.png" alt="">' }
         ]
     },
     {
@@ -2508,6 +2508,7 @@ let learningDetailActivityGuideTarget = null;
 let learningDetailActivityClickHandler = null;
 let learningDetailActivityInteractionHandler = null;
 const learningDetailReviewedControlsByPage = new Map();
+const learningDetailSoundGuideVoicePages = new Set();
 
 function getLearningDetailActionControls(root) {
     if (!root) return [];
@@ -2659,8 +2660,9 @@ function hideLearningDetailNavigationGuide() {
 }
 
 function getLearningActivityGuideText(control) {
-    const label = `${control?.getAttribute?.('aria-label') || ''} ${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
-    if (/소리|듣기|🔊/.test(label)) return '여기를 눌러 보세요.';
+    const visibleLabel = `${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
+    const label = visibleLabel || `${control?.getAttribute?.('aria-label') || ''}`.replace(/\s+/g, ' ').trim();
+    if (isLearningDetailSoundControl(control)) return '여기를 눌러 보세요.';
     if (/읽었어요|읽기/.test(label)) return '읽은 횟수 버튼을 눌러 보세요.';
     if (/완성|썼어요/.test(label)) return '활동을 마쳤다면 이 버튼을 눌러 보세요.';
     if (label && label.length <= 12) return `“${label}” 버튼을 눌러 보세요.`;
@@ -2668,16 +2670,29 @@ function getLearningActivityGuideText(control) {
 }
 
 function isLearningDetailSoundControl(control) {
-    const label = `${control?.getAttribute?.('aria-label') || ''} ${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
-    return /소리|듣기|🔊/.test(label);
+    if (!control) return false;
+    const visibleLabel = `${control.textContent || ''}`.replace(/\s+/g, ' ').trim();
+    if (/소리\s*듣기|문제\s*소리\s*듣기|낱말\s*소리\s*듣기|눌러서\s*듣기/.test(visibleLabel)) return true;
+    if (/^[🔊🔉🔈\s]+$/.test(visibleLabel)) return true;
+    return control.matches('.listen-quiz-play-btn, .lesson-complete-listen-button, .unit9-listen, .mouth-listen-button');
+}
+
+function isRepeatLearningDetailSoundGuideActivity(target) {
+    const activity = target?.closest?.('.practice-step-box');
+    const title = `${activity?.querySelector?.('.practice-step-title')?.textContent || ''}`.replace(/\s+/g, ' ').trim();
+    return /^2\s*듣고\s*알맞은\s*글자\s*선택/.test(title);
 }
 
 function announceLearningDetailSoundGuide(target) {
     if (!isLearningDetailSoundControl(target) || target.dataset.learningSoundGuideSpoken === 'true') return;
+    const pageKey = getLearningDetailReviewPageKey();
+    const allowsRepeatedGuidance = isRepeatLearningDetailSoundGuideActivity(target);
+    if (!allowsRepeatedGuidance && learningDetailSoundGuideVoicePages.has(pageKey)) return;
     target.dataset.learningSoundGuideSpoken = 'true';
     learningDetailActivityGuideVoiceTimer = window.setTimeout(() => {
         learningDetailActivityGuideVoiceTimer = null;
         if (learningDetailActivityGuideTarget !== target || !target.isConnected) return;
+        if (!allowsRepeatedGuidance) learningDetailSoundGuideVoicePages.add(pageKey);
         speakTextKo('소리 듣기 버튼을 눌러 주세요.');
     }, 120);
 }
@@ -13356,7 +13371,7 @@ const LESSON13_READING_GROUPS = [
             { word: '다리', icon: '🦵' },
             { word: '나비', icon: '🦋' },
             { word: '파리', icon: '🪰' },
-            { word: '허리', icon: '<span class="waist-highlight-icon"><span>🧍</span><i></i></span>' }
+            { word: '허리', icon: '<img class="word-picture-asset waist-picture-asset" src="waist-highlight-person.png" alt="">' }
         ],
         wordRows: [
             ['오리', '느끼', '바구니'],
@@ -13511,7 +13526,7 @@ const LESSON13_COMPLETION_WRITING_SETS = [
         prompt: '그림 단어를 듣고 빈칸에 알맞은 글자를 완성해요.',
         items: [
             { word: '가수', icon: '🧑‍🎤', tiles: [{ syllable: '가', initial: 'ㄱ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '수', initial: 'ㅅ', vowel: 'ㅜ', givenSlot: 'initial' }] },
-            { word: '허리', icon: '<span class="waist-highlight-icon"><span>🧍</span><i></i></span>', tiles: [{ syllable: '허', initial: 'ㅎ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+            { word: '허리', icon: '<img class="word-picture-asset waist-picture-asset" src="waist-highlight-person.png" alt="">', tiles: [{ syllable: '허', initial: 'ㅎ', vowel: 'ㅓ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
             { word: '기타', icon: '🎸', tiles: [{ syllable: '기', initial: 'ㄱ', vowel: 'ㅣ', givenSlot: 'vowel' }, { syllable: '타', initial: 'ㅌ', vowel: 'ㅏ', givenSlot: 'vowel' }] },
             { word: '바구니', icon: '🧺', tiles: [{ syllable: '바', initial: 'ㅂ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '구', initial: 'ㄱ', vowel: 'ㅜ', givenSlot: 'vowel' }, { syllable: '니', initial: 'ㄴ', vowel: 'ㅣ', givenSlot: 'initial' }] },
             { word: '코끼리', icon: '🐘', tiles: [{ syllable: '코', initial: 'ㅋ', vowel: 'ㅗ', givenSlot: 'vowel' }, { syllable: '끼', initial: 'ㄲ', vowel: 'ㅣ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'initial' }] },
