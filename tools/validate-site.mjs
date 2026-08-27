@@ -44,6 +44,7 @@ assert(!existsSync(resolve(root, excludedEntry)), '분리 제외 자료 진입 �
 
 assert(/<script\s+type=["']module["']\s+src=["']app\.js(?:\?[^"']*)?["']\s*>/i.test(index), 'index.html이 app.js 모듈을 불러오지 않습니다.');
 assert((app.match(/word:\s*["']가수["'],\s*icon:\s*["']🧑‍🎤["']/g) || []).length === 3 && !/word:\s*["']가수["'],\s*icon:\s*["']🎤["']/.test(app), '가수 그림이 마이크를 든 가수 모습으로 통일되지 않았습니다.');
+assert((app.match(/word:\s*["']마차["'],\s*icon:\s*["']🐎🛒["']/g) || []).length === 2 && !/word:\s*["']마차["'],\s*icon:\s*["']🐴["']/.test(app), '마차 그림이 말이 마차를 끄는 모습으로 통일되지 않았습니다.');
 assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.test(index), 'index.html이 app.css를 불러오지 않습니다.');
 assert(![excludedEntry, excludedBrand, excludedFolder].some((marker) => index.includes(marker)), '에이두 한글 루트 화면에 분리 제외 자료 링크/표시가 남아 있습니다.');
 assert(!/<script\s+type=["']module["']\s*>/i.test(index), 'index.html에 인라인 모듈 스크립트가 다시 들어왔습니다.');
