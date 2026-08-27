@@ -3611,6 +3611,14 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     visibility: hidden;
     opacity: .82;
 }
+.lesson-line-match-drag-line {
+    stroke: #fb923c;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 10 8;
+    visibility: hidden;
+    opacity: .9;
+}
 .lesson-line-match-column {
     position: relative;
     z-index: 1;
@@ -3638,6 +3646,9 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     color: #20364b;
     font-size: 1.55rem;
     font-weight: 1000;
+}
+.lesson-line-match-word {
+    touch-action: none;
 }
 .lesson-line-match-word::after,
 .lesson-line-match-picture::before {

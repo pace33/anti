@@ -13995,6 +13995,7 @@ function renderLessonLineMatch(lessonId) {
             <div class="lesson-line-match-board" data-line-match-board="${lessonId}">
                 <svg class="lesson-line-match-svg" aria-hidden="true">
                     ${config.items.map((item) => `<line class="lesson-line-match-line" data-line-key="${item.key}" x1="0" y1="0" x2="0" y2="0"></line>`).join('')}
+                    <line class="lesson-line-match-drag-line" x1="0" y1="0" x2="0" y2="0"></line>
                 </svg>
                 <div class="lesson-line-match-column words">
                     <div class="lesson-line-match-heading">단어</div>
@@ -14092,6 +14093,101 @@ function redrawLessonLineMatchLines() {
     Object.keys(window.lessonLineMatchState || {}).forEach((lessonId) => {
         const state = window.lessonLineMatchState[lessonId];
         Object.keys(state.matches || {}).forEach((key) => drawLessonLineMatchLine(lessonId, key));
+    });
+}
+
+function initializeLessonLineMatchDragBoards() {
+    document.querySelectorAll('.lesson-line-match-board').forEach((board) => {
+        if (board.dataset.dragReady === 'true' || !window.PointerEvent) return;
+        board.dataset.dragReady = 'true';
+        const lessonId = Number(board.dataset.lineMatchBoard);
+        const previewLine = board.querySelector('.lesson-line-match-drag-line');
+        let drag = null;
+
+        const boardPoint = (clientX, clientY) => {
+            const rect = board.getBoundingClientRect();
+            return {
+                x: Math.max(0, Math.min(rect.width, clientX - rect.left)),
+                y: Math.max(0, Math.min(rect.height, clientY - rect.top))
+            };
+        };
+        const hidePreview = () => {
+            if (previewLine) previewLine.style.visibility = 'hidden';
+        };
+        const beginPreview = (wordButton, point) => {
+            const rect = board.getBoundingClientRect();
+            const wordRect = wordButton.getBoundingClientRect();
+            const startX = wordRect.right - rect.left - 9;
+            const startY = wordRect.top + wordRect.height / 2 - rect.top;
+            previewLine?.setAttribute('x1', String(startX));
+            previewLine?.setAttribute('y1', String(startY));
+            previewLine?.setAttribute('x2', String(point.x));
+            previewLine?.setAttribute('y2', String(point.y));
+            if (previewLine) previewLine.style.visibility = 'visible';
+        };
+
+        board.addEventListener('pointerdown', (event) => {
+            const wordButton = event.target.closest('.lesson-line-match-word');
+            if (!wordButton || !board.contains(wordButton) || wordButton.classList.contains('is-matched')) return;
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+            drag = {
+                pointerId: event.pointerId,
+                wordButton,
+                key: wordButton.dataset.lineWordKey,
+                startX: event.clientX,
+                startY: event.clientY,
+                active: false
+            };
+            try { wordButton.setPointerCapture(event.pointerId); } catch {}
+        });
+
+        board.addEventListener('pointermove', (event) => {
+            if (!drag || event.pointerId !== drag.pointerId) return;
+            const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+            if (!drag.active && distance < 7) return;
+            if (!drag.active) {
+                drag.active = true;
+                window.selectLessonLineMatch(lessonId, 'word', drag.key, drag.wordButton);
+            }
+            if (event.cancelable) event.preventDefault();
+            const point = boardPoint(event.clientX, event.clientY);
+            beginPreview(drag.wordButton, point);
+            board.querySelectorAll('.lesson-line-match-picture').forEach((picture) => {
+                const rect = picture.getBoundingClientRect();
+                const isTarget = event.clientX >= rect.left && event.clientX <= rect.right
+                    && event.clientY >= rect.top && event.clientY <= rect.bottom;
+                picture.classList.toggle('is-target', isTarget && !picture.classList.contains('is-matched'));
+            });
+        });
+
+        const finishDrag = (event) => {
+            if (!drag || event.pointerId !== drag.pointerId) return;
+            const completedDrag = drag;
+            drag = null;
+            hidePreview();
+            board.querySelectorAll('.lesson-line-match-picture').forEach((picture) => picture.classList.remove('is-target'));
+            if (!completedDrag.active) return;
+            if (event.cancelable) event.preventDefault();
+            board.dataset.suppressClickUntil = String(Date.now() + 450);
+            const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.lesson-line-match-picture');
+            if (target && board.contains(target)) {
+                window.selectLessonLineMatch(lessonId, 'picture', target.dataset.linePictureKey, target);
+            }
+        };
+        const cancelDrag = (event) => {
+            if (!drag || event.pointerId !== drag.pointerId) return;
+            drag = null;
+            hidePreview();
+            board.querySelectorAll('.lesson-line-match-picture').forEach((picture) => picture.classList.remove('is-target'));
+        };
+        board.addEventListener('pointerup', finishDrag);
+        board.addEventListener('pointercancel', cancelDrag);
+        board.addEventListener('click', (event) => {
+            if (Date.now() < Number(board.dataset.suppressClickUntil || 0)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+        }, true);
     });
 }
 if (!window.lessonLineMatchResizeBound) {
@@ -16618,6 +16714,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
         initializeLessonCompletionCanvases();
         initializeLesson26BatchimGlyphs();
         initializeLesson13BoardGames();
+        initializeLessonLineMatchDragBoards();
         redrawLessonLineMatchLines();
         if ((isCustomLesson27 || isCustomRepresentativeFamily) && safeIndex === 0) {
             initializeLesson27HandMotionCards();
