@@ -7238,7 +7238,8 @@ body {
 .lesson27-family-step span {padding:6px 10px;border-radius:5px;background:#54a8bc;color:#fff;font-weight:900;}
 .lesson27-family-step strong {font-size:1.05rem;}
 .lesson27-family-cards {display:grid;gap:18px;}
-.lesson27-family-card {position:relative;display:grid;grid-template-columns:110px 92px minmax(260px,1fr) 180px;align-items:center;gap:18px;width:100%;min-height:210px;padding:25px 22px;overflow:hidden;border:2px solid #b8c7d2;border-radius:8px;background:#fff;color:#17324e;text-align:left;transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease;}
+.lesson27-family-card {position:relative;display:grid;grid-template-columns:110px 92px minmax(260px,1fr) 180px;align-items:center;gap:18px;width:100%;min-height:210px;padding:25px 22px;overflow:hidden;border:2px solid #b8c7d2;border-radius:8px;background:#fff;color:#17324e;text-align:left;cursor:pointer;transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease;}
+.lesson27-family-card:hover,.lesson27-family-card:focus-visible {border-color:#318faa;background:#f4fbfd;box-shadow:0 0 0 4px rgba(49,143,170,.14);outline:none;}
 .lesson27-family-card.is-playing {border-color:#318faa;background:#f4fbfd;box-shadow:0 0 0 4px rgba(49,143,170,.14);}
 .lesson27-family-card.is-heard:not(.is-playing) {border-color:#39a96b;background:#c8edd5;box-shadow:0 0 0 3px rgba(57,169,107,.18);}
 .lesson27-family-card.is-heard:not(.is-playing) .lesson27-hand-scene {border-color:#69bd87;background:#e3f6e9;}
