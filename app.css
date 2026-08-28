@@ -7160,7 +7160,7 @@ body {
 .lesson26-word-board {display:grid;gap:7px;padding:16px;border:2px solid #b8c5ce;border-radius:8px;background:#fff;}
 .lesson26-word-board h3 {margin:0 0 3px;color:#173d59;font-size:1.15rem;font-weight:1000;}
 .lesson26-word-row {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
-.lesson26-word-row button {min-height:52px;border:1px solid #b5c4cf;border-radius:6px;background:#f8fbfd;color:#152f49;font-size:1.35rem;font-weight:900;}
+.lesson26-word-row button {min-height:60px;border:1px solid #b5c4cf;border-radius:6px;background:#f8fbfd;color:#152f49;font-size:2rem;font-weight:900;line-height:1.2;}
 .lesson26-word-row button:hover,.lesson26-word-row button:focus-visible {border-color:#4b9bb7;background:#eaf7fc;}
 .lesson26-nonsense-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:16px;border:2px solid #b9c8d2;border-radius:8px;background:#fff;}
 .lesson26-nonsense-grid button {position:relative;min-height:66px;padding:10px 38px 10px 10px;border:1px solid #b9c8d2;border-radius:6px;background:#fbfdff;color:#17324e;font-size:1.55rem;font-weight:1000;}
