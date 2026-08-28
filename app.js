@@ -15646,6 +15646,7 @@ window.goBackLearningStartActivity = function goBackLearningStartActivity() {
 
 const lesson27FamilyState = {
     heard: new Set(),
+    announcedLessons: new Set(),
     playbackToken: 0,
     movementTimer: null,
     activeKey: null,
@@ -16069,6 +16070,10 @@ function syncLesson27FamilyPage() {
             : heardCount > 0
                 ? '좋아요! 이제 다른 글자의 손동작과 소리도 들어 보세요.'
                 : '각 글자의 손동작과 소리를 차례로 들어 보세요.';
+    }
+    if (isComplete && !lesson27FamilyState.announcedLessons.has(lessonId)) {
+        lesson27FamilyState.announcedLessons.add(lessonId);
+        speakTextKo(`잘했어요. 이 받침가족은 모두 ${representative}, ${spokenSound} 소리가 나요. 글자 모양은 달라도 받침에서 나는 소리는 같아요.`);
     }
     const nextBtn = document.getElementById('learning-detail-next-btn');
     if (nextBtn && Number(window.currentLearningActivityStep) === lessonId && Number(window.currentLearningDetailSectionIndex) === 0) {
@@ -16861,6 +16866,7 @@ window.openLearningDetailActivity = function openLearningDetailActivity(step) {
     currentLearningDetailSectionIndex = 0;
     if ([27, 28, 29].includes(Number(step))) {
         lesson27FamilyState.heard.clear();
+        lesson27FamilyState.announcedLessons.delete(Number(step));
         cancelLesson27FamilyPlayback();
         lesson27FamilyState.activeKey = null;
     }
