@@ -12260,7 +12260,7 @@ const LESSON26_READING_GROUPS = [
         batchims: ['ㅇ', 'ㄱ'],
         pictureItems: [
             { word: '강가', icon: '🏞️' }, { word: '야구공', icon: '⚾' },
-            { word: '늑대', icon: '🐺' }, { word: '국자', icon: '🥄' },
+            { word: '늑대', icon: '🐺' }, { word: '국자', icon: '<img class="word-picture-asset cooking-ladle-picture-asset" src="cooking-ladle.webp" alt="">' },
             { word: '축구공', icon: '⚽' }, { word: '책상', icon: '🪑' }
         ],
         wordRows: [
@@ -12380,7 +12380,7 @@ const LESSON26_FIND_GROUPS = [
     ],
     [
         { word: '늑대', icon: '🐺', choices: ['늑대', '늗대'] },
-        { word: '국자', icon: '🥄', choices: ['굴자', '국자'] },
+        { word: '국자', icon: '<img class="word-picture-asset cooking-ladle-picture-asset" src="cooking-ladle.webp" alt="">', choices: ['굴자', '국자'] },
         { word: '책상', icon: '🪑', choices: ['책상', '챙상'] },
         { word: '기린', icon: '🦒', choices: ['기링', '기린'] },
         { word: '분수', icon: '⛲', choices: ['분수', '불수'] },
@@ -12399,7 +12399,7 @@ const LESSON26_WRITING_GROUPS = [
     ],
     [
         { word: '늑대', icon: '🐺', prefix: '', open: '느', target: 'ㄱ', suffix: '대' },
-        { word: '국자', icon: '🥄', prefix: '', open: '구', target: 'ㄱ', suffix: '자' },
+        { word: '국자', icon: '<img class="word-picture-asset cooking-ladle-picture-asset" src="cooking-ladle.webp" alt="">', prefix: '', open: '구', target: 'ㄱ', suffix: '자' },
         { word: '책상', icon: '🪑', prefix: '', open: '채', target: 'ㄱ', suffix: '상' },
         { word: '기린', icon: '🦒', prefix: '기', open: '리', target: 'ㄴ', suffix: '' },
         { word: '분수', icon: '⛲', prefix: '', open: '부', target: 'ㄴ', suffix: '수' },

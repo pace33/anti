@@ -3974,6 +3974,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     width: 0.85em;
     height: 1.25em;
 }
+
+.cooking-ladle-picture-asset {
+    width: 1.55em;
+    height: 1.15em;
+}
 @media (prefers-color-scheme: dark) and (pointer: coarse) {
     .lesson-complete-writing-canvas {
         --lesson-completion-ink: rgba(255, 255, 255, 0.96);
