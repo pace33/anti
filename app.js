@@ -11703,7 +11703,7 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
         items: [
             { word: '풍선', icon: '🎈', parts: [{ text: '풍', write: true }, { text: '선' }] },
             { word: '책상', icon: '🪑', parts: [{ text: '책' }, { text: '상', write: true }] },
-            { word: '멍게', icon: '🐚', parts: [{ text: '멍', write: true }, { text: '게' }] },
+            { word: '멍게', icon: '<img class="word-picture-asset sea-squirt-picture-asset" src="sea-squirt.webp" alt="">', parts: [{ text: '멍', write: true }, { text: '게' }] },
             { word: '희망', icon: '⭐', parts: [{ text: '희' }, { text: '망', write: true }] }
         ]
     },
