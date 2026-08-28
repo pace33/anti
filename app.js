@@ -11731,7 +11731,7 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
             { word: '물', icon: '💧', parts: [{ text: '물', write: true }] },
             { word: '구슬', icon: '🔮', parts: [{ text: '구' }, { text: '슬', write: true }] },
             { word: '얼굴', icon: '🙂', parts: [{ text: '얼' }, { text: '굴', write: true }] },
-            { word: '콜라', icon: '🥤', parts: [{ text: '콜', write: true }, { text: '라' }] }
+            { word: '콜라', icon: '<img class="word-picture-asset cola-bottle-picture-asset" src="cola-bottle.webp" alt="">', parts: [{ text: '콜', write: true }, { text: '라' }] }
         ]
     },
     'ㄷ': {

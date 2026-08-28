@@ -36,6 +36,7 @@ const requiredFiles = [
     'kitchen-tongs.webp',
     'sea-squirt.webp',
     'family-mom-dad-daughter.webp',
+    'cola-bottle.webp',
     'baby_giyeok.webp',
     'mom_ah.webp'
 ];
@@ -73,6 +74,8 @@ assert((app.match(/word:\s*['"]멍게['"],\s*icon:\s*'<img class="word-picture-a
 assert(appCss.includes('.sea-squirt-picture-asset'), '멍게 이미지의 카드 표시 스타일이 없습니다.');
 assert((app.match(/word:\s*['"]가족['"],\s*icon:\s*'<img class="word-picture-asset family-picture-asset" src="family-mom-dad-daughter\.webp"/g) || []).length === 1 && !/word:\s*['"]가족['"],\s*icon:\s*['"]👪['"]/.test(app), '가족 그림이 엄마, 아빠, 딸 이미지로 교체되지 않았습니다.');
 assert(appCss.includes('.family-picture-asset'), '가족 이미지의 카드 표시 스타일이 없습니다.');
+assert((app.match(/word:\s*['"]콜라['"],\s*icon:\s*'<img class="word-picture-asset cola-bottle-picture-asset" src="cola-bottle\.webp"/g) || []).length === 1 && !/word:\s*['"]콜라['"],\s*icon:\s*['"]🥤['"]/.test(app), '콜라 그림이 빨대 컵이 아닌 콜라병 이미지로 교체되지 않았습니다.');
+assert(appCss.includes('.cola-bottle-picture-asset'), '콜라병 이미지의 카드 표시 스타일이 없습니다.');
 assert(app.includes('class="trace-clear-button lesson-complete-submit') && app.includes('disabled>완료</button>'), '단어 완성 버튼이 완료 문구의 비활성 상태로 시작하지 않습니다.');
 assert(app.includes('function lessonCompletionCardHasWriting(card)') && app.includes("canvases.every((canvas) => canvas.dataset.hasWriting === 'true')"), '모든 쓰기 칸을 채운 뒤 완료 버튼을 활성화하는 조건이 없습니다.');
 assert(app.includes("syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));") && app.includes('button.disabled = completed || !lessonCompletionCardHasWriting(card);'), '쓰기 입력과 완료 버튼 활성화 상태가 연결되지 않았습니다.');
