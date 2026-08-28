@@ -12410,11 +12410,14 @@ const LESSON26_WRITING_GROUPS = [
 function renderLesson26ReadingPage(groupIndex) {
     const group = LESSON26_READING_GROUPS[groupIndex];
     if (!group) return '';
+    const renderPictureIcon = (item) => item.word === '집게'
+        ? '<img class="word-picture-asset kitchen-tongs-picture-asset" src="kitchen-tongs.webp" alt="">'
+        : item.icon;
     return `
         <div class="lesson26-page lesson26-reading-page">
             <div class="lesson26-guide"><strong>읽기 ${groupIndex + 1}</strong><span>그림을 누르고 소리를 들은 뒤, 단어를 큰 소리로 읽어 보세요.</span></div>
             <div class="lesson26-picture-grid">
-                ${group.pictureItems.map((item) => `<button type="button" class="lesson26-picture-card" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기"><span class="lesson26-picture-icon" aria-hidden="true">${item.icon}</span><span class="lesson26-picture-word">${renderLesson26BatchimWord(item.word, group.batchims)}</span><small>🔊 눌러서 들어요</small></button>`).join('')}
+                ${group.pictureItems.map((item) => `<button type="button" class="lesson26-picture-card" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기"><span class="lesson26-picture-icon" aria-hidden="true">${renderPictureIcon(item)}</span><span class="lesson26-picture-word">${renderLesson26BatchimWord(item.word, group.batchims)}</span><small>🔊 눌러서 들어요</small></button>`).join('')}
             </div>
             <div class="lesson26-word-board">
                 <h3>한 줄씩 소리 내어 읽어요</h3>

@@ -70,6 +70,7 @@ assert((app.match(/word:\s*['"]참외['"],\s*icon:\s*'<img class="word-picture-a
 assert(appCss.includes('.chamoe-picture-asset'), '참외 이미지의 카드 표시 스타일이 없습니다.');
 assert((app.match(/word:\s*['"]집게['"],\s*icon:\s*'<img class="word-picture-asset kitchen-tongs-picture-asset" src="kitchen-tongs\.webp"/g) || []).length === 4 && !/word:\s*['"]집게['"],\s*icon:\s*['"](?:🗜️|🥢)['"]/.test(app), '집게 그림이 주방용 조리 집게 이미지로 통일되지 않았습니다.');
 assert(appCss.includes('.kitchen-tongs-picture-asset'), '주방용 집게 이미지의 카드 표시 스타일이 없습니다.');
+assert(app.includes("const renderPictureIcon = (item) => item.word === '집게'") && app.includes('${renderPictureIcon(item)}'), '대표받침 단어 읽기 카드에서 집게 사진을 우선 표시하지 않습니다.');
 assert((app.match(/word:\s*['"]멍게['"],\s*icon:\s*'<img class="word-picture-asset sea-squirt-picture-asset" src="sea-squirt\.webp"/g) || []).length === 1 && !/word:\s*['"]멍게['"],\s*icon:\s*['"]🐚['"]/.test(app), '멍게 그림이 소라가 아닌 멍게 이미지로 교체되지 않았습니다.');
 assert(appCss.includes('.sea-squirt-picture-asset'), '멍게 이미지의 카드 표시 스타일이 없습니다.');
 assert((app.match(/word:\s*['"]가족['"],\s*icon:\s*'<img class="word-picture-asset family-picture-asset" src="family-mom-dad-daughter\.webp"/g) || []).length === 1 && !/word:\s*['"]가족['"],\s*icon:\s*['"]👪['"]/.test(app), '가족 그림이 엄마, 아빠, 딸 이미지로 교체되지 않았습니다.');
