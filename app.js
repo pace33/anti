@@ -11710,7 +11710,7 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
     'ㄱ': {
         bank: ['족', '박', '축', '학'],
         items: [
-            { word: '가족', icon: '👪', parts: [{ text: '가' }, { text: '족', write: true }] },
+            { word: '가족', icon: '<img class="word-picture-asset family-picture-asset" src="family-mom-dad-daughter.webp" alt="">', parts: [{ text: '가' }, { text: '족', write: true }] },
             { word: '호박', icon: '🎃', parts: [{ text: '호' }, { text: '박', write: true }] },
             { word: '축구', icon: '⚽', parts: [{ text: '축', write: true }, { text: '구' }] },
             { word: '학교', icon: '🏫', parts: [{ text: '학', write: true }, { text: '교' }] }

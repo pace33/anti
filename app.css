@@ -3961,6 +3961,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     width: 1.2em;
     height: 1.15em;
 }
+
+.family-picture-asset {
+    width: 1.3em;
+    height: 1.15em;
+}
 @media (prefers-color-scheme: dark) and (pointer: coarse) {
     .lesson-complete-writing-canvas {
         --lesson-completion-ink: rgba(255, 255, 255, 0.96);
