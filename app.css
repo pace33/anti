@@ -7343,7 +7343,8 @@ body {
 .lesson27-play-button:focus-visible {outline:4px solid rgba(255,139,70,.34);outline-offset:2px;}
 .lesson27-play-button:disabled {cursor:wait;border-color:#6aa8b9;background:#dff3f7;color:#285f70;opacity:1;}
 .lesson27-sound-compare {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px;padding:14px;border:2px solid #bfd7e0;border-radius:8px;background:#f5fbfd;}
-.lesson27-sound-compare span {display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;border:1px solid #c9d8df;border-radius:6px;background:#fff;font-size:1.15rem;}
+.lesson27-sound-compare button {display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;border:1px solid #c9d8df;border-radius:6px;background:#fff;font-size:1.15rem;cursor:pointer;transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease;}
+.lesson27-sound-compare button:hover,.lesson27-sound-compare button:focus-visible,.lesson27-sound-compare button.is-speaking {border-color:#3295ae;background:#eaf8fb;box-shadow:0 0 0 3px rgba(50,149,174,.16);outline:none;}
 .lesson27-sound-compare i {color:#6e8595;font-style:normal;}
 .lesson27-sound-compare strong {color:#c25225;font-size:1.35rem;}
 .lesson27-sound-compare em {grid-column:1 / -1;color:#23704d;text-align:center;font-size:1.1rem;font-style:normal;font-weight:1000;}

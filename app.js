@@ -15727,8 +15727,8 @@ function renderLesson27BatchimFamilyIntro() {
             </div>
 
             <div class="lesson27-sound-compare" aria-label="받침 소리 비교">
-                <span><b>ㅂ 받침</b><i>→</i><strong>[ㅂ]</strong></span>
-                <span><b>ㅍ 받침</b><i>→</i><strong>[ㅂ]</strong></span>
+                <button type="button" onclick="playLesson27ComparisonSound(this)" aria-label="ㅂ 받침 읍 소리 듣기"><b>ㅂ 받침</b><i>→</i><strong>[ㅂ]</strong></button>
+                <button type="button" onclick="playLesson27ComparisonSound(this)" aria-label="ㅍ 받침 읍 소리 듣기"><b>ㅍ 받침</b><i>→</i><strong>[ㅂ]</strong></button>
                 <em>모양과 이름은 다르지만,<br>받침 소리는 같아요.</em>
             </div>
 
@@ -15738,6 +15738,12 @@ function renderLesson27BatchimFamilyIntro() {
         </section>
     `;
 }
+
+window.playLesson27ComparisonSound = function playLesson27ComparisonSound(button) {
+    document.querySelectorAll('.lesson27-sound-compare button').forEach((item) => item.classList.remove('is-speaking'));
+    button?.classList.add('is-speaking');
+    speakTextKo('읍', () => button?.classList.remove('is-speaking'));
+};
 
 function renderLesson27BatchimWritingPage() {
     const items = [

@@ -88,6 +88,8 @@ assert(appCss.includes('.study-desk-picture-asset'), '책상 이미지의 카드
 assert(app.includes('window.activateLesson27FamilyCard = function activateLesson27FamilyCard') && app.includes("onclick=\"activateLesson27FamilyCard(event, '${item.key}')\"") && app.includes("onclick=\"activateLesson27FamilyCard(event, '${key}')\""), '받침가족 카드 전체 클릭 동작이 모든 배움에 연결되지 않았습니다.');
 assert(app.includes("event.target.closest('button, a, input, select, textarea')") && app.includes("['Enter', ' '].includes(event.key)"), '받침가족 카드의 중복 실행 방지 또는 키보드 동작이 없습니다.');
 assert(appCss.includes('.lesson27-family-card:hover,.lesson27-family-card:focus-visible'), '전체 클릭 가능한 받침가족 카드의 시각적 상태가 없습니다.');
+assert((app.match(/onclick="playLesson27ComparisonSound\(this\)"/g) || []).length === 2 && app.includes("speakTextKo('읍'"), 'ㅂ·ㅍ 받침 비교 버튼에서 읍 소리가 재생되지 않습니다.');
+assert(appCss.includes('.lesson27-sound-compare button.is-speaking'), 'ㅂ·ㅍ 받침 비교 소리 버튼의 재생 상태가 없습니다.');
 assert(app.includes('class="trace-clear-button lesson-complete-submit') && app.includes('disabled>완료</button>'), '단어 완성 버튼이 완료 문구의 비활성 상태로 시작하지 않습니다.');
 assert(app.includes('function lessonCompletionCardHasWriting(card)') && app.includes("canvases.every((canvas) => canvas.dataset.hasWriting === 'true')"), '모든 쓰기 칸을 채운 뒤 완료 버튼을 활성화하는 조건이 없습니다.');
 assert(app.includes("syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));") && app.includes('button.disabled = completed || !lessonCompletionCardHasWriting(card);'), '쓰기 입력과 완료 버튼 활성화 상태가 연결되지 않았습니다.');
