@@ -11702,7 +11702,7 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
         bank: ['풍', '상', '멍', '망'],
         items: [
             { word: '풍선', icon: '🎈', parts: [{ text: '풍', write: true }, { text: '선' }] },
-            { word: '책상', icon: '🪑', parts: [{ text: '책' }, { text: '상', write: true }] },
+            { word: '책상', icon: '<img class="word-picture-asset study-desk-picture-asset" src="wooden-study-desk.webp" alt="">', parts: [{ text: '책' }, { text: '상', write: true }] },
             { word: '멍게', icon: '<img class="word-picture-asset sea-squirt-picture-asset" src="sea-squirt.webp" alt="">', parts: [{ text: '멍', write: true }, { text: '게' }] },
             { word: '희망', icon: '⭐', parts: [{ text: '희' }, { text: '망', write: true }] }
         ]
@@ -12261,7 +12261,7 @@ const LESSON26_READING_GROUPS = [
         pictureItems: [
             { word: '강가', icon: '🏞️' }, { word: '야구공', icon: '⚾' },
             { word: '늑대', icon: '🐺' }, { word: '국자', icon: '<img class="word-picture-asset cooking-ladle-picture-asset" src="cooking-ladle.webp" alt="">' },
-            { word: '축구공', icon: '⚽' }, { word: '책상', icon: '🪑' }
+            { word: '축구공', icon: '⚽' }, { word: '책상', icon: '<img class="word-picture-asset study-desk-picture-asset" src="wooden-study-desk.webp" alt="">' }
         ],
         wordRows: [
             ['석가탑', '박수', '악어'], ['행복', '막대기', '떡국'],
@@ -12381,7 +12381,7 @@ const LESSON26_FIND_GROUPS = [
     [
         { word: '늑대', icon: '🐺', choices: ['늑대', '늗대'] },
         { word: '국자', icon: '<img class="word-picture-asset cooking-ladle-picture-asset" src="cooking-ladle.webp" alt="">', choices: ['굴자', '국자'] },
-        { word: '책상', icon: '🪑', choices: ['책상', '챙상'] },
+        { word: '책상', icon: '<img class="word-picture-asset study-desk-picture-asset" src="wooden-study-desk.webp" alt="">', choices: ['책상', '챙상'] },
         { word: '기린', icon: '🦒', choices: ['기링', '기린'] },
         { word: '분수', icon: '⛲', choices: ['분수', '불수'] },
         { word: '걷다', icon: '🚶‍♀️', choices: ['걸다', '걷다'] }
@@ -12400,7 +12400,7 @@ const LESSON26_WRITING_GROUPS = [
     [
         { word: '늑대', icon: '🐺', prefix: '', open: '느', target: 'ㄱ', suffix: '대' },
         { word: '국자', icon: '<img class="word-picture-asset cooking-ladle-picture-asset" src="cooking-ladle.webp" alt="">', prefix: '', open: '구', target: 'ㄱ', suffix: '자' },
-        { word: '책상', icon: '🪑', prefix: '', open: '채', target: 'ㄱ', suffix: '상' },
+        { word: '책상', icon: '<img class="word-picture-asset study-desk-picture-asset" src="wooden-study-desk.webp" alt="">', prefix: '', open: '채', target: 'ㄱ', suffix: '상' },
         { word: '기린', icon: '🦒', prefix: '기', open: '리', target: 'ㄴ', suffix: '' },
         { word: '분수', icon: '⛲', prefix: '', open: '부', target: 'ㄴ', suffix: '수' },
         { word: '걷다', icon: '🚶‍♀️', prefix: '', open: '거', target: 'ㄷ', suffix: '다' }
