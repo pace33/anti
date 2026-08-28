@@ -11694,7 +11694,7 @@ const LESSON21_PICTURE_WRITING_CONFIGS = {
         items: [
             { word: '접시', icon: '🍽️', parts: [{ text: '접', write: true }, { text: '시' }] },
             { word: '수첩', icon: '📒', parts: [{ text: '수' }, { text: '첩', write: true }] },
-            { word: '집게', icon: '🗜️', parts: [{ text: '집', write: true }, { text: '게' }] },
+            { word: '집게', icon: '<img class="word-picture-asset kitchen-tongs-picture-asset" src="kitchen-tongs.webp" alt="">', parts: [{ text: '집', write: true }, { text: '게' }] },
             { word: '서랍', icon: '🗄️', parts: [{ text: '서' }, { text: '랍', write: true }] }
         ]
     },
@@ -12247,7 +12247,7 @@ const LESSON26_READING_GROUPS = [
         pictureItems: [
             { word: '염소', icon: '🐐' }, { word: '감자', icon: '🥔' },
             { word: '구름', icon: '☁️' }, { word: '수첩', icon: '🗒️' },
-            { word: '집게', icon: '🥢' }, { word: '서랍', icon: '🗄️' }
+            { word: '집게', icon: '<img class="word-picture-asset kitchen-tongs-picture-asset" src="kitchen-tongs.webp" alt="">' }, { word: '서랍', icon: '🗄️' }
         ],
         wordRows: [
             ['김치', '봄비', '잠수'], ['감기', '소금', '잠자리'],
@@ -12375,7 +12375,7 @@ const LESSON26_FIND_GROUPS = [
         { word: '감자', icon: '🥔', choices: ['갑자', '감자'] },
         { word: '구름', icon: '☁️', choices: ['구름', '구릉'] },
         { word: '수첩', icon: '🗒️', choices: ['수철', '수첩'] },
-        { word: '집게', icon: '🥢', choices: ['집게', '깁게'] },
+        { word: '집게', icon: '<img class="word-picture-asset kitchen-tongs-picture-asset" src="kitchen-tongs.webp" alt="">', choices: ['집게', '깁게'] },
         { word: '서랍', icon: '🗄️', choices: ['서랑', '서랍'] }
     ],
     [
@@ -12394,7 +12394,7 @@ const LESSON26_WRITING_GROUPS = [
         { word: '감자', icon: '🥔', prefix: '', open: '가', target: 'ㅁ', suffix: '자' },
         { word: '구름', icon: '☁️', prefix: '구', open: '르', target: 'ㅁ', suffix: '' },
         { word: '수첩', icon: '🗒️', prefix: '수', open: '처', target: 'ㅂ', suffix: '' },
-        { word: '집게', icon: '🥢', prefix: '', open: '지', target: 'ㅂ', suffix: '게' },
+        { word: '집게', icon: '<img class="word-picture-asset kitchen-tongs-picture-asset" src="kitchen-tongs.webp" alt="">', prefix: '', open: '지', target: 'ㅂ', suffix: '게' },
         { word: '서랍', icon: '🗄️', prefix: '서', open: '라', target: 'ㅂ', suffix: '' }
     ],
     [
