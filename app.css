@@ -1777,21 +1777,21 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     touch-action: manipulation;
 }
 .lesson13-read-check {
-    border: 3px solid #fdba74;
-    border-radius: 18px;
-    padding: 18px;
+    border: 2px solid #fdba74;
+    border-radius: 14px;
+    padding: 12px 14px;
     background: #fff7ed;
 }
 .lesson13-read-check-buttons {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 12px;
+    gap: 8px;
+    margin-top: 8px;
 }
 .lesson13-read-check-button {
-    min-height: 72px;
-    border: 3px solid #fb923c;
-    border-radius: 14px;
+    min-height: 58px;
+    border: 2px solid #fb923c;
+    border-radius: 12px;
     background: #ffffff;
     color: #c2410c;
     font-size: 1.2rem;
@@ -3726,6 +3726,9 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     color: #20364b;
     font-size: 1.55rem;
     font-weight: 1000;
+}
+.lesson13-read-feedback:empty {
+    display: none;
 }
 .lesson-line-match-word {
     touch-action: none;
