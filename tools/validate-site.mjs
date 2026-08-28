@@ -85,6 +85,8 @@ assert((app.match(/word:\s*['"]국자['"],\s*icon:\s*'<img class="word-picture-a
 assert(appCss.includes('.cooking-ladle-picture-asset'), '요리용 국자 이미지의 카드 표시 스타일이 없습니다.');
 assert((app.match(/word:\s*['"]책상['"],\s*icon:\s*'<img class="word-picture-asset study-desk-picture-asset" src="wooden-study-desk\.webp"/g) || []).length === 4 && !/word:\s*['"]책상['"],\s*icon:\s*['"]🪑['"]/.test(app), '책상 그림이 의자가 아닌 나무 책상 이미지로 통일되지 않았습니다.');
 assert(appCss.includes('.study-desk-picture-asset'), '책상 이미지의 카드 표시 스타일이 없습니다.');
+assert(app.includes(`['윷','윧','<img class="word-picture-asset yut-sticks-picture-asset" src="traditional-yut-sticks.webp" alt="">']`) && !app.includes("['윷','윧','🎲']"), '윷 그림이 주사위가 아닌 전통 윷가락 이미지로 교체되지 않았습니다.');
+assert(appCss.includes('.yut-sticks-picture-asset'), '윷가락 이미지의 카드 표시 스타일이 없습니다.');
 assert(app.includes('window.activateLesson27FamilyCard = function activateLesson27FamilyCard') && app.includes("onclick=\"activateLesson27FamilyCard(event, '${item.key}')\"") && app.includes("onclick=\"activateLesson27FamilyCard(event, '${key}')\""), '받침가족 카드 전체 클릭 동작이 모든 배움에 연결되지 않았습니다.');
 assert(app.includes("event.target.closest('button, a, input, select, textarea')") && app.includes("['Enter', ' '].includes(event.key)"), '받침가족 카드의 중복 실행 방지 또는 키보드 동작이 없습니다.');
 assert(appCss.includes('.lesson27-family-card:hover,.lesson27-family-card:focus-visible'), '전체 클릭 가능한 받침가족 카드의 시각적 상태가 없습니다.');

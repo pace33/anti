@@ -3984,6 +3984,11 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     width: 1.45em;
     height: 1.15em;
 }
+
+.yut-sticks-picture-asset {
+    width: 1.55em;
+    height: 1.25em;
+}
 @media (prefers-color-scheme: dark) and (pointer: coarse) {
     .lesson-complete-writing-canvas {
         --lesson-completion-ink: rgba(255, 255, 255, 0.96);
