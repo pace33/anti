@@ -15764,7 +15764,7 @@ function renderLesson27BatchimWritingPage() {
         const final = finals[finalIndex];
         const isWritingFinal = final === 'ㅂ' || final === 'ㅍ';
         const finalContent = isWritingFinal
-            ? `<canvas id="lesson27-write-${cardIndex}-${syllableIndex}" class="trace-writing-canvas lesson27-writing-canvas" data-guide="${final}" data-trace-hide-label tabindex="0" aria-label="${base} 아래에 ${final} 받침 쓰기"></canvas>`
+            ? `<canvas id="lesson27-write-${cardIndex}-${syllableIndex}" class="trace-writing-canvas lesson27-writing-canvas" data-guide="${final}" data-spoken-text="읍" data-trace-speak-once data-trace-hide-label tabindex="0" aria-label="${base} 아래에 ${final} 받침 쓰기, 읍 소리"></canvas>`
             : final;
         return `<span class="lesson27-syllable"><b>${base}</b><i class="${isWritingFinal ? 'is-writing-batchim' : ''}">${finalContent}</i></span>`;
     }).join('');
@@ -17701,6 +17701,7 @@ window.resetTraceWritingCanvas = function resetTraceWritingCanvas(target) {
         canvas._tracePaths = [];
         delete canvas.dataset.rewarded;
         delete canvas.dataset.traceCompletionNotified;
+        delete canvas.dataset.traceSpokenPrompt;
         delete canvas.dataset.fillRecorded;
         delete canvas.dataset.completed;
     }
