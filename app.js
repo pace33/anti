@@ -14521,9 +14521,9 @@ const LESSON_MOUTH_ACTIVITY_CONFIGS = {
         guideText: '소리를 들으며 입이 벌어지는 모습을 살펴보세요.',
         sequenceText: 'ㅣ → ㅔ → ㅐ 순서로 입이 점점 크게 벌어져요.',
         items: [
-            { char: 'ㅣ', label: '입을 작게 벌려요', description: 'ㅣ: 입을 작게 벌려요.', mouthShape: { width: 66, height: 11, jawDrop: 0, teethHeight: 4, tongueHeight: 4 } },
-            { char: 'ㅔ', label: '입을 조금 더 벌려요', description: 'ㅔ: 입을 조금 더 벌려요.', mouthShape: { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 } },
-            { char: 'ㅐ', label: '입을 가장 크게 벌려요', description: 'ㅐ: 입을 가장 크게 벌려요.', mouthShape: { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 } }
+            { char: 'ㅣ', label: '입을 작게 벌려요', description: 'ㅣ: 입을 작게 벌려요.' },
+            { char: 'ㅔ', label: '입을 조금 더 벌려요', description: 'ㅔ: 입을 조금 더 벌려요.' },
+            { char: 'ㅐ', label: '입을 가장 크게 벌려요', description: 'ㅐ: 입을 가장 크게 벌려요.' }
         ],
         quizChoices: ['ㅔ', 'ㅐ'],
         quizTitle: 'ㅔ와 ㅐ 소리 구별',
@@ -14536,9 +14536,9 @@ const LESSON_MOUTH_ACTIVITY_CONFIGS = {
         guideText: '소리를 들으며 입이 벌어지는 모습을 살펴보세요.',
         sequenceText: 'ㅣ → ㅖ → ㅒ 순서로 입이 점점 크게 벌어져요.',
         items: [
-            { char: 'ㅣ', label: '입을 작게 벌려요', description: 'ㅣ는 입을 작게 벌려요.', mouthShape: { width: 66, height: 11, jawDrop: 0, teethHeight: 4, tongueHeight: 4 } },
-            { char: 'ㅖ', label: '입을 조금 더 벌려요', description: 'ㅖ는 ㅣ보다 입을 조금 더 벌려요.', mouthShape: { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 } },
-            { char: 'ㅒ', label: '입을 가장 크게 벌려요', description: 'ㅒ는 입을 가장 크게 벌려요.', mouthShape: { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 } }
+            { char: 'ㅣ', label: '입을 작게 벌려요', description: 'ㅣ는 입을 작게 벌려요.' },
+            { char: 'ㅖ', label: '입을 조금 더 벌려요', description: 'ㅖ는 ㅣ보다 입을 조금 더 벌려요.' },
+            { char: 'ㅒ', label: '입을 가장 크게 벌려요', description: 'ㅒ는 입을 가장 크게 벌려요.' }
         ],
         quizChoices: ['ㅖ', 'ㅒ'],
         quizTitle: 'ㅖ와 ㅒ 소리 구별',
@@ -14569,11 +14569,11 @@ const LESSON_MOUTH_AUDIO_PROFILES = {
     'ㅒ': { normalText: '얘기', slowText: '얘기', normalRate: 0.9, slowRate: 0.64, normalDuration: 900, slowDuration: 1250 }
 };
 const LESSON_MOUTH_SHAPE_PRESETS = {
-    'ㅣ': { width: 66, height: 11, jawDrop: 0, teethHeight: 4, tongueHeight: 4 },
-    'ㅔ': { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 },
-    'ㅐ': { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 },
-    'ㅖ': { width: 60, height: 28, jawDrop: 7, teethHeight: 7, tongueHeight: 10 },
-    'ㅒ': { width: 64, height: 42, jawDrop: 14, teethHeight: 8, tongueHeight: 13 }
+    'ㅣ': { width: 70, height: 8, pulseWidth: 62, pulseHeight: 6, closedWidth: 52, closedHeight: 5, mouthTop: 10, jawDrop: 1, jawMotion: 0, teethHeight: 2, tongueHeight: 2 },
+    'ㅔ': { width: 60, height: 30, pulseWidth: 56, pulseHeight: 20, closedWidth: 48, closedHeight: 7, mouthTop: 4, jawDrop: 8, jawMotion: 2, teethHeight: 8, tongueHeight: 10 },
+    'ㅐ': { width: 58, height: 50, pulseWidth: 54, pulseHeight: 35, closedWidth: 46, closedHeight: 8, mouthTop: -4, jawDrop: 16, jawMotion: 3, teethHeight: 9, tongueHeight: 15 },
+    'ㅖ': { width: 60, height: 30, pulseWidth: 56, pulseHeight: 20, closedWidth: 48, closedHeight: 7, mouthTop: 4, jawDrop: 8, jawMotion: 2, teethHeight: 8, tongueHeight: 10 },
+    'ㅒ': { width: 58, height: 50, pulseWidth: 54, pulseHeight: 35, closedWidth: 46, closedHeight: 8, mouthTop: -4, jawDrop: 16, jawMotion: 3, teethHeight: 9, tongueHeight: 15 }
 };
 window.lessonMouthFollowChar = window.lessonMouthFollowChar || { 15: 'ㅣ', 16: 'ㅖ' };
 window.lessonMouthQuizTarget = window.lessonMouthQuizTarget || {};
@@ -14583,7 +14583,8 @@ window.lessonMouthPlaybackState = window.lessonMouthPlaybackState || {
     activeTimer: null,
     currentAudio: null,
     currentAudioFinish: null,
-    sequenceRunId: 0
+    sequenceRunId: 0,
+    soundRunId: 0
 };
 
 function getLessonMouthShape(item) {
@@ -14598,9 +14599,13 @@ function getLessonMouthStyle(item) {
     return [
         `--mouth-width:${shape.width}px`,
         `--mouth-height:${shape.height}px`,
-        '--mouth-closed-width:44px',
-        '--mouth-closed-height:7px',
+        `--mouth-pulse-width:${shape.pulseWidth}px`,
+        `--mouth-pulse-height:${shape.pulseHeight}px`,
+        `--mouth-closed-width:${shape.closedWidth}px`,
+        `--mouth-closed-height:${shape.closedHeight}px`,
+        `--mouth-top:${shape.mouthTop}px`,
         `--jaw-drop:${shape.jawDrop}px`,
+        `--jaw-motion:${shape.jawMotion}px`,
         `--teeth-height:${shape.teethHeight}px`,
         `--tongue-height:${shape.tongueHeight}px`
     ].join(';');
@@ -14609,6 +14614,8 @@ function getLessonMouthStyle(item) {
 function renderLessonMouthFace(item) {
     return `
         <div class="mouth-face">
+            <span class="mouth-cheek left"></span>
+            <span class="mouth-cheek right"></span>
             <span class="mouth-nose"></span>
             <div class="mouth-jaw">
                 <div class="mouth-lips">
@@ -15260,9 +15267,11 @@ function getLessonMouthPlaybackState() {
         activeTimer: null,
         currentAudio: null,
         currentAudioFinish: null,
-        sequenceRunId: 0
+        sequenceRunId: 0,
+        soundRunId: 0
     };
     window.lessonMouthPlaybackState.sequenceRunId = Number(window.lessonMouthPlaybackState.sequenceRunId || 0);
+    window.lessonMouthPlaybackState.soundRunId = Number(window.lessonMouthPlaybackState.soundRunId || 0);
     return window.lessonMouthPlaybackState;
 }
 
@@ -15322,9 +15331,10 @@ function settleLessonMouthCards(step, char) {
 }
 
 function stopLessonMouthPlayback(step, options = {}) {
+    const state = getLessonMouthPlaybackState();
+    state.soundRunId += 1;
     if (!options.keepSequence) {
         clearLessonMouthSequenceTimers();
-        const state = getLessonMouthPlaybackState();
         state.sequenceRunId += 1;
     }
     clearLessonMouthActiveTimer();
@@ -15352,7 +15362,7 @@ function activateLessonMouthCard(step, char, slow = false, options = {}) {
     state.activeTimer = window.setTimeout(() => {
         settleLessonMouthCards(step, char);
         state.activeTimer = null;
-    }, duration + 250);
+    }, 15000);
 }
 
 window.playLessonMouthSequence = async function(step, slow = false, options = {}) {
@@ -15381,6 +15391,8 @@ window.playLessonMouthSound = async function(step, char, slow = false, options =
     if (!config) return;
     const fromSequence = Boolean(options.fromSequence);
     stopLessonMouthPlayback(step, { keepSequence: fromSequence });
+    const state = getLessonMouthPlaybackState();
+    const soundRunId = state.soundRunId;
     activateLessonMouthCard(step, char, slow, { revealCard: options.revealCard !== false });
     window.lessonMouthFollowChar = window.lessonMouthFollowChar || {};
     window.lessonMouthFollowChar[step] = char;
@@ -15408,7 +15420,6 @@ window.playLessonMouthSound = async function(step, char, slow = false, options =
     }
 
     const sources = LESSON_MOUTH_AUDIO_SOURCES[char] || [];
-    const state = getLessonMouthPlaybackState();
     const trySource = async (index) => {
         if (index >= sources.length) return playLessonMouthAudioFallback(char, slow);
         const audio = new Audio(sources[index]);
@@ -15430,7 +15441,12 @@ window.playLessonMouthSound = async function(step, char, slow = false, options =
         });
         return completed ? true : trySource(index + 1);
     };
-    return trySource(0);
+    const completed = await trySource(0);
+    if (state.soundRunId === soundRunId) {
+        clearLessonMouthActiveTimer();
+        settleLessonMouthCards(step, char);
+    }
+    return completed && state.soundRunId === soundRunId;
 };
 
 window.completeLessonMouthRepeat = async function(step, btn) {
