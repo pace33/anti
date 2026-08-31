@@ -99,6 +99,8 @@ assert(app.includes("'ㅖ': [traceRightToLeftStroke(0.4, 0.58, 0.28, { strictDir
 assert(app.includes('class="trace-clear-button lesson-complete-submit') && app.includes('disabled>완료</button>'), '단어 완성 버튼이 완료 문구의 비활성 상태로 시작하지 않습니다.');
 assert(app.includes('function lessonCompletionCardHasWriting(card)') && app.includes("canvases.every((canvas) => canvas.dataset.hasWriting === 'true')"), '모든 쓰기 칸을 채운 뒤 완료 버튼을 활성화하는 조건이 없습니다.');
 assert(app.includes("syncLessonCompletionSubmitButton(canvas.closest('.lesson-complete-card'));") && app.includes('button.disabled = completed || !lessonCompletionCardHasWriting(card);'), '쓰기 입력과 완료 버튼 활성화 상태가 연결되지 않았습니다.');
+assert(app.includes("canvas.dataset.answerRevealed = 'true';") && app.includes("placeholder.textContent = answer;") && app.includes("placeholder.classList.add('is-answer');"), '완료 후 사용자 획을 지우고 파란 쓰기 칸에 정답 글자를 표시하지 않습니다.');
+assert(app.includes('delete canvas.dataset.answerRevealed;') && app.includes("placeholder.textContent = '쓰기';") && app.includes("placeholder.classList.remove('is-answer');"), '다시 쓰기에서 공개된 정답 글자를 초기화하지 않습니다.');
 assert(!app.includes("button.textContent = '완성 완료';"), '이전 완성 완료 버튼 문구가 남아 있습니다.');
 assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.test(index), 'index.html이 app.css를 불러오지 않습니다.');
 assert(![excludedEntry, excludedBrand, excludedFolder].some((marker) => index.includes(marker)), '에이두 한글 루트 화면에 분리 제외 자료 링크/표시가 남아 있습니다.');

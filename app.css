@@ -3904,6 +3904,26 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 .lesson-syllable-part.write {
     background: #cfe8fb;
 }
+.lesson-syllable-write-placeholder {
+    position: relative;
+    z-index: 1;
+    color: rgba(14, 116, 144, 0.32);
+    font-size: .82rem;
+    font-weight: 900;
+    pointer-events: none;
+}
+.lesson-syllable-write-placeholder.is-answer {
+    color: #0f2947;
+    font-size: 2.35rem;
+    font-weight: 1000;
+}
+.lesson-complete-word.three-syllable .lesson-syllable-write-placeholder.is-answer {
+    font-size: 2.1rem;
+}
+.lesson-complete-card.is-complete .lesson-complete-writing-canvas {
+    pointer-events: none;
+    cursor: default;
+}
 .lesson-syllable-part.write::before,
 .lesson-syllable-part.write::after {
     content: "";

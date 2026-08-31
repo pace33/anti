@@ -13870,7 +13870,7 @@ function renderLessonCompletionPart({ lessonId, setIndex, itemIndex, tileIndex, 
     const canvasId = `lesson13-write-${lessonId}-${setIndex}-${itemIndex}-${tileIndex}-${slot}`;
     return `
         <div class="lesson-syllable-part write" aria-label="${tile.syllable} ${slot === 'initial' ? '초성' : '모음'} 쓰기">
-            <span class="lesson-syllable-write-placeholder">쓰기</span>
+            <span class="lesson-syllable-write-placeholder" aria-live="polite">쓰기</span>
             <canvas id="${canvasId}"
                 class="lesson-complete-writing-canvas"
                 data-word="${tile.syllable}"
@@ -14801,6 +14801,18 @@ window.completeLesson13WordWriting = async function completeLesson13WordWriting(
     button.disabled = true;
     button.classList.add('active');
     card?.classList.add('is-complete');
+    card?.querySelectorAll('.lesson-complete-writing-canvas').forEach((canvas) => {
+        const ctx = resizeLessonCompletionCanvas(canvas, { preserve: false });
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        canvas.dataset.answerRevealed = 'true';
+        const answer = canvas.dataset.target || '';
+        const placeholder = canvas.parentElement?.querySelector('.lesson-syllable-write-placeholder');
+        if (placeholder) {
+            placeholder.textContent = answer;
+            placeholder.classList.add('is-answer');
+        }
+    });
     if (feedback) feedback.textContent = `${item.word} 완성했어요. 소리 내어 한 번 더 읽어요.`;
     speakTextKo(`${item.word}. 잘했어요.`);
     await recordKoreanAttempt({
@@ -15115,6 +15127,12 @@ window.clearLesson13WordWriting = function clearLesson13WordWriting(button) {
         const ctx = resizeLessonCompletionCanvas(canvas, { preserve: false });
         ctx.clearRect(0, 0, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
         delete canvas.dataset.hasWriting;
+        delete canvas.dataset.answerRevealed;
+        const placeholder = canvas.parentElement?.querySelector('.lesson-syllable-write-placeholder');
+        if (placeholder) {
+            placeholder.textContent = '쓰기';
+            placeholder.classList.remove('is-answer');
+        }
     });
     const submitButton = card?.querySelector('.lesson-complete-submit');
     if (submitButton) {
