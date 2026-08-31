@@ -6350,12 +6350,16 @@ function speakTextKo(text, onEndCallback, options = {}) {
     }
     const requestedRate = Number(options.playbackRate ?? 0.85);
     const playbackRate = Math.min(2, Math.max(0.5, requestedRate * AIEDUE_TTS_RATE_MULTIPLIER));
-    playAiedueSchoolTts(processedText, { ...options, playbackRate, volumeGain: options.volumeGain ?? 1 })
-        .then(() => onEndCallback?.())
+    return playAiedueSchoolTts(processedText, { ...options, playbackRate, volumeGain: options.volumeGain ?? 1 })
+        .then(() => {
+            onEndCallback?.();
+            return true;
+        })
         .catch((error) => {
-            if (error?.name === 'AbortError') return;
+            if (error?.name === 'AbortError') return false;
             console.error('에이두 한글 TTS 재생 실패:', error);
             onEndCallback?.();
+            return false;
         });
 }
 
@@ -14577,7 +14581,9 @@ window.lessonMouthQuizPlayed = window.lessonMouthQuizPlayed || {};
 window.lessonMouthPlaybackState = window.lessonMouthPlaybackState || {
     sequenceTimers: [],
     activeTimer: null,
-    currentAudio: null
+    currentAudio: null,
+    currentAudioFinish: null,
+    sequenceRunId: 0
 };
 
 function getLessonMouthShape(item) {
@@ -15235,25 +15241,28 @@ function getLessonMouthDuration(char, slow = false, reducedMotion = false) {
 }
 
 function playLessonMouthAudioFallback(char, slow = false) {
-    playLessonMouthNativeFallback(getLessonMouthAudioText(char, slow), slow, char);
+    return playLessonMouthNativeFallback(getLessonMouthAudioText(char, slow), slow, char);
 }
 
 function playLessonMouthOnlineFallback(text, slow = false, char = '') {
     const profile = getLessonMouthAudioProfile(char);
     const playbackRate = profile?.[slow ? 'slowRate' : 'normalRate'] || (slow ? 0.82 : 1);
-    speakTextKo(text, null, { playbackRate });
+    return speakTextKo(text, null, { playbackRate });
 }
 
 function playLessonMouthNativeFallback(text, slow = false, char = '') {
-    playLessonMouthOnlineFallback(text, slow, char);
+    return playLessonMouthOnlineFallback(text, slow, char);
 }
 
 function getLessonMouthPlaybackState() {
     window.lessonMouthPlaybackState = window.lessonMouthPlaybackState || {
         sequenceTimers: [],
         activeTimer: null,
-        currentAudio: null
+        currentAudio: null,
+        currentAudioFinish: null,
+        sequenceRunId: 0
     };
+    window.lessonMouthPlaybackState.sequenceRunId = Number(window.lessonMouthPlaybackState.sequenceRunId || 0);
     return window.lessonMouthPlaybackState;
 }
 
@@ -15279,17 +15288,17 @@ function stopLessonMouthAudio() {
     const state = getLessonMouthPlaybackState();
     if (state.currentAudio) {
         try {
+            state.currentAudio.onended = null;
+            state.currentAudio.onerror = null;
             state.currentAudio.pause();
             state.currentAudio.currentTime = 0;
         } catch {}
         state.currentAudio = null;
     }
-    if (globalTtsAudio) {
-        try {
-            globalTtsAudio.pause();
-            globalTtsAudio.currentTime = 0;
-        } catch {}
-    }
+    const finishCurrentAudio = state.currentAudioFinish;
+    state.currentAudioFinish = null;
+    finishCurrentAudio?.(false);
+    cancelSpeech();
     if (typeof speechSynthesis !== 'undefined') {
         try { speechSynthesis.cancel(); } catch {}
     }
@@ -15313,7 +15322,11 @@ function settleLessonMouthCards(step, char) {
 }
 
 function stopLessonMouthPlayback(step, options = {}) {
-    if (!options.keepSequence) clearLessonMouthSequenceTimers();
+    if (!options.keepSequence) {
+        clearLessonMouthSequenceTimers();
+        const state = getLessonMouthPlaybackState();
+        state.sequenceRunId += 1;
+    }
     clearLessonMouthActiveTimer();
     stopLessonMouthAudio();
     resetLessonMouthCards(step);
@@ -15342,24 +15355,25 @@ function activateLessonMouthCard(step, char, slow = false, options = {}) {
     }, duration + 250);
 }
 
-window.playLessonMouthSequence = function(step, slow = false, options = {}) {
+window.playLessonMouthSequence = async function(step, slow = false, options = {}) {
     const config = LESSON_MOUTH_ACTIVITY_CONFIGS[step];
     if (!config) return;
     stopLessonMouthPlayback(step);
     const state = getLessonMouthPlaybackState();
     const reducedMotion = isReducedMouthMotion();
-    let sequenceOffset = 0;
-    config.items.forEach((item, index) => {
-        const timer = window.setTimeout(() => {
-            window.playLessonMouthSound(step, item.char, slow, {
-                fromSequence: true,
-                skipRecord: true,
-                auto: Boolean(options.auto)
-            });
-        }, sequenceOffset);
-        state.sequenceTimers.push(timer);
-        sequenceOffset += getLessonMouthDuration(item.char, slow, reducedMotion) + (reducedMotion ? 90 : 120);
-    });
+    const sequenceRunId = state.sequenceRunId;
+    for (const [index, item] of config.items.entries()) {
+        if (state.sequenceRunId !== sequenceRunId) return;
+        const completed = await window.playLessonMouthSound(step, item.char, slow, {
+            fromSequence: true,
+            skipRecord: true,
+            auto: Boolean(options.auto)
+        });
+        if (!completed || state.sequenceRunId !== sequenceRunId) return;
+        if (index < config.items.length - 1) {
+            await new Promise((resolve) => window.setTimeout(resolve, reducedMotion ? 90 : 140));
+        }
+    }
 };
 
 window.playLessonMouthSound = async function(step, char, slow = false, options = {}) {
@@ -15395,30 +15409,28 @@ window.playLessonMouthSound = async function(step, char, slow = false, options =
 
     const sources = LESSON_MOUTH_AUDIO_SOURCES[char] || [];
     const state = getLessonMouthPlaybackState();
-    let played = false;
-    const trySource = (index) => {
-        if (index >= sources.length) {
-            if (!played) playLessonMouthAudioFallback(char, slow);
-            return;
-        }
+    const trySource = async (index) => {
+        if (index >= sources.length) return playLessonMouthAudioFallback(char, slow);
         const audio = new Audio(sources[index]);
         audio.playbackRate = slow ? 0.68 : 1;
         state.currentAudio = audio;
-        audio.onended = () => {
-            if (state.currentAudio === audio) state.currentAudio = null;
-        };
-        audio.onerror = () => {
-            if (state.currentAudio === audio) state.currentAudio = null;
-            trySource(index + 1);
-        };
-        audio.play().then(() => {
-            played = true;
-        }).catch(() => {
-            if (state.currentAudio === audio) state.currentAudio = null;
-            trySource(index + 1);
+        const completed = await new Promise((resolve) => {
+            let settled = false;
+            const finish = (didComplete) => {
+                if (settled) return;
+                settled = true;
+                if (state.currentAudio === audio) state.currentAudio = null;
+                if (state.currentAudioFinish === finish) state.currentAudioFinish = null;
+                resolve(didComplete);
+            };
+            state.currentAudioFinish = finish;
+            audio.onended = () => finish(true);
+            audio.onerror = () => finish(false);
+            audio.play().catch(() => finish(false));
         });
+        return completed ? true : trySource(index + 1);
     };
-    trySource(0);
+    return trySource(0);
 };
 
 window.completeLessonMouthRepeat = async function(step, btn) {

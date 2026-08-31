@@ -179,6 +179,8 @@ const mouthQuizNext = section(app, 'window.nextLessonMouthSoundQuiz = function(s
 assert(mouthQuizNext.includes('window.playLessonMouthQuizSound(step);'), '입 모양 퀴즈의 다음 문제가 자동으로 소리와 애니메이션을 재생하지 않습니다.');
 assert(!mouthQuizNext.includes('window.lessonMouthQuizPlayed[step] = false'), '입 모양 퀴즈의 다음 문제가 직전 소리를 다시 고를 수 있습니다.');
 assert(app.includes('onclick="playLessonMouthCard(event, ${step}, \'${item.char}\')"') && app.includes('window.playLessonMouthCard = function playLessonMouthCard'), '입 모양 카드 전체에 소리 재생 기능이 연결되지 않았습니다.');
+assert(app.includes('window.playLessonMouthSequence = async function') && app.includes('const completed = await window.playLessonMouthSound') && app.includes('if (!completed || state.sequenceRunId !== sequenceRunId) return;'), '입 모양 연속 듣기가 각 발음의 실제 재생 완료를 기다리지 않습니다.');
+assert(app.includes('return playLessonMouthAudioFallback(char, slow);') && app.includes('return trySource(0);'), '입 모양 발음 재생 완료 상태가 연속 듣기로 전달되지 않습니다.');
 assert(app.includes("event.target?.closest?.('button')") && app.includes("event.key !== 'Enter' && event.key !== ' '"), '입 모양 카드의 중복 클릭 방지 또는 키보드 재생 처리가 없습니다.');
 const combinationRenderer = section(app, 'function renderCardContent(card)', 'function renderVowelOriginScene');
 assert(combinationRenderer.includes('const comboData = JSON.stringify([combos[index]])') && combinationRenderer.includes('return `<div class="combine-card-list">${cards}</div>`'), '글자 결합 예시가 한 줄씩 독립된 영역으로 분리되지 않습니다.');
