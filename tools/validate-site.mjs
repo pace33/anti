@@ -207,6 +207,9 @@ assert(app.includes('data-no-button-guide') && app.includes('window.selectMakeLe
 assert(appCss.includes('.make-letter-cell.is-make-letter-linked') && appCss.includes('background: #d9f8e8;'), '선택한 결합 글자의 자음·모음 연두색 표시가 없습니다.');
 assert(app.includes('function syncChoiceQuizSoundButtonBlink') && app.includes('introComplete && !quizComplete'), '1번 듣기 완료 뒤 선택 문제 소리 버튼을 끝까지 강조하지 않습니다.');
 assert(appCss.includes('.listen-quiz-play-btn.is-quiz-guide-blinking') && appCss.includes('infinite;'), '선택 문제 소리 듣기 버튼의 반복 깜빡임 스타일이 없습니다.');
+assert(app.includes('window.choiceQuizSoundPlayedForTarget = window.currentChoiceQuizTarget;') && app.includes('window.choiceQuizSoundPlayedForTarget !== answerWord') && app.includes('먼저 [소리 듣기] 버튼을 눌러 주세요!') && app.includes('onclick="playChoiceQuizSound(this)"'), '소리를 듣기 전에는 답안을 채점하지 않고 소리 듣기 버튼을 안내하는 잠금이 없습니다.');
+assert(app.includes("button.setAttribute('aria-disabled', String(soundRequired))") && appCss.includes('transform: scale(1.085)') && appCss.includes('animation: choiceQuizSoundGuideBlink .72s'), '소리를 듣기 전 답안 상태 또는 강한 소리 버튼 깜빡임이 없습니다.');
+assert(app.includes('window.selectChoiceBtn = function(event, btn, word)') && app.includes('event?.stopPropagation();') && app.includes("onclick=\"selectChoiceBtn(event, this, '${word}')\""), '소리를 듣기 전 답안 클릭이 공통 활동 완료 기록으로 전달됩니다.');
 assert(app.includes('const rowSizes = [9, 9, 8, 8, 8]') && app.includes('다섯 줄에 숨어 있어요'), '받침 쓰기 단어 칸이 가로 스크롤 없는 다섯 줄로 재배치되지 않았습니다.');
 assert(appCss.includes('.lesson21-m-board-scroller') && appCss.includes('grid-template-columns: repeat(9, minmax(0, 1fr));'), '받침 쓰기표의 가로 스크롤 제거 또는 9칸 행 배치가 없습니다.');
 assert(app.includes('data-lesson21-challenge-game') && app.includes('window.playLesson21ChallengeWord = function') && app.includes("nextLevel.classList.add('is-active')"), '받침 도전 활동의 점수·단계 해금 게임 흐름이 없습니다.');

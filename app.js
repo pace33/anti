@@ -15488,14 +15488,16 @@ window.nextLesson15SoundQuiz = () => window.nextLessonMouthSoundQuiz(15);
 window.selectLesson15SoundAnswer = (btn, userAnswer) => window.selectLessonMouthSoundAnswer(15, btn, userAnswer);
 
 // ② 듣고 알맞은 글자 선택 (소리 듣기 퀴즈 게임)
-window.playChoiceQuizSound = function() {
+window.playChoiceQuizSound = function(button) {
     if (window.currentChoiceQuizTarget) {
+        window.choiceQuizSoundPlayedForTarget = window.currentChoiceQuizTarget;
         incrementKoreanAudioReplayCount({
             lessonId: currentLearningActivityStep,
             activityType: 'listenAndFind',
             answer: window.currentChoiceQuizTarget
         });
         speakTextKo(spokenLabelForChar(window.currentChoiceQuizTarget));
+        syncChoiceQuizSoundButtonBlink(button?.closest('.learning-practice-card'));
     }
 };
 
@@ -15512,12 +15514,34 @@ function syncChoiceQuizSoundButtonBlink(root = document) {
     const soundButton = activity.querySelector('.listen-quiz-play-btn');
     const introComplete = introButtons.length > 0 && introButtons.every((button) => button.dataset.learningReviewed === 'true');
     const quizComplete = answerButtons.length > 0 && answerButtons.every((button) => button.classList.contains('correct'));
-    soundButton?.classList.toggle('is-quiz-guide-blinking', introComplete && !quizComplete);
+    const soundRequired = Boolean(window.currentChoiceQuizTarget)
+        && window.choiceQuizSoundPlayedForTarget !== window.currentChoiceQuizTarget;
+    soundButton?.classList.toggle('is-quiz-guide-blinking', introComplete && !quizComplete && soundRequired);
+    answerButtons.forEach((button) => button.setAttribute('aria-disabled', String(soundRequired)));
 }
 
-window.selectChoiceBtn = function(btn, word) {
+window.selectChoiceBtn = function(event, btn, word) {
     // 이미 맞춘 글자는 터치 무시
     if (window.completedChoices && window.completedChoices.includes(word)) {
+        return;
+    }
+
+    const feedbackEl = document.getElementById('choice-feedback-area');
+    const answerWord = window.currentChoiceQuizTarget;
+    if (!answerWord || window.choiceQuizSoundPlayedForTarget !== answerWord) {
+        event?.stopPropagation();
+        const activity = btn.closest('[data-choice-quiz-activity]');
+        const soundButton = activity?.querySelector('.listen-quiz-play-btn');
+        if (feedbackEl) {
+            feedbackEl.className = "text-base font-black text-center mt-2 mb-4 min-h-[1.4rem] text-orange-600";
+            feedbackEl.textContent = "먼저 [소리 듣기] 버튼을 눌러 주세요!";
+        }
+        if (soundButton) {
+            soundButton.classList.remove('is-quiz-guide-blinking');
+            void soundButton.offsetWidth;
+            soundButton.classList.add('is-quiz-guide-blinking');
+            soundButton.focus({ preventScroll: true });
+        }
         return;
     }
 
@@ -15530,8 +15554,6 @@ window.selectChoiceBtn = function(btn, word) {
     }
     btn.classList.add('selected');
 
-    const feedbackEl = document.getElementById('choice-feedback-area');
-    const answerWord = window.currentChoiceQuizTarget;
     const attemptContext = {
         lessonId: currentLearningActivityStep,
         lessonTitle: getLessonTitleForReport(currentLearningActivityStep),
@@ -15590,6 +15612,7 @@ window.selectChoiceBtn = function(btn, word) {
             // 아직 남음
             // 새 정답 단어 설정
             window.currentChoiceQuizTarget = window.uncompletedChoices[Math.floor(Math.random() * window.uncompletedChoices.length)];
+            window.choiceQuizSoundPlayedForTarget = null;
             if (feedbackEl) {
                 feedbackEl.className = "text-base font-black text-center mt-2 mb-4 min-h-[1.4rem] text-green-600";
                 feedbackEl.textContent = "🎉 정답! 다음 글자 소리를 들으려면 [소리 듣기]를 눌러주세요!";
@@ -16515,6 +16538,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
             window.uncompletedChoices = [...practiceFlow.choices];
             window.currentChoiceQuizTarget = window.uncompletedChoices[Math.floor(Math.random() * window.uncompletedChoices.length)];
             window.completedChoices = [];
+            window.choiceQuizSoundPlayedForTarget = null;
         }
 
         let sectionTitle = section.title;
@@ -16738,7 +16762,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
                                 <span><span class="practice-step-number">2</span> 듣고 알맞은 글자 선택</span>
                             </div>
                             <div class="text-center mt-4 mb-2">
-                                <button type="button" class="listen-quiz-play-btn" onclick="playChoiceQuizSound()">🔊 소리 듣기</button>
+                                <button type="button" class="listen-quiz-play-btn" onclick="playChoiceQuizSound(this)">🔊 소리 듣기</button>
                             </div>
                             <div id="choice-feedback-area" class="text-base font-black text-center mt-2 mb-4 min-h-[1.4rem] text-orange-500">
                                 소리 듣기 버튼을 누르고 알맞은 글자를 골라요!
@@ -16746,7 +16770,7 @@ function renderLearningDetail(step, sectionIndex = 0) {
                             <div class="${window.currentShuffledChoices.length > 4 ? 'choice-grid-wide' : window.currentShuffledChoices.length === 3 ? 'choice-grid-three' : 'choice-grid'}">
                                 ${window.currentShuffledChoices.map((word) => {
                                     const isDone = window.completedChoices && window.completedChoices.includes(word);
-                                    return `<button type="button" class="choice-chip-button ${isDone ? 'correct' : ''}" onclick="selectChoiceBtn(this, '${word}')">${word}</button>`;
+                                    return `<button type="button" class="choice-chip-button ${isDone ? 'correct' : ''}" onclick="selectChoiceBtn(event, this, '${word}')">${word}</button>`;
                                 }).join('')}
                             </div>
                         </div>
