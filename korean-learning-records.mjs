@@ -1,0 +1,90 @@
+export const MASTERY_CORRECT_THRESHOLD = 3;
+
+function stableHash(value) {
+    let hash = 2166136261;
+    for (const char of String(value || '')) {
+        hash ^= char.codePointAt(0);
+        hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36);
+}
+
+export function buildKoreanQuestionId({ lessonId, activityType, answer, word, prompt } = {}) {
+    const identity = [lessonId || 'unknown', activityType || 'activity', answer || word || prompt || 'target'].join('|');
+    return `k2_${stableHash(identity)}`;
+}
+
+export function getKoreanMasteryKey(attempt = {}) {
+    return [attempt.stage || 2, attempt.lessonId || 'unknown', attempt.activityType || 'activity', attempt.questionId || buildKoreanQuestionId(attempt)].join('|');
+}
+
+export function applyKoreanMasteryAttempt(current, attempt = {}) {
+    const now = attempt.createdAt || new Date().toISOString();
+    const isReview = attempt.attemptSource === 'review';
+    if (attempt.isCorrect && !isReview) return current || null;
+
+    const next = {
+        ...(current || {}),
+        masteryKey: getKoreanMasteryKey(attempt),
+        studentId: attempt.studentId,
+        stage: attempt.stage || 2,
+        lessonId: attempt.lessonId,
+        lessonTitle: attempt.lessonTitle,
+        unitId: attempt.unitId ?? null,
+        activityType: attempt.activityType,
+        questionId: attempt.questionId,
+        questionType: attempt.questionType,
+        inputType: attempt.inputType,
+        questionText: attempt.questionText || attempt.prompt || attempt.word || attempt.answer,
+        correctAnswer: attempt.correctAnswer || attempt.answer || attempt.word,
+        errorType: attempt.errorType || current?.errorType || null,
+        wrongCount: Number(current?.wrongCount || 0),
+        reviewCorrectCount: Number(current?.reviewCorrectCount || 0),
+        masteryStatus: current?.masteryStatus || 'weak',
+        firstWrongAt: current?.firstWrongAt || null,
+        lastWrongAt: current?.lastWrongAt || null,
+        lastReviewAt: current?.lastReviewAt || null,
+        createdAt: current?.createdAt || now,
+        updatedAt: now
+    };
+
+    if (!attempt.isCorrect) {
+        next.wrongCount += 1;
+        next.reviewCorrectCount = 0;
+        next.masteryStatus = 'weak';
+        next.firstWrongAt ||= now;
+        next.lastWrongAt = now;
+        next.lastStudentAnswer = attempt.studentAnswer ?? attempt.userAnswer ?? '';
+        next.lastRecognizedAnswer = attempt.recognizedAnswer ?? null;
+        next.lastSimilarityScore = attempt.similarityScore ?? null;
+        next.passThreshold = attempt.passThreshold ?? null;
+        if (isReview) next.lastReviewAt = now;
+        return next;
+    }
+
+    next.reviewCorrectCount += 1;
+    next.lastReviewAt = now;
+    next.masteryStatus = next.reviewCorrectCount >= MASTERY_CORRECT_THRESHOLD ? 'mastered' : 'learning';
+    return next;
+}
+
+export function getTodayReviewQuestions(masteryByKey = {}, maxQuestions = 10) {
+    return Object.values(masteryByKey || {})
+        .filter((item) => item && ['weak', 'learning'].includes(item.masteryStatus))
+        .sort((a, b) => Number(b.wrongCount || 0) - Number(a.wrongCount || 0)
+            || String(b.lastWrongAt || '').localeCompare(String(a.lastWrongAt || '')))
+        .slice(0, maxQuestions);
+}
+
+export function summarizeKoreanStudentRecords(attempts = [], masteryByKey = {}, now = new Date()) {
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const todayAttempts = attempts.filter((attempt) => String(attempt.localDate || attempt.createdAt || '').slice(0, 10) === localDate);
+    const masteryItems = Object.values(masteryByKey || {}).filter(Boolean);
+    return {
+        todayAttempts: todayAttempts.length,
+        todayCorrect: todayAttempts.filter((attempt) => attempt.isCorrect).length,
+        reviewCount: masteryItems.filter((item) => ['weak', 'learning'].includes(item.masteryStatus)).length,
+        learningCount: masteryItems.filter((item) => item.masteryStatus === 'learning').length,
+        masteredCount: masteryItems.filter((item) => item.masteryStatus === 'mastered').length
+    };
+}

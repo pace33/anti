@@ -14,6 +14,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 import {
+    applyKoreanMasteryAttempt,
+    buildKoreanQuestionId,
+    getKoreanMasteryKey,
+    getTodayReviewQuestions,
+    summarizeKoreanStudentRecords
+} from "./korean-learning-records.mjs";
+import {
     getFirestore,
     doc,
     getDoc,
@@ -83,6 +90,12 @@ function getActivityRouteFromLocation() {
 }
 
 let pendingActivityRoute = getActivityRouteFromLocation();
+
+function getKoreanStudentViewFromLocation() {
+    if (getActivityRouteFromLocation() !== 'hangul') return null;
+    const view = new URLSearchParams(window.location.search).get('view');
+    return ['records', 'mistakes', 'review'].includes(view) ? view : null;
+}
 
 function showActivityLoading(message = '로딩중...') {
     const overlay = document.getElementById('activity-loading-overlay');
@@ -173,9 +186,11 @@ function openPendingActivityRoute() {
 
 window.addEventListener('popstate', () => {
     const routeFromUrl = getActivityRouteFromLocation();
+    const koreanStudentView = getKoreanStudentViewFromLocation();
     if (routeFromUrl) {
         if (loginSuccess) {
             openActivityRoute(routeFromUrl);
+            if (koreanStudentView) openKoreanStudentViewRoute(koreanStudentView, { pushUrl: false });
         } else {
             pendingActivityRoute = routeFromUrl;
         }
@@ -413,6 +428,8 @@ const chanchanLessonById = Object.fromEntries(CHANCHAN_LESSONS.map((lesson) => [
 let koreanActivityStartedAt = Date.now();
 window.koreanAudioReplayCounts = {};
 window.koreanRetryCounts = {};
+let koreanMasteryCache = {};
+let activeKoreanReview = null;
 
 const learningDetailData = {
     1: {
@@ -4068,6 +4085,9 @@ function updateTodayKoreanPreview() {
 
 function updateDashboardExperience(userData = {}) {
     currentUserRole = (userData?.role || 'student').toLowerCase();
+    koreanMasteryCache = userData?.koreanQuestionMastery && typeof userData.koreanQuestionMastery === 'object'
+        ? userData.koreanQuestionMastery
+        : {};
     const rawLearningStep = Number(userData?.currentLearningStep);
     currentLearningStep = Number.isFinite(rawLearningStep) ? Math.min(33, Math.max(-1, Math.floor(rawLearningStep))) : -1;
 
@@ -4079,9 +4099,12 @@ function updateDashboardExperience(userData = {}) {
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     } else {
         document.getElementById('teacher-manage-btn').classList.add('hidden');
-        document.getElementById('rpg-teacher-manage-btn')?.classList.add('hidden');
+        document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     }
+    document.querySelectorAll('.rpg-student-learning-button').forEach((button) => {
+        button.classList.toggle('hidden', currentUserRole === 'teacher');
+    });
 
     // Profile UI Upgrade
     const name = userData?.name || '홍길동';
@@ -4216,6 +4239,9 @@ const topLevelSectionIds = [
     'word-listening-quiz-section',
     'reading-practice-section',
     'hangul-game-section',
+    'korean-records-section',
+    'korean-mistakes-section',
+    'korean-review-section',
     'aiedue-korean-cloud-section',
     'literacy-workspace-section'
 ];
@@ -4266,6 +4292,10 @@ function showTopLevelSection(sectionId) {
         setTopLevelSectionVisible(id, id === sectionId);
     });
     setRpgHudVisible(Boolean(currentUserId) && !['start-screen', 'login-section'].includes(sectionId));
+    const learningView = sectionId === 'korean-review-section'
+        ? 'review'
+        : (sectionId === 'korean-records-section' || sectionId === 'korean-mistakes-section' ? 'records' : '');
+    setKoreanLearningMenuActive(learningView);
 
     // 일부 진입 경로(브라우저 뒤로가기/직접 섹션 표시/외부 라우트)에서는
     // openMyKoreanSection() 또는 openMyDrawingFromDashboard()를 거치지 않아
@@ -10801,6 +10831,8 @@ window.closeMyKoreanSection = function closeMyKoreanSection() {
 
 let koreanAttemptCache = [];
 let koreanSummaryCache = {};
+const KOREAN_ATTEMPT_HISTORY_LIMIT = 500;
+let koreanAttemptDocumentStorageAvailable = true;
 
 function getStoredKoreanAttempts() {
     return koreanAttemptCache;
@@ -10973,6 +11005,21 @@ function updateKoreanProgressSummary(attempt) {
     return summary[attempt.studentId];
 }
 
+function inferKoreanAttemptInputType(activityType = '') {
+    if (['listenAndFind', 'wordPictureMatch', 'batchimFamily', 'finalAssessment', 'lineMatch'].includes(activityType)) return 'choice';
+    if (['writeOnCanvas', 'fillOneJamo'].includes(activityType)) return 'canvas';
+    if (['readThreeTimes', 'nonsenseWordRead'].includes(activityType)) return 'voice';
+    return 'button';
+}
+
+function inferKoreanQuestionType({ activityType = '', answer = '', word = '', prompt = '' } = {}) {
+    if (['readThreeTimes', 'nonsenseWordRead'].includes(activityType)) return 'reading';
+    if (['writeOnCanvas', 'fillOneJamo'].includes(activityType)) return 'writing';
+    const text = String(answer || word || prompt || '');
+    if (/\s|[.!?。]/.test(text)) return 'sentence';
+    return Array.from(text).length <= 1 ? 'character' : 'word';
+}
+
 async function recordKoreanAttempt({
     studentId = currentUserId || 'local_student',
     studentName = currentUserName || '이름 없음',
@@ -10991,48 +11038,98 @@ async function recordKoreanAttempt({
     hintUsed = false,
     audioReplayCount = 0,
     durationMs = Date.now() - koreanActivityStartedAt,
-    readCount = null
+    readCount = null,
+    questionId = '',
+    questionType = '',
+    inputType = '',
+    recognizedAnswer = null,
+    similarityScore = null,
+    passThreshold = null,
+    attemptSource = 'normal',
+    canvasJudgement = null
 } = {}) {
+    const authenticatedStudentId = auth.currentUser?.uid || currentUserId || studentId || 'local_student';
+    if (currentUserRole !== 'teacher') studentId = authenticatedStudentId;
     const lesson = getChanchanLesson(lessonId);
     const normalizedLessonTitle = lessonTitle || lesson?.title || getLessonTitleForReport(lessonId);
     const normalizedUnitId = unitId || lesson?.unit || getUnitIdForLesson(lessonId);
     const normalizedErrorType = isCorrect ? null : (errorType || inferKoreanErrorType({ lessonId, activityType, answer, word }));
+    const normalizedInputType = inputType || inferKoreanAttemptInputType(activityType);
+    const normalizedQuestionType = questionType || inferKoreanQuestionType({ activityType, answer, word, prompt });
+    const normalizedQuestionId = questionId || buildKoreanQuestionId({ lessonId, activityType, answer, word, prompt });
+    const createdAt = new Date();
+    const localDate = new Date(createdAt.getTime() - createdAt.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     const attempt = {
         attemptId: (crypto?.randomUUID?.() || `attempt_${Date.now()}_${Math.random().toString(16).slice(2)}`),
         studentId,
         studentName,
+        stage: 2,
         lessonId,
         lessonTitle: normalizedLessonTitle,
         unitId: normalizedUnitId,
         activityType,
+        questionId: normalizedQuestionId,
+        questionType: normalizedQuestionType,
+        inputType: normalizedInputType,
+        questionText: word || answer || prompt,
         word,
         prompt,
         answer,
         userAnswer,
+        correctAnswer: answer || word,
+        studentAnswer: userAnswer,
+        recognizedAnswer,
+        similarityScore: similarityScore !== null && similarityScore !== '' && Number.isFinite(Number(similarityScore)) ? Number(similarityScore) : null,
+        passThreshold: passThreshold !== null && passThreshold !== '' && Number.isFinite(Number(passThreshold)) ? Number(passThreshold) : null,
         isCorrect: Boolean(isCorrect),
         errorType: normalizedErrorType,
+        attemptSource: attemptSource === 'review' ? 'review' : 'normal',
+        canvasJudgement: normalizedInputType === 'canvas' ? (canvasJudgement || 'completion') : null,
         skillTags,
         retryIndex: Number(retryIndex || 1),
         hintUsed: Boolean(hintUsed),
         audioReplayCount: Number(audioReplayCount || 0),
         durationMs: Number(durationMs || 0),
         ...(readCount !== null ? { readCount: Number(readCount) } : {}),
-        createdAt: new Date().toISOString()
+        localDate,
+        createdAt: createdAt.toISOString()
     };
 
     try {
         const attempts = getStoredKoreanAttempts();
         attempts.push(attempt);
-        setStoredKoreanAttempts(attempts.slice(-1200));
-        const report = updateKoreanProgressSummary(attempt);
+        setStoredKoreanAttempts(attempts.slice(-KOREAN_ATTEMPT_HISTORY_LIMIT));
+        updateKoreanProgressSummary(attempt);
+        const masteryKey = getKoreanMasteryKey(attempt);
+        const nextLocalMastery = applyKoreanMasteryAttempt(koreanMasteryCache[masteryKey], attempt);
+        if (nextLocalMastery) koreanMasteryCache = { ...koreanMasteryCache, [masteryKey]: nextLocalMastery };
         if (studentId && studentId !== 'local_student') {
-            await Promise.all([
-                setDoc(doc(db, 'korean_attempts', attempt.attemptId), attempt, { merge: true }),
-                setDoc(doc(db, 'users', studentId), {
-                    koreanProgressSummary: report,
+            await runTransaction(db, async (transaction) => {
+                const userRef = doc(db, 'users', studentId);
+                const userSnapshot = await transaction.get(userRef);
+                const userData = userSnapshot.data() || {};
+                const remoteAttempts = Array.isArray(userData.koreanLearningAttempts) ? userData.koreanLearningAttempts : [];
+                const nextRemoteAttempts = [...remoteAttempts, attempt].slice(-KOREAN_ATTEMPT_HISTORY_LIMIT);
+                const remoteMastery = userData.koreanQuestionMastery || {};
+                const nextRemoteMastery = applyKoreanMasteryAttempt(remoteMastery[masteryKey], attempt);
+                const masteryMap = nextRemoteMastery ? { ...remoteMastery, [masteryKey]: nextRemoteMastery } : remoteMastery;
+                const remoteReport = summarizeKoreanAttempts(studentId, nextRemoteAttempts);
+                transaction.set(userRef, {
+                    koreanLearningAttempts: nextRemoteAttempts,
+                    koreanProgressSummary: remoteReport,
+                    koreanQuestionMastery: masteryMap,
                     koreanProgressUpdatedAt: attempt.createdAt
-                }, { merge: true })
-            ]);
+                }, { merge: true });
+                koreanMasteryCache = masteryMap;
+            });
+            if (koreanAttemptDocumentStorageAvailable) {
+                try {
+                    await setDoc(doc(db, 'users', studentId, 'koreanAttempts', attempt.attemptId), attempt);
+                } catch (documentError) {
+                    koreanAttemptDocumentStorageAvailable = false;
+                    if (documentError?.code !== 'permission-denied') console.warn('Korean attempt document save failed.', documentError);
+                }
+            }
         }
     } catch (error) {
         if (error?.code === 'permission-denied') {
@@ -11050,6 +11147,299 @@ window.buildKoreanStudentReport = function buildKoreanStudentReport(studentId) {
     if (summary[studentId]) return summary[studentId];
     return summarizeKoreanAttempts(studentId, getStoredKoreanAttempts());
 };
+
+async function loadKoreanLearningRecords(studentId = currentUserId) {
+    if (!studentId || currentUserRole === 'teacher') return;
+    try {
+        const snapshot = await getDoc(doc(db, 'users', studentId));
+        const studentData = snapshot.data() || {};
+        const fallbackAttempts = Array.isArray(studentData.koreanLearningAttempts) ? studentData.koreanLearningAttempts : [];
+        let attempts = [...fallbackAttempts];
+        if (koreanAttemptDocumentStorageAvailable) {
+            try {
+                const attemptSnapshot = await getDocs(query(collection(db, 'users', studentId, 'koreanAttempts'), queryLimit(1200)));
+                const byId = new Map(attempts.map((attempt) => [attempt.attemptId, attempt]));
+                attemptSnapshot.docs.forEach((item) => {
+                    const attempt = item.data();
+                    byId.set(attempt.attemptId || item.id, attempt);
+                });
+                attempts = [...byId.values()];
+            } catch (documentError) {
+                koreanAttemptDocumentStorageAvailable = false;
+                if (documentError?.code !== 'permission-denied') console.warn('Korean attempt documents could not be loaded.', documentError);
+            }
+        }
+        attempts = attempts.filter((attempt) => attempt.studentId === studentId);
+        attempts.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+        setStoredKoreanAttempts(attempts);
+        setStoredKoreanSummary({ [studentId]: summarizeKoreanAttempts(studentId, attempts) });
+
+        let nextMastery = { ...(studentData.koreanQuestionMastery || koreanMasteryCache) };
+        const existingMasteryKeys = new Set(Object.keys(nextMastery));
+        attempts.forEach((rawAttempt) => {
+            const attempt = {
+                ...rawAttempt,
+                stage: rawAttempt.stage || 2,
+                questionId: rawAttempt.questionId || buildKoreanQuestionId(rawAttempt),
+                questionType: rawAttempt.questionType || inferKoreanQuestionType(rawAttempt),
+                inputType: rawAttempt.inputType || inferKoreanAttemptInputType(rawAttempt.activityType),
+                questionText: rawAttempt.questionText || rawAttempt.word || rawAttempt.answer || rawAttempt.prompt,
+                correctAnswer: rawAttempt.correctAnswer || rawAttempt.answer || rawAttempt.word,
+                studentAnswer: rawAttempt.studentAnswer ?? rawAttempt.userAnswer ?? ''
+            };
+            const key = getKoreanMasteryKey(attempt);
+            if (existingMasteryKeys.has(key)) return;
+            const next = applyKoreanMasteryAttempt(nextMastery[key], attempt);
+            if (next) nextMastery[key] = next;
+        });
+        koreanMasteryCache = nextMastery;
+        if (Object.keys(nextMastery).length) {
+            await setDoc(doc(db, 'users', studentId), { koreanQuestionMastery: nextMastery }, { merge: true });
+        }
+    } catch (error) {
+        console.warn('Korean learning records could not be loaded.', error);
+    }
+}
+
+function setKoreanLearningMenuActive(view = '') {
+    document.getElementById('rpg-today-review-btn')?.classList.toggle('is-active', view === 'review');
+    document.getElementById('rpg-records-btn')?.classList.toggle('is-active', ['records', 'mistakes'].includes(view));
+}
+
+function updateKoreanStudentViewUrl(view, replace = false) {
+    const url = `index.html?activity=hangul&view=${view}`;
+    window.history?.[replace ? 'replaceState' : 'pushState']?.(null, '', url);
+}
+
+function formatKoreanMasteryStatus(status) {
+    if (status === 'mastered') return '🟢 잘 알고 있어요';
+    if (status === 'learning') return '🟡 연습 중이에요';
+    return '🔴 다시 연습해요';
+}
+
+function getKoreanMasteryDisplayText(item) {
+    return item.questionText || item.correctAnswer || getLessonTitleForReport(item.lessonId);
+}
+
+function renderKoreanRecordDashboard() {
+    const root = document.getElementById('korean-records-content');
+    if (!root) return;
+    const attempts = getStoredKoreanAttempts().filter((attempt) => attempt.studentId === currentUserId);
+    const summary = summarizeKoreanStudentRecords(attempts, koreanMasteryCache);
+    const reviewItems = getTodayReviewQuestions(koreanMasteryCache, 6);
+    if (!attempts.length && !Object.keys(koreanMasteryCache).length) {
+        root.innerHTML = `<section class="korean-empty-state"><h2>📒 아직 학습 기록이 없어요.</h2><p>한글 공부를 시작하면 여기에 나의 기록이 차곡차곡 쌓여요! 🌱</p><button type="button" class="btn-primary" onclick="goHangulDashboard()">한글 공부하러 가기</button></section>`;
+        return;
+    }
+    root.innerHTML = `
+        <section class="korean-record-summary" aria-label="오늘 학습 요약">
+            <div class="korean-record-stat"><span>오늘 공부</span><strong>${summary.todayAttempts}문제</strong></div>
+            <div class="korean-record-stat"><span>맞았어요</span><strong>${summary.todayCorrect}개</strong></div>
+            <div class="korean-record-stat"><span>다시 연습</span><strong>${summary.reviewCount}개</strong></div>
+        </section>
+        <div class="korean-record-actions">
+            <button type="button" class="btn-primary" onclick="openKoreanTodayReview()">🔁 오늘의 복습 시작</button>
+            <button type="button" class="btn-outline" onclick="openKoreanMistakes()">📕 오답노트 보기</button>
+        </div>
+        <section class="korean-record-band"><h2>🔥 다시 만나볼 한글</h2><div class="korean-record-word-list">${reviewItems.length ? reviewItems.map((item) => `<span>${escapeHtml(getKoreanMasteryDisplayText(item))}</span>`).join('') : '<span>오늘 복습할 문제가 없어요!</span>'}</div></section>
+        <section class="korean-record-summary mt-4" aria-label="숙련 상태">
+            <div class="korean-record-stat"><span>🌱 연습 중</span><strong>${summary.learningCount}개</strong></div>
+            <div class="korean-record-stat"><span>⭐ 익혔어요</span><strong>${summary.masteredCount}개</strong></div>
+            <div class="korean-record-stat"><span>📚 전체 기록</span><strong>${attempts.length}개</strong></div>
+        </section>`;
+}
+
+window.openKoreanRecords = async function openKoreanRecords(options = {}) {
+    if (currentUserRole === 'teacher') return;
+    showTopLevelSection('korean-records-section');
+    setKoreanLearningMenuActive('records');
+    if (options.pushUrl !== false) updateKoreanStudentViewUrl('records');
+    renderKoreanRecordDashboard();
+};
+
+let koreanMistakeFilter = 'all';
+
+function koreanMistakeMatchesFilter(item, filter) {
+    if (filter === 'all') return true;
+    const text = String(item.correctAnswer || item.questionText || '');
+    if (filter === 'sentence') return /\s|[.!?。]/.test(text);
+    if (filter === 'character') return !/\s/.test(text) && Array.from(text).length <= 1;
+    if (filter === 'word') return !/\s|[.!?。]/.test(text) && Array.from(text).length > 1;
+    return true;
+}
+
+function renderKoreanMistakes() {
+    const filters = document.getElementById('korean-mistake-filters');
+    const root = document.getElementById('korean-mistakes-content');
+    if (!filters || !root) return;
+    const filterLabels = { all: '전체', character: '글자', word: '낱말', sentence: '문장' };
+    filters.innerHTML = Object.entries(filterLabels).map(([value, label]) => `<button type="button" class="${koreanMistakeFilter === value ? 'is-active' : ''}" onclick="setKoreanMistakeFilter('${value}')">${label}</button>`).join('');
+    const items = Object.values(koreanMasteryCache)
+        .filter((item) => item && ['weak', 'learning'].includes(item.masteryStatus) && koreanMistakeMatchesFilter(item, koreanMistakeFilter))
+        .sort((a, b) => Number(b.wrongCount || 0) - Number(a.wrongCount || 0));
+    if (!items.length) {
+        root.innerHTML = `<section class="korean-empty-state"><h2>🎉 다시 연습할 문제가 없어요!</h2><p>지금까지 정말 잘했어요.</p><button type="button" class="btn-primary" onclick="goHangulDashboard()">새로운 한글 공부하기</button></section>`;
+        return;
+    }
+    root.innerHTML = items.map((item) => {
+        const answerLabel = item.inputType === 'canvas' && item.lastRecognizedAnswer ? '쓴 글자 인식' : '내가 고른 답';
+        const lastAnswer = item.lastRecognizedAnswer || item.lastStudentAnswer || '다시 확인해요';
+        const hasScore = item.inputType === 'canvas' && item.lastSimilarityScore !== null && item.lastSimilarityScore !== '' && Number.isFinite(Number(item.lastSimilarityScore));
+        const score = hasScore ? `<div><span>쓰기 정확도</span><strong>${Math.round(Number(item.lastSimilarityScore) * (Number(item.lastSimilarityScore) <= 1 ? 100 : 1))}%</strong></div>` : '';
+        return `<article class="korean-mistake-card"><header><h2>${escapeHtml(getKoreanMasteryDisplayText(item))}</h2><span class="korean-mastery-label">${formatKoreanMasteryStatus(item.masteryStatus)}</span></header><div class="korean-mistake-details"><div><span>${answerLabel}</span><strong>${escapeHtml(lastAnswer)}</strong></div><div><span>바른 답</span><strong>${escapeHtml(item.correctAnswer || '')}</strong></div><div><span>틀린 횟수</span><strong>${Number(item.wrongCount || 0)}번</strong></div>${score}</div><button type="button" class="btn-primary w-full" onclick="openKoreanTodayReview({ masteryKey: '${escapeInlineJsString(item.masteryKey)}' })">다시 연습</button></article>`;
+    }).join('');
+}
+
+window.setKoreanMistakeFilter = function setKoreanMistakeFilter(filter) {
+    koreanMistakeFilter = ['all', 'character', 'word', 'sentence'].includes(filter) ? filter : 'all';
+    renderKoreanMistakes();
+};
+
+window.openKoreanMistakes = async function openKoreanMistakes(options = {}) {
+    if (currentUserRole === 'teacher') return;
+    showTopLevelSection('korean-mistakes-section');
+    setKoreanLearningMenuActive('mistakes');
+    if (options.pushUrl !== false) updateKoreanStudentViewUrl('mistakes');
+    renderKoreanMistakes();
+};
+
+function getKoreanReviewChoices(item) {
+    const answer = String(item.correctAnswer || item.questionText || '');
+    const lesson = getChanchanLesson(item.lessonId);
+    const candidates = [
+        ...(lesson?.focus || []),
+        ...(lesson?.words || []),
+        ...(lesson?.pictureItems || []).map((entry) => entry.word),
+        ...(lesson?.fillItems || []).map((entry) => entry.answer),
+        ...CHANCHAN_LESSONS.flatMap((entry) => entry.focus || [])
+    ].filter(Boolean);
+    const sameShape = candidates.filter((value) => value !== answer && (Array.from(value).length === Array.from(answer).length));
+    return [answer, ...Array.from(new Set(sameShape)).slice(0, 3)].sort((a, b) => `${item.questionId}|${a}`.localeCompare(`${item.questionId}|${b}`));
+}
+
+function renderKoreanReviewQuestion() {
+    const root = document.getElementById('korean-review-content');
+    const progress = document.getElementById('korean-review-progress');
+    if (!root || !activeKoreanReview) return;
+    const { queue, index, correctCount, wrongCount } = activeKoreanReview;
+    if (index >= queue.length) {
+        progress.textContent = '오늘의 복습을 모두 마쳤어요.';
+        root.innerHTML = `<section class="korean-review-complete"><h2>🎉 오늘의 복습 완료!</h2><p class="my-4 font-bold text-gray-600">오늘 다시 연습한 문제 ${queue.length}개 · 맞힌 문제 ${correctCount}개 · 조금 더 연습할 문제 ${wrongCount}개</p><div class="korean-record-actions justify-center"><button type="button" class="btn-primary" onclick="openKoreanRecords()">나의 기록 보기</button><button type="button" class="btn-outline" onclick="goHangulDashboard()">한글 공부 계속하기</button></div></section>`;
+        return;
+    }
+    const item = queue[index];
+    const target = escapeHtml(item.correctAnswer || item.questionText || '');
+    progress.textContent = `오늘 ${queue.length}문제 중 ${index + 1}번째예요.`;
+    if (item.inputType === 'canvas') {
+        root.innerHTML = `<article class="korean-review-card"><p>주황색 획을 따라 써 보세요.</p><h2>${target}</h2><canvas id="korean-review-writing-canvas" class="trace-writing-canvas korean-review-canvas" data-guide="${target}" aria-label="${target} 따라 쓰기"></canvas><div class="korean-record-actions justify-center"><button type="button" class="btn-outline" onclick="resetKoreanReviewCanvas()">다시 쓰기</button><button type="button" class="btn-primary" onclick="submitKoreanReviewCanvas()">다 썼어요</button></div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
+        requestAnimationFrame(() => {
+            const canvas = document.getElementById('korean-review-writing-canvas');
+            initializeTraceWritingCanvas(canvas);
+            drawTraceWritingGuide(canvas);
+        });
+        return;
+    }
+    if (item.inputType === 'voice') {
+        root.innerHTML = `<article class="korean-review-card"><p>소리 내어 세 번 읽어 보세요.</p><h2>${target}</h2><div class="korean-record-actions justify-center"><button type="button" class="btn-outline" onclick="speakTextKo('${escapeInlineJsString(item.correctAnswer || item.questionText || '')}')">🔊 소리 듣기</button><button type="button" class="btn-primary" onclick="submitKoreanReviewReading()">세 번 읽었어요</button></div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
+        return;
+    }
+    const choices = getKoreanReviewChoices(item);
+    root.innerHTML = `<article class="korean-review-card"><p>${item.activityType === 'listenAndFind' ? '소리를 듣고 알맞은 답을 골라요.' : '알맞은 답을 골라요.'}</p><h2>${item.activityType === 'listenAndFind' ? '🔊' : target}</h2>${item.activityType === 'listenAndFind' ? `<button type="button" class="btn-outline mb-4" onclick="speakTextKo('${escapeInlineJsString(item.correctAnswer || item.questionText || '')}')">소리 듣기</button>` : ''}<div class="korean-review-choices">${choices.map((choice) => `<button type="button" class="korean-review-choice" onclick="submitKoreanReviewChoice('${escapeInlineJsString(choice)}', this)">${escapeHtml(choice)}</button>`).join('')}</div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
+}
+
+async function finishKoreanReviewAttempt(item, studentAnswer, isCorrect, extra = {}) {
+    await recordKoreanAttempt({
+        lessonId: item.lessonId,
+        lessonTitle: item.lessonTitle,
+        unitId: item.unitId,
+        activityType: item.activityType,
+        questionId: item.questionId,
+        questionType: item.questionType,
+        inputType: item.inputType,
+        word: item.questionText,
+        prompt: item.questionText,
+        answer: item.correctAnswer,
+        userAnswer: studentAnswer,
+        isCorrect,
+        errorType: isCorrect ? null : item.errorType,
+        attemptSource: 'review',
+        ...extra
+    });
+    activeKoreanReview.correctCount += isCorrect ? 1 : 0;
+    activeKoreanReview.wrongCount += isCorrect ? 0 : 1;
+    activeKoreanReview.index += 1;
+    window.setTimeout(renderKoreanReviewQuestion, 650);
+}
+
+window.submitKoreanReviewChoice = async function submitKoreanReviewChoice(studentAnswer, button) {
+    const item = activeKoreanReview?.queue?.[activeKoreanReview.index];
+    if (!item) return;
+    document.querySelectorAll('.korean-review-choice').forEach((choice) => { choice.disabled = true; });
+    const isCorrect = studentAnswer === item.correctAnswer;
+    button?.classList.add(isCorrect ? 'is-correct' : 'is-wrong');
+    const feedback = document.getElementById('korean-review-feedback');
+    if (feedback) feedback.textContent = isCorrect ? '잘했어요! 한 번 더 기억했어요. ⭐' : '다시 한번 살펴봐요. 🌱';
+    await finishKoreanReviewAttempt(item, studentAnswer, isCorrect);
+};
+
+window.resetKoreanReviewCanvas = function resetKoreanReviewCanvas() {
+    const canvas = document.getElementById('korean-review-writing-canvas');
+    if (canvas) resetTraceWritingCanvas(canvas);
+};
+
+window.submitKoreanReviewCanvas = async function submitKoreanReviewCanvas() {
+    const item = activeKoreanReview?.queue?.[activeKoreanReview.index];
+    const canvas = document.getElementById('korean-review-writing-canvas');
+    const feedback = document.getElementById('korean-review-feedback');
+    if (!item || !canvas) return;
+    if (!isTraceWritingComplete(canvas)) {
+        if (feedback) feedback.textContent = '주황색 획을 순서대로 모두 따라 써 주세요.';
+        return;
+    }
+    if (feedback) feedback.textContent = '잘했어요! 한 번 더 기억했어요. ⭐';
+    await finishKoreanReviewAttempt(item, `${item.correctAnswer} 따라쓰기 완료`, true, { canvasJudgement: 'trace-complete' });
+};
+
+window.submitKoreanReviewReading = async function submitKoreanReviewReading() {
+    const item = activeKoreanReview?.queue?.[activeKoreanReview.index];
+    if (!item) return;
+    const feedback = document.getElementById('korean-review-feedback');
+    if (feedback) feedback.textContent = '잘했어요! 한 번 더 기억했어요. ⭐';
+    await finishKoreanReviewAttempt(item, '세 번 읽기 완료', true, { readCount: 3 });
+};
+
+window.openKoreanTodayReview = async function openKoreanTodayReview(options = {}) {
+    if (currentUserRole === 'teacher') return;
+    let queue = getTodayReviewQuestions(koreanMasteryCache, 10);
+    if (options.masteryKey) queue = queue.filter((item) => item.masteryKey === options.masteryKey);
+    activeKoreanReview = { queue, index: 0, correctCount: 0, wrongCount: 0 };
+    showTopLevelSection('korean-review-section');
+    setKoreanLearningMenuActive('review');
+    if (options.pushUrl !== false) updateKoreanStudentViewUrl('review');
+    if (!queue.length) {
+        const root = document.getElementById('korean-review-content');
+        document.getElementById('korean-review-progress').textContent = '지금까지 정말 잘했어요.';
+        root.innerHTML = `<section class="korean-empty-state"><h2>🎉 오늘 복습할 문제가 없어요!</h2><p>새로운 한글을 공부해 볼까요?</p><div class="korean-record-actions justify-center"><button type="button" class="btn-primary" onclick="goHangulDashboard()">한글 공부하러 가기</button><button type="button" class="btn-outline" onclick="openKoreanRecords()">나의 기록 보기</button></div></section>`;
+        return;
+    }
+    renderKoreanReviewQuestion();
+};
+
+window.openRpgClass = function openRpgClass() {
+    if (currentUserRole === 'teacher') {
+        window.openClassManagement();
+        return;
+    }
+    const joined = Boolean(currentUserProfileSnapshot?.teacherId || currentUserProfileSnapshot?.classId || currentUserProfileSnapshot?.classCode);
+    showModal(joined ? '🏫 우리 학급에 연결되어 있어요.' : '🏫 아직 연결된 학급이 없어요. 선생님께 학생 추가를 부탁해 주세요.');
+};
+
+function openKoreanStudentViewRoute(view, options = {}) {
+    if (view === 'records') return window.openKoreanRecords({ pushUrl: options.pushUrl });
+    if (view === 'mistakes') return window.openKoreanMistakes({ pushUrl: options.pushUrl });
+    if (view === 'review') return window.openKoreanTodayReview({ pushUrl: options.pushUrl });
+    return false;
+}
 
 function getKoreanStudentReportFromData(studentId, student = {}) {
     return student.koreanProgressSummary || window.buildKoreanStudentReport(studentId);
@@ -18796,6 +19186,7 @@ onAuthStateChanged(auth, async (user) => {
         await loadKoreanExperienceMultipliers(teacherId, classId);
 
         updateDashboardExperience(userData);
+        await loadKoreanLearningRecords(user.uid);
         const recoveredLiteracyPromotion = advanceLiteracyDanIfReady();
         if (recoveredLiteracyPromotion) {
             await setDoc(userRef, {
@@ -18808,10 +19199,14 @@ onAuthStateChanged(auth, async (user) => {
         }
         loginSuccess = true;
         setRpgHudVisible(true);
+        const requestedKoreanStudentView = getKoreanStudentViewFromLocation();
 
         // 이미 대시보드/활동 화면이라면 패스, 아니라면 요청된 활동 또는 대시보드 열기
         const visibleActivityRoute = getVisibleActivityRoute();
-        if (visibleActivityRoute) {
+        if (requestedKoreanStudentView) {
+            openKoreanStudentViewRoute(requestedKoreanStudentView, { pushUrl: false });
+            pendingActivityRoute = null;
+        } else if (visibleActivityRoute) {
             const route = activityRoutes[visibleActivityRoute];
             if (route && !unlockedLevels.includes(route.level)) {
                 pendingActivityRoute = null;

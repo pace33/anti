@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260901-canonical-batchim-after-trace-v129">
+    <link rel="stylesheet" href="app.css?v=20260901-student-records-review-v131">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1360,6 +1360,38 @@
         </div>
     </div>
 
+    <!-- [한글 2단계 학생 기록과 맞춤 복습] -->
+    <div id="korean-records-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
+        <main class="korean-records-shell" aria-labelledby="korean-records-title">
+            <header class="korean-records-header">
+                <div><span class="aiedu-badge bg-teal-500">한글 2단계</span><h1 id="korean-records-title">📒 나의 기록</h1><p>오늘도 한글 실력이 자라고 있어요!</p></div>
+                <button type="button" class="btn-outline" onclick="goHangulDashboard()">한글 공부</button>
+            </header>
+            <div id="korean-records-content" aria-live="polite"></div>
+        </main>
+    </div>
+
+    <div id="korean-mistakes-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
+        <main class="korean-records-shell" aria-labelledby="korean-mistakes-title">
+            <header class="korean-records-header">
+                <div><span class="aiedu-badge bg-orange-500">오답노트</span><h1 id="korean-mistakes-title">📕 다시 연습할 한글</h1><p>조금 어려웠던 한글을 다시 만나 봐요.</p></div>
+                <button type="button" class="btn-outline" onclick="openKoreanRecords()">나의 기록</button>
+            </header>
+            <div id="korean-mistake-filters" class="korean-record-filters" aria-label="오답 종류"></div>
+            <div id="korean-mistakes-content" class="korean-mistake-list" aria-live="polite"></div>
+        </main>
+    </div>
+
+    <div id="korean-review-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
+        <main class="korean-records-shell" aria-labelledby="korean-review-title">
+            <header class="korean-records-header">
+                <div><span class="aiedu-badge bg-green-500">맞춤 학습</span><h1 id="korean-review-title">🌱 오늘의 복습</h1><p id="korean-review-progress">복습 문제를 준비하고 있어요.</p></div>
+                <button type="button" class="btn-outline" onclick="openKoreanRecords()">나의 기록</button>
+            </header>
+            <div id="korean-review-content" aria-live="polite"></div>
+        </main>
+    </div>
+
     <!-- [5. 교사용 학급 관리 모달] -->
     <div id="class-management-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-2 md:p-4">
         <div class="modal-content max-w-7xl w-full max-h-[94vh] overflow-hidden">
@@ -1496,7 +1528,9 @@
             <div id="rpg-profile-menu" class="rpg-profile-tools" aria-label="계정 메뉴">
                 <button type="button" class="rpg-tool-button" onclick="openDashboard()" aria-label="홈으로 이동"><span aria-hidden="true">🏠</span><span>홈</span></button>
                 <button type="button" id="rpg-student-shop-btn" class="rpg-tool-button rpg-student-shop-button" onclick="openAiedueKoreanShop()" aria-label="상점"><span aria-hidden="true">🛒</span><span>상점</span></button>
-                <button type="button" id="rpg-teacher-manage-btn" class="rpg-tool-button hidden" onclick="openClassManagement()" aria-label="학급 관리"><span aria-hidden="true">🏫</span><span>학급</span></button>
+                <button type="button" id="rpg-teacher-manage-btn" class="rpg-tool-button hidden" onclick="openRpgClass()" aria-label="학급"><span aria-hidden="true">🏫</span><span>학급</span></button>
+                <button type="button" id="rpg-today-review-btn" class="rpg-tool-button rpg-student-learning-button rpg-review-button" onclick="openKoreanTodayReview()" aria-label="오늘의 복습" title="오늘의 복습"><span aria-hidden="true">🔁</span><span>복습</span></button>
+                <button type="button" id="rpg-records-btn" class="rpg-tool-button rpg-student-learning-button rpg-records-button" onclick="openKoreanRecords()" aria-label="나의 기록" title="나의 기록"><span aria-hidden="true">📒</span><span>기록</span></button>
                 <button type="button" class="rpg-tool-button rpg-logout-button" onclick="handleLogout()" aria-label="로그아웃"><span aria-hidden="true">🚪</span><span>나가기</span></button>
                 <button type="button" class="rpg-tool-button rpg-expand-button" onclick="toggleRpgHudActions(this)" aria-label="하단 메뉴 펼치기" aria-expanded="false" aria-controls="rpg-action-tray"><span aria-hidden="true">→</span><span>메뉴</span></button>
             </div>
@@ -1561,7 +1595,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260901-canonical-batchim-after-trace-v129"></script>
+    <script type="module" src="app.js?v=20260901-student-records-review-v131"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
