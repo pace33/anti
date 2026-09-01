@@ -202,7 +202,27 @@ function renderTask(item,q){return `<div class="task-top"><span class="task-stag
 function bindTaskEvents(item){document.querySelectorAll('.spiral-option').forEach(button=>button.addEventListener('click',()=>{void checkAnswer(item,button);}));document.getElementById('spiral-hint')?.addEventListener('click',()=>{if(!state.submitting)feedback(state.question.hint,'hint');});document.getElementById('spiral-new')?.addEventListener('click',()=>{if(state.submitting)return;state.question=createTrackedQuestion(item,state.step);renderLesson();});document.querySelector('.speak-button')?.addEventListener('click',event=>speak(event.currentTarget.dataset.speak));}
 function setTaskBusy(busy){document.querySelectorAll('.spiral-option,#spiral-hint,#spiral-new,.spiral-step').forEach(control=>{control.disabled=busy;});}
 function attemptPayload(item,question,studentAnswer,isCorrect){const{area,band}=state.current;return{nodeId:item.id,nodeTitle:item.title,domain:area.id,domainTitle:area.title,gradeBand:band,achievementCodes:[...item.standards],stepIndex:state.step,stepKey:STEP_KEYS[state.step],representation:STEP_KEYS[state.step],activityType:item.type,questionId:question.questionId,prompt:question.prompt,correctAnswer:String(question.answer),studentAnswer:String(studentAnswer),isCorrect,completed:isCorrect&&state.step===STEPS.length-1,attemptSource:state.attemptSource,misconceptionTags:isCorrect?[]:[`${item.type}-${STEP_KEYS[state.step]}`],durationMs:Math.max(0,Date.now()-question.startedAt),...(state.assignmentId?{assignmentId:state.assignmentId}:{})};}
-async function recordServerAttempt(payload){const api=window.aiedueMathData;if(!api||typeof api.recordAttempt!=='function')throw new Error('수학 데이터 서버가 아직 준비되지 않았습니다.');if(typeof api.ready==='function')await api.ready();const result=await api.recordAttempt(payload);if(result===false||result?.saved===false)throw new Error('수학 답안이 저장되지 않았습니다.');return result;}
+function isRetryableAttemptSaveError(error){const status=Number(error?.status||0);return error?.name==='TypeError'||[408,409,412,425,429].includes(status)||status>=500;}
+function waitForAttemptRetry(milliseconds){return new Promise(resolve=>setTimeout(resolve,milliseconds));}
+async function recordServerAttempt(payload){
+  const api=window.aiedueMathData;
+  if(!api||typeof api.recordAttempt!=='function')throw new Error('수학 데이터 서버가 아직 준비되지 않았습니다.');
+  if(typeof api.ready==='function')await api.ready();
+  let lastError;
+  for(let attempt=1;attempt<=3;attempt+=1){
+    try{
+      const result=await api.recordAttempt(payload);
+      if(result===false||result?.saved===false)throw new Error('수학 답안이 저장되지 않았습니다.');
+      return result;
+    }catch(error){
+      lastError=error;
+      if(attempt>=3||!isRetryableAttemptSaveError(error))break;
+      console.warn(`Math attempt save retry ${attempt}/2:`,error);
+      await waitForAttemptRetry(attempt===1?350:900);
+    }
+  }
+  throw lastError;
+}
 async function checkAnswer(item,button){
   if(state.submitting||!state.question||!state.current)return;
   const question=state.question;

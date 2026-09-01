@@ -81,6 +81,8 @@ assert.match(spiral, /파란 칸 수를 전체 20칸으로 나눈 뒤/);
 assert.doesNotMatch(spiral, /style=\\"width:\$\{a\}%\\">\$\{a\}%<\/span>/, '비율 그래프가 정답을 그림 안에 노출하면 안 됩니다.');
 assert.match(spiral, /분수 곱셈 그림과 정답이 일치하지 않습니다/);
 assert.match(spiral, /원 문항 선택지는 4개여야 합니다/);
+assert.match(spiral, /for\(let attempt=1;attempt<=3;attempt\+=1\)/, '일시적인 네트워크 오류에는 동일 시도 ID로 최대 3회 재시도해야 합니다.');
+assert.match(spiral, /isRetryableAttemptSaveError/, '영구 오류와 일시적인 저장 오류를 구분해야 합니다.');
 ['분수의 나눗셈', '소수 곱셈', '삼각형 넓이', '원의 넓이', '직육면체 겉넓이', '무게 단위 바꾸기'].forEach((marker) => {
     assert.ok(spiral.includes(marker), `부족했던 문제 유형이 없습니다: ${marker}`);
 });
