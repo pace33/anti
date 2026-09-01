@@ -351,7 +351,7 @@ body.rpg-hud-active .premium-card {
 
 .aiedue-rpg-hud {
     position: fixed;
-    left: max(24px, calc((100vw - 1100px) / 2 + 22px));
+    left: max(24px, calc((100vw - min(98vw, 1440px)) / 2 + 22px));
     bottom: 14px;
     z-index: 1050;
     width: auto;
