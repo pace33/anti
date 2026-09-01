@@ -348,7 +348,8 @@ export function getFirestore(app) {
 
 export function doc(parent, ...segments) {
     const db = getDb(parent);
-    const path = joinReferencePath(parent?.type === 'firestore' ? null : parent, segments);
+    const effectiveSegments = parent?.type === 'collection' && segments.length === 0 ? [randomId()] : segments;
+    const path = joinReferencePath(parent?.type === 'firestore' ? null : parent, effectiveSegments);
     assertPath(path, 'document');
     return Object.freeze({ type: 'document', db, path, id: pathParts(path).at(-1), parent: collection(db, ...pathParts(path).slice(0, -1)) });
 }

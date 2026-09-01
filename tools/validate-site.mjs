@@ -125,7 +125,7 @@ assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.te
 assert(![excludedEntry, excludedBrand, separatedFolder].some((marker) => index.includes(marker)), '에이두 한글 루트 화면에 분리된 수학 자료 링크/표시가 남아 있습니다.');
 assert(!/<script\s+type=["']module["']\s*>/i.test(index), 'index.html에 인라인 모듈 스크립트가 다시 들어왔습니다.');
 assert(/id=["']result-modal["'][^>]*z-\[1300\]/i.test(index), '상세 결과 모달이 학급 관리 모달보다 위에 표시되지 않습니다.');
-assert(app.includes('from "./korean-data-adapter.js?v=20260901-data-cutover-v1";'), 'app.js가 에이두 데이터 서버 adapter를 사용하지 않습니다.');
+assert(/from "\.\/korean-data-adapter\.js\?v=20260901-data-cutover-v\d+";/.test(app), 'app.js가 에이두 데이터 서버 adapter를 사용하지 않습니다.');
 assert(!app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";'), 'app.js가 Firebase Firestore를 직접 import하고 있습니다.');
 assert(!app.includes('from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";'), 'app.js가 Firebase Storage를 직접 import하고 있습니다.');
 assert(dataAdapter.includes("const DEFAULT_ENDPOINT = '/db-api/korean/v2';"), 'Korean adapter 기본 endpoint가 /db-api/korean/v2가 아닙니다.');

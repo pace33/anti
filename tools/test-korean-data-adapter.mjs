@@ -95,6 +95,10 @@ const db = getFirestore({ options: { storageBucket: 'test.appspot.com' } });
 const first = doc(db, 'users', 'student-1');
 assert.equal(first.id, 'student-1');
 assert.equal(first.parent.path, 'users');
+const generatedTransfer = doc(collection(db, 'transferLog'));
+assert.equal(generatedTransfer.parent.path, 'transferLog');
+assert.equal(generatedTransfer.path.split('/').length, 2);
+assert(generatedTransfer.id.length >= 12);
 await setDoc(first, {
     name: '가람', score: 10, tags: ['old'],
     createdAt: serverTimestamp()
