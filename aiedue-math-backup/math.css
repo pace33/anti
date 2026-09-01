@@ -1,0 +1,328 @@
+.hidden {
+    display: none !important;
+}
+
+body.math-mode {
+    background: #e7f6ff;
+}
+
+.math-mode .premium-card {
+    background: transparent;
+}
+
+.math-mode .btn-start,
+.math-mode .btn-primary {
+    background: linear-gradient(135deg, #36aef1, #1688cf);
+    color: #fff;
+}
+
+.math-mode .btn-start:hover,
+.math-mode .btn-primary:hover {
+    background: linear-gradient(135deg, #1688cf, #0f76b5);
+}
+
+.math-mode .btn-outline {
+    border-color: #bde3fb;
+    color: #1688cf;
+    background: #f4fbff;
+}
+
+.math-mode .nav-tab.active,
+.math-mode .login-tabs-container .nav-tab.active {
+    color: #1688cf;
+    border-color: #8bd1ff;
+    background: #e7f6ff;
+}
+
+.math-mode .grid-item {
+    border-color: #ccecff;
+}
+
+.math-mode .grid-item:hover {
+    background: #e7f6ff;
+    color: #1688cf;
+}
+
+.math-logo-main {
+    width: min(560px, 78vw);
+    max-height: 48vh;
+    object-fit: contain;
+}
+
+.math-mini-logo {
+    width: 180px;
+    height: auto;
+    object-fit: contain;
+}
+
+.math-stage-board.single {
+    grid-template-columns: minmax(260px, 360px);
+    justify-content: center;
+}
+
+.math-mode .dashboard-stage-card.level-card {
+    border-color: rgba(139, 209, 255, 0.72);
+}
+
+.math-mode .dashboard-stage-card .stage-badge {
+    background: #1688cf;
+}
+
+.math-mode .dashboard-stage-card.level-card .level-title {
+    color: #1f3551;
+}
+
+.math-mode .dashboard-stage-card.level-card .level-desc {
+    color: #1688cf;
+}
+
+.math-mode .dashboard-stage-card.level-card.locked {
+    opacity: 0.68;
+    cursor: default;
+}
+
+.math-quiz-workspace {
+    width: min(1120px, calc(100% - 32px));
+    margin: 132px auto 120px;
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(280px, 0.78fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.math-clock-card,
+.math-answer-card {
+    border: 2px solid rgba(121, 196, 240, 0.62);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 18px 40px rgba(38, 130, 189, 0.16);
+}
+
+.math-clock-card {
+    padding: clamp(18px, 3vw, 32px);
+}
+
+.math-section-eyebrow {
+    margin: 0 0 6px;
+    color: #1688cf;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.math-title {
+    margin: 0;
+    color: #1e3450;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.math-subtitle {
+    margin: 8px 0 20px;
+    color: #5b6d80;
+    font-weight: 800;
+}
+
+.math-clock-wrap {
+    width: min(420px, 100%);
+    aspect-ratio: 1;
+    margin: 0 auto;
+}
+
+#time-quiz-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.math-answer-card {
+    padding: clamp(18px, 3vw, 26px);
+}
+
+.math-difficulty-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.time-difficulty-btn,
+.time-option-btn,
+.math-check-button {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.time-difficulty-btn {
+    min-height: 48px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #eef8ff;
+    color: #24658f;
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: inset 0 0 0 2px #c6e8ff;
+}
+
+.time-difficulty-btn.active {
+    background: #2498df;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(36, 152, 223, 0.28);
+}
+
+.math-meta {
+    display: grid;
+    gap: 8px;
+    margin: 18px 0;
+    padding: 14px;
+    border-radius: 8px;
+    background: #f4fbff;
+    color: #42566b;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.math-meta strong {
+    color: #1f3551;
+}
+
+.math-feedback {
+    min-height: 26px;
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.math-feedback.ok { color: #08875d; }
+.math-feedback.warn { color: #c27405; }
+.math-feedback.error { color: #d13f4a; }
+
+.math-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.time-option-btn {
+    min-height: 48px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fff;
+    color: #253951;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 900;
+    box-shadow: inset 0 0 0 2px #d7ecfb;
+}
+
+.time-option-btn.selected {
+    background: #e1f3ff;
+    box-shadow: inset 0 0 0 3px #5dbaf0;
+}
+
+.time-option-btn.correct {
+    background: #e6f9ef;
+    box-shadow: inset 0 0 0 3px #36c277;
+}
+
+.time-option-btn.incorrect {
+    background: #fff0f3;
+    box-shadow: inset 0 0 0 3px #f17287;
+}
+
+.math-input-wrap {
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.math-input-wrap.active {
+    display: flex;
+}
+
+.math-input-wrap input {
+    width: 88px;
+    min-height: 44px;
+    border: 2px solid #bde3fb;
+    border-radius: 8px;
+    text-align: center;
+    font: inherit;
+    font-weight: 900;
+    color: #1f3551;
+}
+
+.math-check-button {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 14px;
+    border-radius: 8px;
+    background: #1688cf;
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 12px 20px rgba(22, 136, 207, 0.25);
+}
+
+.math-check-button:disabled,
+.time-option-btn:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+}
+
+.math-mode .info-drawer {
+    border-left: 5px solid #8bd1ff;
+}
+
+.math-mode .drawer-overlay.visible {
+    display: block;
+}
+
+.math-rpg-hud .rpg-profile-banner {
+    border-color: #8bd1ff;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.math-rpg-hud .rpg-level-badge,
+.math-rpg-hud .rpg-expand-button {
+    background: #e7f6ff;
+    color: #1688cf;
+    border-color: #bde3fb;
+}
+
+.math-rpg-hud .rpg-role-label {
+    color: #1688cf;
+}
+
+.math-rpg-hud .rpg-experience-fill {
+    background: linear-gradient(90deg, #74d0ff, #1688cf);
+}
+
+.rpg-korean-button,
+.rpg-korean-action-button {
+    color: #338f4f;
+    border-color: #ccebd7;
+    background: linear-gradient(135deg, #f3fcf5, #e4f7e9);
+}
+
+@media (max-width: 860px) {
+    .math-quiz-workspace {
+        grid-template-columns: 1fr;
+        margin-top: 112px;
+    }
+
+    .math-mini-logo {
+        width: 130px !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .math-quiz-workspace {
+        width: calc(100% - 20px);
+        margin-top: 92px;
+    }
+
+    .math-difficulty-row,
+    .math-options {
+        grid-template-columns: 1fr;
+    }
+}
