@@ -4102,9 +4102,7 @@ function updateDashboardExperience(userData = {}) {
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     }
-    document.querySelectorAll('.rpg-student-learning-button').forEach((button) => {
-        button.classList.toggle('hidden', currentUserRole === 'teacher');
-    });
+    document.querySelectorAll('.rpg-student-learning-button').forEach((button) => button.classList.remove('hidden'));
 
     // Profile UI Upgrade
     const name = userData?.name || '홍길동';
@@ -11049,7 +11047,7 @@ async function recordKoreanAttempt({
     canvasJudgement = null
 } = {}) {
     const authenticatedStudentId = auth.currentUser?.uid || currentUserId || studentId || 'local_student';
-    if (currentUserRole !== 'teacher') studentId = authenticatedStudentId;
+    studentId = authenticatedStudentId;
     const lesson = getChanchanLesson(lessonId);
     const normalizedLessonTitle = lessonTitle || lesson?.title || getLessonTitleForReport(lessonId);
     const normalizedUnitId = unitId || lesson?.unit || getUnitIdForLesson(lessonId);
@@ -11149,7 +11147,7 @@ window.buildKoreanStudentReport = function buildKoreanStudentReport(studentId) {
 };
 
 async function loadKoreanLearningRecords(studentId = currentUserId) {
-    if (!studentId || currentUserRole === 'teacher') return;
+    if (!studentId) return;
     try {
         const snapshot = await getDoc(doc(db, 'users', studentId));
         const studentData = snapshot.data() || {};
@@ -11250,7 +11248,6 @@ function renderKoreanRecordDashboard() {
 }
 
 window.openKoreanRecords = async function openKoreanRecords(options = {}) {
-    if (currentUserRole === 'teacher') return;
     showTopLevelSection('korean-records-section');
     setKoreanLearningMenuActive('records');
     if (options.pushUrl !== false) updateKoreanStudentViewUrl('records');
@@ -11296,7 +11293,6 @@ window.setKoreanMistakeFilter = function setKoreanMistakeFilter(filter) {
 };
 
 window.openKoreanMistakes = async function openKoreanMistakes(options = {}) {
-    if (currentUserRole === 'teacher') return;
     showTopLevelSection('korean-mistakes-section');
     setKoreanLearningMenuActive('mistakes');
     if (options.pushUrl !== false) updateKoreanStudentViewUrl('mistakes');
@@ -11409,7 +11405,6 @@ window.submitKoreanReviewReading = async function submitKoreanReviewReading() {
 };
 
 window.openKoreanTodayReview = async function openKoreanTodayReview(options = {}) {
-    if (currentUserRole === 'teacher') return;
     let queue = getTodayReviewQuestions(koreanMasteryCache, 10);
     if (options.masteryKey) queue = queue.filter((item) => item.masteryKey === options.masteryKey);
     activeKoreanReview = { queue, index: 0, correctCount: 0, wrongCount: 0 };

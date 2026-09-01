@@ -437,6 +437,7 @@ assert(menuOrder.every((position) => position >= 0) && menuOrder.every((position
 assert(app.includes("updateKoreanStudentViewUrl('review')") && index.includes('onclick="openKoreanTodayReview()"'), '오늘의 복습 메뉴와 기록 화면이 같은 복습 경로를 사용하지 않습니다.');
 assert(app.includes("attemptSource: 'review'") && app.includes('studentAnswer: userAnswer'), '복습 출처 또는 실제 학생 답 저장이 없습니다.');
 assert(app.includes('runTransaction(db') && app.includes('koreanQuestionMastery'), '시도 기록과 문제별 숙련 상태의 트랜잭션 저장이 없습니다.');
+assert(app.includes("button.classList.remove('hidden')") && !app.includes("button.classList.toggle('hidden', currentUserRole === 'teacher')"), '교사 테스트 계정에서 복습/기록 메뉴가 숨겨집니다.');
 
 ['.skip-link', ':focus-visible', 'prefers-reduced-motion', 'forced-colors'].forEach((marker) => {
     assert(appCss.includes(marker), `app.css 접근성 스타일이 없습니다: ${marker}`);
