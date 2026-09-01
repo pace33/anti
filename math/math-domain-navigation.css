@@ -1,0 +1,457 @@
+/* 에이두 수학 영역 우선 탐색 화면 */
+#dashboard-section {
+  overflow-y: auto !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+.math-domain-dashboard {
+  width: min(1040px, calc(100% - 32px));
+  margin: 120px auto 140px;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-content: start;
+}
+
+.math-domain-card {
+  --domain-color: #1688cf;
+  position: relative;
+  min-height: 210px;
+  padding: 26px;
+  border: 3px solid color-mix(in srgb, var(--domain-color) 56%, white);
+  border-radius: 30px;
+  background: linear-gradient(145deg, #fff 0%, color-mix(in srgb, var(--domain-color) 9%, white) 100%);
+  box-shadow: 0 16px 34px rgba(22, 104, 154, .13);
+  color: #24495f;
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr auto;
+  column-gap: 18px;
+  row-gap: 9px;
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.math-domain-card:hover,
+.math-domain-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 42px rgba(22, 104, 154, .2);
+  border-color: var(--domain-color);
+  outline: none;
+}
+
+.math-domain-card .domain-card-icon {
+  grid-row: 1 / 4;
+  width: 74px;
+  height: 74px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  font-size: 2.5rem;
+  background: color-mix(in srgb, var(--domain-color) 15%, white);
+  border: 2px solid color-mix(in srgb, var(--domain-color) 35%, white);
+}
+
+.math-domain-card .domain-card-copy {
+  align-self: start;
+}
+
+.math-domain-card .domain-card-label {
+  display: inline-block;
+  color: var(--domain-color);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  margin-bottom: 4px;
+}
+
+.math-domain-card h2 {
+  margin: 0;
+  color: #183f57;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: 900;
+}
+
+.math-domain-card p {
+  margin: 7px 0 0;
+  color: #5a7180;
+  font-size: .95rem;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.domain-card-progress {
+  grid-column: 2;
+  align-self: end;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 10px;
+  align-items: center;
+  color: #587080;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.domain-card-progress-value {
+  color: var(--domain-color);
+  font-size: 1rem;
+}
+
+.domain-card-progress-track {
+  grid-column: 1 / 3;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(96, 151, 183, .16);
+  overflow: hidden;
+}
+
+.domain-card-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--domain-color);
+  transition: width .3s ease;
+}
+
+.spiral-section {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scroll-behavior: auto !important;
+}
+
+.domain-map-shell {
+  width: min(1040px, calc(100% - 28px));
+  margin: 22px auto 140px !important;
+  padding-top: 0;
+  gap: 16px;
+}
+
+.domain-map-hero {
+  padding: 22px 26px 26px;
+  border-color: color-mix(in srgb, var(--area) 58%, white);
+}
+
+.domain-back-button {
+  border: 0;
+  border-radius: 14px;
+  padding: 9px 14px;
+  margin-bottom: 16px;
+  background: #eef8ff;
+  color: #176b9b;
+  font-weight: 900;
+}
+
+.domain-hero-main {
+  display: grid;
+  grid-template-columns: auto 1fr minmax(180px, 240px);
+  gap: 18px;
+  align-items: center;
+}
+
+.domain-hero-icon {
+  width: 82px;
+  height: 82px;
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 2.8rem;
+  background: color-mix(in srgb, var(--area) 15%, white);
+  border: 2px solid color-mix(in srgb, var(--area) 40%, white);
+}
+
+.domain-hero-copy h1 {
+  margin: 2px 0 6px;
+  color: #173f57;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 900;
+}
+
+.domain-hero-copy > p:last-child {
+  margin: 0;
+  color: #587080;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.domain-progress-card {
+  padding: 17px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--area) 9%, white);
+  border: 2px solid color-mix(in srgb, var(--area) 28%, white);
+  display: grid;
+  gap: 6px;
+}
+
+.domain-progress-card strong {
+  color: var(--area);
+  font-size: 1.75rem;
+  font-weight: 900;
+}
+
+.domain-progress-card span {
+  color: #5b7483;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.domain-progress-card .spiral-progress-fill {
+  background: var(--area);
+}
+
+.domain-band-tabs {
+  margin: 0;
+  padding: 4px 0;
+}
+
+.domain-learning-panel {
+  padding: 25px;
+  border-color: color-mix(in srgb, var(--area) 45%, white);
+}
+
+.domain-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-end;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid #edf5f9;
+}
+
+.domain-panel-heading h2 {
+  margin: 2px 0 5px;
+  color: #21495f;
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.domain-panel-heading p {
+  margin: 0;
+  color: #6a7d88;
+  font-weight: 700;
+}
+
+.domain-panel-heading > span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--area) 12%, white);
+  color: color-mix(in srgb, var(--area) 85%, #183f57);
+  font-size: .84rem;
+  font-weight: 900;
+}
+
+.domain-node-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.domain-lesson-node {
+  min-height: 100px;
+  border-color: color-mix(in srgb, var(--area) 24%, #d9eef9);
+  background: linear-gradient(145deg, #fff, color-mix(in srgb, var(--area) 5%, white));
+}
+
+.domain-lesson-node:hover:not(:disabled) {
+  border-color: var(--area);
+}
+
+.domain-node-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.domain-node-copy strong {
+  color: #244b61;
+  font-size: 1rem;
+}
+
+.domain-node-copy small {
+  color: #6a7d88;
+  font-size: .8rem;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.domain-special-activity {
+  margin-top: 18px;
+  border-radius: 24px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 15px;
+  align-items: center;
+  background: #fff9e8;
+  border: 2px solid #ffd372;
+}
+
+.domain-special-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  background: #fff;
+}
+
+.domain-special-label {
+  color: #a56b00;
+  font-size: .75rem;
+  font-weight: 900;
+}
+
+.domain-special-activity h3 {
+  margin: 1px 0 3px;
+  color: #664700;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.domain-special-activity p {
+  margin: 0;
+  color: #806a35;
+  font-size: .84rem;
+  font-weight: 700;
+}
+
+.domain-special-activity button {
+  border: 0;
+  border-radius: 15px;
+  padding: 11px 16px;
+  background: #f2a900;
+  color: #fff;
+  font-weight: 900;
+}
+
+.domain-flow-guide {
+  padding: 18px 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.domain-flow-guide > strong {
+  color: #31576c;
+  font-weight: 900;
+}
+
+.domain-flow-guide > div {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.domain-flow-guide span {
+  border-radius: 14px;
+  padding: 10px 6px;
+  background: #f0f8fc;
+  color: #4e6979;
+  text-align: center;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.domain-flow-guide b {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--area);
+  color: #fff;
+}
+
+@media (max-width: 780px) {
+  .math-domain-dashboard {
+    grid-template-columns: 1fr;
+    margin-top: 128px;
+  }
+
+  .domain-hero-main {
+    grid-template-columns: auto 1fr;
+  }
+
+  .domain-progress-card {
+    grid-column: 1 / 3;
+  }
+
+  .domain-node-list {
+    grid-template-columns: 1fr;
+  }
+
+  .domain-flow-guide > div {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .math-domain-dashboard {
+    width: calc(100% - 18px);
+    margin-bottom: 115px;
+    gap: 12px;
+  }
+
+  .math-domain-card {
+    min-height: 175px;
+    padding: 19px;
+    border-radius: 23px;
+    grid-template-columns: auto 1fr;
+    column-gap: 12px;
+  }
+
+  .math-domain-card .domain-card-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    font-size: 2rem;
+  }
+
+  .domain-map-shell {
+    width: calc(100% - 14px);
+    margin-top: 8px !important;
+  }
+
+  .domain-map-hero,
+  .domain-learning-panel {
+    padding: 17px;
+  }
+
+  .domain-hero-main {
+    grid-template-columns: 1fr;
+  }
+
+  .domain-hero-icon {
+    width: 62px;
+    height: 62px;
+    border-radius: 19px;
+    font-size: 2.1rem;
+  }
+
+  .domain-progress-card {
+    grid-column: auto;
+  }
+
+  .domain-panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .domain-special-activity {
+    grid-template-columns: auto 1fr;
+  }
+
+  .domain-special-activity button {
+    grid-column: 1 / 3;
+    width: 100%;
+  }
+
+  .domain-flow-guide > div {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

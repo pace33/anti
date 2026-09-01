@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate Korean site
+    name: Validate Korean and Math sites
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,9 +24,16 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check math/math.js
+          node --check math/math-services.js
+          node --check math/math-spiral.js
+          node --check math/math-domain-navigation.js
 
       - name: Validate static site structure
-        run: node tools/validate-site.mjs
+        run: |
+          node tools/validate-site.mjs
+          node tools/test-math-learning-records.mjs
+          node tools/validate-math-site.mjs
 
       - name: Verify modular structure and repository hygiene
         shell: bash
@@ -49,7 +56,7 @@ jobs:
           fi
 
   deploy:
-    name: Deploy /korean on local domain host
+    name: Deploy /korean and /korean/math on local domain host
     needs: validate
     if: github.event_name != 'pull_request'
     runs-on: [self-hosted, Windows]
@@ -140,7 +147,19 @@ jobs:
           if ($app -notmatch 'adjustStudentKoreanWallet') { throw 'Public app.js did not include teacher warning-token wallet controls.' }
           if ($app -notmatch 'warningTokens') { throw 'Public app.js did not include warning-token persistence.' }
           if ($app -match 'korean-db/db-api') { throw 'Public app.js still references the retired Korean DB mirror.' }
-          if ($app -notmatch 'firebase-firestore\.js') { throw 'Public app.js did not use Firebase Firestore directly.' }
-          if ($app -notmatch 'firebase-storage\.js') { throw 'Public app.js did not use Firebase Storage directly.' }
-          if ($app -match 'from ["'']\.\/korean-data-adapter\.js') { throw 'Public app.js still routes data through the self-hosted adapter.' }
-          Write-Host 'Smoke test passed: modular page, warning tokens, and direct Firebase persistence are reachable.'
+          if ($app -match 'from ["'']https://www\.gstatic\.com/firebasejs/[^"'']+/firebase-(?:firestore|storage)\.js') { throw 'Public app.js still imports Firebase data SDKs directly.' }
+          if ($app -notmatch 'from ["'']\.\/korean-data-adapter\.js') { throw 'Public app.js did not route data through the self-hosted adapter.' }
+          $adapter = (Invoke-WebRequest -UseBasicParsing -Uri "$base/korean-data-adapter.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($adapter -notmatch "DEFAULT_ENDPOINT = '/db-api/korean/v2'") { throw 'Public data adapter did not target the Aiedue data server.' }
+
+          $mathBase = "$base/math"
+          $mathHtml = (Invoke-WebRequest -UseBasicParsing -Uri "$mathBase/?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($mathHtml -notmatch 'id="aiedue-rpg-hud"') { throw 'Public Math page did not include the shared Aiedue HUD.' }
+          if ($mathHtml -notmatch 'src="math-services.js') { throw 'Public Math page did not load math-services.js.' }
+          if ($mathHtml -notmatch 'id="math-review-section"' -or $mathHtml -notmatch 'id="math-records-section"' -or $mathHtml -notmatch 'id="math-class-section"') { throw 'Public Math page did not include review, records, and class views.' }
+          $mathApp = (Invoke-WebRequest -UseBasicParsing -Uri "$mathBase/math.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          $mathServices = (Invoke-WebRequest -UseBasicParsing -Uri "$mathBase/math-services.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($mathApp -notmatch 'from ["'']\.\/aiedu-data-adapter\.js') { throw 'Public Math app did not route data through the Aiedue adapter.' }
+          if ($mathServices -notmatch 'mathStudentProgress' -or $mathServices -notmatch 'mathAttempts' -or $mathServices -notmatch 'mathAssignments') { throw 'Public Math services did not expose the learning-data collections.' }
+          if ($mathApp -match 'firebase-firestore\.js' -or $mathServices -match 'firebase-firestore\.js') { throw 'Public Math app imports Firebase Firestore directly.' }
+          Write-Host 'Smoke test passed: Korean and Math pages, shared HUD, and Aiedue data-server persistence are reachable.'

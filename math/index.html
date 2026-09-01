@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="aiedue-math-build" content="20260901-math-complete-v2">
+  <meta name="theme-color" content="#e7f6ff">
+  <title>에이두 수학</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
+  <script src="https://cdn.tailwindcss.com" defer></script>
+  <link rel="stylesheet" href="style.css?v=20260901-shared-shell-v1">
+  <link rel="stylesheet" href="app.css?v=20260901-shared-shell-v1">
+  <link rel="stylesheet" href="math.css?v=20260901-math-complete-v2">
+  <link rel="stylesheet" href="math-spiral.css?v=20260901-math-complete-v2">
+  <link rel="stylesheet" href="math-domain-navigation.css?v=20260901-math-complete-v2">
+</head>
+<body class="math-mode">
+  <a class="skip-link" href="#main-container">본문 바로가기</a>
+
+  <audio id="bg-music" loop preload="none"><source src="aiedu_bgm.mp3" type="audio/mpeg"></audio>
+  <audio id="click-sound" preload="none"><source src="aiedu_click.mp3" type="audio/mpeg"></audio>
+
+  <div class="premium-card fade-in-up" id="main-container" tabindex="-1">
+    <div id="start-screen" class="view-section" style="background-image:url('aiedu_math_bg.svg')">
+      <button type="button" id="mute-toggle-btn" class="mute-control-btn" onclick="toggleMute()" aria-label="배경음악 켜기 또는 끄기"><span id="mute-icon">🔇</span></button>
+      <div class="logo-wrapper"><img src="aiedu_math_logo_cutout.png" width="1456" height="1088" alt="에이두 수학 로고" class="logo-main floating math-logo-main" decoding="async"></div>
+      <button type="button" class="btn-start" onclick="showLoginFromStart()">시작하기</button>
+    </div>
+
+    <div id="login-section" class="view-section hidden" style="background-image:url('aiedu_math_bg.svg');background-size:cover;background-position:center">
+      <button type="button" id="mute-toggle-btn-login" class="mute-control-btn" onclick="toggleMute()" aria-label="배경음악 켜기 또는 끄기"><span class="mute-icon-span">🔇</span></button>
+      <div class="flex justify-between items-center p-10 w-full absolute top-0 left-0"><img src="aiedu_math_logo_cutout.png" width="1456" height="1088" alt="에이두 수학" class="login-mini-logo math-mini-logo" onclick="location.reload()" style="cursor:pointer" decoding="async"></div>
+      <div class="flex flex-col items-center justify-center h-full">
+        <div class="relative">
+          <div class="login-tabs-container">
+            <button type="button" id="student-tab-btn" class="nav-tab active" onclick="switchLoginView('student')">학생 로그인</button>
+            <button type="button" id="teacher-tab-btn" class="nav-tab" onclick="switchLoginView('teacher')">선생님 로그인</button>
+          </div>
+          <div class="login-card shadow-2xl">
+            <div id="student-login-view" class="fade-in">
+              <div class="text-center mb-12"><h2 class="text-3xl font-bold text-[#1688cf]">학생 로그인</h2><p class="text-gray-500 mt-1">에이두 수학으로 떠나요!</p></div>
+              <div class="flex justify-center items-center gap-4 mb-6">
+                <div id="password-display" class="stitched flex-1 bg-white text-[#1688cf] font-bold text-center h-20 flex items-center justify-center text-5xl rounded-3xl border-2 border-dashed border-[#8bd1ff] shadow-inner" role="status" aria-live="polite" aria-label="입력한 로그인 번호"></div>
+                <button type="button" class="btn-primary w-28 h-20 rounded-3xl text-xl font-black" onclick="checkStudentLogin()">시작</button>
+              </div>
+              <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto mb-6">
+                <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('1')">1</button><button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('2')">2</button><button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('3')">3</button>
+                <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('4')">4</button><button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('5')">5</button><button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('6')">6</button>
+                <button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('7')">7</button><button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('8')">8</button><button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('9')">9</button>
+                <div class="flex items-center justify-center text-3xl" aria-hidden="true">🧮</div><button type="button" class="grid-item text-2xl font-bold" onclick="addNumber('0')">0</button><button type="button" class="grid-item text-base font-bold bg-[#fff0f0] text-red-500" onclick="backspace()">지우기</button>
+              </div>
+              <div class="border-t pt-6 text-center"><p class="text-gray-400 text-sm mb-3">새로 가입해야 하나요?</p><div class="flex justify-center gap-2 flex-wrap"><button type="button" onclick="openStudentSignupModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-8 py-2 rounded-full font-bold transition-all shadow-sm">회원가입</button><button type="button" onclick="testLoginStudent()" class="bg-[#1688cf] hover:bg-[#0f76b5] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">학생 테스트</button></div></div>
+            </div>
+
+            <div id="teacher-login-view" class="fade-in hidden">
+              <div class="text-center mb-8"><h2 class="text-3xl font-bold text-[#1688cf]">선생님 로그인</h2><p class="text-gray-500 mt-1">반갑습니다, 선생님!</p></div>
+              <div class="space-y-4">
+                <input type="email" id="teacher-email" placeholder="이메일 주소" class="premium-input w-full" aria-label="선생님 이메일 주소" autocomplete="username">
+                <input type="password" id="teacher-pw" placeholder="비밀번호" class="premium-input w-full" aria-label="선생님 비밀번호" autocomplete="current-password">
+                <button type="button" class="btn-primary w-full py-5 text-xl font-bold mt-4" onclick="checkTeacherLogin()">로그인 하기</button>
+                <div class="divider my-7 text-gray-300 text-sm font-medium text-center">또는</div>
+                <button type="button" onclick="checkTeacherGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-100 py-4 rounded-3xl font-bold hover:bg-gray-50 transition-all shadow-sm"><img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" width="24" height="24" alt="" aria-hidden="true">Google로 로그인</button>
+              </div>
+              <div class="border-t pt-8 mt-8 text-center"><p class="text-gray-400 text-sm mb-3">새로 오셨나요?</p><div class="flex justify-center gap-2 flex-wrap"><button type="button" onclick="openTeacherSignupModal()" class="bg-[#e7f6ff] hover:bg-[#d6efff] text-[#1688cf] px-8 py-2 rounded-full font-bold transition-all shadow-sm">선생님 회원가입</button><button type="button" onclick="testLoginTeacher()" class="bg-[#2c3e50] hover:bg-[#1a252f] text-white px-6 py-2 rounded-full font-black transition-all shadow-sm">교사 테스트</button></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dashboard-section" class="view-section hidden" style="background-image:url('aiedu_math_bg.svg');background-size:cover;background-position:center;position:relative">
+      <div class="absolute top-0 left-0 w-full p-10 z-50 pointer-events-none"><button type="button" class="pointer-events-auto cursor-pointer" onclick="openDashboard()" aria-label="에이두 수학 대시보드"><img src="aiedu_math_logo_cutout.png" width="1456" height="1088" alt="에이두 수학" class="login-mini-logo math-mini-logo" style="width:180px" decoding="async"></button></div>
+      <div class="math-domain-dashboard" role="group" aria-label="에이두 수학 영역 선택">
+        <button type="button" class="math-domain-card" data-math-domain="number" style="--domain-color:#35a7ff" onclick="openMathDomain('number')"><span class="domain-card-icon" aria-hidden="true">🔢</span><span class="domain-card-copy"><span class="domain-card-label">영역 1</span><h2>수와 연산</h2><p>수의 의미, 자릿값, 덧셈·뺄셈·곱셈·나눗셈을 단계적으로 배워요.</p></span><span class="domain-card-progress"><span>영역 성장</span><strong class="domain-card-progress-value">0%</strong><span class="domain-card-progress-track"><span class="domain-card-progress-fill"></span></span></span></button>
+        <button type="button" class="math-domain-card" data-math-domain="relation" style="--domain-color:#9b6dff" onclick="openMathDomain('relation')"><span class="domain-card-icon" aria-hidden="true">🔁</span><span class="domain-card-copy"><span class="domain-card-label">영역 2</span><h2>변화와 관계</h2><p>규칙을 찾고 등호, 대응 관계, 비와 비율로 생각을 넓혀요.</p></span><span class="domain-card-progress"><span>영역 성장</span><strong class="domain-card-progress-value">0%</strong><span class="domain-card-progress-track"><span class="domain-card-progress-fill"></span></span></span></button>
+        <button type="button" class="math-domain-card" data-math-domain="geometry" style="--domain-color:#ff9a45" onclick="openMathDomain('geometry')"><span class="domain-card-icon" aria-hidden="true">📐</span><span class="domain-card-copy"><span class="domain-card-label">영역 3</span><h2>도형과 측정</h2><p>도형의 특징을 살펴보고 길이, 시간, 각도, 넓이와 부피를 측정해요.</p></span><span class="domain-card-progress"><span>영역 성장</span><strong class="domain-card-progress-value">0%</strong><span class="domain-card-progress-track"><span class="domain-card-progress-fill"></span></span></span></button>
+        <button type="button" class="math-domain-card" data-math-domain="data" style="--domain-color:#24bd87" onclick="openMathDomain('data')"><span class="domain-card-icon" aria-hidden="true">📊</span><span class="domain-card-copy"><span class="domain-card-label">영역 4</span><h2>자료와 가능성</h2><p>자료를 분류하고 표와 그래프로 나타내며 가능성을 판단해요.</p></span><span class="domain-card-progress"><span>영역 성장</span><strong class="domain-card-progress-value">0%</strong><span class="domain-card-progress-track"><span class="domain-card-progress-fill"></span></span></span></button>
+      </div>
+    </div>
+
+    <div id="math-activities-section" class="view-section hidden" style="background-image:url('aiedu_math_bg.svg');background-size:cover;background-position:center;position:relative"><div class="dashboard-stage-board math-stage-board single" role="group" aria-label="수학 집중 활동"><button type="button" class="dashboard-stage-card level-card" onclick="openTimeQuiz()"><span class="stage-badge">TIME</span><span class="stage-emoji" aria-hidden="true">🕒</span><span class="level-title">시간 퀴즈</span><span class="level-desc">시계 읽기</span><span class="stage-note">쉬움 · 보통 · 어려움 · 매우 어려움</span></button></div></div>
+
+    <div id="time-quiz-section" class="view-section hidden" style="background-image:url('aiedu_math_bg.svg');background-size:cover;background-position:center;position:relative">
+      <section class="math-quiz-workspace" aria-labelledby="math-time-quiz-title">
+        <div class="math-clock-card"><div><p class="math-section-eyebrow">AIEDUE MATH</p><h1 id="math-time-quiz-title" class="math-title">시간 퀴즈</h1><p class="math-subtitle">난이도별 시계 문제를 계속 풀어보세요.</p></div><div class="math-clock-wrap"><canvas id="time-quiz-canvas"></canvas></div></div>
+        <div class="math-answer-card">
+          <div class="math-difficulty-row"><button type="button" class="time-difficulty-btn" data-difficulty="easy">쉬움 (+1)</button><button type="button" class="time-difficulty-btn" data-difficulty="middle">보통 (+3)</button><button type="button" class="time-difficulty-btn" data-difficulty="hard">어려움 (+5)</button><button type="button" class="time-difficulty-btn" data-difficulty="very-hard">매우 어려움 (+10)</button></div>
+          <div class="math-meta"><div><strong>현재 난이도:</strong> <span id="time-quiz-current-difficulty">쉬움</span></div><div><strong>마지막 레벨업:</strong> <span id="time-quiz-last-completion">-</span></div><div><strong>정답 경험치:</strong> +<span id="time-quiz-exp-reward">1</span> EXP</div><div><strong>연속 오답:</strong> <span id="time-quiz-streak">0</span></div><div><strong>매우 어려움 남은 기회:</strong> <span id="time-quiz-attempts">-</span></div></div>
+          <p id="time-quiz-lock-message" class="math-feedback error hidden"></p><p id="time-quiz-feedback" class="math-feedback" aria-live="polite"></p><div id="time-quiz-options" class="math-options"></div>
+          <div id="time-quiz-input-wrap" class="math-input-wrap"><input type="number" id="time-quiz-hour-input" min="1" max="12" placeholder="시" aria-label="시"><span>시</span><input type="number" id="time-quiz-minute-input" min="0" max="59" placeholder="분" aria-label="분"><span>분</span></div>
+          <button type="button" id="time-quiz-check-btn" class="math-check-button">정답 확인</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="spiral-map-section" class="view-section spiral-section hidden" style="background-image:url('aiedu_math_bg.svg');background-size:cover;background-position:center;position:relative;overflow:auto"><div id="spiral-map-content" style="width:100%"></div></div>
+    <div id="spiral-lesson-section" class="view-section spiral-section hidden" style="background-image:url('aiedu_math_bg.svg');background-size:cover;background-position:center;position:relative;overflow:auto"><div id="spiral-lesson-content" style="width:100%"></div></div>
+
+    <div id="math-records-section" class="view-section math-hub-view hidden"><main class="math-hub-shell" aria-labelledby="math-records-title"><header class="math-hub-header"><div><span class="math-hub-badge records">수학 성장</span><h1 id="math-records-title">📘 나의 수학 기록</h1><p>영역별 성장과 최근 풀이를 한눈에 살펴봐요.</p></div><button type="button" class="btn-outline" onclick="openDashboard()">수학 공부</button></header><div id="math-records-content" class="math-hub-content" aria-live="polite"><div class="math-hub-empty"><span aria-hidden="true">📊</span><strong>수학 기록을 불러오고 있어요.</strong><p>풀이 기록이 쌓이면 영역별 성장이 여기에 나타나요.</p></div></div></main></div>
+    <div id="math-review-section" class="view-section math-hub-view hidden"><main class="math-hub-shell" aria-labelledby="math-review-title"><header class="math-hub-header"><div><span class="math-hub-badge review">맞춤 학습</span><h1 id="math-review-title">🔁 오늘의 수학 복습</h1><p>최근에 어려웠던 개념부터 차근차근 다시 풀어요.</p></div><button type="button" class="btn-outline" onclick="openMathRecords()">나의 기록</button></header><div id="math-review-content" class="math-hub-content" aria-live="polite"><div class="math-hub-empty"><span aria-hidden="true">🧠</span><strong>오늘의 복습을 준비하고 있어요.</strong><p>나에게 꼭 맞는 문제를 골라 보여줄게요.</p></div></div></main></div>
+    <div id="math-class-section" class="view-section math-hub-view hidden"><main class="math-hub-shell math-class-shell" aria-labelledby="math-class-title"><header class="math-hub-header"><div><span class="math-hub-badge class">우리 학급</span><h1 id="math-class-title">🏫 수학 학급 관리</h1><p>학생의 포인트, 진도, 영역별 성장을 함께 관리해요.</p></div><button type="button" class="btn-outline" onclick="openDashboard()">대시보드</button></header><div id="math-class-content" class="math-hub-content" aria-live="polite"><div class="math-hub-empty"><span aria-hidden="true">👩‍🏫</span><strong>학급 정보를 불러오고 있어요.</strong><p>학생 계정에서는 연결된 학급 상태를 안내해요.</p></div></div></main></div>
+  </div>
+
+  <div id="drawer-overlay" class="drawer-overlay" onclick="toggleInfoDrawer()"></div>
+  <aside id="info-drawer" class="info-drawer math-info-drawer" aria-label="회원 정보">
+    <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-black text-gray-800">회원 정보</h2><button type="button" class="text-gray-400 hover:text-gray-600 text-3xl" onclick="toggleInfoDrawer()" aria-label="회원 정보 닫기">×</button></div>
+    <div class="flex flex-col items-center p-8 bg-sky-50 rounded-[40px] border border-sky-100"><button type="button" id="user-icon-btn" class="w-24 h-24 bg-sky-300 rounded-full border-4 border-white flex items-center justify-center text-5xl shadow-xl cursor-pointer hover:scale-105 transition-transform mb-4" onclick="openIconModal()" aria-label="아이콘 바꾸기">🐻</button><div class="text-center"><div class="flex items-center justify-center gap-2 mb-1"><span class="text-2xl font-black text-[#2c3e50]" id="dashboard-account-name">이름 없음</span><span class="text-xs px-2 py-1 bg-sky-100 text-sky-700 rounded-lg font-bold" id="user-role-badge">학생</span></div><p class="text-gray-400 font-bold" id="dashboard-level-label">수학 새싹</p></div></div>
+    <div class="bg-yellow-50 p-6 rounded-3xl flex items-center justify-between border border-yellow-100"><div class="flex items-center gap-3"><span class="text-3xl" aria-hidden="true">⭐</span><span class="text-lg font-bold text-yellow-700">에이두 포인트</span></div><span class="text-2xl font-black text-yellow-600" id="dashboard-coins">0</span></div>
+    <div class="bg-red-50 p-5 rounded-3xl flex items-center justify-between border border-red-100 mt-3"><div class="flex items-center gap-3"><span class="text-2xl" aria-hidden="true">⚠️</span><span class="text-base font-black text-red-600">주의 토큰</span></div><span class="text-2xl font-black text-red-500 sync-warning-tokens">0</span></div>
+    <div class="grid grid-cols-1 gap-3 mt-auto"><button type="button" id="teacher-manage-btn" class="w-full py-4 bg-sky-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-sky-600 transition-all hidden" onclick="openMathClass()"><span aria-hidden="true">🏫</span> 학급 관리하기</button><button type="button" class="w-full py-4 bg-gray-100 text-gray-700 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-gray-200 transition-all" onclick="openSettingsModal()"><span aria-hidden="true">⚙️</span> 환경 설정</button><button type="button" class="w-full py-4 border-2 border-red-50 text-red-400 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-red-50 transition-all" onclick="handleLogout()"><span aria-hidden="true">🚪</span> 로그아웃</button></div>
+  </aside>
+
+  <nav id="aiedue-rpg-hud" class="aiedue-rpg-hud rpg-collapsed hidden math-rpg-hud" aria-label="에이두 수학 메뉴">
+    <section class="rpg-profile-banner" aria-label="내 정보">
+      <button type="button" class="rpg-profile-portrait" onclick="toggleRpgHudPanel(this)" aria-label="메뉴 펼치기" aria-expanded="false" aria-controls="rpg-profile-menu"><span class="sync-user-icon" aria-hidden="true">🐻</span><span class="rpg-level-badge">LV.<span class="sync-aedu-level">1</span></span></button>
+      <button type="button" class="rpg-profile-copy" onclick="toggleInfoDrawer()" aria-label="내 정보 열기"><strong class="sync-account-name">이름 없음</strong><span class="rpg-role-label sync-user-role">학생</span><span class="rpg-wallet-line"><span>⭐ <span class="sync-coins">0</span></span><span>⚠️ <span class="sync-warning-tokens">0</span></span></span></button>
+      <div id="rpg-profile-menu" class="rpg-profile-tools" aria-label="계정 메뉴">
+        <button type="button" class="rpg-tool-button" onclick="openDashboard()" aria-label="홈으로 이동"><span aria-hidden="true">🏠</span><span>홈</span></button>
+        <button type="button" id="rpg-student-shop-btn" class="rpg-tool-button rpg-student-shop-button" onclick="openAiedueMathShop()" aria-label="상점"><span aria-hidden="true">🛒</span><span>상점</span></button>
+        <button type="button" id="rpg-teacher-manage-btn" class="rpg-tool-button hidden" onclick="openMathClass()" aria-label="학급"><span aria-hidden="true">🏫</span><span>학급</span></button>
+        <button type="button" id="rpg-today-review-btn" class="rpg-tool-button rpg-student-learning-button rpg-review-button" onclick="openMathTodayReview()" aria-label="오늘의 복습" title="오늘의 복습"><span aria-hidden="true">🔁</span><span>복습</span></button>
+        <button type="button" id="rpg-records-btn" class="rpg-tool-button rpg-student-learning-button rpg-records-button" onclick="openMathRecords()" aria-label="나의 기록" title="나의 기록"><span aria-hidden="true">📘</span><span>기록</span></button>
+        <button type="button" class="rpg-tool-button rpg-logout-button" onclick="handleLogout()" aria-label="로그아웃"><span aria-hidden="true">🚪</span><span>나가기</span></button>
+        <button type="button" class="rpg-tool-button rpg-expand-button" onclick="toggleRpgHudActions(this)" aria-label="하단 메뉴 펼치기" aria-expanded="false" aria-controls="rpg-action-tray"><span aria-hidden="true">→</span><span>메뉴</span></button>
+      </div>
+      <div class="rpg-experience-track" role="progressbar" aria-label="현재 레벨 경험치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="rpg-experience-fill sync-aedu-exp-bar" style="width:0%"></div></div><span class="rpg-experience-label"><span class="sync-aedu-exp-percent">0%</span> EXP</span>
+    </section>
+    <div id="rpg-action-tray" class="rpg-action-tray" aria-label="주요 메뉴" aria-hidden="true" inert><button type="button" class="rpg-action-button rpg-korean-action-button" onclick="location.href='../index.html'"><span class="rpg-action-icon" aria-hidden="true">📗</span><span>에이두 한글</span></button><button type="button" class="rpg-action-button rpg-shop-button" onclick="openAiedueMathShop()"><span class="rpg-action-icon" aria-hidden="true">🛒</span><span>상점</span></button><button type="button" class="rpg-action-button rpg-settings-button" onclick="openSettingsModal()"><span class="rpg-action-icon" aria-hidden="true">⚙️</span><span>환경 설정</span></button></div>
+  </nav>
+
+  <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1300] p-4"><div class="modal-content text-center max-w-5xl w-full scale-in"><div id="modal-icon" class="text-5xl mb-6">🧮</div><div id="modal-message" class="text-2xl font-bold text-[#2c3e50] mb-10 leading-relaxed">메시지</div><button type="button" id="modal-confirm-btn" class="btn-primary w-full text-xl py-4" onclick="handleModalConfirm()">확인했습니다</button></div></div>
+
+  <div id="aiedu-craft-shop-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden justify-center items-center z-[1200] p-3 sm:p-5" role="dialog" aria-modal="true" aria-labelledby="aiedu-craft-shop-title">
+    <div class="aiedu-craft-modal-content scale-in">
+      <button type="button" id="close-aiedu-craft-shop-btn" class="aiedu-craft-close-btn" aria-label="에이두 크래프트 상점 닫기">&times;</button>
+      <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3 mb-4 pr-10"><div><h2 id="aiedu-craft-shop-title" class="text-2xl font-black text-[#2c3e50]">⛏️ 에이두 크래프트 상점</h2><p class="text-sm text-gray-500 font-bold mt-1">고정 상품은 즉시 거래하고, 다른 아이템은 경매장과 랜덤마켓에서 사고팔 수 있어요.</p></div><div class="flex flex-wrap gap-2"><button type="button" id="refresh-aiedu-craft-inventory-btn" class="btn-outline px-3 py-2 text-sm whitespace-nowrap">인벤토리 새로고침</button><button type="button" id="refresh-aiedu-craft-auction-btn" class="btn-outline px-3 py-2 text-sm whitespace-nowrap">경매장 새로고침</button><button type="button" id="refresh-aiedu-craft-random-btn" class="btn-primary px-3 py-2 text-sm whitespace-nowrap">랜덤마켓 새로고침 (500점)</button></div></div>
+      <div id="aiedu-craft-shop-status" class="aiedu-craft-status" aria-live="polite">크래프트 서버에 접속한 적이 있는 계정만 조회할 수 있어요.</div>
+      <div class="aiedu-craft-shop-layout">
+        <section class="aiedu-craft-panel"><h3 class="font-black text-lg text-[#2c3e50] mb-2">판매 목록</h3><p class="text-xs text-gray-500 mb-3">석탄·철·금·다이아는 즉시 판매하고, 나머지는 가격을 정해 경매장에 등록해요.</p><div id="aiedu-craft-inventory-list" class="space-y-2 max-h-[34rem] overflow-y-auto text-sm custom-scrollbar"><p class="text-gray-400 text-center py-8">아직 조회하지 않았어요.</p></div></section>
+        <section class="aiedu-craft-panel space-y-4">
+          <div><h3 class="font-black text-lg text-[#2c3e50] mb-2">구매 목록</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="aiedu-craft-product stone"><p class="font-black">⚫ 석탄</p><p class="text-xs text-gray-500">1개 100점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="coal"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="coal" data-name="석탄" data-price="100">구매</button></div></div>
+            <div class="aiedu-craft-product iron"><p class="font-black">🔩 철</p><p class="text-xs text-gray-500">1개 200점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="iron_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="iron_ingot" data-name="철" data-price="200">구매</button></div></div>
+            <div class="aiedu-craft-product gold"><p class="font-black">🟡 금</p><p class="text-xs text-gray-500">1개 300점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="gold_ingot"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="gold_ingot" data-name="금" data-price="300">구매</button></div></div>
+            <div class="aiedu-craft-product diamond"><p class="font-black">💎 다이아몬드</p><p class="text-xs text-gray-500">1개 1,000점</p><div class="aiedu-craft-buy-row"><input type="number" min="1" max="64" value="1" class="aiedu-craft-buy-count" data-item="diamond"><button type="button" class="btn-primary px-3 py-2 text-sm buy-aiedu-craft-item-btn" data-item="diamond" data-name="다이아몬드" data-price="1000">구매</button></div></div>
+          </div></div>
+          <div class="border-t pt-4"><h3 class="font-black text-lg text-[#2c3e50] mb-2">명령 구매</h3><div class="space-y-3 text-sm"><div class="aiedu-craft-command home"><div><p class="font-black">🏠 집으로 이동하기</p><p class="text-xs text-gray-500">x:-204 y:46 z:-162 · 500점</p></div><button type="button" id="buy-aiedu-craft-home-tp-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div><div class="aiedu-craft-command house"><div><p class="font-black">🛏️ 집 소환기</p><p class="text-xs text-gray-500">나무 집 생성기 · 1,000점</p></div><button type="button" id="buy-aiedu-craft-housewand-btn" class="btn-primary px-3 py-2 text-xs">구매</button></div><div class="aiedu-craft-command teleport"><p class="font-black">🧭 친구에게 이동하기 · 500점</p><select id="aiedu-craft-target-player-select" class="w-full border rounded-xl px-3 py-2 text-sm bg-white"><option value="">온라인 명단 로딩 전</option></select><button type="button" id="buy-aiedu-craft-target-tp-btn" class="btn-primary px-3 py-2 text-xs w-full">선택한 친구에게 이동</button></div></div></div>
+        </section>
+        <section class="aiedu-craft-panel space-y-4"><div><div class="flex items-center justify-between gap-2 mb-2"><h3 class="font-black text-lg text-[#2c3e50]">경매장</h3><button type="button" id="refresh-aiedu-craft-auction-inline-btn" class="btn-outline px-2 py-1 text-xs">새로고침</button></div><div id="aiedu-craft-auction-list" class="space-y-2 max-h-72 overflow-y-auto text-sm custom-scrollbar"><p class="text-gray-400 text-center py-6">경매장을 불러오는 중이에요.</p></div></div><div class="border-t pt-4"><div class="flex items-center justify-between gap-2 mb-2"><h3 class="font-black text-lg text-[#2c3e50]">랜덤마켓</h3><span id="aiedu-craft-random-timer" class="text-xs text-gray-500"></span></div><p class="text-xs text-gray-500 mb-2">30분마다 무료 갱신 · 수동 갱신 500점 · 개당 100점 · 최대 10개</p><div id="aiedu-craft-random-list" class="space-y-2 max-h-72 overflow-y-auto text-sm custom-scrollbar"><p class="text-gray-400 text-center py-6">상점을 열면 자동으로 불러와요.</p></div></div></section>
+      </div>
+    </div>
+  </div>
+
+  <div id="student-signup-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4"><div class="modal-content max-w-md w-full"><h3 class="text-3xl font-black text-center text-[#2c3e50] mb-8">✨ 새 친구 등록하기</h3><label for="student-signup-name" class="block text-sm font-bold text-gray-400 mb-2 ml-2">학생 이름</label><input id="student-signup-name" class="premium-input w-full mb-8" placeholder="이름을 입력하세요" autocomplete="name"><div class="flex gap-4"><button type="button" class="btn-primary flex-1 py-4" onclick="createStudentAccount()">등록하기</button><button type="button" class="btn-outline flex-1 py-4" onclick="closeStudentSignupModal()">취소</button></div></div></div>
+  <div id="teacher-signup-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4"><div class="modal-content max-w-md w-full"><h3 class="text-3xl font-black text-center text-[#2c3e50] mb-8">👩‍🏫 선생님 가입하기</h3><div class="space-y-5 mb-8"><input id="teacher-signup-name" class="premium-input w-full" placeholder="이름" autocomplete="name"><input id="teacher-signup-email" type="email" class="premium-input w-full" placeholder="이메일" autocomplete="email"><input id="teacher-signup-pw" type="password" class="premium-input w-full" placeholder="비밀번호" autocomplete="new-password"></div><div class="flex gap-4"><button type="button" class="btn-primary flex-1 py-4" onclick="createTeacherAccount()">가입하기</button><button type="button" class="btn-outline flex-1 py-4" onclick="closeTeacherSignupModal()">취소</button></div></div></div>
+
+  <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4"><div class="bg-white rounded-[40px] p-10 w-full max-w-md shadow-2xl scale-in"><div class="text-center mb-8"><div class="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">⚙️</div><h3 class="text-2xl font-black text-[#2c3e50]">설정</h3></div><div class="space-y-6"><div><label for="settings-name-input" class="block text-sm font-bold text-gray-400 mb-2 ml-1">이름 변경</label><input type="text" id="settings-name-input" class="premium-input bg-gray-50 border-transparent focus:bg-white" placeholder="이름을 입력하세요" autocomplete="name"></div><div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl"><div class="flex items-center gap-3"><span id="settings-sound-icon" class="text-2xl">🔊</span><span class="font-bold text-[#2c3e50]">소리 설정</span></div><button type="button" id="settings-mute-toggle" class="btn-outline px-4 py-1.5 text-sm" onclick="toggleMute()">끄기</button></div></div><div class="grid grid-cols-2 gap-4 mt-10"><button type="button" class="btn-outline py-4" onclick="closeSettingsModal()">취소</button><button type="button" class="btn-primary py-4" onclick="saveSettings()">저장하기</button></div></div></div>
+  <div id="icon-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4"><div class="bg-white rounded-[40px] p-10 w-full max-w-lg shadow-2xl scale-in"><div class="text-center mb-8"><h3 class="text-2xl font-black text-[#2c3e50]">아이콘 선택</h3><p class="text-gray-400 font-medium">마음에 드는 아이콘을 골라보세요!</p></div><div class="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto p-2 custom-scrollbar" id="icon-grid"></div><button type="button" class="btn-outline w-full py-4 mt-8" onclick="closeIconModal()">닫기</button></div></div>
+
+  <script type="module" src="math.js?v=20260901-math-complete-v2"></script>
+  <script type="module" src="math-services.js?v=20260901-math-complete-v2"></script>
+  <script src="math-spiral.js?v=20260901-math-complete-v2" defer></script>
+  <script src="math-domain-navigation.js?v=20260901-math-complete-v2" defer></script>
+</body>
+</html>

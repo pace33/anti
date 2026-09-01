@@ -1,0 +1,614 @@
+.hidden {
+    display: none !important;
+}
+
+body.math-mode {
+    background: #e7f6ff;
+}
+
+.math-mode .premium-card {
+    background: transparent;
+}
+
+.math-mode .btn-start,
+.math-mode .btn-primary {
+    background: linear-gradient(135deg, #36aef1, #1688cf);
+    color: #fff;
+}
+
+.math-mode .btn-start:hover,
+.math-mode .btn-primary:hover {
+    background: linear-gradient(135deg, #1688cf, #0f76b5);
+}
+
+.math-mode .btn-outline {
+    border-color: #bde3fb;
+    color: #1688cf;
+    background: #f4fbff;
+}
+
+.math-mode .nav-tab.active,
+.math-mode .login-tabs-container .nav-tab.active {
+    color: #1688cf;
+    border-color: #8bd1ff;
+    background: #e7f6ff;
+}
+
+.math-mode .grid-item {
+    border-color: #ccecff;
+}
+
+.math-mode .grid-item:hover {
+    background: #e7f6ff;
+    color: #1688cf;
+}
+
+.math-logo-main {
+    width: min(560px, 78vw);
+    max-height: 48vh;
+    object-fit: contain;
+}
+
+.math-mini-logo {
+    width: 180px;
+    height: auto;
+    object-fit: contain;
+}
+
+.math-stage-board.single {
+    grid-template-columns: minmax(260px, 360px);
+    justify-content: center;
+}
+
+.math-mode .dashboard-stage-card.level-card {
+    border-color: rgba(139, 209, 255, 0.72);
+}
+
+.math-mode .dashboard-stage-card .stage-badge {
+    background: #1688cf;
+}
+
+.math-mode .dashboard-stage-card.level-card .level-title {
+    color: #1f3551;
+}
+
+.math-mode .dashboard-stage-card.level-card .level-desc {
+    color: #1688cf;
+}
+
+.math-mode .dashboard-stage-card.level-card.locked {
+    opacity: 0.68;
+    cursor: default;
+}
+
+.math-quiz-workspace {
+    width: min(1120px, calc(100% - 32px));
+    margin: 132px auto 120px;
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(280px, 0.78fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.math-clock-card,
+.math-answer-card {
+    border: 2px solid rgba(121, 196, 240, 0.62);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 18px 40px rgba(38, 130, 189, 0.16);
+}
+
+.math-clock-card {
+    padding: clamp(18px, 3vw, 32px);
+}
+
+.math-section-eyebrow {
+    margin: 0 0 6px;
+    color: #1688cf;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.math-title {
+    margin: 0;
+    color: #1e3450;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.math-subtitle {
+    margin: 8px 0 20px;
+    color: #5b6d80;
+    font-weight: 800;
+}
+
+.math-clock-wrap {
+    width: min(420px, 100%);
+    aspect-ratio: 1;
+    margin: 0 auto;
+}
+
+#time-quiz-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.math-answer-card {
+    padding: clamp(18px, 3vw, 26px);
+}
+
+.math-difficulty-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.time-difficulty-btn,
+.time-option-btn,
+.math-check-button {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.time-difficulty-btn {
+    min-height: 48px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #eef8ff;
+    color: #24658f;
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: inset 0 0 0 2px #c6e8ff;
+}
+
+.time-difficulty-btn.active {
+    background: #2498df;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(36, 152, 223, 0.28);
+}
+
+.math-meta {
+    display: grid;
+    gap: 8px;
+    margin: 18px 0;
+    padding: 14px;
+    border-radius: 8px;
+    background: #f4fbff;
+    color: #42566b;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.math-meta strong {
+    color: #1f3551;
+}
+
+.math-feedback {
+    min-height: 26px;
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.math-feedback.ok { color: #08875d; }
+.math-feedback.warn { color: #c27405; }
+.math-feedback.error { color: #d13f4a; }
+
+.math-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.time-option-btn {
+    min-height: 48px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fff;
+    color: #253951;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 900;
+    box-shadow: inset 0 0 0 2px #d7ecfb;
+}
+
+.time-option-btn.selected {
+    background: #e1f3ff;
+    box-shadow: inset 0 0 0 3px #5dbaf0;
+}
+
+.time-option-btn.correct {
+    background: #e6f9ef;
+    box-shadow: inset 0 0 0 3px #36c277;
+}
+
+.time-option-btn.incorrect {
+    background: #fff0f3;
+    box-shadow: inset 0 0 0 3px #f17287;
+}
+
+.math-input-wrap {
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.math-input-wrap.active {
+    display: flex;
+}
+
+.math-input-wrap input {
+    width: 88px;
+    min-height: 44px;
+    border: 2px solid #bde3fb;
+    border-radius: 8px;
+    text-align: center;
+    font: inherit;
+    font-weight: 900;
+    color: #1f3551;
+}
+
+.math-check-button {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 14px;
+    border-radius: 8px;
+    background: #1688cf;
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 12px 20px rgba(22, 136, 207, 0.25);
+}
+
+.math-check-button:disabled,
+.time-option-btn:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+}
+
+.math-mode .info-drawer {
+    border-left: 5px solid #8bd1ff;
+}
+
+.math-mode .drawer-overlay.visible {
+    display: block;
+}
+
+.math-rpg-hud .rpg-profile-banner {
+    border-color: #8bd1ff;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.math-rpg-hud .rpg-level-badge,
+.math-rpg-hud .rpg-expand-button {
+    background: #e7f6ff;
+    color: #1688cf;
+    border-color: #bde3fb;
+}
+
+.math-rpg-hud .rpg-role-label {
+    color: #1688cf;
+}
+
+.math-rpg-hud .rpg-experience-fill {
+    background: linear-gradient(90deg, #74d0ff, #1688cf);
+}
+
+.rpg-korean-button,
+.rpg-korean-action-button {
+    color: #338f4f;
+    border-color: #ccebd7;
+    background: linear-gradient(135deg, #f3fcf5, #e4f7e9);
+}
+
+@media (max-width: 860px) {
+    .math-quiz-workspace {
+        grid-template-columns: 1fr;
+        margin-top: 112px;
+    }
+
+    .math-mini-logo {
+        width: 130px !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .math-quiz-workspace {
+        width: calc(100% - 20px);
+        margin-top: 92px;
+    }
+
+    .math-difficulty-row,
+    .math-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 2026-09-01: 에이두 한글과 공유하는 계정 셸/HUD의 수학 테마. */
+body.math-mode {
+    background:
+        radial-gradient(circle at 12% 12%, rgba(186, 230, 253, .56), transparent 32%),
+        radial-gradient(circle at 88% 84%, rgba(221, 214, 254, .45), transparent 34%),
+        linear-gradient(145deg, #f6fcff 0%, #f8f8ff 100%);
+    background-attachment: fixed;
+}
+
+body.math-mode .premium-card {
+    border-width: 10px;
+    border-color: rgba(255, 255, 255, .96);
+    background: rgba(255, 255, 255, .2);
+    box-shadow: 0 32px 90px rgba(31, 78, 113, .18), 0 8px 24px rgba(44, 62, 80, .08), inset 0 0 0 1px rgba(148, 163, 184, .12);
+}
+
+body.rpg-hud-active .premium-card {
+    width: min(98vw, 1440px);
+    max-width: 1440px;
+    height: clamp(750px, calc(100dvh - 24px), 920px);
+}
+
+.aiedue-rpg-hud {
+    position: fixed;
+    left: max(24px, calc((100vw - 1100px) / 2 + 22px));
+    bottom: 14px;
+    z-index: 1050;
+    width: auto;
+    max-width: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    color: #2c3e50;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.math-rpg-hud .rpg-profile-banner {
+    position: relative;
+    width: 600px;
+    min-width: 590px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 18px 86px;
+    border: 2px solid rgba(255, 255, 255, .98);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 14px 36px rgba(42, 112, 158, .18), 0 0 0 2px rgba(139, 209, 255, .58);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: width .36s cubic-bezier(.16, 1, .3, 1), min-width .36s cubic-bezier(.16, 1, .3, 1), height .36s cubic-bezier(.16, 1, .3, 1), padding .36s cubic-bezier(.16, 1, .3, 1), border-radius .36s ease;
+}
+
+.math-rpg-hud .rpg-profile-portrait {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    width: 62px;
+    height: 62px;
+    display: grid;
+    place-items: center;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #dff4ff, #8bd1ff);
+    box-shadow: 0 6px 16px rgba(58, 146, 205, .22), 0 0 0 2px #8bd1ff;
+}
+
+.math-rpg-hud .rpg-profile-portrait .sync-user-icon { font-size: 1.9rem; line-height: 1; }
+.math-rpg-hud .rpg-level-badge {
+    position: absolute;
+    right: -5px;
+    bottom: -4px;
+    min-width: 40px;
+    padding: 3px 6px;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    color: #fff;
+    background: #1688cf;
+    font: 900 10px/1.1 Outfit, sans-serif;
+    box-shadow: 0 3px 8px rgba(22, 136, 207, .26);
+}
+
+.math-rpg-hud .rpg-profile-copy {
+    min-width: 86px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    text-align: left;
+    transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease;
+}
+
+.math-rpg-hud .rpg-profile-copy strong { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #2c3e50; font-size: .94rem; }
+.math-rpg-hud .rpg-role-label { color: #1688cf; font-size: .64rem; font-weight: 900; }
+.math-rpg-hud .rpg-wallet-line { display: flex; gap: 7px; margin-top: 2px; color: #72806f; font-size: .66rem; font-weight: 900; }
+.math-rpg-hud .rpg-profile-tools { margin-left: -8px; display: flex; align-items: center; gap: 3px; transform: translateX(-8px); transition: opacity .18s ease, transform .3s cubic-bezier(.16, 1, .3, 1), visibility .18s ease; }
+
+.math-rpg-hud .rpg-tool-button {
+    min-width: 38px;
+    width: 38px;
+    height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border: 1px solid #dce9f0;
+    border-radius: 15px;
+    background: #fff;
+    color: #667366;
+    padding: 0;
+    font-size: .64rem;
+    font-weight: 900;
+    box-shadow: 0 5px 12px rgba(51, 105, 139, .08);
+}
+
+.math-rpg-hud .rpg-tool-button > span:first-child { font-size: .92rem; }
+.math-rpg-hud .rpg-student-shop-button { color: #3d8d64; background: #f3fbf4; border-color: #d5ead8; }
+.math-rpg-hud .rpg-review-button { color: #167a61; border-color: #bde8d7; background: #effbf6; }
+.math-rpg-hud .rpg-records-button { color: #3974a6; border-color: #c9def1; background: #f2f8fd; }
+.math-rpg-hud .rpg-logout-button { color: #c46b6b; background: #fff8f7; border-color: #f4dddd; }
+.math-rpg-hud .rpg-expand-button { color: #1688cf; border-color: #bde3fb; background: #f3faff; }
+
+.math-rpg-hud .rpg-action-tray {
+    width: 0;
+    height: 68px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    border: 0 solid rgba(255, 255, 255, .98);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: none;
+    transform: translateX(-18px);
+    transition: width .3s cubic-bezier(.2, .8, .25, 1), padding .3s ease, opacity .2s ease, transform .3s ease, border-width .3s ease;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.math-rpg-hud.actions-open .rpg-action-tray {
+    width: 540px;
+    padding-inline: 7px;
+    opacity: 1;
+    pointer-events: auto;
+    border-width: 2px;
+    box-shadow: 0 14px 36px rgba(42, 112, 158, .18);
+    transform: translateX(0);
+}
+
+.math-rpg-hud .rpg-action-button {
+    min-width: 0;
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 10px;
+    border: 2px solid transparent;
+    border-radius: 19px;
+    font-weight: 900;
+    letter-spacing: -.02em;
+    box-shadow: 0 7px 16px rgba(65, 108, 80, .1);
+}
+
+.math-rpg-hud .rpg-action-button > span:last-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.math-rpg-hud .rpg-experience-track { left: 76px; right: 10px; bottom: 6px; height: 7px; border-color: #bde3fb; background: #e7f6ff; }
+.math-rpg-hud .rpg-experience-fill { background: linear-gradient(90deg, #74d0ff, #1688cf); box-shadow: 0 0 8px rgba(22, 136, 207, .42); }
+.math-rpg-hud .rpg-experience-label { right: 14px; bottom: 16px; color: #1688cf; }
+
+.math-rpg-hud.rpg-collapsed { width: auto; max-width: none; }
+.math-rpg-hud.rpg-collapsed .rpg-profile-banner { width: 86px; min-width: 86px; height: 86px; display: block; padding: 0; border-radius: 28px; }
+.math-rpg-hud.rpg-collapsed .rpg-profile-portrait { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: 58px; height: 58px; }
+.math-rpg-hud.rpg-collapsed .rpg-profile-copy,
+.math-rpg-hud.rpg-collapsed .rpg-profile-tools,
+.math-rpg-hud.rpg-collapsed .rpg-experience-track,
+.math-rpg-hud.rpg-collapsed .rpg-experience-label { opacity: 0; visibility: hidden; pointer-events: none; }
+.math-rpg-hud.rpg-collapsed .rpg-profile-copy { transform: translateX(-16px); }
+.math-rpg-hud.rpg-collapsed .rpg-profile-tools { transform: translateX(-20px); }
+
+.math-mode .info-drawer {
+    top: 0;
+    right: 0 !important;
+    width: 400px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 40px;
+    border-left: 5px solid #8bd1ff;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: -24px 0 65px rgba(15, 23, 42, .16);
+    transform: translateX(105%);
+    transition: transform .42s cubic-bezier(.16, 1, .3, 1), box-shadow .36s ease !important;
+    will-change: transform;
+}
+
+.math-mode .info-drawer.open { transform: translateX(0); }
+.math-mode .drawer-overlay { display: block !important; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .28s ease, visibility .28s ease !important; }
+.math-mode .drawer-overlay.visible { display: block; opacity: 1; visibility: visible; pointer-events: auto; }
+
+.math-hub-view {
+    align-items: stretch;
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding: clamp(18px, 3vw, 36px);
+    background-image: linear-gradient(rgba(244, 251, 255, .9), rgba(247, 247, 255, .93)), url('aiedu_math_bg.svg');
+    background-size: cover;
+    background-position: center;
+}
+
+.math-hub-shell {
+    width: min(1160px, 100%);
+    min-height: 100%;
+    margin: 0 auto;
+    padding: clamp(20px, 3vw, 34px);
+    border: 2px solid rgba(139, 209, 255, .72);
+    border-radius: 34px;
+    background: rgba(249, 253, 255, .96);
+    box-shadow: 0 24px 64px rgba(31, 91, 128, .16);
+}
+
+.math-hub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 22px;
+    border-bottom: 2px solid #e5f3fb;
+}
+
+.math-hub-header h1 { margin: 6px 0 2px; color: #20364b; font-size: clamp(1.8rem, 4vw, 2.65rem); font-weight: 900; letter-spacing: -.035em; }
+.math-hub-header p { margin: 0; color: #64748b; font-weight: 700; }
+.math-hub-badge { display: inline-flex; padding: 7px 14px; border-radius: 999px; color: #fff; font-size: .78rem; font-weight: 900; }
+.math-hub-badge.records { background: #1688cf; }
+.math-hub-badge.review { background: #14b8a6; }
+.math-hub-badge.class { background: #8b5cf6; }
+.math-hub-content { padding-top: 24px; }
+.math-hub-empty { min-height: 330px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 32px; border: 2px dashed #cbe8f7; border-radius: 28px; background: #fff; text-align: center; }
+.math-hub-empty > span { font-size: 4rem; }
+.math-hub-empty strong { color: #20364b; font-size: 1.35rem; font-weight: 900; }
+.math-hub-empty p { margin: 0; color: #718096; font-weight: 700; }
+
+@media (max-width: 1024px) {
+    body.rpg-hud-active .premium-card { width: calc(100vw - 16px); height: clamp(750px, calc(100dvh - 16px), 920px); border-width: 8px; border-radius: 36px; }
+    .aiedue-rpg-hud { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); bottom: auto; left: auto; flex-direction: column; align-items: flex-end; max-width: calc(100vw - 24px); }
+    .math-rpg-hud .rpg-action-tray { position: absolute; top: calc(100% + 8px); right: 0; bottom: auto; left: auto; height: 0; flex-wrap: wrap; transform: translateY(-10px) scale(.98); transform-origin: top right; }
+    .math-rpg-hud.actions-open .rpg-action-tray { width: min(540px, calc(100vw - 24px)); height: 68px; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+    .aiedue-rpg-hud { top: max(9px, env(safe-area-inset-top)); right: max(9px, env(safe-area-inset-right)); left: auto; width: min(430px, calc(100vw - 18px)); }
+    .math-rpg-hud .rpg-profile-banner { width: 100%; min-width: 0; height: 86px; padding: 8px 6px 18px 72px; gap: 4px; }
+    .math-rpg-hud .rpg-profile-portrait { left: 8px; top: 50%; bottom: auto; width: 56px; height: 56px; }
+    .math-rpg-hud .rpg-profile-copy { min-width: 65px; }
+    .math-rpg-hud .rpg-profile-copy strong { max-width: 92px; font-size: .8rem; }
+    .math-rpg-hud .rpg-wallet-line { flex-direction: column; gap: 0; font-size: .58rem; }
+    .math-rpg-hud .rpg-profile-tools { gap: 3px; transform: translate(-12px, -4px); }
+    .math-rpg-hud .rpg-tool-button { min-width: 33px; width: 33px; height: 40px; border-radius: 12px; font-size: .5rem; }
+    .math-rpg-hud .rpg-action-tray { top: calc(100% + 7px); right: 0; bottom: auto; left: auto; width: 0; height: 0; }
+    .math-rpg-hud.actions-open .rpg-action-tray { width: min(340px, 100%); height: 124px; }
+    .math-rpg-hud .rpg-action-button { min-width: 0; flex: 0 0 calc(50% - 4px); height: 50px; gap: 5px; padding: 3px 6px; border-radius: 14px; }
+    .math-rpg-hud .rpg-action-button > span:last-child { font-size: .68rem; }
+    .math-rpg-hud .rpg-experience-track { left: 62px; right: 5px; }
+    .math-rpg-hud .rpg-experience-label { right: 9px; }
+    .math-mode .info-drawer { width: min(400px, 100vw); padding: 28px 22px; }
+    .math-hub-header { align-items: flex-start; flex-direction: column; }
+    .math-hub-header .btn-outline { width: 100%; }
+}
+
+@media (max-width: 520px) {
+    .math-rpg-hud .rpg-tool-button { min-width: 32px; width: 32px; }
+    .math-rpg-hud .rpg-tool-button > span:last-child { display: none; }
+}
+
+@media (max-width: 576px) {
+    body.rpg-hud-active .premium-card { width: 100%; height: 100dvh; max-height: 100dvh; border: 0; border-radius: 0; }
+}
