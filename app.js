@@ -1,6 +1,6 @@
 // =========================================================================
-// --- AIEDUE SCHOOL SHARED FIREBASE AUTH + FIRESTORE ENGINE ---
-// 에이두 스쿨과 같은 Firebase 프로젝트/Auth/Firestore를 직접 사용합니다.
+// --- AIEDUE SCHOOL SHARED FIREBASE AUTH + SELF-HOSTED DATA ENGINE ---
+// Firebase Auth만 임시 유지하고 Firestore/Storage 데이터는 에이두 데이터 서버를 사용합니다.
 // =========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import {
@@ -43,7 +43,7 @@ import {
     arrayUnion,
     arrayRemove,
     onSnapshot
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+} from "./korean-data-adapter.js?v=20260901-data-cutover-v1";
 import {
     getStorage,
     ref as storageRef,
@@ -52,7 +52,7 @@ import {
     getMetadata,
     getDownloadURL,
     deleteObject
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+} from "./korean-data-adapter.js?v=20260901-data-cutover-v1";
 import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm";
 import { PDFDocument } from "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm";
 

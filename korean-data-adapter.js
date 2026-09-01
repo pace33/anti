@@ -6,7 +6,7 @@ const DEFAULT_ENDPOINT = '/db-api/korean/v2';
 const DEFAULT_POLL_MS = 5000;
 const FIREBASE_VERSION = '11.6.1';
 const TYPE_KEY = '__koreanAdapterType';
-const config = globalThis.__KOREAN_DATA_ADAPTER__ || {};
+const config = globalThis.__KOREAN_DATA_ADAPTER__ ||= {};
 
 let testTransport = null;
 let bridgeOverride;
@@ -115,16 +115,30 @@ function encodeValue(value) {
     return value;
 }
 
+function integerOrNull(value) {
+    if (typeof value === 'number' && Number.isInteger(value)) return value;
+    if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) return Number(value);
+    return null;
+}
+
+function timestampFromMillis(value) {
+    const millis = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(millis)) return null;
+    const seconds = Math.floor(millis / 1000);
+    return [seconds, Math.floor((millis - seconds * 1000) * 1e6)];
+}
+
 function timestampParts(value) {
     if (!value || typeof value !== 'object') return null;
     if (value instanceof Timestamp) return [value.seconds, value.nanoseconds];
+    const seconds = integerOrNull(value.seconds ?? value._seconds);
+    const nanoseconds = integerOrNull(value.nanoseconds ?? value._nanoseconds ?? value.nanos ?? 0);
     if (value[TYPE_KEY] === 'timestamp' || value.__type === 'timestamp' || value.type === 'timestamp') {
-        return [value.seconds ?? value._seconds, value.nanoseconds ?? value._nanoseconds ?? value.nanos ?? 0];
+        if (value.millis !== undefined || value.milliseconds !== undefined) return timestampFromMillis(value.millis ?? value.milliseconds);
+        if (seconds !== null && nanoseconds !== null) return [seconds, nanoseconds];
+        return null;
     }
-    if (Number.isInteger(value._seconds) && Number.isInteger(value._nanoseconds ?? 0)) return [value._seconds, value._nanoseconds ?? 0];
-    if (Number.isInteger(value.seconds) && Number.isInteger(value.nanoseconds ?? value.nanos ?? 0)) {
-        return [value.seconds, value.nanoseconds ?? value.nanos ?? 0];
-    }
+    if (seconds !== null && nanoseconds !== null) return [seconds, nanoseconds];
     return null;
 }
 
