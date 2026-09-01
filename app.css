@@ -698,6 +698,19 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 .korean-record-band h2 { margin: 0 0 14px; color: #24563c; font-size: 1.35rem; font-weight: 1000; }
 .korean-record-word-list { display: flex; flex-wrap: wrap; gap: 9px; }
 .korean-record-word-list span { padding: 9px 14px; border: 2px solid #bbe0c1; border-radius: 999px; background: #fff; color: #24563c; font-size: 1.15rem; font-weight: 1000; }
+.korean-focus-section { margin-top: 22px; padding: 22px; border: 2px solid #ffd0a6; border-radius: 8px; background: #fffaf4; }
+.korean-focus-list { display: grid; gap: 10px; }
+.korean-focus-item { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 100px; padding: 15px; border: 2px solid #f3d7bd; border-radius: 8px; background: #fff; }
+.korean-focus-item.is-high { border-color: #f6a26d; }
+.korean-focus-rank { width: 40px; height: 40px; display: grid; place-content: center; border-radius: 50%; background: #ff8a3d; color: #fff; font-size: 1.15rem; font-weight: 1000; }
+.korean-focus-copy { min-width: 0; }
+.korean-focus-copy > span { color: #bf5a26; font-size: .78rem; font-weight: 1000; }
+.korean-focus-copy h3 { margin: 2px 0 4px; overflow: hidden; color: #294a60; font-size: 1.2rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
+.korean-focus-copy p { color: #70818b; font-size: .85rem; font-weight: 800; }
+.korean-focus-copy p strong { color: #bd4f2c; }
+.korean-focus-item .btn-outline { min-height: 44px; white-space: nowrap; }
+.korean-focus-clear { display: grid; gap: 4px; padding: 20px; border: 2px dashed #c8ddcc; border-radius: 8px; background: #fff; color: #6f8075; text-align: center; }
+.korean-focus-clear strong { color: #286947; font-size: 1.05rem; }
 .korean-growth-section { margin-top: 22px; padding-top: 22px; border-top: 2px solid #dce9e2; }
 .korean-growth-heading { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
 .korean-growth-heading h2 { margin: 0; color: #23455b; font-size: 1.55rem; font-weight: 1000; }
@@ -770,6 +783,9 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     .korean-records-header > button { align-self: flex-start; }
     .korean-record-summary { grid-template-columns: 1fr; }
     .korean-mistake-list { grid-template-columns: 1fr; }
+    .korean-focus-section { padding: 16px; }
+    .korean-focus-item { grid-template-columns: 40px minmax(0, 1fr); }
+    .korean-focus-item .btn-outline { grid-column: 1 / -1; width: 100%; }
     .korean-growth-grid { grid-template-columns: 1fr; }
     .korean-area-row { grid-template-columns: minmax(92px, 1fr) minmax(100px, 1.5fr) 42px; gap: 7px; }
     .korean-mastery-visual { grid-template-columns: 118px minmax(0, 1fr); }

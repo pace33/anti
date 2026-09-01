@@ -130,3 +130,39 @@ export function summarizeKoreanMasteryDistribution(masteryByKey = {}) {
     });
     return result;
 }
+
+export function buildKoreanGrowthRecommendations(attempts = [], masteryByKey = {}, limit = 3) {
+    const units = new Map();
+    attempts.forEach((attempt) => {
+        const unitId = Number(attempt.unitId);
+        if (!Number.isInteger(unitId) || unitId < 1 || typeof attempt.isCorrect !== 'boolean') return;
+        if (!units.has(unitId)) {
+            units.set(unitId, { unitId, attempts: 0, correctAttempts: 0, wrongAttempts: 0, wrongQuestions: new Set() });
+        }
+        const unit = units.get(unitId);
+        unit.attempts += 1;
+        if (attempt.isCorrect) {
+            unit.correctAttempts += 1;
+            return;
+        }
+        unit.wrongAttempts += 1;
+        unit.wrongQuestions.add(attempt.questionId || buildKoreanQuestionId(attempt));
+    });
+    const masteryItems = Object.values(masteryByKey || {}).filter(Boolean);
+    const activeUnits = new Set(masteryItems
+        .filter((item) => ['weak', 'learning'].includes(item.masteryStatus))
+        .map((item) => Number(item.unitId))
+        .filter((unitId) => Number.isInteger(unitId) && unitId > 0));
+    return [...units.values()]
+        .filter((unit) => unit.wrongAttempts > 0 && (!masteryItems.length || activeUnits.has(unit.unitId)))
+        .map((unit) => ({
+            unitId: unit.unitId,
+            attempts: unit.attempts,
+            wrongAttempts: unit.wrongAttempts,
+            wrongQuestions: unit.wrongQuestions.size,
+            accuracy: Math.round((unit.correctAttempts / unit.attempts) * 100),
+            priority: unit.wrongAttempts >= 3 || (unit.attempts >= 2 && unit.correctAttempts / unit.attempts < 0.5) ? 'high' : 'practice'
+        }))
+        .sort((a, b) => b.wrongAttempts - a.wrongAttempts || a.accuracy - b.accuracy || a.unitId - b.unitId)
+        .slice(0, Math.max(0, limit));
+}

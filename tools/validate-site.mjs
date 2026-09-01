@@ -443,6 +443,7 @@ assert(app.includes("attemptSource: 'review'") && app.includes('studentAnswer: u
 assert(app.includes('runTransaction(db') && app.includes('koreanQuestionMastery'), '시도 기록과 문제별 숙련 상태의 트랜잭션 저장이 없습니다.');
 assert(app.includes("button.classList.remove('hidden')") && !app.includes("button.classList.toggle('hidden', currentUserRole === 'teacher')"), '교사 테스트 계정에서 복습/기록 메뉴가 숨겨집니다.');
 ['나의 한글 성장', '영역별 도달 정도', '복습 상태', '최근 7일 학습 발자국'].forEach((marker) => assert(app.includes(marker), `나의 기록 성장 그래프가 없습니다: ${marker}`));
+['성장이 필요한 단원', '이 단원 공부하기', 'openKoreanGrowthUnit', 'buildKoreanGrowthRecommendations'].forEach((marker) => assert(app.includes(marker), `성장 필요 단원 안내가 없습니다: ${marker}`));
 ['buildKoreanAreaProgress', 'buildKoreanWeeklyProgress', 'summarizeKoreanMasteryDistribution'].forEach((marker) => assert(app.includes(marker), `성장 그래프 실제 데이터 계산이 없습니다: ${marker}`));
 
 ['.skip-link', ':focus-visible', 'prefers-reduced-motion', 'forced-colors'].forEach((marker) => {

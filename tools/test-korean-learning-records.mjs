@@ -3,6 +3,7 @@ import {
     MASTERY_CORRECT_THRESHOLD,
     applyKoreanMasteryAttempt,
     buildKoreanAreaProgress,
+    buildKoreanGrowthRecommendations,
     buildKoreanQuestionId,
     buildKoreanWeeklyProgress,
     getKoreanMasteryKey,
@@ -71,5 +72,21 @@ const masteryDistribution = summarizeKoreanMasteryDistribution({
     mastered: { masteryStatus: 'mastered' }
 });
 assert.deepEqual(masteryDistribution, { weak: 1, learning: 1, mastered: 1, total: 3 });
+
+const growthRecommendations = buildKoreanGrowthRecommendations([
+    { ...base, unitId: 1, questionId: 'vowel-1', isCorrect: false },
+    { ...base, unitId: 1, questionId: 'vowel-1', isCorrect: false },
+    { ...base, unitId: 1, questionId: 'vowel-2', isCorrect: true },
+    { ...base, unitId: 2, questionId: 'consonant-1', isCorrect: false },
+    { ...base, unitId: 2, questionId: 'consonant-2', isCorrect: true },
+    { ...base, unitId: 3, questionId: 'word-1', isCorrect: false }
+], {
+    vowel: { unitId: 1, masteryStatus: 'weak' },
+    consonant: { unitId: 2, masteryStatus: 'learning' },
+    masteredWord: { unitId: 3, masteryStatus: 'mastered' }
+});
+assert.equal(growthRecommendations.length, 2);
+assert.deepEqual(growthRecommendations[0], { unitId: 1, attempts: 3, wrongAttempts: 2, wrongQuestions: 1, accuracy: 33, priority: 'high' });
+assert.equal(growthRecommendations[1].unitId, 2);
 
 console.log('한글 학생 기록/숙련도 테스트 완료');

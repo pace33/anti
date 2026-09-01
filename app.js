@@ -16,6 +16,7 @@ import { firebaseConfig } from "./firebase-config.js";
 import {
     applyKoreanMasteryAttempt,
     buildKoreanAreaProgress,
+    buildKoreanGrowthRecommendations,
     buildKoreanQuestionId,
     buildKoreanWeeklyProgress,
     getKoreanMasteryKey,
@@ -11234,6 +11235,7 @@ function renderKoreanRecordDashboard() {
     }
     const unitLabels = Object.fromEntries(Object.values(unitMeta).map((item) => [item.unit, item.label]));
     const areaProgress = buildKoreanAreaProgress(attempts);
+    const growthRecommendations = buildKoreanGrowthRecommendations(attempts, koreanMasteryCache);
     const weeklyProgress = buildKoreanWeeklyProgress(attempts);
     const mastery = summarizeKoreanMasteryDistribution(koreanMasteryCache);
     const weeklyMax = Math.max(1, ...weeklyProgress.map((day) => day.correct));
@@ -11253,6 +11255,10 @@ function renderKoreanRecordDashboard() {
             <button type="button" class="btn-outline" onclick="openKoreanMistakes()">📕 오답노트 보기</button>
         </div>
         <section class="korean-record-band"><h2>🔥 다시 만나볼 한글</h2><div class="korean-record-word-list">${reviewItems.length ? reviewItems.map((item) => `<span>${escapeHtml(getKoreanMasteryDisplayText(item))}</span>`).join('') : '<span>오늘 복습할 문제가 없어요!</span>'}</div></section>
+        <section class="korean-focus-section" aria-labelledby="korean-focus-title">
+            <div class="korean-growth-heading"><div><h2 id="korean-focus-title">🎯 성장이 필요한 단원</h2><p>자주 틀린 기록을 보고 먼저 공부하면 좋은 단원을 골랐어요.</p></div></div>
+            ${growthRecommendations.length ? `<div class="korean-focus-list">${growthRecommendations.map((unit, index) => `<article class="korean-focus-item ${unit.priority === 'high' ? 'is-high' : ''}"><div class="korean-focus-rank">${index + 1}</div><div class="korean-focus-copy"><span>${unit.priority === 'high' ? '먼저 공부해요' : '조금 더 연습해요'}</span><h3>${escapeHtml(unitLabels[unit.unitId] || `${unit.unitId}단원`)}</h3><p><strong>${unit.wrongAttempts}번</strong> 틀렸어요 · 정답률 <strong>${unit.accuracy}%</strong></p></div><button type="button" class="btn-outline" onclick="openKoreanGrowthUnit(${unit.unitId})">이 단원 공부하기</button></article>`).join('')}</div>` : '<div class="korean-focus-clear"><strong>지금은 집중해서 공부할 단원이 없어요.</strong><span>새로운 학습 기록이 쌓이면 필요한 단원을 알려줄게요.</span></div>'}
+        </section>
         <section class="korean-growth-section" aria-labelledby="korean-growth-title">
             <div class="korean-growth-heading"><div><h2 id="korean-growth-title">📈 나의 한글 성장</h2><p>공부한 기록이 쌓일수록 그래프도 함께 자라요.</p></div></div>
             <div class="korean-growth-grid">
@@ -11273,6 +11279,13 @@ window.openKoreanRecords = async function openKoreanRecords(options = {}) {
     setKoreanLearningMenuActive('records');
     if (options.pushUrl !== false) updateKoreanStudentViewUrl('records');
     renderKoreanRecordDashboard();
+};
+
+window.openKoreanGrowthUnit = function openKoreanGrowthUnit(unitId) {
+    const entry = Object.entries(unitMeta).find(([, meta]) => meta.unit === Number(unitId));
+    if (!entry) return;
+    activeUnitKey = entry[0];
+    openMyKoreanSection();
 };
 
 let koreanMistakeFilter = 'all';
