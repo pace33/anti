@@ -88,3 +88,45 @@ export function summarizeKoreanStudentRecords(attempts = [], masteryByKey = {}, 
         masteredCount: masteryItems.filter((item) => item.masteryStatus === 'mastered').length
     };
 }
+
+export function buildKoreanAreaProgress(attempts = []) {
+    const areas = new Map();
+    attempts.forEach((attempt) => {
+        const unitId = Number(attempt.unitId);
+        if (!Number.isInteger(unitId) || unitId < 1) return;
+        if (!areas.has(unitId)) areas.set(unitId, new Map());
+        const questions = areas.get(unitId);
+        const questionId = attempt.questionId || buildKoreanQuestionId(attempt);
+        const current = questions.get(questionId) || false;
+        questions.set(questionId, current || Boolean(attempt.isCorrect));
+    });
+    return [...areas.entries()].sort((a, b) => a[0] - b[0]).map(([unitId, questions]) => {
+        const total = questions.size;
+        const reached = [...questions.values()].filter(Boolean).length;
+        return { unitId, total, reached, rate: total ? Math.round((reached / total) * 100) : 0 };
+    });
+}
+
+export function buildKoreanWeeklyProgress(attempts = [], now = new Date()) {
+    const days = [];
+    for (let offset = 6; offset >= 0; offset -= 1) {
+        const date = new Date(now);
+        date.setHours(12, 0, 0, 0);
+        date.setDate(date.getDate() - offset);
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        const dayAttempts = attempts.filter((attempt) => String(attempt.localDate || attempt.createdAt || '').slice(0, 10) === localDate);
+        const correctQuestions = new Set(dayAttempts.filter((attempt) => attempt.isCorrect).map((attempt) => attempt.questionId || buildKoreanQuestionId(attempt)));
+        days.push({ localDate, label: `${date.getMonth() + 1}/${date.getDate()}`, attempts: dayAttempts.length, correct: correctQuestions.size });
+    }
+    return days;
+}
+
+export function summarizeKoreanMasteryDistribution(masteryByKey = {}) {
+    const result = { weak: 0, learning: 0, mastered: 0, total: 0 };
+    Object.values(masteryByKey || {}).forEach((item) => {
+        if (!item || !Object.hasOwn(result, item.masteryStatus)) return;
+        result[item.masteryStatus] += 1;
+        result.total += 1;
+    });
+    return result;
+}

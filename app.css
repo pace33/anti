@@ -698,6 +698,45 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 .korean-record-band h2 { margin: 0 0 14px; color: #24563c; font-size: 1.35rem; font-weight: 1000; }
 .korean-record-word-list { display: flex; flex-wrap: wrap; gap: 9px; }
 .korean-record-word-list span { padding: 9px 14px; border: 2px solid #bbe0c1; border-radius: 999px; background: #fff; color: #24563c; font-size: 1.15rem; font-weight: 1000; }
+.korean-growth-section { margin-top: 22px; padding-top: 22px; border-top: 2px solid #dce9e2; }
+.korean-growth-heading { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.korean-growth-heading h2 { margin: 0; color: #23455b; font-size: 1.55rem; font-weight: 1000; }
+.korean-growth-heading p { margin-top: 4px; color: #70818b; font-size: .9rem; font-weight: 800; }
+.korean-growth-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: 12px; }
+.korean-growth-panel { min-width: 0; padding: 20px; border: 2px solid #d4e2e7; border-radius: 8px; background: #fff; box-shadow: 0 8px 20px rgba(44,62,80,.06); }
+.korean-growth-panel h3 { margin: 0 0 16px; color: #294a60; font-size: 1.15rem; font-weight: 1000; }
+.korean-area-bars { display: grid; gap: 14px; }
+.korean-area-row { display: grid; grid-template-columns: minmax(105px, 1fr) minmax(120px, 2fr) 46px; align-items: center; gap: 10px; }
+.korean-area-row > div:first-child { min-width: 0; }
+.korean-area-row strong { display: block; overflow: hidden; color: #294a60; font-size: .9rem; text-overflow: ellipsis; white-space: nowrap; }
+.korean-area-row span { color: #7b8a93; font-size: .72rem; font-weight: 800; }
+.korean-area-row b { color: #237c61; text-align: right; font-size: .9rem; }
+.korean-area-track { height: 14px; overflow: hidden; border-radius: 999px; background: #e9f0ee; }
+.korean-area-track > span { display: block; height: 100%; border-radius: inherit; background: #42b879; transition: width .35s ease; }
+.korean-chart-empty { padding: 28px 10px; color: #8a9992; text-align: center; font-weight: 800; }
+.korean-mastery-visual { display: grid; grid-template-columns: 130px minmax(0, 1fr); align-items: center; gap: 18px; }
+.korean-mastery-donut { position: relative; width: 130px; aspect-ratio: 1; border-radius: 50%; }
+.korean-mastery-donut::after { position: absolute; inset: 22px; content: ''; border-radius: 50%; background: #fff; }
+.korean-mastery-donut > span { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; text-align: center; }
+.korean-mastery-donut strong { color: #294a60; font-size: 1.7rem; line-height: 1; }
+.korean-mastery-donut small { margin-top: 4px; color: #7d8b94; font-size: .7rem; font-weight: 900; }
+.korean-mastery-visual ul { display: grid; gap: 9px; }
+.korean-mastery-visual li { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 8px; color: #5c6e79; font-size: .82rem; font-weight: 900; }
+.korean-mastery-visual li i { width: 10px; height: 10px; border-radius: 50%; }
+.korean-mastery-visual li i.weak { background: #ef765f; }
+.korean-mastery-visual li i.learning { background: #f2c94c; }
+.korean-mastery-visual li i.mastered { background: #42b879; }
+.korean-mastery-visual li strong { color: #294a60; }
+.korean-weekly-chart { margin-top: 12px; }
+.korean-weekly-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.korean-weekly-heading h3 { margin-bottom: 0; }
+.korean-weekly-heading span { color: #75858f; font-size: .78rem; font-weight: 900; }
+.korean-weekly-bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: end; gap: 10px; height: 190px; margin-top: 14px; }
+.korean-weekly-day { height: 100%; display: grid; grid-template-rows: 22px 1fr 22px; align-items: end; text-align: center; }
+.korean-weekly-day strong { color: #2b6f8d; font-size: .78rem; }
+.korean-weekly-day small { color: #75858f; font-size: .72rem; font-weight: 900; }
+.korean-weekly-track { height: 132px; display: flex; align-items: end; justify-content: center; border-bottom: 2px solid #d7e3e8; }
+.korean-weekly-track span { display: block; width: min(34px, 72%); min-height: 4px; border-radius: 6px 6px 0 0; background: #54a9c9; transition: height .35s ease; }
 .korean-empty-state { padding: 56px 22px; border: 2px dashed #bed9c4; border-radius: 8px; background: #fbfffa; text-align: center; }
 .korean-empty-state h2 { color: #284c3c; font-size: 1.65rem; font-weight: 1000; }
 .korean-empty-state p { margin: 9px 0 22px; color: #65796d; font-weight: 800; }
@@ -731,6 +770,12 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     .korean-records-header > button { align-self: flex-start; }
     .korean-record-summary { grid-template-columns: 1fr; }
     .korean-mistake-list { grid-template-columns: 1fr; }
+    .korean-growth-grid { grid-template-columns: 1fr; }
+    .korean-area-row { grid-template-columns: minmax(92px, 1fr) minmax(100px, 1.5fr) 42px; gap: 7px; }
+    .korean-mastery-visual { grid-template-columns: 118px minmax(0, 1fr); }
+    .korean-mastery-donut { width: 118px; }
+    .korean-weekly-bars { gap: 5px; height: 170px; }
+    .korean-weekly-track { height: 112px; }
 }
 #drawing-workspace-back-btn {
     position: static;

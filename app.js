@@ -15,9 +15,12 @@ import {
 import { firebaseConfig } from "./firebase-config.js";
 import {
     applyKoreanMasteryAttempt,
+    buildKoreanAreaProgress,
     buildKoreanQuestionId,
+    buildKoreanWeeklyProgress,
     getKoreanMasteryKey,
     getTodayReviewQuestions,
+    summarizeKoreanMasteryDistribution,
     summarizeKoreanStudentRecords
 } from "./korean-learning-records.mjs";
 import {
@@ -11229,6 +11232,16 @@ function renderKoreanRecordDashboard() {
         root.innerHTML = `<section class="korean-empty-state"><h2>📒 아직 학습 기록이 없어요.</h2><p>한글 공부를 시작하면 여기에 나의 기록이 차곡차곡 쌓여요! 🌱</p><button type="button" class="btn-primary" onclick="goHangulDashboard()">한글 공부하러 가기</button></section>`;
         return;
     }
+    const unitLabels = Object.fromEntries(Object.values(unitMeta).map((item) => [item.unit, item.label]));
+    const areaProgress = buildKoreanAreaProgress(attempts);
+    const weeklyProgress = buildKoreanWeeklyProgress(attempts);
+    const mastery = summarizeKoreanMasteryDistribution(koreanMasteryCache);
+    const weeklyMax = Math.max(1, ...weeklyProgress.map((day) => day.correct));
+    const weakPercent = mastery.total ? Math.round((mastery.weak / mastery.total) * 100) : 0;
+    const learningPercent = mastery.total ? Math.round((mastery.learning / mastery.total) * 100) : 0;
+    const masteryChart = mastery.total
+        ? `conic-gradient(#ef765f 0 ${weakPercent}%, #f2c94c ${weakPercent}% ${weakPercent + learningPercent}%, #42b879 ${weakPercent + learningPercent}% 100%)`
+        : 'conic-gradient(#dfe8e3 0 100%)';
     root.innerHTML = `
         <section class="korean-record-summary" aria-label="오늘 학습 요약">
             <div class="korean-record-stat"><span>오늘 공부</span><strong>${summary.todayAttempts}문제</strong></div>
@@ -11240,6 +11253,14 @@ function renderKoreanRecordDashboard() {
             <button type="button" class="btn-outline" onclick="openKoreanMistakes()">📕 오답노트 보기</button>
         </div>
         <section class="korean-record-band"><h2>🔥 다시 만나볼 한글</h2><div class="korean-record-word-list">${reviewItems.length ? reviewItems.map((item) => `<span>${escapeHtml(getKoreanMasteryDisplayText(item))}</span>`).join('') : '<span>오늘 복습할 문제가 없어요!</span>'}</div></section>
+        <section class="korean-growth-section" aria-labelledby="korean-growth-title">
+            <div class="korean-growth-heading"><div><h2 id="korean-growth-title">📈 나의 한글 성장</h2><p>공부한 기록이 쌓일수록 그래프도 함께 자라요.</p></div></div>
+            <div class="korean-growth-grid">
+                <article class="korean-growth-panel korean-area-progress"><h3>영역별 도달 정도</h3><div class="korean-area-bars">${areaProgress.length ? areaProgress.map((area) => `<div class="korean-area-row"><div><strong>${escapeHtml(unitLabels[area.unitId] || `${area.unitId}단원`)}</strong><span>${area.reached}/${area.total}문제</span></div><div class="korean-area-track" role="progressbar" aria-label="${escapeHtml(unitLabels[area.unitId] || `${area.unitId}단원`)} 도달 정도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${area.rate}"><span style="width:${area.rate}%"></span></div><b>${area.rate}%</b></div>`).join('') : '<p class="korean-chart-empty">영역별 기록이 곧 쌓여요.</p>'}</div></article>
+                <article class="korean-growth-panel korean-mastery-chart"><h3>복습 상태</h3><div class="korean-mastery-visual"><div class="korean-mastery-donut" role="img" aria-label="다시 연습 ${mastery.weak}개, 연습 중 ${mastery.learning}개, 익혔어요 ${mastery.mastered}개" style="background:${masteryChart}"><span><strong>${mastery.total}</strong><small>복습 문제</small></span></div><ul><li><i class="weak"></i><span>다시 연습</span><strong>${mastery.weak}</strong></li><li><i class="learning"></i><span>연습 중</span><strong>${mastery.learning}</strong></li><li><i class="mastered"></i><span>익혔어요</span><strong>${mastery.mastered}</strong></li></ul></div></article>
+            </div>
+            <article class="korean-growth-panel korean-weekly-chart"><div class="korean-weekly-heading"><h3>최근 7일 학습 발자국</h3><span>날짜별 맞힌 문제</span></div><div class="korean-weekly-bars">${weeklyProgress.map((day) => `<div class="korean-weekly-day"><strong>${day.correct}</strong><div class="korean-weekly-track"><span style="height:${day.correct ? Math.max(14, Math.round((day.correct / weeklyMax) * 100)) : 4}%"></span></div><small>${day.label}</small></div>`).join('')}</div></article>
+        </section>
         <section class="korean-record-summary mt-4" aria-label="숙련 상태">
             <div class="korean-record-stat"><span>🌱 연습 중</span><strong>${summary.learningCount}개</strong></div>
             <div class="korean-record-stat"><span>⭐ 익혔어요</span><strong>${summary.masteredCount}개</strong></div>

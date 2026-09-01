@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import {
     MASTERY_CORRECT_THRESHOLD,
     applyKoreanMasteryAttempt,
+    buildKoreanAreaProgress,
     buildKoreanQuestionId,
+    buildKoreanWeeklyProgress,
     getKoreanMasteryKey,
     getTodayReviewQuestions,
+    summarizeKoreanMasteryDistribution,
     summarizeKoreanStudentRecords
 } from '../korean-learning-records.mjs';
 
@@ -46,5 +49,27 @@ const summary = summarizeKoreanStudentRecords([
 assert.equal(summary.todayAttempts, 2);
 assert.equal(summary.todayCorrect, 1);
 assert.equal(summary.reviewCount, 1);
+
+const areaProgress = buildKoreanAreaProgress([
+    { ...base, unitId: 1, isCorrect: false },
+    { ...base, unitId: 1, isCorrect: true },
+    { ...base, unitId: 1, questionId: 'another-question', isCorrect: false }
+]);
+assert.deepEqual(areaProgress, [{ unitId: 1, total: 2, reached: 1, rate: 50 }]);
+
+const weeklyProgress = buildKoreanWeeklyProgress([
+    { ...base, isCorrect: true, localDate: '2026-09-01' },
+    { ...base, isCorrect: true, localDate: '2026-09-01' },
+    { ...base, questionId: 'another-question', isCorrect: true, localDate: '2026-09-01' }
+], new Date('2026-09-01T12:00:00+09:00'));
+assert.equal(weeklyProgress.length, 7);
+assert.equal(weeklyProgress.at(-1).correct, 2);
+
+const masteryDistribution = summarizeKoreanMasteryDistribution({
+    weak: mastery,
+    learning: { masteryStatus: 'learning' },
+    mastered: { masteryStatus: 'mastered' }
+});
+assert.deepEqual(masteryDistribution, { weak: 1, learning: 1, mastered: 1, total: 3 });
 
 console.log('한글 학생 기록/숙련도 테스트 완료');
