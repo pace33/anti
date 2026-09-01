@@ -17,6 +17,13 @@ import {
     setDoc
 } from "./aiedu-data-adapter.js?v=20260901-math-data-v1";
 import { firebaseConfig } from "./firebase-config.js";
+import {
+    TIME_QUIZ_REWARDS,
+    buildClockOptions,
+    clockMisconceptionTag,
+    generateClockTime,
+    validateClockInput
+} from "./math-quality-core.mjs?v=20260901-math-quality-v1";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -42,7 +49,7 @@ const topLevelSectionIds = [
 ];
 const TIME_QUIZ_DIFFICULTIES = ['easy', 'middle', 'hard', 'very-hard'];
 const TIME_QUIZ_DIFFICULTY_LABELS = { easy: '쉬움', middle: '보통', hard: '어려움', 'very-hard': '매우 어려움' };
-const TIME_QUIZ_EXP_REWARDS = { easy: 1, middle: 3, hard: 5, 'very-hard': 10 };
+const TIME_QUIZ_EXP_REWARDS = TIME_QUIZ_REWARDS;
 const MATH_LEVEL_EXP_REQUIRED = 100;
 const MATH_LEVEL_UP_COINS = 1000;
 const timeQuizState = {
@@ -53,7 +60,14 @@ const timeQuizState = {
     selectedAnswer: null,
     attemptsLeft: 3,
     isLocked: false,
-    lastCompletionAt: ''
+    lastCompletionAt: '',
+    recentTimes: [],
+    questionInstanceId: '',
+    correctAttemptId: '',
+    wrongAttemptOrdinal: 0,
+    submitting: false,
+    settled: false,
+    nextQuestionTimer: null
 };
 
 function showTopLevelSection(sectionId) {
@@ -516,6 +530,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function setTimeQuizDifficulty(difficulty) {
+    if (timeQuizState.submitting) return;
     if (!TIME_QUIZ_DIFFICULTIES.includes(difficulty)) return;
     timeQuizState.difficulty = difficulty;
     timeQuizState.selectedAnswer = null;
@@ -564,7 +579,14 @@ function generateTimeQuizQuestion() {
     lockMessage.classList.add('hidden');
     lockMessage.textContent = '';
     disableTimeQuizInputs(false);
+    window.clearTimeout(timeQuizState.nextQuestionTimer);
     timeQuizState.correctAnswer = generateTimeByDifficulty(timeQuizState.difficulty);
+    timeQuizState.recentTimes = [...timeQuizState.recentTimes, timeQuizState.correctAnswer].slice(-3);
+    timeQuizState.questionInstanceId = globalThis.crypto?.randomUUID?.() || `clock-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    timeQuizState.correctAttemptId = `time-quiz:${currentUserId || 'anonymous'}:${timeQuizState.questionInstanceId}:correct`;
+    timeQuizState.wrongAttemptOrdinal = 0;
+    timeQuizState.submitting = false;
+    timeQuizState.settled = false;
     timeQuizState.selectedAnswer = null;
     if (timeQuizState.difficulty === 'very-hard') timeQuizState.attemptsLeft = 3;
     renderTimeQuizAnswerArea();
@@ -577,16 +599,11 @@ function disableTimeQuizInputs(disabled) {
     document.getElementById('time-quiz-check-btn').disabled = disabled;
     document.querySelectorAll('#time-quiz-options button').forEach((button) => { button.disabled = disabled; });
     ['time-quiz-hour-input', 'time-quiz-minute-input'].forEach((id) => { document.getElementById(id).disabled = disabled; });
+    document.querySelectorAll('.time-difficulty-btn').forEach((button) => { button.disabled = disabled; });
 }
 
 function generateTimeByDifficulty(difficulty) {
-    const hour = Math.floor(Math.random() * 12) + 1;
-    if (difficulty === 'easy') return { hour, minute: 0 };
-    if (difficulty === 'middle') {
-        const options = [0, 15, 30, 45];
-        return { hour, minute: options[Math.floor(Math.random() * options.length)] };
-    }
-    return { hour, minute: Math.floor(Math.random() * 60) };
+    return generateClockTime(difficulty, Math.random, timeQuizState.recentTimes);
 }
 
 function renderTimeQuizAnswerArea() {
@@ -612,8 +629,9 @@ function renderTimeQuizAnswerArea() {
         button.textContent = `${index + 1}. ${formatTimeQuizLabel(option.hour, option.minute)}`;
         button.dataset.hour = String(option.hour);
         button.dataset.minute = String(option.minute);
+        button.dataset.misconceptionTag = option.misconceptionTag || '';
         button.addEventListener('click', () => {
-            if (timeQuizState.isLocked) return;
+            if (timeQuizState.isLocked || timeQuizState.submitting || timeQuizState.settled) return;
             document.querySelectorAll('.time-option-btn').forEach((btn) => btn.classList.remove('selected'));
             button.classList.add('selected');
             timeQuizState.selectedAnswer = option;
@@ -623,12 +641,7 @@ function renderTimeQuizAnswerArea() {
 }
 
 function buildTimeQuizOptions() {
-    const options = [timeQuizState.correctAnswer];
-    while (options.length < 4) {
-        const candidate = generateTimeByDifficulty(timeQuizState.difficulty);
-        if (!options.some((opt) => opt.hour === candidate.hour && opt.minute === candidate.minute)) options.push(candidate);
-    }
-    return options.sort(() => Math.random() - 0.5);
+    return buildClockOptions(timeQuizState.correctAnswer, timeQuizState.difficulty);
 }
 
 function formatTimeQuizLabel(hour, minute) {
@@ -637,72 +650,22 @@ function formatTimeQuizLabel(hour, minute) {
 
 async function awardMathExperience(expAmount, attempt = null) {
     const safeExpAmount = Math.max(0, Math.floor(Number(expAmount) || 0));
-    if (!currentUserId || safeExpAmount <= 0) {
-        return { levelUps: 0, warningReduced: 0 };
-    }
-
-    if (attempt && window.aiedueMathData?.recordAttempt) {
-        return window.aiedueMathData.recordAttempt({
-            ...attempt,
-            isCorrect: true,
-            experienceReward: safeExpAmount
-        });
-    }
-
-    const userRef = doc(db, 'users', currentUserId);
-    const nextProfile = await runTransaction(db, async (transaction) => {
-        const userSnap = await transaction.get(userRef);
-        if (!userSnap.exists()) throw new Error('사용자 정보를 찾을 수 없습니다.');
-
-        const data = userSnap.data() || {};
-        const rawExperience = Math.max(0, Number(data.aeduExperience ?? data.experience ?? 0) || 0);
-        const currentExp = rawExperience >= 100 ? rawExperience % 100 : rawExperience;
-        const derivedLevel = Math.floor(rawExperience / MATH_LEVEL_EXP_REQUIRED) + 1;
-        const currentLevel = Math.max(derivedLevel, Math.floor(Number(data.aeduLevel ?? data.level ?? 1) || 1));
-        const currentBalance = Math.max(0, Math.floor(Number(data.balance ?? data.coins ?? 0) || 0));
-        const currentAeduTokens = Math.max(0, Math.floor(Number(data.aeduTokens ?? currentBalance) || 0));
-        const currentWarningTokens = Math.max(0, Math.floor(Number(data.warningTokens ?? 0) || 0));
-
-        const totalExp = currentExp + safeExpAmount;
-        const levelUps = Math.floor(totalExp / MATH_LEVEL_EXP_REQUIRED);
-        const nextExp = totalExp % MATH_LEVEL_EXP_REQUIRED;
-        const coinReward = levelUps * MATH_LEVEL_UP_COINS;
-        const warningReduced = Math.min(currentWarningTokens, levelUps);
-        const nextBalance = currentBalance + coinReward;
-
-        const updates = {
-            aeduExperience: nextExp,
-            aeduLevel: currentLevel + levelUps,
-            balance: nextBalance,
-            coins: nextBalance,
-            aeduTokens: currentAeduTokens + coinReward,
-            warningTokens: currentWarningTokens - warningReduced,
-            updatedAt: serverTimestamp()
-        };
-        transaction.set(userRef, updates, { merge: true });
-
-        return {
-            ...data,
-            ...updates,
-            id: userSnap.id,
-            levelUps,
-            warningReduced
-        };
+    if (!currentUserId || safeExpAmount <= 0) return { levelUps: 0, warningReduced: 0, levelUpPoints: 0 };
+    if (!attempt || !window.aiedueMathData?.recordAttempt) throw new Error('수학 학습 기록 서버가 준비되지 않았습니다.');
+    return window.aiedueMathData.recordAttempt({
+        ...attempt,
+        isCorrect: true,
+        experienceReward: safeExpAmount
     });
-
-    currentUserData = nextProfile;
-    renderProfile(currentUserData);
-    return {
-        levelUps: nextProfile.levelUps || 0,
-        warningReduced: nextProfile.warningReduced || 0
-    };
 }
 
 function buildTimeQuizAttempt(isCorrect, studentAnswer) {
     const difficulty = timeQuizState.difficulty;
     const correctAnswer = formatTimeQuizLabel(timeQuizState.correctAnswer.hour, timeQuizState.correctAnswer.minute);
     return {
-        attemptId: globalThis.crypto?.randomUUID?.() || `time-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        attemptId: isCorrect
+            ? timeQuizState.correctAttemptId
+            : `time-quiz:${currentUserId || 'anonymous'}:${timeQuizState.questionInstanceId}:wrong:${timeQuizState.wrongAttemptOrdinal}`,
         nodeId: 'g-time',
         nodeTitle: '시각과 시간',
         domain: 'geometry',
@@ -711,13 +674,18 @@ function buildTimeQuizAttempt(isCorrect, studentAnswer) {
         stepKey: `time-${difficulty}`,
         representation: difficulty === 'very-hard' ? 'symbol' : 'visualization',
         activityType: 'time-quiz',
-        questionId: `clock-${timeQuizState.correctAnswer.hour}-${timeQuizState.correctAnswer.minute}`,
+        difficulty,
+        answerMode: difficulty === 'very-hard' ? 'input' : 'choice',
+        questionInstanceId: timeQuizState.questionInstanceId,
+        attemptOrdinal: timeQuizState.wrongAttemptOrdinal,
+        experiencePolicyVersion: 1,
+        questionId: timeQuizState.questionInstanceId,
         correctAnswer,
         studentAnswer,
         isCorrect,
         completed: isCorrect && difficulty === 'very-hard',
         attemptSource: 'normal',
-        misconceptionTags: isCorrect ? [] : ['hour-minute-hand'],
+        misconceptionTags: isCorrect ? [] : [clockMisconceptionTag(timeQuizState.selectedAnswer, timeQuizState.correctAnswer)],
         createdAt: new Date().toISOString(),
         localDate: new Date().toLocaleDateString('sv-SE')
     };
@@ -729,14 +697,15 @@ async function persistTimeQuizAttempt(attempt, experienceReward = 0) {
 }
 
 async function checkTimeQuizAnswer() {
-    if (timeQuizState.isLocked) return;
+    if (timeQuizState.isLocked || timeQuizState.submitting || timeQuizState.settled) return;
     const correct = timeQuizState.correctAnswer;
     let isCorrect = false;
     if (timeQuizState.difficulty === 'very-hard') {
         const hour = parseInt(document.getElementById('time-quiz-hour-input').value, 10);
         const minute = parseInt(document.getElementById('time-quiz-minute-input').value, 10);
-        if (Number.isNaN(hour) || Number.isNaN(minute)) {
-            updateTimeQuizFeedback('시간과 분을 입력해주세요.', 'warn');
+        const inputError = validateClockInput(hour, minute);
+        if (inputError) {
+            updateTimeQuizFeedback(inputError, 'warn');
             return;
         }
         isCorrect = hour === correct.hour && minute === correct.minute;
@@ -747,9 +716,11 @@ async function checkTimeQuizAnswer() {
         }
         isCorrect = timeQuizState.selectedAnswer.hour === correct.hour && timeQuizState.selectedAnswer.minute === correct.minute;
     }
+    timeQuizState.submitting = true;
+    disableTimeQuizInputs(true);
     if (isCorrect) {
         const expReward = TIME_QUIZ_EXP_REWARDS[timeQuizState.difficulty];
-        let rewardResult = { levelUps: 0, warningReduced: 0 };
+        let rewardResult
         try {
             const studentAnswer = timeQuizState.difficulty === 'very-hard'
                 ? formatTimeQuizLabel(
@@ -761,18 +732,22 @@ async function checkTimeQuizAnswer() {
         } catch (error) {
             console.error('Math time quiz experience award failed:', error);
             updateTimeQuizFeedback('정답이지만 학습 기록을 저장하지 못했어요. 연결을 확인하고 다시 눌러주세요.', 'warn');
+            timeQuizState.submitting = false;
+            disableTimeQuizInputs(false);
             return;
         }
+        timeQuizState.settled = true;
         timeQuizState.consecutiveWrong = 0;
         if (rewardResult.levelUps > 0) {
             timeQuizState.lastCompletionAt = new Date().toISOString();
-            updateTimeQuizFeedback(`정답입니다! 레벨업으로 ${MATH_LEVEL_UP_COINS.toLocaleString('ko-KR')}원 지급, 주의토큰 ${rewardResult.warningReduced}개 감소!`, 'ok');
+            updateTimeQuizFeedback(`정답입니다! 경험치 +${rewardResult.grantedExperience || expReward} · ${rewardResult.levelUps}레벨 상승 · ${(rewardResult.levelUpPoints || 0).toLocaleString('ko-KR')}원 지급${rewardResult.warningReduced ? ` · 주의토큰 ${rewardResult.warningReduced}개 감소` : ''}!`, 'ok');
         } else {
             updateTimeQuizFeedback(`정답입니다! 경험치 +${expReward}`, 'ok');
         }
         highlightTimeQuizOptions();
-        window.setTimeout(generateTimeQuizQuestion, 700);
+        timeQuizState.nextQuestionTimer = window.setTimeout(generateTimeQuizQuestion, 900);
     } else {
+        timeQuizState.wrongAttemptOrdinal += 1;
         const studentAnswer = timeQuizState.difficulty === 'very-hard'
             ? formatTimeQuizLabel(
                 parseInt(document.getElementById('time-quiz-hour-input').value, 10),
@@ -784,8 +759,12 @@ async function checkTimeQuizAnswer() {
         } catch (error) {
             console.error('Math time quiz attempt save failed:', error);
             updateTimeQuizFeedback('학습 기록을 저장하지 못했어요. 연결을 확인하고 다시 눌러주세요.', 'warn');
+            timeQuizState.submitting = false;
+            disableTimeQuizInputs(false);
             return;
         }
+        timeQuizState.submitting = false;
+        disableTimeQuizInputs(false);
         if (timeQuizState.difficulty === 'very-hard') {
             timeQuizState.attemptsLeft -= 1;
             updateTimeQuizMeta();
@@ -814,7 +793,7 @@ async function checkTimeQuizAnswer() {
             generateTimeQuizQuestion();
             return;
         }
-        window.setTimeout(generateTimeQuizQuestion, 1000);
+        timeQuizState.nextQuestionTimer = window.setTimeout(generateTimeQuizQuestion, 1200);
     }
     updateTimeQuizMeta();
 }

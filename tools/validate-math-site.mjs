@@ -19,6 +19,7 @@ const requiredFiles = [
     'firebase-config.js',
     'aiedu-data-adapter.js',
     'math-learning-records.mjs',
+    'math-quality-core.mjs',
     'math.js',
     'math-services.js',
     'math-spiral.js',
@@ -42,6 +43,7 @@ const spiral = read('math-spiral.js');
 const navigation = read('math-domain-navigation.js');
 const adapter = read('aiedu-data-adapter.js');
 const records = read('math-learning-records.mjs');
+const quality = read('math-quality-core.mjs');
 
 [
     'dashboard-section',
@@ -109,6 +111,9 @@ assert(curriculumLessonCount === 51, '백업의 수학 나선형 교육과정 51
     assert(spiral.includes(`'${step}'`), `6단계 학습 표현이 없습니다: ${step}`);
 });
 assert(spiral.includes('aiedueMathData') && spiral.includes('recordAttempt'), '나선형 학습이 서버 시도 기록 API와 연결되지 않았습니다.');
+assert(math.includes('math-quality-core.mjs') && services.includes('math-quality-core.mjs'), '시간 퀴즈와 서버 보상이 공통 품질·보상 정책을 사용하지 않습니다.');
+['generateClockTime', 'buildClockOptions', 'experienceForAttempt', 'calculateWalletReward'].forEach((name) => assert(quality.includes(`export function ${name}`), `수학 품질 코어 API가 없습니다: ${name}`));
+assert(spiral.includes('auditAiedueMathQuestionQuality'), '수학 문제은행 무작위 품질 감사 API가 없습니다.');
 assert(services.includes("'mathStudentProgress'") && services.includes("'mathAttempts'"), '수학 진도/시도 컬렉션 계약이 없습니다.');
 assert(services.includes("'mathAssignments'"), '교사 수학 배정 컬렉션 계약이 없습니다.');
 assert(services.includes("'shopItems'") && services.includes("'purchaseLog'") && services.includes('assignedShopItems'), '국어와 공유하는 상점 데이터 계약이 없습니다.');

@@ -5,8 +5,9 @@
 ## 실행 구조
 
 - `index.html`: 시작, 로그인, 대시보드, 기록, 복습, 교사 학급 화면
-- `math.js`: Firebase 로그인과 시계 퀴즈
-- `math-services.js`: 에이두 데이터 서버, 기록, 추천, 학급, 상점
+- `math.js`: Firebase 로그인과 난이도별 시간 퀴즈
+- `math-quality-core.mjs`: 시계 문항·오개념 선택지·문항 경험치·레벨업 보상 공통 정책
+- `math-services.js`
 - `math-spiral.js`: 백업의 51개 개념과 6단계 학습 활동
 - `math-domain-navigation.js`: 영역별 학년군 지도와 진행률
 - `math-learning-records.mjs`: 진도, 숙련도, 주간 성장, 추천 계산
@@ -19,11 +20,18 @@ Firebase는 인증에만 사용합니다. 사용자 프로필, 수학 진도, �
 
 - `users/{uid}`: 공용 프로필, 포인트, 경험치, 주의 토큰
 - `mathStudentProgress/{uid__nodeId}`: 학생별 개념 진도와 숙련도
-- `mathAttempts/{attemptId}`: 정답·오답과 표현 단계별 시도
+- `mathAttempts/{attemptId}`: 정답·오답과 표현 단계별 시도. 시계 퀴즈 정답 시도는 문제별 고정 ID로 중복 지급을 방지
 - `mathAssignments/{assignmentId}`: 교사가 학생에게 배정한 개념
 - `shopItems/{itemId}`: 국어와 공유하는 교사 상점 물품
 - `users/{uid}/assignedShopItems/{itemId}`: 학생별 상점 배부
 - `purchaseLog/{purchaseId}`: 공용 구매 기록
+
+## 경험치와 레벨업 보상
+
+- 모든 수학 정답 문항은 경험치를 지급합니다. 일반 나선형 문항은 기본 `+2 EXP`입니다.
+- 시간 퀴즈는 쉬움 `+1`, 보통 `+3`, 어려움 `+5`, 매우 어려움 `+10 EXP`입니다.
+- 경험치 100을 채우면 레벨이 1 오르고 공용 지갑에 `1,000원`을 지급합니다.
+- 경험치·레벨·`balance`·`coins`·`aeduTokens`·주의토큰은 한 트랜잭션에서 함께 갱신합니다.
 
 ## 검증
 
@@ -35,6 +43,8 @@ node --check math/math-services.js
 node --check math/math-spiral.js
 node --check math/math-domain-navigation.js
 node tools/test-math-learning-records.mjs
+node tools/test-math-quality.mjs
+node tools/audit-math-question-bank.mjs
 node tools/validate-math-site.mjs
 ```
 

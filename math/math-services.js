@@ -27,6 +27,10 @@ import {
     buildMathWeeklyProgress,
     summarizeMathStudentRecords
 } from "./math-learning-records.mjs?v=20260901-math-complete-v2";
+import {
+    calculateWalletReward,
+    experienceForAttempt
+} from "./math-quality-core.mjs?v=20260901-math-quality-v1";
 
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
@@ -391,7 +395,7 @@ function buildAttempt(payload, uid) {
     if (typeof payload.isCorrect !== 'boolean') throw new Error('수학 시도에는 isCorrect가 필요합니다.');
     const createdAt = payload.createdAt || new Date().toISOString();
     const attemptIdSource = payload.attemptId || (payload.questionId ? `question-${payload.questionId}` : randomId('attempt'));
-    const attemptId = safeDocumentId(attemptIdSource);
+    const attemptId = safeDocumentId(`${uid}:${attemptIdSource}`);
     return {
         ...payload,
         attemptId,
@@ -409,31 +413,11 @@ function buildAttempt(payload, uid) {
 }
 
 function rewardForAttempt(payload, attempt) {
-    if (!attempt.isCorrect) return 0;
-    const requested = payload.experienceReward;
-    return requested == null ? DEFAULT_CORRECT_EXPERIENCE : asNonNegativeNumber(requested, 0);
+    return experienceForAttempt(payload, attempt);
 }
 
 function walletReward(profile, experienceReward) {
-    const wallet = normalizeWallet(profile);
-    const totalExperience = wallet.aeduExperience + experienceReward;
-    const levelUps = Math.floor(totalExperience / LEVEL_EXPERIENCE);
-    const levelUpPoints = levelUps * LEVEL_UP_POINTS;
-    const warningReduced = Math.min(wallet.warningTokens, levelUps);
-    const balance = wallet.balance + levelUpPoints;
-    return {
-        updates: {
-            aeduExperience: totalExperience % LEVEL_EXPERIENCE,
-            aeduLevel: wallet.aeduLevel + levelUps,
-            balance,
-            coins: balance,
-            aeduTokens: balance,
-            warningTokens: wallet.warningTokens - warningReduced
-        },
-        levelUps,
-        levelUpPoints,
-        warningReduced
-    };
+    return calculateWalletReward(profile, experienceReward);
 }
 
 async function recordAttempt(payload = {}) {
@@ -451,6 +435,7 @@ async function recordAttempt(payload = {}) {
         if (existingAttempt.exists()) {
             const progressSnapshot = await transaction.get(progressRef);
             const saved = existingAttempt.data() || {};
+            if (saved.uid !== uid) throw new Error('다른 사용자의 수학 시도 기록에는 접근할 수 없습니다.');
             return {
                 progress: progressSnapshot.exists() ? { id: progressSnapshot.id, ...progressSnapshot.data() } : null,
                 grantedExperience: asNonNegativeNumber(saved.grantedExperience, 0),
