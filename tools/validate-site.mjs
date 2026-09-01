@@ -223,6 +223,7 @@ assert(app.includes('data-lesson21-challenge-game') && app.includes('window.play
 assert(appCss.includes('.lesson21-challenge-scoreboard') && appCss.includes('.lesson21-challenge-word.is-read'), '받침 낱말 게임의 점수판 또는 읽은 낱말 상태가 없습니다.');
 assert(app.includes("char === 'ㅁ'") && app.includes('w: W * 1.36') && appCss.includes('width: min(100%, 72px);'), '주황색 ㅁ 받침 쓰기 안내가 충분히 크게 표시되지 않습니다.');
 assert(app.includes('soundQuestionRegions.every(learningDetailQuestionRegionComplete)'), '여러 문제의 정답을 모두 맞혔는지 확인하는 완료 조건이 없습니다.');
+assert(app.includes('canvas._lesson21MPaths = getLesson21IntroStrokes(canvas).map((stroke) => (') && !app.includes("if (batchim === 'ㅂ') {\n        canvas._lesson21MPaths = getLesson21IntroStrokes(canvas)"), '모든 받침 따라쓰기가 완료 후 반듯한 기준 글자로 교체되지 않습니다.');
 assert(app.includes("const target = controls.find((control) => control.dataset.learningReviewed !== 'true');") && !app.includes("|| controls[0]"), '모든 일반 버튼을 확인한 뒤 이미 누른 버튼 안내가 반복될 수 있습니다.');
 assert(app.includes('learningDetailActivityGuideTarget || learningDetailActivityGuideTimer') && app.includes("window.matchMedia?.('(pointer: coarse)').matches ? 2200 : 4200"), '태블릿에서 안내 타이머가 반복 초기화되거나 지나치게 늦게 표시될 수 있습니다.');
 assert(app.includes("if (sectionId !== 'learning-detail-section')") && app.includes('resetLearningDetailNavigationGuide();'), '학습 화면을 벗어날 때 안내 말풍선이 정리되지 않습니다.');

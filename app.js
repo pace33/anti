@@ -12854,11 +12854,10 @@ function completeLesson21MTrace(canvas) {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const mergeDuration = reduceMotion ? 80 : (itemIndex === 0 ? 1100 : 900);
 
-    if (batchim === 'ㅂ') {
-        canvas._lesson21MPaths = getLesson21IntroStrokes(canvas).map((stroke) => (
-            getLesson21IntroStrokePoints(stroke).map(([x, y]) => ({ x, y }))
-        ));
-    }
+    // 쓰기를 마치면 사용자가 그린 선을 지우고 해당 받침의 반듯한 기준 획을 보여 준다.
+    canvas._lesson21MPaths = getLesson21IntroStrokes(canvas).map((stroke) => (
+        getLesson21IntroStrokePoints(stroke).map(([x, y]) => ({ x, y }))
+    ));
     canvas.dataset.completed = 'true';
     pair.classList.remove('is-active');
     pair.classList.add('is-merging');
