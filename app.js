@@ -2548,6 +2548,7 @@ function isLearningDetailReadCountControl(control) {
 function getLearningDetailGuideControls(root) {
     const controls = getLearningDetailActionControls(root).filter((control) => !isLearningDetailReadCountControl(control));
     if (root?.querySelector?.('[data-no-button-guide]')) return [];
+    if (root?.querySelector?.('.lesson21-m-picture-canvas')) return [];
     if (root?.querySelector?.('.lesson-complete-writing-canvas')) {
         return controls.filter((control) => {
             const label = `${control.getAttribute('aria-label') || ''} ${control.textContent || ''}`.replace(/\s+/g, ' ').trim();
@@ -2710,6 +2711,11 @@ function getLearningActivityGuideText(control) {
 
 function getLearningDetailWritingGuide(content) {
     if (!content) return null;
+    const pictureCanvas = [...content.querySelectorAll('.lesson21-m-picture-canvas')]
+        .find((canvas) => canvas.dataset.lesson21MPictureCompleted !== 'true');
+    if (pictureCanvas) {
+        return { target: pictureCanvas, text: '다음 하늘색 쓰기 칸에 글자를 써 보세요.' };
+    }
     const cards = [...content.querySelectorAll('.lesson-complete-card')];
     for (const card of cards) {
         if (card.classList.contains('is-complete')) continue;
@@ -2917,6 +2923,9 @@ function learningDetailBodyActivitiesComplete(root) {
     const allGuidedButtonsReviewed = guideControls.every((control) => control.dataset.learningReviewed === 'true');
     if (root.querySelector('.lesson-complete-writing-canvas')) {
         return structuredActivitiesComplete && allGuidedButtonsReviewed;
+    }
+    if (root.querySelector('.lesson21-m-picture-canvas')) {
+        return structuredActivitiesComplete;
     }
     if (learningDetailHasAnswerChoices(root)) {
         return structuredActivitiesComplete && allGuidedButtonsReviewed;
