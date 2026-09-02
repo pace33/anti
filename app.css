@@ -8065,6 +8065,35 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
 .aiedue-library-spinner { width: 58px; height: 58px; border: 7px solid #d6eadb; border-top-color: #329761; border-radius: 50%; animation: aiedue-library-spin .8s linear infinite; }
 @keyframes aiedue-library-spin { to { transform: rotate(360deg); } }
 
+/* 교사 설정 · AntiAI 그림 생성 테스트 */
+.settings-tabs { display: flex; gap: 8px; margin-bottom: 24px; padding: 5px; border-radius: 18px; background: #f2f5f3; }
+.settings-tab { flex: 1; min-height: 46px; padding: 10px 14px; border: 0; border-radius: 14px; color: #718078; background: transparent; font-weight: 900; transition: .2s ease; }
+.settings-tab.active { color: #226b48; background: #fff; box-shadow: 0 4px 14px rgba(45,78,59,.11); }
+.settings-panel { min-height: 150px; }
+.settings-image-test-intro { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding: 16px 18px; border: 1px solid #d9ebdf; border-radius: 20px; background: linear-gradient(135deg,#f4fbf6,#edf7ff); }
+.settings-image-test-intro > span { font-size: 2rem; }
+.settings-image-test-intro strong { display: block; color: #2d4e3a; font-size: 1.05rem; font-weight: 1000; }
+.settings-image-test-intro p { margin: 3px 0 0; color: #738078; font-size: .82rem; font-weight: 700; }
+.settings-image-label { display: block; margin: 0 0 7px 3px; color: #56665c; font-size: .8rem; font-weight: 950; }
+.settings-image-prompt { width: 100%; min-height: 128px; padding: 15px 16px; resize: vertical; border: 2px solid #dfe9e2; border-radius: 18px; outline: 0; color: #34473b; background: #fbfdfb; font-weight: 750; line-height: 1.55; }
+.settings-image-prompt:focus { border-color: #5cad7a; background: #fff; box-shadow: 0 0 0 4px rgba(92,173,122,.12); }
+.settings-image-controls { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-top: 14px; }
+.settings-image-controls label { display: grid; gap: 6px; color: #617168; font-size: .76rem; font-weight: 900; }
+.settings-image-controls select { min-width: 150px; min-height: 44px; padding: 8px 34px 8px 12px; border: 2px solid #dfe9e2; border-radius: 13px; color: #3c5647; background: #fff; font-weight: 850; }
+.settings-image-generate { min-height: 46px; padding: 10px 22px; border: 0; border-radius: 15px; color: #fff; background: linear-gradient(135deg,#3c9f67,#397fc0); box-shadow: 0 8px 18px rgba(54,131,98,.22); font-weight: 1000; }
+.settings-image-generate:disabled { cursor: wait; opacity: .62; box-shadow: none; }
+.settings-image-status { display: flex; align-items: center; gap: 15px; margin-top: 18px; padding: 18px; border-radius: 18px; color: #335342; background: #f0f8f2; }
+.settings-image-status strong,.settings-image-status small { display: block; }
+.settings-image-status small { margin-top: 3px; color: #78857d; font-weight: 750; }
+.settings-image-spinner { flex: 0 0 auto; width: 34px; height: 34px; border: 5px solid #d2ead9; border-top-color: #399b61; border-radius: 50%; animation: settings-image-spin .8s linear infinite; }
+@keyframes settings-image-spin { to { transform: rotate(360deg); } }
+.settings-image-error { margin-top: 18px; padding: 14px 16px; border: 1px solid #f2c5bd; border-radius: 16px; color: #a6493d; background: #fff3f0; font-size: .84rem; font-weight: 850; }
+.settings-image-result { overflow: hidden; margin: 20px 0 0; border: 1px solid #dce8df; border-radius: 24px; background: #f6f8f6; box-shadow: 0 12px 30px rgba(53,79,63,.12); }
+.settings-image-result img { width: 100%; max-height: 480px; display: block; object-fit: contain; background: #e9eeea; }
+.settings-image-result figcaption { display: flex; justify-content: space-between; gap: 12px; padding: 13px 16px; color: #385344; font-size: .8rem; }
+.settings-image-result figcaption strong { font-weight: 1000; }
+.settings-image-result figcaption span { color: #7b887f; font-weight: 800; }
+
 @media (max-width: 1120px) {
     .aiedue-library-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .aiedue-library-button { min-width: 168px; padding: 9px 12px; }
@@ -8082,6 +8111,11 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
     .aiedue-book-page-right img { min-height: 420px; }
 }
 @media (max-width: 640px) {
+    .settings-dialog { padding: 22px 16px; border-radius: 28px; }
+    .settings-tab { padding: 9px 7px; font-size: .76rem; }
+    .settings-image-controls { align-items: stretch; flex-direction: column; }
+    .settings-image-controls select,.settings-image-generate { width: 100%; }
+    .settings-image-result figcaption { align-items: flex-start; flex-direction: column; }
     .dashboard-quick-actions .aiedue-library-button { position: static; flex: 1 1 0; min-width: 0; max-width: 160px; padding: 8px 10px; }
     .aiedue-library-button strong { font-size: .75rem; }
     .aiedue-library-button small { display: none; }

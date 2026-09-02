@@ -14,6 +14,14 @@ for (const marker of [
 ]) assert.ok(html.includes(marker), `index.html marker missing: ${marker}`);
 
 for (const marker of [
+  'id="settings-image-test-tab"',
+  'id="settings-image-prompt"',
+  'id="settings-image-status"',
+  'id="settings-image-result-img"',
+  'onclick="generateSettingsTestImage()"'
+]) assert.ok(html.includes(marker), `teacher image-test marker missing: ${marker}`);
+
+for (const marker of [
   '.aiedue-library-modal',
   '.aiedue-library-grid',
   '.aiedue-character-card',
@@ -21,6 +29,12 @@ for (const marker of [
   'grid-template-columns: 1fr 1fr',
   '.aiedue-book-page-right img'
 ]) assert.ok(css.includes(marker), `app.css marker missing: ${marker}`);
+
+for (const marker of [
+  '.settings-tabs',
+  '.settings-image-spinner',
+  '.settings-image-result'
+]) assert.ok(css.includes(marker), `settings image-test CSS missing: ${marker}`);
 
 for (const marker of [
   "collectionGroup(db, 'storyCharacters')",
@@ -44,6 +58,18 @@ for (const marker of [
   'window.saveGeneratedStoryBook',
   'window.turnStoryBookPage'
 ]) assert.ok(app.includes(marker), `app.js marker missing: ${marker}`);
+
+for (const marker of [
+  "currentUserRole === 'teacher'",
+  'window.generateSettingsTestImage',
+  'createStoryImageJob(prompt, controller.signal, aspectRatio)',
+  'waitForStoryImageJob(job, controller.signal)',
+  'downloadStoryImage(job, image, controller.signal)',
+  'settingsImageTestController !== controller',
+  'URL.createObjectURL(blob)'
+]) assert.ok(app.includes(marker), `settings image-test flow missing: ${marker}`);
+
+assert.match(html, /id="settings-image-test-tab"[^>]*class="[^"]*hidden/, 'image-test tab must be hidden until a teacher session enables it');
 
 assert.ok(css.includes('.aiedue-book-cover-title'), 'book title must be presented on the cover artwork');
 assert.ok(css.includes('.aiedue-book-caption'), 'book description must be presented below the cover');

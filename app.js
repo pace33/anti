@@ -19373,15 +19373,140 @@ window.prevLevel = function() {
 };
 
 // Settings Modal
+let settingsImageTestController = null;
+let settingsImageTestUrl = '';
+let settingsModalReturnFocus = null;
+
+window.switchSettingsTab = function(tabName = 'basic') {
+    const canTestImages = currentUserRole === 'teacher' && Boolean(currentUserId);
+    const selected = tabName === 'image-test' && canTestImages ? 'image-test' : 'basic';
+    const basicTab = document.getElementById('settings-basic-tab');
+    const imageTab = document.getElementById('settings-image-test-tab');
+    const basicPanel = document.getElementById('settings-basic-panel');
+    const imagePanel = document.getElementById('settings-image-test-panel');
+    basicTab?.classList.toggle('active', selected === 'basic');
+    imageTab?.classList.toggle('active', selected === 'image-test');
+    basicTab?.setAttribute('aria-selected', String(selected === 'basic'));
+    imageTab?.setAttribute('aria-selected', String(selected === 'image-test'));
+    basicTab?.setAttribute('tabindex', selected === 'basic' ? '0' : '-1');
+    imageTab?.setAttribute('tabindex', selected === 'image-test' ? '0' : '-1');
+    basicPanel?.classList.toggle('hidden', selected !== 'basic');
+    imagePanel?.classList.toggle('hidden', selected !== 'image-test');
+    document.getElementById('settings-save-btn')?.classList.toggle('invisible', selected !== 'basic');
+};
+
+window.handleSettingsTabKeydown = function(event) {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    const tabs = [...document.querySelectorAll('.settings-tab:not(.hidden)')];
+    if (!tabs.length) return;
+    event.preventDefault();
+    const currentIndex = Math.max(0, tabs.indexOf(event.currentTarget));
+    const nextIndex = event.key === 'Home' ? 0
+        : event.key === 'End' ? tabs.length - 1
+            : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    const nextTab = tabs[nextIndex];
+    window.switchSettingsTab(nextTab.id === 'settings-image-test-tab' ? 'image-test' : 'basic');
+    nextTab.focus();
+};
+
 window.openSettingsModal = function() {
+    settingsModalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const name = document.getElementById('dashboard-account-name').innerText;
     document.getElementById('settings-name-input').value = name;
     document.getElementById('settings-mute-toggle').innerText = isMuted ? '켜기' : '끄기';
+    const teacherImageTab = document.getElementById('settings-image-test-tab');
+    teacherImageTab?.classList.toggle('hidden', currentUserRole !== 'teacher' || !currentUserId);
+    window.switchSettingsTab('basic');
     document.getElementById('settings-modal').classList.remove('hidden');
+    requestAnimationFrame(() => document.getElementById('settings-basic-tab')?.focus());
 };
 
 window.closeSettingsModal = function() {
+    settingsImageTestController?.abort();
+    settingsImageTestController = null;
+    if (settingsImageTestUrl) URL.revokeObjectURL(settingsImageTestUrl);
+    settingsImageTestUrl = '';
+    const image = document.getElementById('settings-image-result-img');
+    if (image) image.removeAttribute('src');
+    document.getElementById('settings-image-result')?.classList.add('hidden');
+    document.getElementById('settings-image-status')?.classList.add('hidden');
+    document.getElementById('settings-image-error')?.classList.add('hidden');
+    const generateButton = document.getElementById('settings-image-generate-btn');
+    if (generateButton) {
+        generateButton.disabled = false;
+        generateButton.textContent = '✨ 그림 생성';
+    }
     document.getElementById('settings-modal').classList.add('hidden');
+    settingsModalReturnFocus?.focus?.();
+    settingsModalReturnFocus = null;
+};
+
+window.generateSettingsTestImage = async function() {
+    if (currentUserRole !== 'teacher' || !currentUserId) {
+        return alert('그림 생성 테스트는 교사 계정에서만 사용할 수 있습니다.');
+    }
+    const promptInput = document.getElementById('settings-image-prompt');
+    const prompt = String(promptInput?.value || '').trim();
+    if (prompt.length < 5) {
+        promptInput?.focus();
+        return alert('만들고 싶은 그림을 조금 더 자세히 적어 주세요.');
+    }
+
+    settingsImageTestController?.abort();
+    if (settingsImageTestUrl) URL.revokeObjectURL(settingsImageTestUrl);
+    settingsImageTestUrl = '';
+    const controller = new AbortController();
+    settingsImageTestController = controller;
+    const button = document.getElementById('settings-image-generate-btn');
+    const status = document.getElementById('settings-image-status');
+    const statusTitle = document.getElementById('settings-image-status-title');
+    const statusDetail = document.getElementById('settings-image-status-detail');
+    const errorBox = document.getElementById('settings-image-error');
+    const result = document.getElementById('settings-image-result');
+    const imageElement = document.getElementById('settings-image-result-img');
+    const meta = document.getElementById('settings-image-result-meta');
+
+    button.disabled = true;
+    button.textContent = '생성 중…';
+    status.classList.remove('hidden');
+    errorBox.classList.add('hidden');
+    result.classList.add('hidden');
+    statusTitle.textContent = 'AntiAI가 그림을 준비하고 있어요.';
+    statusDetail.textContent = '작업을 접수하고 있습니다.';
+
+    try {
+        const aspectRatio = document.getElementById('settings-image-ratio')?.value || '4:3';
+        const job = await createStoryImageJob(prompt, controller.signal, aspectRatio);
+        if (settingsImageTestController !== controller) return;
+        statusTitle.textContent = '그림을 그리고 있어요.';
+        statusDetail.textContent = '보통 몇 분 정도 걸립니다. 이 화면을 열어 두세요.';
+        const image = await waitForStoryImageJob(job, controller.signal);
+        if (settingsImageTestController !== controller) return;
+        statusTitle.textContent = '완성된 그림을 불러오고 있어요.';
+        statusDetail.textContent = '잠시만 기다려 주세요.';
+        const blob = await downloadStoryImage(job, image, controller.signal);
+        if (settingsImageTestController !== controller) return;
+        if (settingsImageTestUrl) URL.revokeObjectURL(settingsImageTestUrl);
+        settingsImageTestUrl = URL.createObjectURL(blob);
+        imageElement.src = settingsImageTestUrl;
+        const dimensions = image.width && image.height ? `${image.width} × ${image.height}` : aspectRatio;
+        meta.textContent = `${dimensions} · ${(blob.size / 1024).toFixed(0)} KB · ${blob.type.replace('image/', '').toUpperCase()}`;
+        status.classList.add('hidden');
+        result.classList.remove('hidden');
+    } catch (error) {
+        if (settingsImageTestController !== controller) return;
+        status.classList.add('hidden');
+        if (error?.name !== 'AbortError') {
+            errorBox.textContent = error?.message || '그림을 생성하지 못했습니다.';
+            errorBox.classList.remove('hidden');
+        }
+    } finally {
+        if (settingsImageTestController === controller) {
+            settingsImageTestController = null;
+            button.disabled = false;
+            button.textContent = '✨ 그림 생성';
+        }
+    }
 };
 
 window.saveSettings = async function() {
@@ -19815,11 +19940,11 @@ window.openStoryBookMaker = async function openStoryBookMaker() {
     }
 };
 
-async function createStoryImageJob(prompt, signal) {
+async function createStoryImageJob(prompt, signal, aspectRatio = STORY_LIBRARY_IMAGE_RATIO) {
     const response = await fetchStoryResource('/korean-ai/api/image-jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, aspectRatio: STORY_LIBRARY_IMAGE_RATIO, count: 1 }),
+        body: JSON.stringify({ prompt, aspectRatio, count: 1 }),
         signal
     }, 120000);
     const data = await response.json().catch(() => ({}));
