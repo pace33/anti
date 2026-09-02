@@ -246,7 +246,7 @@ assert(appCss.includes('.lesson21-challenge-scoreboard') && appCss.includes('.le
 assert(app.includes("char === 'ㅁ'") && app.includes('w: W * 1.36') && appCss.includes('width: min(100%, 72px);'), '주황색 ㅁ 받침 쓰기 안내가 충분히 크게 표시되지 않습니다.');
 assert(app.includes('soundQuestionRegions.every(learningDetailQuestionRegionComplete)'), '여러 문제의 정답을 모두 맞혔는지 확인하는 완료 조건이 없습니다.');
 assert(app.includes('canvas._lesson21MPaths = getLesson21IntroStrokes(canvas).map((stroke) => (') && !app.includes("if (batchim === 'ㅂ') {\n        canvas._lesson21MPaths = getLesson21IntroStrokes(canvas)"), '모든 받침 따라쓰기가 완료 후 반듯한 기준 글자로 교체되지 않습니다.');
-assert(app.includes("const target = controls.find((control) => control.dataset.learningReviewed !== 'true');") && !app.includes("|| controls[0]"), '모든 일반 버튼을 확인한 뒤 이미 누른 버튼 안내가 반복될 수 있습니다.');
+assert(app.includes("controls.find((control) => control.dataset.learningReviewed !== 'true')") && !app.includes("|| controls[0]"), '모든 일반 버튼을 확인한 뒤 이미 누른 버튼 안내가 반복될 수 있습니다.');
 assert(app.includes('learningDetailActivityGuideTarget || learningDetailActivityGuideTimer') && app.includes("window.matchMedia?.('(pointer: coarse)').matches ? 2200 : 4200"), '태블릿에서 안내 타이머가 반복 초기화되거나 지나치게 늦게 표시될 수 있습니다.');
 assert(app.includes("if (sectionId !== 'learning-detail-section')") && app.includes('resetLearningDetailNavigationGuide();'), '학습 화면을 벗어날 때 안내 말풍선이 정리되지 않습니다.');
 assert(app.includes('!target.isConnected || !section || section.classList.contains(\'hidden\') || !section.contains(target)'), '화면 전환 후 지연된 안내 말풍선이 다시 표시될 수 있습니다.');
@@ -444,6 +444,7 @@ assert(app.includes('runTransaction(db') && app.includes('koreanQuestionMastery'
 assert(app.includes("button.classList.remove('hidden')") && !app.includes("button.classList.toggle('hidden', currentUserRole === 'teacher')"), '교사 테스트 계정에서 복습/기록 메뉴가 숨겨집니다.');
 ['나의 한글 성장', '영역별 도달 정도', '복습 상태', '최근 7일 학습 발자국'].forEach((marker) => assert(app.includes(marker), `나의 기록 성장 그래프가 없습니다: ${marker}`));
 ['성장이 필요한 단원', '이 단원 공부하기', 'openKoreanGrowthUnit', 'buildKoreanGrowthRecommendations'].forEach((marker) => assert(app.includes(marker), `성장 필요 단원 안내가 없습니다: ${marker}`));
+['getLearningDetailWritingGuide', '이 빈칸에 알맞은 글자를 써 보세요.', '글자를 다 썼다면 완료 버튼을 눌러 주세요.'].forEach((marker) => assert(app.includes(marker), `캔버스 쓰기 전용 안내 흐름이 없습니다: ${marker}`));
 ['buildKoreanAreaProgress', 'buildKoreanWeeklyProgress', 'summarizeKoreanMasteryDistribution'].forEach((marker) => assert(app.includes(marker), `성장 그래프 실제 데이터 계산이 없습니다: ${marker}`));
 
 ['.skip-link', ':focus-visible', 'prefers-reduced-motion', 'forced-colors'].forEach((marker) => {

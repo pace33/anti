@@ -2543,6 +2543,15 @@ function getLearningDetailActionControls(root) {
 function getLearningDetailGuideControls(root) {
     const controls = getLearningDetailActionControls(root);
     if (root?.querySelector?.('[data-no-button-guide]')) return [];
+    if (root?.querySelector?.('.lesson-complete-writing-canvas')) {
+        return controls.filter((control) => {
+            const label = `${control.getAttribute('aria-label') || ''} ${control.textContent || ''}`.replace(/\s+/g, ' ').trim();
+            const handler = control.getAttribute('onclick') || '';
+            return control.matches('.lesson-complete-submit')
+                || /completeLesson(?:13Word|26)Writing/.test(handler)
+                || /^(?:완료|썼어요)$/.test(label);
+        });
+    }
     const boardGame = root?.querySelector?.('[data-board-game]');
     if (boardGame) {
         return controls.filter((control) => control.matches('.lesson13-move-button') && boardGame.contains(control));
@@ -2695,6 +2704,25 @@ function getLearningActivityGuideText(control) {
     return '이 버튼을 눌러 활동해 보세요.';
 }
 
+function getLearningDetailWritingGuide(content) {
+    if (!content) return null;
+    const cards = [...content.querySelectorAll('.lesson-complete-card')];
+    for (const card of cards) {
+        if (card.classList.contains('is-complete')) continue;
+        const canvases = [...card.querySelectorAll('.lesson-complete-writing-canvas')];
+        const emptyCanvas = canvases.find((canvas) => canvas.dataset.hasWriting !== 'true' && canvas.dataset.completed !== 'true');
+        if (emptyCanvas) {
+            return { target: emptyCanvas, text: '이 빈칸에 알맞은 글자를 써 보세요.' };
+        }
+        const completeButton = getLearningDetailGuideControls(card)
+            .find((control) => control.dataset.completed !== 'true');
+        if (canvases.length && completeButton) {
+            return { target: completeButton, text: '글자를 다 썼다면 완료 버튼을 눌러 주세요.' };
+        }
+    }
+    return null;
+}
+
 function isLearningDetailSoundControl(control) {
     if (!control) return false;
     const visibleLabel = `${control.textContent || ''}`.replace(/\s+/g, ' ').trim();
@@ -2749,9 +2777,10 @@ function positionLearningActivityButtonGuide() {
 function showLearningActivityButtonGuide(content) {
     const section = document.getElementById('learning-detail-section');
     if (!content || !section || section.classList.contains('hidden') || learningDetailBodyActivitiesComplete(content)) return;
-    const controls = getLearningDetailGuideControls(content);
-    if (!controls.length) return;
-    const target = controls.find((control) => control.dataset.learningReviewed !== 'true');
+    const writingGuide = getLearningDetailWritingGuide(content);
+    const controls = writingGuide ? [] : getLearningDetailGuideControls(content);
+    const unreviewedControl = controls.find((control) => control.dataset.learningReviewed !== 'true');
+    const target = writingGuide?.target || unreviewedControl;
     if (!target) return;
     hideLearningActivityButtonGuide();
     learningDetailActivityGuideTarget = target;
@@ -2761,7 +2790,7 @@ function showLearningActivityButtonGuide(content) {
         announceLearningDetailSoundGuide(target);
     }
     const guide = ensureLearningActivityGuide();
-    guide.textContent = getLearningActivityGuideText(target);
+    guide.textContent = writingGuide?.text || getLearningActivityGuideText(target);
     guide.classList.remove('hidden');
     const rect = target.getBoundingClientRect();
     if (rect.top < 12 || rect.bottom > window.innerHeight - 12) {
@@ -2777,7 +2806,8 @@ function showLearningActivityButtonGuide(content) {
 
 function scheduleLearningActivityButtonGuide(content, delay) {
     if (learningDetailActivityGuideTarget || learningDetailActivityGuideTimer) return;
-    if (!content || learningDetailBodyActivitiesComplete(content) || !getLearningDetailGuideControls(content).length) return;
+    if (!content || learningDetailBodyActivitiesComplete(content)) return;
+    if (!getLearningDetailWritingGuide(content) && !getLearningDetailGuideControls(content).length) return;
     const guideDelay = Number.isFinite(delay)
         ? delay
         : (window.matchMedia?.('(pointer: coarse)').matches ? 2200 : 4200);
@@ -2851,7 +2881,8 @@ function learningDetailPageLooksComplete(root) {
         ['.lesson21-m-pair', 'is-complete'],
         ['.lesson21-m-syllable-cell.is-target', 'is-complete'],
         ['.lesson21-b-word-item', 'is-complete'],
-        ['.lesson21-m-picture-item', 'is-complete']
+        ['.lesson21-m-picture-item', 'is-complete'],
+        ['.lesson-complete-card', 'is-complete']
     ];
     let foundRequirements = false;
     for (const [selector, completedClass] of completionGroups) {
@@ -2880,6 +2911,9 @@ function learningDetailBodyActivitiesComplete(root) {
     const structuredActivitiesComplete = learningDetailPageLooksComplete(root);
     const guideControls = getLearningDetailGuideControls(root);
     const allGuidedButtonsReviewed = guideControls.every((control) => control.dataset.learningReviewed === 'true');
+    if (root.querySelector('.lesson-complete-writing-canvas')) {
+        return structuredActivitiesComplete && allGuidedButtonsReviewed;
+    }
     if (learningDetailHasAnswerChoices(root)) {
         return structuredActivitiesComplete && allGuidedButtonsReviewed;
     }
