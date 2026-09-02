@@ -445,6 +445,7 @@ assert(app.includes("button.classList.remove('hidden')") && !app.includes("butto
 ['나의 한글 성장', '영역별 도달 정도', '복습 상태', '최근 7일 학습 발자국'].forEach((marker) => assert(app.includes(marker), `나의 기록 성장 그래프가 없습니다: ${marker}`));
 ['성장이 필요한 단원', '이 단원 공부하기', 'openKoreanGrowthUnit', 'buildKoreanGrowthRecommendations'].forEach((marker) => assert(app.includes(marker), `성장 필요 단원 안내가 없습니다: ${marker}`));
 ['getLearningDetailWritingGuide', '이 빈칸에 알맞은 글자를 써 보세요.', '글자를 다 썼다면 완료 버튼을 눌러 주세요.'].forEach((marker) => assert(app.includes(marker), `캔버스 쓰기 전용 안내 흐름이 없습니다: ${marker}`));
+assert(app.includes('lesson26-write-card lesson-complete-card') && app.includes('completeLesson26Writing') && app.includes(".lesson-complete-writing-canvas"), '대표받침 완성해 보기 1·2가 공통 캔버스 안내 규칙에 포함되지 않았습니다.');
 ['buildKoreanAreaProgress', 'buildKoreanWeeklyProgress', 'summarizeKoreanMasteryDistribution'].forEach((marker) => assert(app.includes(marker), `성장 그래프 실제 데이터 계산이 없습니다: ${marker}`));
 
 ['.skip-link', ':focus-visible', 'prefers-reduced-motion', 'forced-colors'].forEach((marker) => {
