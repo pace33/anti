@@ -17482,7 +17482,6 @@ const traceCompositeJamo = {
 };
 const traceTopToBottomStroke = (x, top, bottom) => ({ points: [[x, top], [x, bottom]] });
 const traceLeftToRightStroke = (y, left, right, options = {}) => ({ points: [[left, y], [right, y]], ...options });
-const traceRightToLeftStroke = (y, right, left, options = {}) => ({ points: [[right, y], [left, y]], ...options });
 const traceStrokeMap = {
     'ㆍ': [{ points: [[0.5, 0.5], [0.5, 0.5]], dot: true }],
     '●': [{ points: [[0.5, 0.5], [0.5, 0.5]], dot: true }],
