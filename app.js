@@ -4680,33 +4680,35 @@ window.openReadingPracticeActivity = function openReadingPracticeActivity() {
     });
 }
 
-const readingPracticeCards = {
-    greeting: [
-        { phrase: '안녕하세요', emoji: '👋' },
-        { phrase: '감사합니다', emoji: '🙏' },
-        { phrase: '죄송합니다', emoji: '😢' },
-        { phrase: '반가워요', emoji: '✨' },
-        { phrase: '안녕히 가세요', emoji: '🙋' },
-        { phrase: '또 만나요', emoji: '🤗' }
-    ],
-    animal: [
-        { phrase: '강아지', emoji: '🐶' },
-        { phrase: '고양이', emoji: '🐱' },
-        { phrase: '토끼', emoji: '🐰' },
-        { phrase: '코끼리', emoji: '🐘' },
-        { phrase: '기린', emoji: '🦒' },
-        { phrase: '사자', emoji: '🦁' }
-    ],
-    food: [
-        { phrase: '김밥', emoji: '🍙' },
-        { phrase: '떡볶이', emoji: '🍲' },
-        { phrase: '비빔밥', emoji: '🥗' },
-        { phrase: '라면', emoji: '🍜' },
-        { phrase: '사과', emoji: '🍎' },
-        { phrase: '수박', emoji: '🍉' }
-    ]
-};
-let activeReadingCategory = 'greeting';
+function uniqueReadingPictureCards(items) {
+    const seen = new Set();
+    return items.reduce((cards, item) => {
+        const phrase = `${item?.word || ''}`.trim();
+        const visual = `${item?.icon || ''}`.trim();
+        if (!phrase || !visual || seen.has(phrase)) return cards;
+        seen.add(phrase);
+        cards.push({ phrase, visual });
+        return cards;
+    }, []);
+}
+
+function getReadingPracticeCards() {
+    const basicWords = CHANCHAN_LESSONS
+        .filter((lesson) => lesson.id === 13 || lesson.id === 14)
+        .flatMap((lesson) => lesson.pictureItems || []);
+    const complexVowelWords = LESSON20_READ_FIND_ITEMS;
+    const batchimWords = [
+        ...Object.values(LESSON21_PICTURE_WRITING_CONFIGS).flatMap((config) => config.items || []),
+        ...LESSON26_READING_GROUPS.flatMap((group) => group.pictureItems || [])
+    ];
+    return {
+        basic: uniqueReadingPictureCards(basicWords),
+        complex: uniqueReadingPictureCards(complexVowelWords),
+        batchim: uniqueReadingPictureCards(batchimWords)
+    };
+}
+
+let activeReadingCategory = 'basic';
 let readingSlowMode = false;
 let readingActiveCard = null;
 let readingSlowTimer = null;
@@ -4782,13 +4784,14 @@ function speakReadingPhraseSlowly(card, phrase) {
 function renderReadingPracticeCards() {
     const grid = document.getElementById('reading-cards-grid');
     if (!grid) return;
-    const cards = readingPracticeCards[activeReadingCategory] || readingPracticeCards.greeting;
+    const readingPracticeCards = getReadingPracticeCards();
+    const cards = readingPracticeCards[activeReadingCategory] || readingPracticeCards.basic;
     grid.innerHTML = cards.map((item, index) => {
         const chars = Array.from(item.phrase).map((char, charIndex) => (
             `<span class="reading-card-char${char === ' ' ? ' space' : ''}" data-index="${charIndex}">${char === ' ' ? '&nbsp;' : char}</span>`
         )).join('');
         return `<button type="button" class="reading-card" data-index="${index}" aria-label="${item.phrase} 읽기">
-            <span class="reading-card-emoji" aria-hidden="true">${item.emoji}</span>
+            <span class="reading-card-visual" aria-hidden="true">${item.visual}</span>
             <span class="reading-card-phrase">${chars}</span>
         </button>`;
     }).join('');

@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260902-batchim-word-no-listen-v141">
+    <link rel="stylesheet" href="app.css?v=20260902-reading-picture-cards-v143">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1098,14 +1098,14 @@
             </div>
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-8 overflow-y-auto custom-scrollbar">
                 <div class="w-full text-center mb-8">
-                    <div class="aiedu-badge bg-indigo-500 mb-4">읽기 연습</div>
-                    <h2 class="text-5xl font-black text-[#2c3e50] mb-3">에이두 한글 카드</h2>
-                    <p class="text-xl text-gray-500 font-bold">카드를 클릭하면 읽어줍니다. 느리게 읽기를 켜면 한 글자씩 강조해요.</p>
+                    <div class="aiedu-badge bg-indigo-500 mb-4">한글 카드</div>
+                    <h2 class="text-5xl font-black text-[#2c3e50] mb-3">에이두 한글 그림 카드</h2>
+                    <p class="text-xl text-gray-500 font-bold">배움에서 본 그림 카드를 누르면 낱말을 읽어줘요. 느리게 읽기를 켜면 한 글자씩 강조해요.</p>
                 </div>
-                <div id="reading-category-tabs" class="reading-category-tabs" role="tablist" aria-label="읽기 연습 주제">
-                    <button type="button" class="nav-tab active" data-reading-category="greeting">인삿말</button>
-                    <button type="button" class="nav-tab" data-reading-category="animal">동물</button>
-                    <button type="button" class="nav-tab" data-reading-category="food">음식</button>
+                <div id="reading-category-tabs" class="reading-category-tabs" role="tablist" aria-label="한글 그림 카드 묶음">
+                    <button type="button" class="nav-tab active" data-reading-category="basic">받침 없는 낱말</button>
+                    <button type="button" class="nav-tab" data-reading-category="complex">복잡한 모음</button>
+                    <button type="button" class="nav-tab" data-reading-category="batchim">받침 낱말</button>
                 </div>
                 <div id="reading-cards-grid" class="reading-cards-grid w-full" aria-live="polite"></div>
             </div>
@@ -1595,7 +1595,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260902-picture-canvas-guide-v142"></script>
+    <script type="module" src="app.js?v=20260902-reading-picture-cards-v143"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">
