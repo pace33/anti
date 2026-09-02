@@ -7844,3 +7844,252 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
         border-radius: 0;
     }
 }
+
+/* ==========================================================================
+   에이두 도서관 · AntiAI 동화책 제작소
+   ========================================================================== */
+.aiedue-library-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 194px;
+    padding: 11px 15px;
+    border: 2px solid #c8ead8;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ffffff, #f1fff7);
+    color: #275d46;
+    text-align: left;
+    box-shadow: 0 10px 24px rgba(43, 108, 76, .13);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+.aiedue-library-button:hover { transform: translateY(-3px); box-shadow: 0 16px 32px rgba(43, 108, 76, .2); }
+.aiedue-library-button-icon { font-size: 1.8rem; }
+.aiedue-library-button > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.aiedue-library-button strong { font-size: .96rem; font-weight: 1000; }
+.aiedue-library-button small { color: #4e9a70; font-size: .68rem; font-weight: 900; }
+
+.aiedue-library-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1250;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(24, 39, 33, .72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.aiedue-library-shell {
+    position: relative;
+    width: min(1380px, 98vw);
+    height: min(900px, 96dvh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 4px solid rgba(255,255,255,.92);
+    border-radius: 38px;
+    background: #f7fbf5;
+    box-shadow: 0 30px 80px rgba(9, 28, 18, .36);
+}
+.aiedue-library-header {
+    min-height: 118px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 30px;
+    border-bottom: 1px solid #dbe9dc;
+    background: linear-gradient(120deg, #effbea, #fff8dc 58%, #eef8ff);
+}
+.aiedue-library-eyebrow { margin: 0 0 5px; color: #4b9d69; font-size: .76rem; font-weight: 1000; letter-spacing: .12em; }
+.aiedue-library-header h2 { margin: 0; color: #263d31; font-size: clamp(1.7rem, 3vw, 2.55rem); font-weight: 1000; letter-spacing: -.04em; }
+.aiedue-library-header p:last-child { margin: 6px 0 0; color: #6f8076; font-weight: 800; }
+.aiedue-library-header-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
+.aiedue-library-primary,
+.aiedue-library-secondary,
+.aiedue-library-ghost,
+.aiedue-library-danger {
+    min-height: 46px;
+    padding: 11px 17px;
+    border: 0;
+    border-radius: 15px;
+    font-weight: 1000;
+    transition: transform .15s ease, filter .15s ease;
+}
+.aiedue-library-primary { color: #fff; background: #2f9562; box-shadow: 0 9px 18px rgba(47,149,98,.24); }
+.aiedue-library-secondary { color: #2f7655; background: #e4f5e8; border: 2px solid #bce0c5; }
+.aiedue-library-ghost { color: #53665b; background: #fff; border: 2px solid #d8e3da; }
+.aiedue-library-danger { color: #a14949; background: #fff1ee; border: 2px solid #f2ceca; }
+.aiedue-library-primary:hover,
+.aiedue-library-secondary:hover,
+.aiedue-library-ghost:hover,
+.aiedue-library-danger:hover { transform: translateY(-2px); filter: brightness(.98); }
+.aiedue-library-primary:disabled,
+.aiedue-library-secondary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.aiedue-library-close {
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    color: #607064;
+    font: 700 2rem/1 sans-serif;
+    box-shadow: 0 5px 14px rgba(40,60,48,.12);
+}
+.aiedue-library-content { flex: 1; min-height: 0; overflow-y: auto; padding: 26px 30px 34px; }
+.aiedue-library-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+.aiedue-library-toolbar h3 { margin: 0; color: #2c4938; font-size: 1.35rem; font-weight: 1000; }
+.aiedue-library-count { color: #789080; font-size: .86rem; font-weight: 900; }
+.aiedue-library-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px; }
+.aiedue-book-card {
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 2px solid #e0eadf;
+    border-radius: 24px;
+    background: #fff;
+    color: #2c3e50;
+    text-align: left;
+    box-shadow: 0 10px 24px rgba(54,82,63,.09);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.aiedue-book-card:hover { transform: translateY(-6px); border-color: #9fd1ae; box-shadow: 0 18px 35px rgba(54,82,63,.16); }
+.aiedue-book-cover { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: linear-gradient(145deg,#dff2e0,#fff0bd); }
+.aiedue-book-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.aiedue-book-cover-placeholder { width: 100%; height: 100%; display: grid; place-items: center; font-size: 4rem; }
+.aiedue-book-badge { position: absolute; top: 10px; left: 10px; padding: 5px 9px; border-radius: 999px; color: #fff; background: rgba(45,128,83,.9); font-size: .65rem; font-weight: 1000; }
+.aiedue-book-card-body { padding: 15px 16px 17px; }
+.aiedue-book-card h4 { margin: 0; overflow: hidden; color: #2c4637; font-size: 1.1rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
+.aiedue-book-card p { min-height: 2.7em; margin: 7px 0 12px; overflow: hidden; color: #758179; font-size: .82rem; font-weight: 750; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.aiedue-book-card-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #91a097; font-size: .72rem; font-weight: 900; }
+.aiedue-library-empty { min-height: 360px; display: grid; place-items: center; text-align: center; border: 3px dashed #cfe0d2; border-radius: 30px; background: rgba(255,255,255,.64); color: #75837a; }
+.aiedue-library-empty span { display: block; margin-bottom: 12px; font-size: 4rem; }
+.aiedue-library-empty strong { display: block; margin-bottom: 7px; color: #476252; font-size: 1.3rem; }
+
+.aiedue-form-card { max-width: 980px; margin: 0 auto; padding: 26px; border: 2px solid #deeadf; border-radius: 28px; background: #fff; box-shadow: 0 12px 30px rgba(49,82,60,.08); }
+.aiedue-form-card h3 { margin: 0 0 7px; color: #294837; font-size: 1.55rem; font-weight: 1000; }
+.aiedue-form-card > p { margin: 0 0 22px; color: #758078; font-weight: 750; }
+.aiedue-form-label { display: block; margin: 16px 0 7px; color: #3f594a; font-size: .88rem; font-weight: 1000; }
+.aiedue-form-input,
+.aiedue-form-textarea,
+.aiedue-form-select {
+    width: 100%;
+    border: 2px solid #d9e4dc;
+    border-radius: 16px;
+    background: #fbfdfb;
+    color: #2f4035;
+    font-weight: 800;
+    outline: 0;
+}
+.aiedue-form-input,
+.aiedue-form-select { min-height: 52px; padding: 11px 14px; }
+.aiedue-form-textarea { min-height: 122px; padding: 14px; resize: vertical; line-height: 1.55; }
+.aiedue-form-input:focus,
+.aiedue-form-textarea:focus,
+.aiedue-form-select:focus { border-color: #60b47e; box-shadow: 0 0 0 4px rgba(96,180,126,.13); background: #fff; }
+.aiedue-form-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.aiedue-character-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.aiedue-character-card { position: relative; padding: 18px; border: 2px solid #dfebdf; border-radius: 21px; background: #fff; text-align: left; }
+.aiedue-character-card h4 { margin: 0 0 10px; color: #2d503b; font-size: 1.1rem; font-weight: 1000; }
+.aiedue-character-card dl { margin: 0; }
+.aiedue-character-card dt { margin-top: 8px; color: #4f9568; font-size: .72rem; font-weight: 1000; }
+.aiedue-character-card dd { margin: 3px 0 0; color: #67736b; font-size: .84rem; font-weight: 750; line-height: 1.45; }
+.aiedue-character-card-select { display: block; cursor: pointer; }
+.aiedue-character-card-select input { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; accent-color: #2f9562; }
+.aiedue-character-card-select:has(input:checked) { border-color: #52ab75; background: #effbf2; box-shadow: 0 0 0 3px rgba(82,171,117,.12); }
+.aiedue-character-delete { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #fff0ed; color: #ad5650; font-weight: 1000; }
+.aiedue-maker-layout { display: grid; grid-template-columns: minmax(260px, .86fr) minmax(360px, 1.4fr); gap: 20px; }
+.aiedue-maker-panel { padding: 22px; border: 2px solid #deeadf; border-radius: 25px; background: #fff; }
+.aiedue-maker-panel h3 { margin: 0 0 5px; color: #2d4d39; font-size: 1.25rem; font-weight: 1000; }
+.aiedue-maker-panel > p { margin: 0 0 16px; color: #77837b; font-size: .83rem; font-weight: 750; }
+.aiedue-maker-character-list { max-height: 400px; overflow-y: auto; display: grid; gap: 10px; padding-right: 4px; }
+.aiedue-maker-character-list .aiedue-character-card { padding: 14px; }
+
+.aiedue-book-preview { display: flex; flex-direction: column; gap: 18px; }
+.aiedue-book-preview-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.aiedue-book-preview-heading h3 { margin: 0; color: #294838; font-size: 1.55rem; font-weight: 1000; }
+.aiedue-book-preview-heading p { margin: 4px 0 0; color: #7a877f; font-weight: 750; }
+.aiedue-book-spread {
+    position: relative;
+    width: min(1100px, 100%);
+    min-height: 570px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+    border: 12px solid #6d4d34;
+    border-radius: 24px 34px 34px 24px;
+    background: #fffdf5;
+    box-shadow: 0 24px 50px rgba(53,39,27,.24);
+    perspective: 1300px;
+}
+.aiedue-book-page { position: relative; min-width: 0; padding: 46px 44px; background: linear-gradient(90deg,#fffdf3,#fff); }
+.aiedue-book-page-left { display: flex; flex-direction: column; justify-content: center; border-right: 1px solid #d9ccb6; box-shadow: inset -18px 0 25px rgba(85,62,35,.06); }
+.aiedue-book-page-left::after { content: ''; position: absolute; top: 0; right: -8px; width: 16px; height: 100%; z-index: 2; background: linear-gradient(90deg,rgba(90,65,39,.16),rgba(255,255,255,.52),rgba(90,65,39,.08)); }
+.aiedue-book-page-right { padding: 22px; display: flex; align-items: center; justify-content: center; background: #fbf4e3; transform-origin: left center; animation: aiedue-page-turn .42s ease; }
+.aiedue-book-page-right img { width: 100%; height: 100%; min-height: 500px; display: block; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 18px rgba(70,50,30,.16); }
+.aiedue-book-page-kicker { margin-bottom: 20px; color: #75a47f; font-size: .76rem; font-weight: 1000; letter-spacing: .12em; }
+.aiedue-book-page-text { color: #35453a; font-size: clamp(1.15rem, 2vw, 1.65rem); font-weight: 850; line-height: 1.85; word-break: keep-all; }
+.aiedue-book-page-number { position: absolute; bottom: 16px; color: #9d978c; font-size: .78rem; font-weight: 900; }
+.aiedue-book-page-left .aiedue-book-page-number { left: 24px; }
+.aiedue-book-page-right .aiedue-book-page-number { right: 24px; }
+.aiedue-book-nav { display: grid; grid-template-columns: 120px 1fr 120px; align-items: center; gap: 14px; width: min(780px, 100%); margin: 0 auto; }
+.aiedue-book-nav span { text-align: center; color: #617168; font-weight: 1000; }
+.aiedue-book-nav button { min-height: 50px; border: 2px solid #cbdccc; border-radius: 16px; background: #fff; color: #3e6850; font-weight: 1000; }
+.aiedue-book-nav button:disabled { opacity: .35; }
+.aiedue-book-preview-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+@keyframes aiedue-page-turn { from { opacity: .35; transform: rotateY(-8deg); } to { opacity: 1; transform: rotateY(0); } }
+
+.aiedue-library-busy { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: rgba(247,251,245,.92); text-align: center; backdrop-filter: blur(8px); }
+.aiedue-library-busy strong { margin-top: 17px; color: #2e5940; font-size: 1.35rem; font-weight: 1000; }
+.aiedue-library-busy p { max-width: 520px; margin: 8px 0 0; color: #6d7b71; font-weight: 800; }
+.aiedue-library-spinner { width: 58px; height: 58px; border: 7px solid #d6eadb; border-top-color: #329761; border-radius: 50%; animation: aiedue-library-spin .8s linear infinite; }
+@keyframes aiedue-library-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1120px) {
+    .aiedue-library-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .aiedue-library-button { min-width: 168px; padding: 9px 12px; }
+    .aiedue-library-button small { display: none; }
+}
+@media (max-width: 860px) {
+    .aiedue-library-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .aiedue-library-header { align-items: flex-start; padding: 20px; }
+    .aiedue-library-content { padding: 20px; }
+    .aiedue-maker-layout { grid-template-columns: 1fr; }
+    .aiedue-character-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .aiedue-book-spread { min-height: 480px; border-width: 8px; }
+    .aiedue-book-page { padding: 30px 24px; }
+    .aiedue-book-page-right { padding: 14px; }
+    .aiedue-book-page-right img { min-height: 420px; }
+}
+@media (max-width: 640px) {
+    .aiedue-library-button { position: absolute; top: 94px; left: 14px; z-index: 4; min-width: 0; max-width: 160px; padding: 8px 10px; }
+    .aiedue-library-button strong { font-size: .75rem; }
+    .aiedue-library-button small { display: none; }
+    .aiedue-library-button-icon { font-size: 1.3rem; }
+    .aiedue-library-modal { padding: 0; }
+    .aiedue-library-shell { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
+    .aiedue-library-header { min-height: 122px; flex-direction: column; gap: 12px; padding: 15px 16px; }
+    .aiedue-library-header > div:first-child { padding-right: 40px; }
+    .aiedue-library-header p:last-child { font-size: .72rem; }
+    .aiedue-library-header-actions { width: 100%; justify-content: flex-start; }
+    .aiedue-library-header-actions .aiedue-library-close { position: absolute; top: 12px; right: 12px; }
+    .aiedue-library-primary,.aiedue-library-secondary { min-height: 40px; padding: 8px 11px; font-size: .78rem; }
+    .aiedue-library-content { padding: 16px 12px 24px; }
+    .aiedue-library-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .aiedue-book-card-body { padding: 11px; }
+    .aiedue-book-card h4 { font-size: .88rem; }
+    .aiedue-book-card p { font-size: .7rem; }
+    .aiedue-character-grid { grid-template-columns: 1fr; }
+    .aiedue-form-card,.aiedue-maker-panel { padding: 17px; border-radius: 21px; }
+    .aiedue-book-preview-heading { align-items: flex-start; flex-direction: column; }
+    .aiedue-book-spread { min-height: 0; grid-template-columns: 1fr 1fr; border-width: 5px; border-radius: 13px; }
+    .aiedue-book-page { min-height: 330px; padding: 24px 14px; }
+    .aiedue-book-page-text { font-size: .86rem; line-height: 1.65; }
+    .aiedue-book-page-right { padding: 7px; }
+    .aiedue-book-page-right img { min-height: 315px; border-radius: 7px; }
+    .aiedue-book-page-kicker { margin-bottom: 10px; font-size: .55rem; }
+    .aiedue-book-page-number { bottom: 7px; font-size: .58rem; }
+    .aiedue-book-nav { grid-template-columns: 82px 1fr 82px; gap: 7px; }
+    .aiedue-book-nav button { min-height: 43px; font-size: .75rem; }
+}

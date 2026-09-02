@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260902-ye-direction-force-refresh-v140">
+    <meta name="aiedue-korean-build" content="20260902-aiedue-library-v146">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260902-reading-picture-tabs-v145">
+    <link rel="stylesheet" href="app.css?v=20260902-aiedue-library-v146">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -163,6 +163,10 @@
                     </div>
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
                 </div>
+                <button type="button" class="aiedue-library-button pointer-events-auto" onclick="openAiedueLibrary()" aria-label="에이두 도서관 열기">
+                    <span class="aiedue-library-button-icon" aria-hidden="true">📚</span>
+                    <span><strong>에이두 도서관</strong><small>AI 동화책을 읽고 만들어요</small></span>
+                </button>
                 <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
                     <span class="lesson-photo-icon" aria-hidden="true">📷</span>
                     <span><strong>오늘의 노트 사진 찍기</strong><small>웹 카메라 화면에서 바로 찍어요</small></span>
@@ -1595,7 +1599,32 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=20260902-reading-picture-cards-v143"></script>
+    <!-- [에이두 도서관: AI 동화책 · 등장인물 사전 · 두 쪽 펼침 뷰어] -->
+    <div id="aiedue-library-modal" class="aiedue-library-modal hidden" role="dialog" aria-modal="true" aria-labelledby="aiedue-library-title" aria-hidden="true">
+        <section class="aiedue-library-shell" aria-live="polite">
+            <header class="aiedue-library-header">
+                <div>
+                    <p class="aiedue-library-eyebrow">📚 AIEDUE STORY LIBRARY</p>
+                    <h2 id="aiedue-library-title">에이두 도서관</h2>
+                    <p id="aiedue-library-subtitle">선생님이 AntiAI와 함께 만든 동화책을 읽어요.</p>
+                </div>
+                <div class="aiedue-library-header-actions">
+                    <button type="button" id="aiedue-library-characters-btn" class="aiedue-library-secondary hidden" onclick="openStoryCharacterDictionary()">등장인물 사전</button>
+                    <button type="button" id="aiedue-library-create-btn" class="aiedue-library-primary hidden" onclick="openStoryBookMaker()">＋ 책 만들기</button>
+                    <button type="button" class="aiedue-library-close" onclick="closeAiedueLibrary()" aria-label="에이두 도서관 닫기">×</button>
+                </div>
+            </header>
+            <main id="aiedue-library-content" class="aiedue-library-content"></main>
+            <div id="aiedue-library-busy" class="aiedue-library-busy hidden" role="status" aria-live="assertive">
+                <div class="aiedue-library-spinner" aria-hidden="true"></div>
+                <strong id="aiedue-library-busy-title">AntiAI가 동화를 만들고 있어요.</strong>
+                <p id="aiedue-library-busy-detail">잠시만 기다려 주세요.</p>
+                <button type="button" id="aiedue-library-cancel-btn" class="aiedue-library-ghost hidden" onclick="cancelStoryBookGeneration()">생성 취소</button>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="app.js?v=20260902-aiedue-library-v146"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

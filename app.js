@@ -56,6 +56,14 @@ import {
 } from "./korean-data-adapter.js?v=20260901-data-cutover-v2";
 import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm";
 import { PDFDocument } from "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm";
+import {
+    buildStoryGenerationPrompt,
+    buildStoryImagePrompt,
+    normalizeStoryPlan,
+    normalizeImageJobStatusUrl,
+    normalizeImageJobUrl,
+    validateStoryCharacter
+} from "./story-library-utils.mjs?v=20260902-aiedue-library-v2";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -8189,11 +8197,15 @@ async function callKoreanAiGenerate(prompt, options = {}) {
         body.printTimeout = options.printTimeout || '4m';
     }
     const endpoint = '/korean-ai/generate';
-    const res = await fetch(endpoint, {
+    const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
+        body: JSON.stringify(body),
+        ...(options.signal ? { signal: options.signal } : {})
+    };
+    const res = options.signal || options.requestTimeoutMs
+        ? await fetchStoryResource(endpoint, requestOptions, Number(options.requestTimeoutMs) || 6 * 60 * 1000)
+        : await fetch(endpoint, requestOptions);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `AI ${res.status}`);
     return getAiTextFromResponse(data);
@@ -19468,3 +19480,645 @@ const accessibilityObserver = new MutationObserver((mutations) => {
     });
 });
 accessibilityObserver.observe(document.body, { childList: true, subtree: true });
+
+// =========================================================================
+// --- 에이두 도서관: 교사 등장인물 사전 + AntiAI 동화/삽화 생성 + 두 쪽 책 ---
+// =========================================================================
+const STORY_LIBRARY_APP_TYPE = 'aiedue-storybook';
+const STORY_LIBRARY_SPREAD_COUNT = 4;
+const STORY_LIBRARY_IMAGE_RATIO = '4:3';
+let storyLibraryBooks = [];
+let storyLibraryCharacters = [];
+let activeStoryBook = null;
+let activeStorySpreadIndex = 0;
+let activeStoryDraft = null;
+let storyLibraryBusy = false;
+let activeStoryGenerationController = null;
+let storyImageRenderToken = 0;
+const storyImageUrlCache = new Map();
+
+function isStoryLibraryTeacher() {
+    return currentUserRole === 'teacher' && Boolean(currentUserId);
+}
+
+function storyLibraryElement(id) {
+    return document.getElementById(id);
+}
+
+function setStoryLibraryHeader({ title = '에이두 도서관', subtitle = '선생님이 AntiAI와 함께 만든 동화책을 읽어요.', showTeacherActions = false } = {}) {
+    const titleEl = storyLibraryElement('aiedue-library-title');
+    const subtitleEl = storyLibraryElement('aiedue-library-subtitle');
+    if (titleEl) titleEl.textContent = title;
+    if (subtitleEl) subtitleEl.textContent = subtitle;
+    const canCreate = showTeacherActions && isStoryLibraryTeacher();
+    storyLibraryElement('aiedue-library-characters-btn')?.classList.toggle('hidden', !canCreate);
+    storyLibraryElement('aiedue-library-create-btn')?.classList.toggle('hidden', !canCreate);
+}
+
+function setStoryLibraryBusy(isBusy, title = '', detail = '', { cancellable = false } = {}) {
+    storyLibraryBusy = Boolean(isBusy);
+    const overlay = storyLibraryElement('aiedue-library-busy');
+    if (!overlay) return;
+    overlay.classList.toggle('hidden', !isBusy);
+    if (title) storyLibraryElement('aiedue-library-busy-title').textContent = title;
+    if (detail) storyLibraryElement('aiedue-library-busy-detail').textContent = detail;
+    storyLibraryElement('aiedue-library-cancel-btn')?.classList.toggle('hidden', !isBusy || !cancellable);
+}
+
+function storyAbortError(message = '동화책 생성을 취소했습니다.') {
+    return new DOMException(message, 'AbortError');
+}
+
+function waitForStoryDelay(milliseconds, signal) {
+    if (signal?.aborted) return Promise.reject(storyAbortError());
+    return new Promise((resolve, reject) => {
+        const finish = () => {
+            signal?.removeEventListener('abort', cancel);
+            resolve();
+        };
+        const cancel = () => {
+            clearTimeout(timer);
+            reject(storyAbortError());
+        };
+        const timer = setTimeout(finish, milliseconds);
+        signal?.addEventListener('abort', cancel, { once: true });
+    });
+}
+
+async function fetchStoryResource(url, options = {}, timeoutMs = 120000) {
+    const externalSignal = options.signal;
+    if (externalSignal?.aborted) throw storyAbortError();
+    const controller = new AbortController();
+    let timedOut = false;
+    const abortFromExternal = () => controller.abort();
+    externalSignal?.addEventListener('abort', abortFromExternal, { once: true });
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+    try {
+        return await fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+        if (timedOut) throw new Error('AntiAI 요청 시간이 초과되었습니다. 실패한 항목만 다시 시도해 주세요.');
+        if (externalSignal?.aborted || error?.name === 'AbortError') throw storyAbortError();
+        throw error;
+    } finally {
+        clearTimeout(timer);
+        externalSignal?.removeEventListener('abort', abortFromExternal);
+    }
+}
+
+window.cancelStoryBookGeneration = function cancelStoryBookGeneration() {
+    if (!activeStoryGenerationController || activeStoryGenerationController.signal.aborted) return;
+    activeStoryGenerationController.abort();
+    const detail = storyLibraryElement('aiedue-library-busy-detail');
+    if (detail) detail.textContent = '진행 중인 요청을 중단하고 완료된 그림을 보존하고 있어요.';
+    storyLibraryElement('aiedue-library-cancel-btn')?.classList.add('hidden');
+};
+
+function revokeActiveStoryDraftUrls() {
+    (activeStoryDraft?.pages || []).forEach((page) => {
+        if (page.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(page.previewUrl);
+    });
+}
+
+function formatStoryBookDate(value) {
+    const date = value?.toDate?.() || new Date(value || Date.now());
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+}
+
+async function resolveStoryImageUrl(path) {
+    const safePath = String(path || '').trim();
+    if (!safePath) return '';
+    if (storyImageUrlCache.has(safePath)) return storyImageUrlCache.get(safePath);
+    const url = await getDownloadURL(storageRef(storage, safePath));
+    storyImageUrlCache.set(safePath, url);
+    return url;
+}
+
+async function loadStoryLibraryBooks() {
+    const booksQuery = query(
+        collection(db, 'Book'),
+        where('appType', '==', STORY_LIBRARY_APP_TYPE),
+        where('isPublic', '==', true),
+        orderBy('createdAt', 'desc'),
+        queryLimit(100)
+    );
+    const snapshot = await getDocs(booksQuery);
+    storyLibraryBooks = snapshot.docs
+        .map((bookSnapshot) => ({ id: bookSnapshot.id, ...(bookSnapshot.data() || {}) }))
+        .filter((book) => book.appType === STORY_LIBRARY_APP_TYPE && book.isPublic === true && Array.isArray(book.pages) && book.pages.length > 0);
+    return storyLibraryBooks;
+}
+
+async function renderStoryLibraryList() {
+    setStoryLibraryHeader({ showTeacherActions: true });
+    const content = storyLibraryElement('aiedue-library-content');
+    if (!content) return;
+    content.innerHTML = '<div class="aiedue-library-empty"><div><span>📖</span><strong>동화책을 불러오고 있어요.</strong><p>잠시만 기다려 주세요.</p></div></div>';
+    try {
+        await loadStoryLibraryBooks();
+        if (!storyLibraryBooks.length) {
+            content.innerHTML = `<div class="aiedue-library-empty"><div><span>🌱</span><strong>첫 번째 동화책을 기다리고 있어요.</strong><p>${isStoryLibraryTeacher() ? '오른쪽 위의 책 만들기를 눌러 AntiAI 동화를 만들어 보세요.' : '선생님이 동화책을 만들면 이곳에 나타나요.'}</p></div></div>`;
+            return;
+        }
+        const cards = await Promise.all(storyLibraryBooks.map(async (book) => {
+            const coverPath = book.coverImagePath || book.pages?.[0]?.imagePath || '';
+            let coverUrl = '';
+            try { coverUrl = await resolveStoryImageUrl(coverPath); } catch (error) { console.warn('Story cover load failed', error); }
+            return `<button type="button" class="aiedue-book-card" onclick="openStoryBookViewer('${escapeInlineJsString(book.id)}')" aria-label="${escapeHtml(book.title || '동화책')} 읽기">
+                <div class="aiedue-book-cover">
+                    ${coverUrl ? `<img src="${escapeHtml(coverUrl)}" alt="${escapeHtml(book.title || '동화책')} 표지">` : '<div class="aiedue-book-cover-placeholder">📕</div>'}
+                    <span class="aiedue-book-badge">AntiAI 동화</span>
+                </div>
+                <div class="aiedue-book-card-body">
+                    <h4>${escapeHtml(book.title || '이름 없는 동화')}</h4>
+                    <p>${escapeHtml(book.summary || '따뜻한 이야기를 읽어 보세요.')}</p>
+                    <div class="aiedue-book-card-meta"><span>${escapeHtml(book.authorName || '에이두 선생님')}</span><span>${formatStoryBookDate(book.publishedAt || book.createdAt)}</span></div>
+                </div>
+            </button>`;
+        }));
+        content.innerHTML = `<div class="aiedue-library-toolbar"><h3>AI 동화책 목록</h3><span class="aiedue-library-count">총 ${storyLibraryBooks.length}권</span></div><div class="aiedue-library-grid">${cards.join('')}</div>`;
+    } catch (error) {
+        console.error('Story library load failed', error);
+        content.innerHTML = `<div class="aiedue-library-empty"><div><span>☁️</span><strong>도서관을 불러오지 못했어요.</strong><p>${escapeHtml(error.message || '잠시 뒤 다시 시도해 주세요.')}</p><button type="button" class="aiedue-library-primary" onclick="refreshAiedueLibrary()">다시 불러오기</button></div></div>`;
+    }
+}
+
+window.openAiedueLibrary = async function openAiedueLibrary() {
+    if (!currentUserId) {
+        alert('로그인한 뒤 에이두 도서관을 이용해 주세요.');
+        return;
+    }
+    const modal = storyLibraryElement('aiedue-library-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    await renderStoryLibraryList();
+};
+
+window.refreshAiedueLibrary = renderStoryLibraryList;
+
+window.closeAiedueLibrary = function closeAiedueLibrary() {
+    if (storyLibraryBusy) {
+        alert('AntiAI가 동화책을 만들고 있어요. 생성이 끝난 뒤 닫아 주세요.');
+        return;
+    }
+    storyLibraryElement('aiedue-library-modal')?.classList.add('hidden');
+    storyLibraryElement('aiedue-library-modal')?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    revokeActiveStoryDraftUrls();
+    activeStoryDraft = null;
+    activeStoryBook = null;
+};
+
+async function loadStoryCharacters() {
+    if (!isStoryLibraryTeacher()) throw new Error('등장인물 사전은 교사 계정에서 사용할 수 있습니다.');
+    const charactersRef = collection(db, 'teachers', currentUserId, 'storyCharacters');
+    const snapshot = await getDocs(query(charactersRef, orderBy('name', 'asc'), queryLimit(100)));
+    storyLibraryCharacters = snapshot.docs.map((characterSnapshot) => ({ id: characterSnapshot.id, ...(characterSnapshot.data() || {}) }));
+    return storyLibraryCharacters;
+}
+
+function characterCardMarkup(character, { selectable = false } = {}) {
+    const input = selectable ? `<input type="checkbox" name="story-character" value="${escapeHtml(character.id)}" aria-label="${escapeHtml(character.name)} 선택">` : '';
+    const deleteButton = selectable ? '' : `<button type="button" class="aiedue-character-delete" onclick="event.stopPropagation(); deleteStoryCharacter('${escapeInlineJsString(character.id)}')" aria-label="${escapeHtml(character.name)} 삭제">×</button>`;
+    const tag = selectable ? 'label' : 'article';
+    return `<${tag} class="aiedue-character-card ${selectable ? 'aiedue-character-card-select' : ''}">
+        ${input}${deleteButton}<h4>👤 ${escapeHtml(character.name)}</h4>
+        <dl><dt>외형</dt><dd>${escapeHtml(character.appearance)}</dd><dt>성격</dt><dd>${escapeHtml(character.personality)}</dd></dl>
+    </${tag}>`;
+}
+
+window.openStoryCharacterDictionary = async function openStoryCharacterDictionary() {
+    if (!isStoryLibraryTeacher()) return alert('등장인물 사전은 교사 계정에서 사용할 수 있습니다.');
+    setStoryLibraryHeader({ title: '등장인물 사전', subtitle: '이름·외형·성격을 자세히 적어 두면 여러 동화에서 같은 인물을 사용할 수 있어요.' });
+    const content = storyLibraryElement('aiedue-library-content');
+    content.innerHTML = '<div class="aiedue-library-empty"><div><span>👥</span><strong>등장인물을 불러오고 있어요.</strong></div></div>';
+    try {
+        await loadStoryCharacters();
+        content.innerHTML = `<div class="aiedue-library-toolbar">
+            <div><h3>내 등장인물</h3><span class="aiedue-library-count">총 ${storyLibraryCharacters.length}명</span></div>
+            <div class="aiedue-form-actions" style="margin:0"><button type="button" class="aiedue-library-ghost" onclick="refreshAiedueLibrary()">← 도서관</button><button type="button" class="aiedue-library-primary" onclick="openStoryCharacterEditor()">＋ 등장인물 만들기</button></div>
+        </div>${storyLibraryCharacters.length ? `<div class="aiedue-character-grid">${storyLibraryCharacters.map((character) => characterCardMarkup(character)).join('')}</div>` : '<div class="aiedue-library-empty"><div><span>🧒</span><strong>아직 등록한 등장인물이 없어요.</strong><p>등장인물 만들기를 눌러 첫 인물을 등록해 보세요.</p></div></div>'}`;
+    } catch (error) {
+        content.innerHTML = `<div class="aiedue-library-empty"><div><span>⚠️</span><strong>등장인물을 불러오지 못했어요.</strong><p>${escapeHtml(error.message)}</p></div></div>`;
+    }
+};
+
+window.openStoryCharacterEditor = function openStoryCharacterEditor() {
+    if (!isStoryLibraryTeacher()) return;
+    setStoryLibraryHeader({ title: '등장인물 만들기', subtitle: 'AntiAI가 장면마다 같은 모습으로 그릴 수 있도록 외형을 구체적으로 적어 주세요.' });
+    storyLibraryElement('aiedue-library-content').innerHTML = `<form class="aiedue-form-card" onsubmit="saveStoryCharacter(event)">
+        <h3>새 등장인물</h3><p>한 번 등록하면 책 만들기에서 계속 선택할 수 있어요.</p>
+        <label class="aiedue-form-label" for="story-character-name">이름</label>
+        <input id="story-character-name" class="aiedue-form-input" maxlength="40" required placeholder="예: 별이">
+        <label class="aiedue-form-label" for="story-character-appearance">외형</label>
+        <textarea id="story-character-appearance" class="aiedue-form-textarea" maxlength="500" required placeholder="예: 짧은 곱슬머리, 노란 우비, 빨간 장화, 동그란 안경"></textarea>
+        <label class="aiedue-form-label" for="story-character-personality">성격</label>
+        <textarea id="story-character-personality" class="aiedue-form-textarea" maxlength="500" required placeholder="예: 호기심이 많고 어려운 친구를 먼저 도와줘요."></textarea>
+        <div class="aiedue-form-actions"><button type="button" class="aiedue-library-ghost" onclick="openStoryCharacterDictionary()">취소</button><button type="submit" class="aiedue-library-primary">등장인물 추가</button></div>
+    </form>`;
+    storyLibraryElement('story-character-name')?.focus();
+};
+
+window.saveStoryCharacter = async function saveStoryCharacter(event) {
+    event?.preventDefault();
+    if (!isStoryLibraryTeacher()) return;
+    try {
+        const character = validateStoryCharacter({
+            name: storyLibraryElement('story-character-name')?.value,
+            appearance: storyLibraryElement('story-character-appearance')?.value,
+            personality: storyLibraryElement('story-character-personality')?.value
+        });
+        setStoryLibraryBusy(true, '등장인물을 저장하고 있어요.', character.name);
+        await addDoc(collection(db, 'teachers', currentUserId, 'storyCharacters'), {
+            ...character,
+            ownerUid: currentUserId,
+            teacherId: currentUserId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        setStoryLibraryBusy(false);
+        await window.openStoryCharacterDictionary();
+    } catch (error) {
+        setStoryLibraryBusy(false);
+        alert(error.message || '등장인물을 저장하지 못했습니다.');
+    }
+};
+
+window.deleteStoryCharacter = async function deleteStoryCharacter(characterId) {
+    if (!isStoryLibraryTeacher()) return;
+    const character = storyLibraryCharacters.find((item) => item.id === characterId);
+    if (!character || !confirm(`‘${character.name}’을(를) 등장인물 사전에서 삭제할까요?\n이미 저장된 동화책에는 그대로 남아 있어요.`)) return;
+    try {
+        setStoryLibraryBusy(true, '등장인물을 삭제하고 있어요.', character.name);
+        await deleteDoc(doc(db, 'teachers', currentUserId, 'storyCharacters', characterId));
+        setStoryLibraryBusy(false);
+        await window.openStoryCharacterDictionary();
+    } catch (error) {
+        setStoryLibraryBusy(false);
+        alert(error.message || '등장인물을 삭제하지 못했습니다.');
+    }
+};
+
+window.openStoryBookMaker = async function openStoryBookMaker() {
+    if (!isStoryLibraryTeacher()) return alert('책 만들기는 교사 계정에서 사용할 수 있습니다.');
+    setStoryLibraryHeader({ title: 'AI 동화책 만들기', subtitle: '등장인물을 고르고 이야기를 적으면 AntiAI가 글과 오른쪽 페이지 그림을 만들어요.' });
+    const content = storyLibraryElement('aiedue-library-content');
+    content.innerHTML = '<div class="aiedue-library-empty"><div><span>✨</span><strong>책 만들기 도구를 준비하고 있어요.</strong></div></div>';
+    try {
+        await loadStoryCharacters();
+        content.innerHTML = `<form onsubmit="generateStoryBook(event)">
+            <div class="aiedue-maker-layout">
+                <section class="aiedue-maker-panel"><h3>1. 등장인물 선택</h3><p>사전에 저장한 인물 중 동화에 나올 인물을 골라 주세요.</p>
+                    ${storyLibraryCharacters.length ? `<div class="aiedue-maker-character-list">${storyLibraryCharacters.map((character) => characterCardMarkup(character, { selectable: true })).join('')}</div>` : '<div class="aiedue-library-empty" style="min-height:230px"><div><span>👤</span><strong>등장인물이 필요해요.</strong><button type="button" class="aiedue-library-primary" onclick="openStoryCharacterEditor()">등장인물 만들기</button></div></div>'}
+                </section>
+                <section class="aiedue-maker-panel"><h3>2. 스토리 짜기</h3><p>주제, 사건, 배울 점을 자유롭게 적어 주세요.</p>
+                    <label class="aiedue-form-label" for="story-book-idea">동화 프롬프트</label>
+                    <textarea id="story-book-idea" class="aiedue-form-textarea" style="min-height:190px" maxlength="3000" required placeholder="예: 비 오는 날 별이가 길을 잃은 달팽이를 만나 집을 찾아주는 이야기. 서로 돕는 마음을 배울 수 있게 해 주세요."></textarea>
+                    <label class="aiedue-form-label" for="story-book-style">그림 스타일</label>
+                    <select id="story-book-style" class="aiedue-form-select"><option>따뜻하고 포근한 수채화 동화책</option><option>감성적인 색연필 동화책</option><option>부드러운 3D 클레이 애니메이션</option><option>한국 전통 채색화 느낌의 동화책</option><option>사실적인 디지털 일러스트</option></select>
+                    <div class="aiedue-form-actions"><button type="button" class="aiedue-library-ghost" onclick="refreshAiedueLibrary()">취소</button><button type="submit" class="aiedue-library-primary" ${storyLibraryCharacters.length ? '' : 'disabled'}>✨ AntiAI로 생성</button></div>
+                </section>
+            </div>
+        </form>`;
+    } catch (error) {
+        content.innerHTML = `<div class="aiedue-library-empty"><div><span>⚠️</span><strong>책 만들기를 준비하지 못했어요.</strong><p>${escapeHtml(error.message)}</p></div></div>`;
+    }
+};
+
+async function createStoryImageJob(prompt, signal) {
+    const response = await fetchStoryResource('/korean-ai/api/image-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, aspectRatio: STORY_LIBRARY_IMAGE_RATIO, count: 1 }),
+        signal
+    }, 120000);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || data.message || `그림 작업 생성 실패 (${response.status})`);
+    const token = data.jobToken || data.token || data.capabilityToken;
+    if (!data.id || !token) throw new Error('그림 작업 ID 또는 임시 토큰을 받지 못했습니다.');
+    return { id: data.id, token };
+}
+
+async function waitForStoryImageJob(job, signal) {
+    const deadline = Date.now() + 25 * 60 * 1000;
+    const statusUrl = normalizeImageJobStatusUrl(`/korean-ai/api/image-jobs/${encodeURIComponent(job.id)}`, job.id);
+    while (Date.now() < deadline) {
+        const response = await fetchStoryResource(statusUrl, { headers: { 'X-Image-Job-Token': job.token }, cache: 'no-store', signal }, 30000);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const error = new Error(data.error || data.message || `그림 상태 확인 실패 (${response.status})`);
+            if ([404, 410].includes(response.status)) error.retryWithNewJob = true;
+            throw error;
+        }
+        if (data.status === 'completed') {
+            const image = data.result?.images?.[0];
+            if (!image?.url) throw new Error('완료된 그림 파일 주소가 없습니다.');
+            return image;
+        }
+        if (data.status === 'failed' || data.status === 'expired' || data.status === 'cancelled') {
+            const error = new Error(data.error || data.message || 'AntiAI 그림 생성에 실패했습니다.');
+            error.retryWithNewJob = true;
+            throw error;
+        }
+        await waitForStoryDelay(3000, signal);
+    }
+    throw new Error('AntiAI 그림 생성 대기 시간이 25분을 넘었습니다.');
+}
+
+async function downloadStoryImage(job, image, signal) {
+    const response = await fetchStoryResource(normalizeImageJobUrl(image.url, job.id), { headers: { 'X-Image-Job-Token': job.token }, cache: 'no-store', signal }, 120000);
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || data.message || `그림 다운로드 실패 (${response.status})`);
+    }
+    const blob = await response.blob();
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(blob.type)) throw new Error('지원하지 않는 그림 형식입니다.');
+    return blob;
+}
+
+async function renderStoryImageRecovery(error) {
+    const draft = activeStoryDraft;
+    const content = storyLibraryElement('aiedue-library-content');
+    if (!draft || !content) return;
+    activeStoryBook = draft;
+    const completed = draft.pages.filter((page) => page.imageBlob).length;
+    const failed = draft.pages.length - completed;
+    setStoryLibraryHeader({ title: '삽화 생성 이어하기', subtitle: '완료된 그림은 그대로 두고 실패하거나 취소된 그림만 다시 만들 수 있어요.' });
+    content.innerHTML = `<section class="aiedue-form-card">
+        <h3>${completed}장은 완료 · ${failed}장은 남음</h3>
+        <p>${escapeHtml(error?.message || '일부 삽화가 아직 완성되지 않았습니다.')}</p>
+        <div class="aiedue-maker-character-list">${draft.pages.map((page, index) => `<article class="aiedue-character-card"><h4>${index + 1}번째 삽화 ${page.imageBlob ? '✅' : '⏳'}</h4><p>${page.imageBlob ? '완료된 그림을 보존했습니다.' : escapeHtml(page.imageError || '다시 생성할 수 있습니다.')}</p></article>`).join('')}</div>
+        <div class="aiedue-form-actions"><button type="button" class="aiedue-library-ghost" onclick="discardStoryBookDraft()">초안 버리기</button><button type="button" class="aiedue-library-primary" onclick="retryStoryBookImages()">실패한 ${failed}장만 다시 생성</button></div>
+    </section>`;
+}
+
+async function generateMissingStoryImages(controller) {
+    const draft = activeStoryDraft;
+    if (!draft) throw new Error('이어 만들 동화책 초안이 없습니다.');
+    const signal = controller.signal;
+    const pendingIndexes = draft.pages.map((page, index) => page.imageBlob ? -1 : index).filter((index) => index >= 0);
+    if (!pendingIndexes.length) {
+        activeStoryBook = draft;
+        activeStorySpreadIndex = 0;
+        setStoryLibraryBusy(false);
+        await renderStoryBookViewer({ isDraft: true });
+        return true;
+    }
+    const total = draft.pages.length;
+    let completed = draft.pages.filter((page) => page.imageBlob).length;
+    let nextPending = 0;
+    setStoryLibraryBusy(true, 'AntiAI가 오른쪽 페이지 그림을 만들고 있어요.', `${completed} / ${total}장 완료 · 완료된 그림은 실패해도 보존됩니다.`, { cancellable: true });
+    const workers = Array.from({ length: Math.min(2, pendingIndexes.length) }, async () => {
+        while (nextPending < pendingIndexes.length) {
+            if (signal.aborted) throw storyAbortError();
+            const index = pendingIndexes[nextPending];
+            nextPending += 1;
+            const page = draft.pages[index];
+            page.imageError = '';
+            try {
+                const job = page.imageJob || await createStoryImageJob(page.generationPrompt, signal);
+                page.imageJob = job;
+                const image = await waitForStoryImageJob(job, signal);
+                const blob = await downloadStoryImage(job, image, signal);
+                page.imageBlob = blob;
+                page.imageJob = null;
+                page.imageMimeType = blob.type;
+                page.imageWidth = Number(image.width || 0);
+                page.imageHeight = Number(image.height || 0);
+                page.previewUrl = URL.createObjectURL(blob);
+                completed += 1;
+                const detail = storyLibraryElement('aiedue-library-busy-detail');
+                if (detail) detail.textContent = `${completed} / ${total}장 완료 · 나머지 그림을 만들고 있어요.`;
+            } catch (error) {
+                if (error?.retryWithNewJob) page.imageJob = null;
+                if (error?.name === 'AbortError' || signal.aborted) throw storyAbortError();
+                page.imageError = error?.message || '삽화 생성 실패';
+            }
+        }
+    });
+    try {
+        await Promise.all(workers);
+    } catch (error) {
+        setStoryLibraryBusy(false);
+        await renderStoryImageRecovery(error);
+        return false;
+    }
+    const failedPages = draft.pages.filter((page) => !page.imageBlob);
+    if (failedPages.length) {
+        setStoryLibraryBusy(false);
+        await renderStoryImageRecovery(new Error(`${failedPages.length}장의 삽화를 완성하지 못했습니다. 서버 호출 제한이 표시되면 잠시 뒤 다시 시도해 주세요.`));
+        return false;
+    }
+    activeStoryBook = draft;
+    activeStorySpreadIndex = 0;
+    setStoryLibraryBusy(false);
+    await renderStoryBookViewer({ isDraft: true });
+    return true;
+}
+
+window.retryStoryBookImages = async function retryStoryBookImages() {
+    if (!isStoryLibraryTeacher() || storyLibraryBusy || !activeStoryDraft) return;
+    const controller = new AbortController();
+    activeStoryGenerationController = controller;
+    try {
+        await generateMissingStoryImages(controller);
+    } finally {
+        if (activeStoryGenerationController === controller) activeStoryGenerationController = null;
+    }
+};
+
+window.discardStoryBookDraft = async function discardStoryBookDraft() {
+    if (storyLibraryBusy) return;
+    revokeActiveStoryDraftUrls();
+    activeStoryDraft = null;
+    activeStoryBook = null;
+    await window.openStoryBookMaker();
+};
+
+window.generateStoryBook = async function generateStoryBook(event) {
+    event?.preventDefault();
+    if (!isStoryLibraryTeacher() || storyLibraryBusy) return;
+    const controller = new AbortController();
+    activeStoryGenerationController = controller;
+    try {
+        const selectedIds = [...document.querySelectorAll('input[name="story-character"]:checked')].map((input) => input.value);
+        const selectedCharacters = storyLibraryCharacters.filter((character) => selectedIds.includes(character.id)).map(validateStoryCharacter);
+        const idea = storyLibraryElement('story-book-idea')?.value || '';
+        const style = storyLibraryElement('story-book-style')?.value || '따뜻하고 포근한 수채화 동화책';
+        const prompt = buildStoryGenerationPrompt({ idea, characters: selectedCharacters, spreadCount: STORY_LIBRARY_SPREAD_COUNT });
+        revokeActiveStoryDraftUrls();
+        activeStoryDraft = null;
+        setStoryLibraryBusy(true, 'AntiAI가 동화 글을 만들고 있어요.', '이야기 흐름과 네 개의 펼침면을 구성하고 있어요.', { cancellable: true });
+        const rawPlan = await callKoreanAiGenerate(prompt, { printTimeout: '5m', signal: controller.signal, requestTimeoutMs: 6 * 60 * 1000 });
+        const plan = normalizeStoryPlan(rawPlan, STORY_LIBRARY_SPREAD_COUNT);
+        activeStoryDraft = {
+            ...plan,
+            idea: String(idea).trim(),
+            style,
+            characters: selectedCharacters,
+            pages: plan.spreads.map((spread, index) => ({
+                ...spread,
+                generationPrompt: buildStoryImagePrompt({ title: plan.title, spread, spreadIndex: index, spreadCount: STORY_LIBRARY_SPREAD_COUNT, characters: selectedCharacters, style }),
+                imageBlob: null,
+                imageJob: null,
+                imageError: '',
+                previewUrl: ''
+            }))
+        };
+        await generateMissingStoryImages(controller);
+    } catch (error) {
+        console.error('Story book generation failed', error);
+        setStoryLibraryBusy(false);
+        if (activeStoryDraft) await renderStoryImageRecovery(error);
+        else if (error?.name !== 'AbortError') alert(error.message || '동화책을 만들지 못했습니다.');
+    } finally {
+        if (activeStoryGenerationController === controller) activeStoryGenerationController = null;
+    }
+};
+
+async function renderStoryBookViewer({ isDraft = false } = {}) {
+    const book = activeStoryBook;
+    const content = storyLibraryElement('aiedue-library-content');
+    if (!book || !content) return;
+    setStoryLibraryHeader({ title: isDraft ? '동화책 미리보기' : book.title, subtitle: isDraft ? '모든 펼침면을 확인한 뒤 저장하면 에이두 도서관 목록에 추가돼요.' : `${book.authorName || '에이두 선생님'}이 만든 AntiAI 동화책` });
+    const pages = book.pages || [];
+    activeStorySpreadIndex = Math.max(0, Math.min(activeStorySpreadIndex, pages.length - 1));
+    const page = pages[activeStorySpreadIndex];
+    if (!page) return;
+    const renderToken = ++storyImageRenderToken;
+    let imageUrl = page.previewUrl || '';
+    if (!imageUrl && page.imagePath) {
+        try { imageUrl = await resolveStoryImageUrl(page.imagePath); } catch (error) { console.warn('Story page image load failed', error); }
+    }
+    if (renderToken !== storyImageRenderToken) return;
+    const leftNumber = activeStorySpreadIndex * 2 + 1;
+    const rightNumber = leftNumber + 1;
+    content.innerHTML = `<section class="aiedue-book-preview">
+        <div class="aiedue-book-preview-heading"><div><h3>${escapeHtml(book.title)}</h3><p>${escapeHtml(book.summary || '')}</p></div>${isDraft ? '<span class="aiedue-library-count">저장 전 미리보기</span>' : ''}</div>
+        <div class="aiedue-book-spread" key="${activeStorySpreadIndex}">
+            <article class="aiedue-book-page aiedue-book-page-left"><div class="aiedue-book-page-kicker">${activeStorySpreadIndex + 1}번째 이야기</div><div class="aiedue-book-page-text">${escapeHtml(page.text).replace(/\n/g, '<br>')}</div><span class="aiedue-book-page-number">${leftNumber}</span></article>
+            <figure class="aiedue-book-page aiedue-book-page-right">${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(book.title)} ${activeStorySpreadIndex + 1}번째 장면">` : '<div class="aiedue-book-cover-placeholder">🖼️</div>'}<span class="aiedue-book-page-number">${rightNumber}</span></figure>
+        </div>
+        <nav class="aiedue-book-nav" aria-label="동화책 페이지 이동"><button type="button" onclick="turnStoryBookPage(-1)" ${activeStorySpreadIndex === 0 ? 'disabled' : ''}>← 이전</button><span>${activeStorySpreadIndex + 1} / ${pages.length} 펼침</span><button type="button" onclick="turnStoryBookPage(1)" ${activeStorySpreadIndex >= pages.length - 1 ? 'disabled' : ''}>다음 →</button></nav>
+        <div class="aiedue-book-preview-actions">${isDraft ? '<button type="button" class="aiedue-library-ghost" onclick="openStoryBookMaker()">다시 만들기</button><button type="button" class="aiedue-library-primary" onclick="saveGeneratedStoryBook()">💾 저장하고 도서관에 추가</button>' : '<button type="button" class="aiedue-library-primary" onclick="refreshAiedueLibrary()">📚 도서관 목록</button>'}</div>
+    </section>`;
+}
+
+window.turnStoryBookPage = async function turnStoryBookPage(direction) {
+    if (!activeStoryBook) return;
+    const pages = activeStoryBook.pages || [];
+    const next = Math.max(0, Math.min(activeStorySpreadIndex + Number(direction || 0), pages.length - 1));
+    if (next === activeStorySpreadIndex) return;
+    activeStorySpreadIndex = next;
+    await renderStoryBookViewer({ isDraft: activeStoryBook === activeStoryDraft });
+};
+
+window.openStoryBookViewer = async function openStoryBookViewer(bookId) {
+    const book = storyLibraryBooks.find((item) => item.id === bookId);
+    if (!book) return alert('동화책을 찾지 못했습니다. 도서관 목록을 새로고침해 주세요.');
+    activeStoryBook = book;
+    activeStorySpreadIndex = 0;
+    await renderStoryBookViewer({ isDraft: false });
+};
+
+function storyImageExtension(mimeType) {
+    if (mimeType === 'image/png') return 'png';
+    if (mimeType === 'image/webp') return 'webp';
+    return 'jpg';
+}
+
+window.saveGeneratedStoryBook = async function saveGeneratedStoryBook() {
+    if (!isStoryLibraryTeacher() || !activeStoryDraft || storyLibraryBusy) return;
+    const draft = activeStoryDraft;
+    if (draft.pages.some((page) => !(page.imageBlob instanceof Blob))) {
+        await renderStoryImageRecovery(new Error('완성되지 않은 삽화가 있습니다. 실패한 그림만 먼저 생성해 주세요.'));
+        return;
+    }
+    const bookRef = doc(collection(db, 'Book'));
+    const uploadedPaths = [];
+    let published = false;
+    let publicationAttempted = false;
+    try {
+        setStoryLibraryBusy(true, '동화책을 저장하고 있어요.', '그림을 에이두 도서관 보관함에 안전하게 옮기고 있어요.');
+        const baseData = {
+            appType: STORY_LIBRARY_APP_TYPE,
+            schemaVersion: 1,
+            title: draft.title,
+            summary: draft.summary,
+            prompt: draft.idea,
+            illustrationStyle: draft.style,
+            characters: draft.characters,
+            spreadCount: draft.pages.length,
+            authorId: currentUserId,
+            authorUid: currentUserId,
+            teacherId: currentUserId,
+            authorName: currentUserName || '에이두 선생님',
+            isPublic: false,
+            pages: [],
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        };
+        await setDoc(bookRef, baseData);
+        const savedPages = [];
+        for (let index = 0; index < draft.pages.length; index += 1) {
+            const page = draft.pages[index];
+            storyLibraryElement('aiedue-library-busy-detail').textContent = `그림 ${index + 1} / ${draft.pages.length}장을 저장하고 있어요.`;
+            const extension = storyImageExtension(page.imageMimeType || page.imageBlob?.type);
+            const path = `Book/${bookRef.id}/spread-${String(index + 1).padStart(2, '0')}.${extension}`;
+            await uploadBytes(storageRef(storage, path), page.imageBlob, { contentType: page.imageMimeType || page.imageBlob.type });
+            uploadedPaths.push(path);
+            savedPages.push({
+                text: page.text,
+                imagePrompt: page.imagePrompt,
+                imagePath: path,
+                imageMimeType: page.imageMimeType || page.imageBlob.type,
+                imageWidth: Number(page.imageWidth || 0),
+                imageHeight: Number(page.imageHeight || 0)
+            });
+        }
+        publicationAttempted = true;
+        await updateDoc(bookRef, {
+            pages: savedPages,
+            coverImagePath: savedPages[0]?.imagePath || '',
+            isPublic: true,
+            publishedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        published = true;
+        revokeActiveStoryDraftUrls();
+        activeStoryDraft = null;
+        activeStoryBook = null;
+        setStoryLibraryBusy(false);
+        alert('동화책을 저장했어요! 에이두 도서관 목록에 추가되었습니다.');
+        await renderStoryLibraryList();
+    } catch (error) {
+        console.error('Story book save failed', error);
+        let publicationConfirmedPrivate = !publicationAttempted;
+        if (publicationAttempted && !published) {
+            try {
+                const savedBook = await getDoc(bookRef);
+                published = savedBook.exists() && savedBook.data()?.isPublic === true;
+                publicationConfirmedPrivate = !published;
+            } catch (verificationError) {
+                console.warn('Story book publication verification failed; preserving recoverable data', verificationError);
+            }
+        }
+        if (!published && publicationConfirmedPrivate) {
+            for (const path of uploadedPaths) {
+                try { await deleteObject(storageRef(storage, path)); } catch {}
+            }
+            try { await deleteDoc(bookRef); } catch {}
+        }
+        setStoryLibraryBusy(false);
+        if (published) {
+            alert('동화책은 정상적으로 공개되었습니다. 목록을 다시 열어 확인해 주세요.');
+            await renderStoryLibraryList().catch(() => {});
+        } else if (publicationAttempted && !publicationConfirmedPrivate) {
+            alert('공개 결과를 확인하지 못해 원본과 삽화를 삭제하지 않았습니다. 도서관을 다시 열어 확인해 주세요.');
+        } else {
+            alert(error.message || '동화책을 저장하지 못했습니다.');
+        }
+    }
+};
