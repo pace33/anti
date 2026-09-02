@@ -2540,8 +2540,13 @@ function getLearningDetailActionControls(root) {
     });
 }
 
+function isLearningDetailReadCountControl(control) {
+    const label = `${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
+    return /^(?:한|두|세|\d+)\s*번\s*읽었어요$/.test(label);
+}
+
 function getLearningDetailGuideControls(root) {
-    const controls = getLearningDetailActionControls(root);
+    const controls = getLearningDetailActionControls(root).filter((control) => !isLearningDetailReadCountControl(control));
     if (root?.querySelector?.('[data-no-button-guide]')) return [];
     if (root?.querySelector?.('.lesson-complete-writing-canvas')) {
         return controls.filter((control) => {
@@ -2698,7 +2703,6 @@ function getLearningActivityGuideText(control) {
     const visibleLabel = `${control?.textContent || ''}`.replace(/\s+/g, ' ').trim();
     const label = visibleLabel || `${control?.getAttribute?.('aria-label') || ''}`.replace(/\s+/g, ' ').trim();
     if (isLearningDetailSoundControl(control)) return '여기를 눌러 보세요.';
-    if (/읽었어요|읽기/.test(label)) return '읽은 횟수 버튼을 눌러 보세요.';
     if (/완성|썼어요/.test(label)) return '활동을 마쳤다면 이 버튼을 눌러 보세요.';
     if (label && label.length <= 12) return `“${label}” 버튼을 눌러 보세요.`;
     return '이 버튼을 눌러 활동해 보세요.';
