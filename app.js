@@ -12108,14 +12108,13 @@ function renderLesson21BatchimWordWritingPage(lessonId, batchim = 'ㅁ') {
     let writingIndex = 0;
     return `
         <div class="lesson21-page lesson21-b-word-writing-page" data-lesson21-b-word-writing="${lessonId}">
-            <div class="lesson21-instruction"><strong>쓰기</strong> · 단어를 듣고 빈 받침 자리에 ${selectedBatchim}을 써 보세요.</div>
-            <div class="lesson21-b-word-tip">처음에는 단어를 한 번에 듣고, 어려우면 받침 소리를 나누어 들어 보세요.</div>
+            <div class="lesson21-instruction"><strong>쓰기</strong> · 빈 받침 자리에 ${selectedBatchim}을 써 보세요.</div>
+            <div class="lesson21-b-word-tip">받침을 다 쓰면 완성된 단어 소리가 자동으로 나와요.</div>
             <div class="lesson21-b-word-rows" aria-label="찬찬한글 ${selectedBatchim} 받침 단어 쓰기">
                 ${rows.map((row, rowIndex) => `
                     <div class="lesson21-b-word-row" role="group" aria-label="${selectedBatchim} 받침 단어 ${rowIndex + 1}번째 줄">
                         ${row.map((item) => `
                             <section class="lesson21-b-word-group" data-word="${item.word}" aria-label="${item.word} 쓰기">
-                                <button type="button" class="lesson21-b-word-listen" onclick="speakLesson13Word('${item.word}', this)" aria-label="${item.word} 소리 듣기">🔊 <span>듣기</span></button>
                                 <div class="lesson21-b-word-strip">
                                     ${item.syllables.map((syllable) => {
                                         if (!syllable.write) return `<div class="lesson21-b-word-syllable is-reading"><span class="lesson21-b-word-base">${syllable.base}</span><span class="lesson21-b-word-empty" aria-hidden="true"></span></div>`;
@@ -13538,8 +13537,6 @@ function completeLesson21BWordCanvas(canvas) {
     const status = syllable.querySelector('.lesson21-b-word-status');
     if (status) status.textContent = '✓ 완성';
     group.classList.add('is-complete');
-    const listenLabel = group.querySelector('.lesson21-b-word-listen span');
-    if (listenLabel) listenLabel.textContent = group.dataset.word;
 
     const completed = page.querySelectorAll('.lesson21-b-word-canvas[data-lesson21-b-word-completed="true"]').length;
     const progress = page.querySelector('#lesson21-b-word-progress-count');

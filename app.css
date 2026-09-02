@@ -3296,25 +3296,6 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     position: relative;
     display: grid;
     gap: 6px;
-    padding-top: 36px;
-}
-.lesson21-b-word-listen {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    min-width: 68px;
-    min-height: 34px;
-    padding: 5px 9px;
-    border: 1px solid #8eb8d0;
-    border-radius: 7px;
-    background: #ffffff;
-    color: #285e7c;
-    font-size: .8rem;
-    font-weight: 900;
 }
 .lesson21-b-word-strip {
     display: flex;
@@ -3382,11 +3363,6 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 }
 .lesson21-b-word-syllable.is-complete .lesson21-b-word-status {
     color: #197247;
-}
-.lesson21-b-word-group.is-complete .lesson21-b-word-listen {
-    border-color: #55b77a;
-    background: #ebf8ef;
-    color: #176b43;
 }
 .lesson21-b-word-progress {
     display: flex;
