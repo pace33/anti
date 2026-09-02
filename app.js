@@ -17450,6 +17450,7 @@ const traceInitials = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','�
 const traceMedials = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
 const traceFinals = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 const traceVerticalVowels = new Set(['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅣ']);
+const traceMixedLayoutVowels = new Set(['ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ']);
 const traceCompositeJamo = {
     'ㄲ': ['ㄱ', 'ㄱ'],
     'ㄸ': ['ㄷ', 'ㄷ'],
@@ -17537,6 +17538,32 @@ function traceSubBox(box, x, y, w, h) {
         w: box.w * w,
         h: box.h * h
     };
+}
+
+function getTraceSyllableParts(syllable, box) {
+    const hasFinal = Boolean(syllable.final);
+    const top = hasFinal ? traceSubBox(box, 0.08, 0.05, 0.84, 0.62) : traceSubBox(box, 0.08, 0.08, 0.84, 0.82);
+    const parts = [];
+    if (traceMixedLayoutVowels.has(syllable.medial)) {
+        const [horizontalPart, verticalPart] = traceCompositeJamo[syllable.medial];
+        parts.push(
+            { char: syllable.initial, box: traceSubBox(top, 0.02, 0.0, 0.56, 0.5) },
+            { char: horizontalPart, box: traceSubBox(top, 0.0, 0.46, 0.62, 0.54) },
+            { char: verticalPart, box: traceSubBox(top, 0.58, 0.0, 0.42, 1) }
+        );
+    } else if (traceVerticalVowels.has(syllable.medial)) {
+        parts.push(
+            { char: syllable.initial, box: traceSubBox(top, 0.0, 0.02, 0.48, 0.96) },
+            { char: syllable.medial, box: traceSubBox(top, 0.48, 0.0, 0.52, 1) }
+        );
+    } else {
+        parts.push(
+            { char: syllable.initial, box: traceSubBox(top, 0.18, 0.0, 0.64, 0.52) },
+            { char: syllable.medial, box: traceSubBox(top, 0.0, 0.45, 1, 0.55) }
+        );
+    }
+    if (hasFinal) parts.push({ char: syllable.final, box: traceSubBox(box, 0.16, 0.68, 0.68, 0.28) });
+    return parts;
 }
 
 function drawTraceNumber(ctx, x, y, number, scale) {
@@ -17641,18 +17668,7 @@ function drawSingleTraceChar(ctx, char, box) {
 
     const syllable = decomposeTraceSyllable(char);
     if (syllable) {
-        const hasFinal = Boolean(syllable.final);
-        const top = hasFinal ? traceSubBox(box, 0.08, 0.05, 0.84, 0.62) : traceSubBox(box, 0.08, 0.08, 0.84, 0.82);
-        if (traceVerticalVowels.has(syllable.medial)) {
-            drawSingleTraceChar(ctx, syllable.initial, traceSubBox(top, 0.0, 0.02, 0.48, 0.96));
-            drawSingleTraceChar(ctx, syllable.medial, traceSubBox(top, 0.48, 0.0, 0.52, 1));
-        } else {
-            drawSingleTraceChar(ctx, syllable.initial, traceSubBox(top, 0.18, 0.0, 0.64, 0.52));
-            drawSingleTraceChar(ctx, syllable.medial, traceSubBox(top, 0.0, 0.45, 1, 0.55));
-        }
-        if (hasFinal) {
-            drawSingleTraceChar(ctx, syllable.final, traceSubBox(box, 0.16, 0.68, 0.68, 0.28));
-        }
+        getTraceSyllableParts(syllable, box).forEach((part) => drawSingleTraceChar(ctx, part.char, part.box));
         return;
     }
 
@@ -17681,16 +17697,7 @@ function collectSingleTraceChar(char, box, out) {
 
     const syllable = decomposeTraceSyllable(char);
     if (syllable) {
-        const hasFinal = Boolean(syllable.final);
-        const top = hasFinal ? traceSubBox(box, 0.08, 0.05, 0.84, 0.62) : traceSubBox(box, 0.08, 0.08, 0.84, 0.82);
-        if (traceVerticalVowels.has(syllable.medial)) {
-            collectSingleTraceChar(syllable.initial, traceSubBox(top, 0.0, 0.02, 0.48, 0.96), out);
-            collectSingleTraceChar(syllable.medial, traceSubBox(top, 0.48, 0.0, 0.52, 1), out);
-        } else {
-            collectSingleTraceChar(syllable.initial, traceSubBox(top, 0.18, 0.0, 0.64, 0.52), out);
-            collectSingleTraceChar(syllable.medial, traceSubBox(top, 0.0, 0.45, 1, 0.55), out);
-        }
-        if (hasFinal) collectSingleTraceChar(syllable.final, traceSubBox(box, 0.16, 0.68, 0.68, 0.28), out);
+        getTraceSyllableParts(syllable, box).forEach((part) => collectSingleTraceChar(part.char, part.box, out));
         return;
     }
 
