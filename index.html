@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260902-settings-image-test-v149">
+    <link rel="stylesheet" href="app.css?v=20260902-image-edit-ui-v150">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1626,7 +1626,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260902-settings-image-test-v149"></script>
+    <script type="module" src="app.js?v=20260902-image-edit-ui-v150"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
@@ -1659,9 +1659,22 @@
             <section id="settings-image-test-panel" class="settings-panel hidden" role="tabpanel" aria-labelledby="settings-image-test-tab">
                 <div class="settings-image-test-intro">
                     <span aria-hidden="true">🖼️</span>
-                    <div><strong>AntiAI 그림 생성 테스트</strong><p>만들고 싶은 그림을 자세히 적고 생성 결과를 바로 확인하세요.</p></div>
+                    <div><strong>AntiAI 그림 생성·편집 테스트</strong><p>새 그림을 만들거나 올린 이미지를 편집한 뒤 계속 조정할 수 있어요.</p></div>
                 </div>
-                <label for="settings-image-prompt" class="settings-image-label">그림 프롬프트</label>
+                <div class="settings-image-mode-tabs" role="tablist" aria-label="그림 작업 방식">
+                    <button type="button" id="settings-image-mode-generate" class="settings-image-mode-tab active" role="tab" aria-selected="true" aria-controls="settings-image-generate-options" tabindex="0" onclick="switchSettingsImageMode('generate')" onkeydown="handleSettingsImageModeKeydown(event)">새 그림</button>
+                    <button type="button" id="settings-image-mode-edit" class="settings-image-mode-tab" role="tab" aria-selected="false" aria-controls="settings-image-edit-options" tabindex="-1" onclick="switchSettingsImageMode('edit')" onkeydown="handleSettingsImageModeKeydown(event)">이미지 편집</button>
+                </div>
+                <div id="settings-image-generate-options" class="settings-image-mode-note" role="tabpanel" aria-labelledby="settings-image-mode-generate">글로 설명한 새 그림을 생성합니다.</div>
+                <div id="settings-image-edit-options" class="settings-image-upload-panel hidden" role="tabpanel" aria-labelledby="settings-image-mode-edit">
+                    <label for="settings-image-file" class="settings-image-upload-label">JPEG, PNG, WebP 이미지 선택 <small>최대 20MB</small></label>
+                    <input id="settings-image-file" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleSettingsImageFile(event)">
+                    <div id="settings-image-upload-preview" class="settings-image-upload-preview hidden">
+                        <img id="settings-image-upload-img" alt="편집할 원본 이미지 미리보기">
+                        <span id="settings-image-upload-meta"></span>
+                    </div>
+                </div>
+                <label id="settings-image-prompt-label" for="settings-image-prompt" class="settings-image-label">그림 프롬프트</label>
                 <textarea id="settings-image-prompt" class="settings-image-prompt" maxlength="2000" rows="5" placeholder="예: 햇살이 비치는 숲속에서 노란 우비를 입은 작은 여우가 책을 읽는 따뜻한 동화책 삽화"></textarea>
                 <div class="settings-image-controls">
                     <label for="settings-image-ratio">그림 비율
@@ -1678,10 +1691,18 @@
                     <div><strong id="settings-image-status-title">그림을 준비하고 있어요.</strong><small id="settings-image-status-detail">완성될 때까지 이 화면을 열어 두세요.</small></div>
                 </div>
                 <div id="settings-image-error" class="settings-image-error hidden" role="alert"></div>
-                <figure id="settings-image-result" class="settings-image-result hidden">
-                    <img id="settings-image-result-img" alt="생성된 AntiAI 테스트 그림">
-                    <figcaption><strong>그림 생성 완료</strong><span id="settings-image-result-meta"></span></figcaption>
-                </figure>
+                <section id="settings-image-result" class="settings-image-result hidden" aria-labelledby="settings-image-result-title">
+                    <div class="settings-image-compare">
+                        <figure><span>원본</span><img id="settings-image-original-img" alt="조정 전 원본 이미지"></figure>
+                        <figure><span>현재 결과</span><img id="settings-image-result-img" alt="생성 또는 편집된 현재 이미지"></figure>
+                    </div>
+                    <div class="settings-image-result-caption"><strong id="settings-image-result-title">그림 작업 완료</strong><span id="settings-image-result-meta"></span><a id="settings-image-download" class="settings-image-download" download="antiai-image.png">그림 다운로드</a></div>
+                    <div class="settings-image-adjust">
+                        <label for="settings-image-adjust-prompt" class="settings-image-label">조정 요청</label>
+                        <textarea id="settings-image-adjust-prompt" class="settings-image-prompt" maxlength="2000" rows="3" placeholder="예: 배경을 저녁으로 바꾸고 주인공을 더 크게 보여 주세요."></textarea>
+                        <button type="button" id="settings-image-adjust-btn" class="settings-image-generate" onclick="adjustSettingsTestImage()">이 결과 조정하기</button>
+                    </div>
+                </section>
             </section>
 
             <div id="settings-footer" class="settings-footer mt-8">

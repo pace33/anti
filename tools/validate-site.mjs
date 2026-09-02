@@ -145,6 +145,28 @@ assert(!app.includes('aiedue.netlify.app'), '폐기된 Netlify 크래프트 주�
     'enhanceInteractiveSemantics'
 ].forEach((marker) => assert(app.includes(marker), `app.js 필수 기능이 없습니다: ${marker}`));
 
+// 교사 전용 이미지 생성·편집 테스트 UI/API 계약
+[
+    'settings-image-mode-generate',
+    'settings-image-mode-edit',
+    'settings-image-file',
+    'settings-image-original-img',
+    'settings-image-adjust-prompt',
+    'settings-image-download'
+].forEach((id) => assert(index.includes(`id="${id}"`), `이미지 편집 테스트 UI가 없습니다: ${id}`));
+assert(index.includes('accept="image/jpeg,image/png,image/webp"') && index.includes('조정 요청'), '이미지 업로드 형식 또는 반복 조정 UI가 올바르지 않습니다.');
+assert(app.includes("const SETTINGS_IMAGE_MAX_BYTES = 20 * 1024 * 1024;") && app.includes("new Set(['image/jpeg', 'image/png', 'image/webp'])"), '이미지 업로드의 20MB/형식 제한이 없습니다.');
+assert(app.includes("fetchStoryResource('/korean-ai/api/image-edit-sessions'") && app.includes("'Content-Type': blob.type") && app.includes('body: blob'), '편집 원본을 raw 파일로 세션 API에 업로드하지 않습니다.');
+assert(app.includes('/turns`') && app.includes("'X-Image-Session-Token': session.token") && app.includes('JSON.stringify({ prompt, aspectRatio })'), '편집 turn API 계약이 올바르지 않습니다.');
+assert(app.includes('value.statusUrl ? normalizeImageJobStatusUrl(value.statusUrl, value.id)') && app.includes('return { id: value.id, token, statusUrl }'), '편집 turn 작업의 상태 URL 또는 capability token이 정규화 결과에 보존되지 않습니다.');
+assert(app.includes('job.statusUrl || `/korean-ai/api/image-jobs/${encodeURIComponent(job.id)}`') && app.includes("'X-Image-Job-Token': job.token"), '서버가 돌려준 검증된 상태 URL을 polling에 사용하거나 capability token을 전달하지 않습니다.');
+assert(app.includes('waitForStoryImageJob(job, controller.signal)') && app.includes('downloadStoryImage(job, image, controller.signal)'), '편집 결과가 기존 이미지 작업 polling/download helper를 사용하지 않습니다.');
+assert(app.includes('createSettingsImageEditSession(settingsImageCurrentBlob') && app.includes('if (editTurnAccepted) settingsImageEditSession = null;'), '불확실한 turn 실패 후 현재 결과에서 새 편집 세션을 만들도록 상태를 무효화하지 않습니다.');
+assert(app.includes("firstEditComplete = settingsImageMode === 'edit' && Boolean(settingsImageCurrentBlob)") && app.includes("'편집 완료 · 아래에서 조정'"), '첫 편집 완료 후 상단 버튼이 같은 세션에서 초기 편집을 반복할 수 있습니다.');
+assert(app.includes("const tabs = ['generate', 'edit'];") && app.includes("(currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length"), '중첩 이미지 모드 탭의 좌우 화살표 순환이 올바르지 않습니다.');
+assert(app.includes("currentUserRole !== 'teacher' || !currentUserId") && app.includes("revokeSettingsImageUrl('source')") && app.includes("revokeSettingsImageUrl('result')"), '교사 권한 확인 또는 이미지 Blob URL 정리가 없습니다.');
+assert(appCss.includes('.settings-image-mode-tabs') && appCss.includes('.settings-image-compare') && appCss.includes('.settings-image-adjust'), '이미지 편집/비교/조정 스타일이 없습니다.');
+
 [
     'saveDrawingRecordToFirebase',
     'addWrongToSharedBank',
