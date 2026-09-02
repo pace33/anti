@@ -8070,6 +8070,8 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
 .settings-tab { flex: 1; min-height: 46px; padding: 10px 14px; border: 0; border-radius: 14px; color: #718078; background: transparent; font-weight: 900; transition: .2s ease; }
 .settings-tab.active { color: #226b48; background: #fff; box-shadow: 0 4px 14px rgba(45,78,59,.11); }
 .settings-panel { min-height: 150px; }
+.settings-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.settings-footer.image-test-active { grid-template-columns: 1fr; }
 .settings-image-test-intro { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding: 16px 18px; border: 1px solid #d9ebdf; border-radius: 20px; background: linear-gradient(135deg,#f4fbf6,#edf7ff); }
 .settings-image-test-intro > span { font-size: 2rem; }
 .settings-image-test-intro strong { display: block; color: #2d4e3a; font-size: 1.05rem; font-weight: 1000; }

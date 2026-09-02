@@ -19392,7 +19392,8 @@ window.switchSettingsTab = function(tabName = 'basic') {
     imageTab?.setAttribute('tabindex', selected === 'image-test' ? '0' : '-1');
     basicPanel?.classList.toggle('hidden', selected !== 'basic');
     imagePanel?.classList.toggle('hidden', selected !== 'image-test');
-    document.getElementById('settings-save-btn')?.classList.toggle('invisible', selected !== 'basic');
+    document.getElementById('settings-save-btn')?.classList.toggle('hidden', selected !== 'basic');
+    document.getElementById('settings-footer')?.classList.toggle('image-test-active', selected === 'image-test');
 };
 
 window.handleSettingsTabKeydown = function(event) {
