@@ -17476,7 +17476,7 @@ const traceCompositeJamo = {
     'ㅄ': ['ㅂ', 'ㅅ']
 };
 const traceTopToBottomStroke = (x, top, bottom) => ({ points: [[x, top], [x, bottom]] });
-const traceLeftToRightStroke = (y, left, right) => ({ points: [[left, y], [right, y]] });
+const traceLeftToRightStroke = (y, left, right, options = {}) => ({ points: [[left, y], [right, y]], ...options });
 const traceRightToLeftStroke = (y, right, left, options = {}) => ({ points: [[right, y], [left, y]], ...options });
 const traceStrokeMap = {
     'ㆍ': [{ points: [[0.5, 0.5], [0.5, 0.5]], dot: true }],
@@ -17494,7 +17494,7 @@ const traceStrokeMap = {
     'ㅐ': [{ points: [[0.36, 0.18], [0.36, 0.82]] }, { points: [[0.36, 0.5], [0.58, 0.5]] }, { points: [[0.7, 0.18], [0.7, 0.82]] }],
     'ㅔ': [traceLeftToRightStroke(0.5, 0.32, 0.62), { points: [[0.62, 0.18], [0.62, 0.82]] }, { points: [[0.78, 0.18], [0.78, 0.82]] }],
     'ㅒ': [{ points: [[0.34, 0.16], [0.34, 0.84]] }, { points: [[0.34, 0.4], [0.56, 0.4]] }, { points: [[0.34, 0.62], [0.56, 0.62]] }, { points: [[0.72, 0.16], [0.72, 0.84]] }],
-    'ㅖ': [traceRightToLeftStroke(0.4, 0.58, 0.28, { strictDirection: true }), traceRightToLeftStroke(0.62, 0.58, 0.28, { strictDirection: true }), { points: [[0.58, 0.16], [0.58, 0.84]] }, { points: [[0.78, 0.16], [0.78, 0.84]] }],
+    'ㅖ': [traceLeftToRightStroke(0.4, 0.28, 0.58, { strictDirection: true }), traceLeftToRightStroke(0.62, 0.28, 0.58, { strictDirection: true }), { points: [[0.58, 0.16], [0.58, 0.84]] }, { points: [[0.78, 0.16], [0.78, 0.84]] }],
     'ㄱ': [{ points: [[0.22, 0.24], [0.78, 0.24], [0.78, 0.78]] }],
     'ㄴ': [{ points: [[0.24, 0.2], [0.24, 0.76], [0.78, 0.76]] }],
     'ㄷ': [{ points: [[0.28, 0.24], [0.74, 0.24]] }, { points: [[0.28, 0.24], [0.28, 0.76]] }, { points: [[0.28, 0.76], [0.74, 0.76]] }],
