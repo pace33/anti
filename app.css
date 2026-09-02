@@ -7186,7 +7186,7 @@ body {
 #letter-writing-section .letter-practice-selector-grid {grid-template-columns:1fr;}
 
 .reading-category-tabs {display:flex;justify-content:center;gap:12px;width:100%;margin:0 0 24px;}
-.reading-category-tabs .nav-tab {min-width:130px;font-size:1.05rem;}
+.reading-category-tabs .nav-tab {min-width:180px;padding-inline:20px;font-size:1.05rem;white-space:nowrap;}
 .reading-slow-toggle {display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;border:2px solid rgba(99,102,241,.22);background:rgba(255,255,255,.94);color:#334155;font-weight:900;box-shadow:0 12px 28px rgba(15,23,42,.08);transition:transform .2s ease,box-shadow .2s ease,background .2s ease;}
 .reading-slow-toggle:hover {transform:translateY(-2px);box-shadow:0 16px 34px rgba(15,23,42,.12);}
 .reading-slow-toggle.active {background:linear-gradient(135deg,#f59e0b,#fb7185);color:white;border-color:transparent;}
@@ -7203,7 +7203,7 @@ body {
 @media (max-width:992px){.reading-cards-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
 @media (max-width:1180px){#my-korean-section > .section-dashboard-header{grid-template-columns:160px minmax(0,1fr);gap:22px;}.my-korean-logo-link,.my-korean-logo-link .login-mini-logo{width:160px;}}
 @media (max-width:860px){#my-korean-section > .section-dashboard-header{grid-template-columns:130px minmax(0,1fr);gap:16px;padding:24px 20px !important;}.my-korean-logo-link,.my-korean-logo-link .login-mini-logo{width:130px;}.activity-logo-button .login-mini-logo{width:125px;}#letter-writing-section .writing-mode-buttons .nav-tab{min-width:0;padding:8px 10px;font-size:.82rem;}}
-@media (max-width:576px){#my-korean-section > .section-dashboard-header{grid-template-columns:1fr;gap:10px;padding:18px 14px !important;}.my-korean-logo-link,.my-korean-logo-link .login-mini-logo{width:104px;}.my-korean-unit-bar{width:100%;flex-wrap:wrap;overflow:visible;}.my-korean-unit-tab{flex:1 1 calc(33.333% - 6px);min-width:0;padding:8px;font-size:.76rem;}#my-korean-section .stitched{margin-top:17rem !important;}.activity-logo-button .login-mini-logo{width:94px;}#letter-writing-section .writing-mode-quick-card{padding:4px;}.letter-practice-kind-tabs{gap:6px}.letter-practice-kind-tabs .nav-tab{min-width:0;flex:1;padding:9px 8px}.reading-category-tabs{gap:7px}.reading-category-tabs .nav-tab{min-width:0;flex:1;padding:10px}.reading-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.reading-card{min-height:150px;border-radius:24px;}}
+@media (max-width:576px){#my-korean-section > .section-dashboard-header{grid-template-columns:1fr;gap:10px;padding:18px 14px !important;}.my-korean-logo-link,.my-korean-logo-link .login-mini-logo{width:104px;}.my-korean-unit-bar{width:100%;flex-wrap:wrap;overflow:visible;}.my-korean-unit-tab{flex:1 1 calc(33.333% - 6px);min-width:0;padding:8px;font-size:.76rem;}#my-korean-section .stitched{margin-top:17rem !important;}.activity-logo-button .login-mini-logo{width:94px;}#letter-writing-section .writing-mode-quick-card{padding:4px;}.letter-practice-kind-tabs{gap:6px}.letter-practice-kind-tabs .nav-tab{min-width:0;flex:1;padding:9px 8px}.reading-category-tabs{gap:7px}.reading-category-tabs .nav-tab{min-width:0;min-height:48px;flex:1;padding:8px 4px;font-size:.78rem;line-height:1.2;white-space:normal}.reading-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.reading-card{min-height:150px;border-radius:24px;}}
 
 /* 배움 25: 찬찬한글 듣고 알맞은 글자 고르기 */
 .lesson25-listen-page {display:grid;gap:18px;}
