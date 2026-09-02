@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260902-aiedue-library-v146">
+    <link rel="stylesheet" href="app.css?v=20260902-aiedue-library-v147">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -163,15 +163,17 @@
                     </div>
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
                 </div>
-                <button type="button" class="aiedue-library-button pointer-events-auto" onclick="openAiedueLibrary()" aria-label="에이두 도서관 열기">
-                    <span class="aiedue-library-button-icon" aria-hidden="true">📚</span>
-                    <span><strong>에이두 도서관</strong><small>AI 동화책을 읽고 만들어요</small></span>
-                </button>
-                <button type="button" class="lesson-photo-button pointer-events-auto" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
-                    <span class="lesson-photo-icon" aria-hidden="true">📷</span>
-                    <span><strong>오늘의 노트 사진 찍기</strong><small>웹 카메라 화면에서 바로 찍어요</small></span>
-                </button>
-                <input id="lesson-photo-input" type="file" accept="image/*" class="hidden" onchange="handleLessonPhotoCapture(this)" aria-label="오늘의 노트 사진 파일 선택">
+                <div class="dashboard-quick-actions pointer-events-auto" aria-label="대시보드 빠른 메뉴">
+                    <button type="button" class="aiedue-library-button" onclick="openAiedueLibrary()" aria-label="에이두 도서관 열기">
+                        <span class="aiedue-library-button-icon" aria-hidden="true">📚</span>
+                        <span><strong>에이두 도서관</strong><small>AI 동화책을 읽고 만들어요</small></span>
+                    </button>
+                    <button type="button" class="lesson-photo-button" onclick="triggerLessonPhotoCapture()" aria-label="오늘의 노트 사진 찍기">
+                        <span class="lesson-photo-icon" aria-hidden="true">📷</span>
+                        <span><strong>오늘의 노트 사진 찍기</strong><small>웹 카메라 화면에서 바로 찍어요</small></span>
+                    </button>
+                    <input id="lesson-photo-input" type="file" accept="image/*" class="hidden" onchange="handleLessonPhotoCapture(this)" aria-label="오늘의 노트 사진 파일 선택">
+                </div>
             </div>
 
             <!-- Information Drawer (Right Side) -->
@@ -1624,7 +1626,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260902-aiedue-library-v146"></script>
+    <script type="module" src="app.js?v=20260902-aiedue-library-v147"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4">

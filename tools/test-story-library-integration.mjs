@@ -23,7 +23,9 @@ for (const marker of [
 ]) assert.ok(css.includes(marker), `app.css marker missing: ${marker}`);
 
 for (const marker of [
-  "collection(db, 'teachers', currentUserId, 'storyCharacters')",
+  "collectionGroup(db, 'storyCharacters')",
+  "creatorName: currentUserName",
+  'isStoryCharacterCreator',
   "collection(db, 'Book')",
   "appType: STORY_LIBRARY_APP_TYPE",
   "isPublic: true",
@@ -42,6 +44,10 @@ for (const marker of [
   'window.saveGeneratedStoryBook',
   'window.turnStoryBookPage'
 ]) assert.ok(app.includes(marker), `app.js marker missing: ${marker}`);
+
+assert.ok(css.includes('.aiedue-book-cover-title'), 'book title must be presented on the cover artwork');
+assert.ok(css.includes('.aiedue-book-caption'), 'book description must be presented below the cover');
+assert.ok(html.indexOf('aiedue-library-button') < html.indexOf('lesson-photo-button'), 'library button must appear left of the photo button');
 
 assert.match(app, /Array\.from\(\{ length: Math\.min\(2, pendingIndexes\.length\) \}/, 'image generation must respect the server owner-active limit of two jobs');
 assert.ok(app.indexOf('isPublic: false') < app.indexOf('isPublic: true'), 'book metadata must be private until all images are uploaded');

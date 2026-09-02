@@ -276,6 +276,7 @@ body.rpg-hud-active .page-number { bottom: 112px; }
 .lesson-photo-button strong { font-size: 1rem; font-weight: 1000; }
 .lesson-photo-button small { color: #dd7a39; font-size: .72rem; font-weight: 900; }
 .lesson-photo-icon { font-size: 1.8rem; }
+.dashboard-quick-actions { display: flex; align-items: flex-start; gap: 10px; }
 
 @media (max-width: 860px) {
     .aiedue-rpg-hud { left: 18px; bottom: 18px; }
@@ -308,7 +309,8 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     .rpg-experience-track { left: 62px; right: 5px; }
     .rpg-experience-label { right: 9px; }
     body.rpg-hud-active .page-number { bottom: 110px; }
-    .lesson-photo-button { position: absolute; top: 94px; right: 14px; max-width: 235px; padding: 8px 11px; }
+    .dashboard-quick-actions { position: absolute; top: 94px; left: 14px; right: 14px; align-items: stretch; justify-content: space-between; gap: 8px; }
+    .lesson-photo-button { position: static; flex: 1 1 0; min-width: 0; max-width: 235px; padding: 8px 11px; }
     .lesson-photo-icon { font-size: 1.35rem; }
     .lesson-photo-button strong { font-size: .76rem; }
     .lesson-photo-button small { font-size: .6rem; }
@@ -7940,28 +7942,41 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
 .aiedue-library-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
 .aiedue-library-toolbar h3 { margin: 0; color: #2c4938; font-size: 1.35rem; font-weight: 1000; }
 .aiedue-library-count { color: #789080; font-size: .86rem; font-weight: 900; }
-.aiedue-library-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px; }
+.aiedue-library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 260px)); align-items: start; gap: 32px 26px; }
 .aiedue-book-card {
     min-width: 0;
     padding: 0;
-    overflow: hidden;
-    border: 2px solid #e0eadf;
-    border-radius: 24px;
-    background: #fff;
+    border: 0;
+    background: transparent;
     color: #2c3e50;
     text-align: left;
-    box-shadow: 0 10px 24px rgba(54,82,63,.09);
-    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    perspective: 1100px;
 }
-.aiedue-book-card:hover { transform: translateY(-6px); border-color: #9fd1ae; box-shadow: 0 18px 35px rgba(54,82,63,.16); }
-.aiedue-book-cover { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: linear-gradient(145deg,#dff2e0,#fff0bd); }
-.aiedue-book-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.aiedue-book-cover {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border: 1px solid rgba(37,54,44,.16);
+    border-radius: 8px 20px 20px 8px;
+    background: linear-gradient(145deg,#dff2e0,#fff0bd);
+    box-shadow: -7px 9px 0 #d8cfb8, 0 18px 32px rgba(40,64,48,.2);
+    transform-origin: left center;
+    transition: transform .24s ease, box-shadow .24s ease;
+}
+.aiedue-book-card:hover .aiedue-book-cover { transform: translateY(-8px) rotateY(-3deg); box-shadow: -9px 12px 0 #d8cfb8, 0 28px 42px rgba(40,64,48,.27); }
+.aiedue-book-cover::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(12,27,18,.04) 15%,rgba(12,27,18,.05) 36%,rgba(12,27,18,.82) 100%); pointer-events: none; }
+.aiedue-book-cover img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .45s ease; }
+.aiedue-book-card:hover .aiedue-book-cover img { transform: scale(1.035); }
 .aiedue-book-cover-placeholder { width: 100%; height: 100%; display: grid; place-items: center; font-size: 4rem; }
-.aiedue-book-badge { position: absolute; top: 10px; left: 10px; padding: 5px 9px; border-radius: 999px; color: #fff; background: rgba(45,128,83,.9); font-size: .65rem; font-weight: 1000; }
-.aiedue-book-card-body { padding: 15px 16px 17px; }
-.aiedue-book-card h4 { margin: 0; overflow: hidden; color: #2c4637; font-size: 1.1rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
-.aiedue-book-card p { min-height: 2.7em; margin: 7px 0 12px; overflow: hidden; color: #758179; font-size: .82rem; font-weight: 750; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.aiedue-book-card-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #91a097; font-size: .72rem; font-weight: 900; }
+.aiedue-book-badge { position: absolute; z-index: 3; top: 14px; right: 13px; padding: 6px 10px; border-radius: 999px; color: #fff; background: rgba(36,132,81,.9); font-size: .65rem; font-weight: 1000; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+.aiedue-book-spine { position: absolute; z-index: 3; inset: 0 auto 0 0; width: 14px; background: linear-gradient(90deg,rgba(21,33,25,.42),rgba(255,255,255,.18),rgba(21,33,25,.16)); box-shadow: 3px 0 8px rgba(0,0,0,.15); }
+.aiedue-book-cover-title { position: absolute; z-index: 3; left: 22px; right: 18px; bottom: 24px; color: #fff; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,.72); }
+.aiedue-book-cover-title small { display: block; margin-bottom: 8px; font-size: .7rem; font-weight: 900; opacity: .88; }
+.aiedue-book-cover-title h4 { margin: 0; color: #fff; font-size: clamp(1.25rem,2vw,1.65rem); font-weight: 1000; line-height: 1.28; word-break: keep-all; }
+.aiedue-book-cover-title span { display: block; margin-top: 11px; font-size: .55rem; font-weight: 900; letter-spacing: .16em; opacity: .72; }
+.aiedue-book-caption { padding: 17px 7px 0 13px; }
+.aiedue-book-caption p { min-height: 3em; margin: 0 0 8px; overflow: hidden; color: #65746b; font-size: .84rem; font-weight: 760; line-height: 1.5; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.aiedue-book-caption > span { color: #93a098; font-size: .7rem; font-weight: 900; }
 .aiedue-library-empty { min-height: 360px; display: grid; place-items: center; text-align: center; border: 3px dashed #cfe0d2; border-radius: 30px; background: rgba(255,255,255,.64); color: #75837a; }
 .aiedue-library-empty span { display: block; margin-bottom: 12px; font-size: 4rem; }
 .aiedue-library-empty strong { display: block; margin-bottom: 7px; color: #476252; font-size: 1.3rem; }
@@ -7990,14 +8005,18 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
 .aiedue-form-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .aiedue-character-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .aiedue-character-card { position: relative; padding: 18px; border: 2px solid #dfebdf; border-radius: 21px; background: #fff; text-align: left; }
-.aiedue-character-card h4 { margin: 0 0 10px; color: #2d503b; font-size: 1.1rem; font-weight: 1000; }
+.aiedue-character-card h4 { margin: 0 0 5px; padding-right: 108px; color: #2d503b; font-size: 1.1rem; font-weight: 1000; }
+.aiedue-character-creator { margin: 0 0 12px; color: #89988e; font-size: .7rem; font-weight: 900; }
 .aiedue-character-card dl { margin: 0; }
 .aiedue-character-card dt { margin-top: 8px; color: #4f9568; font-size: .72rem; font-weight: 1000; }
 .aiedue-character-card dd { margin: 3px 0 0; color: #67736b; font-size: .84rem; font-weight: 750; line-height: 1.45; }
 .aiedue-character-card-select { display: block; cursor: pointer; }
+.aiedue-character-card-select h4 { padding-right: 30px; }
 .aiedue-character-card-select input { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; accent-color: #2f9562; }
 .aiedue-character-card-select:has(input:checked) { border-color: #52ab75; background: #effbf2; box-shadow: 0 0 0 3px rgba(82,171,117,.12); }
-.aiedue-character-delete { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #fff0ed; color: #ad5650; font-weight: 1000; }
+.aiedue-character-actions { position: absolute; top: 11px; right: 11px; display: flex; gap: 5px; }
+.aiedue-character-actions button { min-height: 30px; padding: 5px 9px; border: 0; border-radius: 10px; background: #eaf6ee; color: #337552; font-size: .68rem; font-weight: 1000; }
+.aiedue-character-actions .aiedue-character-delete { position: static; width: auto; height: auto; background: #fff0ed; color: #ad5650; }
 .aiedue-maker-layout { display: grid; grid-template-columns: minmax(260px, .86fr) minmax(360px, 1.4fr); gap: 20px; }
 .aiedue-maker-panel { padding: 22px; border: 2px solid #deeadf; border-radius: 25px; background: #fff; }
 .aiedue-maker-panel h3 { margin: 0 0 5px; color: #2d4d39; font-size: 1.25rem; font-weight: 1000; }
@@ -8063,7 +8082,7 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
     .aiedue-book-page-right img { min-height: 420px; }
 }
 @media (max-width: 640px) {
-    .aiedue-library-button { position: absolute; top: 94px; left: 14px; z-index: 4; min-width: 0; max-width: 160px; padding: 8px 10px; }
+    .dashboard-quick-actions .aiedue-library-button { position: static; flex: 1 1 0; min-width: 0; max-width: 160px; padding: 8px 10px; }
     .aiedue-library-button strong { font-size: .75rem; }
     .aiedue-library-button small { display: none; }
     .aiedue-library-button-icon { font-size: 1.3rem; }

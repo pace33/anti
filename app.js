@@ -19492,6 +19492,7 @@ let storyLibraryCharacters = [];
 let activeStoryBook = null;
 let activeStorySpreadIndex = 0;
 let activeStoryDraft = null;
+let activeStoryCharacterEditId = null;
 let storyLibraryBusy = false;
 let activeStoryGenerationController = null;
 let storyImageRenderToken = 0;
@@ -19505,14 +19506,15 @@ function storyLibraryElement(id) {
     return document.getElementById(id);
 }
 
-function setStoryLibraryHeader({ title = '에이두 도서관', subtitle = '선생님이 AntiAI와 함께 만든 동화책을 읽어요.', showTeacherActions = false } = {}) {
+function setStoryLibraryHeader({ title = '에이두 도서관', subtitle = '모두가 만든 등장인물과 AntiAI 동화책을 함께 즐겨요.', showTeacherActions = false } = {}) {
     const titleEl = storyLibraryElement('aiedue-library-title');
     const subtitleEl = storyLibraryElement('aiedue-library-subtitle');
     if (titleEl) titleEl.textContent = title;
     if (subtitleEl) subtitleEl.textContent = subtitle;
-    const canCreate = showTeacherActions && isStoryLibraryTeacher();
-    storyLibraryElement('aiedue-library-characters-btn')?.classList.toggle('hidden', !canCreate);
-    storyLibraryElement('aiedue-library-create-btn')?.classList.toggle('hidden', !canCreate);
+    const showCharacters = showTeacherActions && Boolean(currentUserId);
+    const showBookMaker = showTeacherActions && isStoryLibraryTeacher();
+    storyLibraryElement('aiedue-library-characters-btn')?.classList.toggle('hidden', !showCharacters);
+    storyLibraryElement('aiedue-library-create-btn')?.classList.toggle('hidden', !showBookMaker);
 }
 
 function setStoryLibraryBusy(isBusy, title = '', detail = '', { cancellable = false } = {}) {
@@ -19626,13 +19628,14 @@ async function renderStoryLibraryList() {
             try { coverUrl = await resolveStoryImageUrl(coverPath); } catch (error) { console.warn('Story cover load failed', error); }
             return `<button type="button" class="aiedue-book-card" onclick="openStoryBookViewer('${escapeInlineJsString(book.id)}')" aria-label="${escapeHtml(book.title || '동화책')} 읽기">
                 <div class="aiedue-book-cover">
-                    ${coverUrl ? `<img src="${escapeHtml(coverUrl)}" alt="${escapeHtml(book.title || '동화책')} 표지">` : '<div class="aiedue-book-cover-placeholder">📕</div>'}
+                    ${coverUrl ? `<img src="${escapeHtml(coverUrl)}" alt="${escapeHtml(book.title || '동화책')} 표지 그림">` : '<div class="aiedue-book-cover-placeholder">📕</div>'}
                     <span class="aiedue-book-badge">AntiAI 동화</span>
+                    <span class="aiedue-book-spine" aria-hidden="true"></span>
+                    <div class="aiedue-book-cover-title"><small>${escapeHtml(book.authorName || '에이두 선생님')}</small><h4>${escapeHtml(book.title || '이름 없는 동화')}</h4><span>AIEDUE STORYBOOK</span></div>
                 </div>
-                <div class="aiedue-book-card-body">
-                    <h4>${escapeHtml(book.title || '이름 없는 동화')}</h4>
+                <div class="aiedue-book-caption">
                     <p>${escapeHtml(book.summary || '따뜻한 이야기를 읽어 보세요.')}</p>
-                    <div class="aiedue-book-card-meta"><span>${escapeHtml(book.authorName || '에이두 선생님')}</span><span>${formatStoryBookDate(book.publishedAt || book.createdAt)}</span></div>
+                    <span>${formatStoryBookDate(book.publishedAt || book.createdAt)}</span>
                 </div>
             </button>`;
         }));
@@ -19672,72 +19675,97 @@ window.closeAiedueLibrary = function closeAiedueLibrary() {
 };
 
 async function loadStoryCharacters() {
-    if (!isStoryLibraryTeacher()) throw new Error('등장인물 사전은 교사 계정에서 사용할 수 있습니다.');
-    const charactersRef = collection(db, 'teachers', currentUserId, 'storyCharacters');
-    const snapshot = await getDocs(query(charactersRef, orderBy('name', 'asc'), queryLimit(100)));
-    storyLibraryCharacters = snapshot.docs.map((characterSnapshot) => ({ id: characterSnapshot.id, ...(characterSnapshot.data() || {}) }));
+    if (!currentUserId) throw new Error('로그인한 뒤 등장인물 사전을 이용해 주세요.');
+    const snapshot = await getDocs(query(collectionGroup(db, 'storyCharacters'), orderBy('name', 'asc'), queryLimit(200)));
+    storyLibraryCharacters = snapshot.docs.map((characterSnapshot) => ({
+        id: characterSnapshot.id,
+        path: characterSnapshot.ref.path,
+        ...(characterSnapshot.data() || {})
+    }));
     return storyLibraryCharacters;
+}
+
+function isStoryCharacterCreator(character) {
+    return Boolean(character && currentUserId && character.ownerUid === currentUserId);
 }
 
 function characterCardMarkup(character, { selectable = false } = {}) {
     const input = selectable ? `<input type="checkbox" name="story-character" value="${escapeHtml(character.id)}" aria-label="${escapeHtml(character.name)} 선택">` : '';
-    const deleteButton = selectable ? '' : `<button type="button" class="aiedue-character-delete" onclick="event.stopPropagation(); deleteStoryCharacter('${escapeInlineJsString(character.id)}')" aria-label="${escapeHtml(character.name)} 삭제">×</button>`;
+    const creatorName = character.creatorName || (String(character.path || '').startsWith('teachers/') ? '에이두 선생님' : '이름 미등록');
+    const ownerActions = !selectable && isStoryCharacterCreator(character) ? `<div class="aiedue-character-actions"><button type="button" onclick="event.stopPropagation(); openStoryCharacterEditor('${escapeInlineJsString(character.id)}')" aria-label="${escapeHtml(character.name)} 수정">수정</button><button type="button" class="aiedue-character-delete" onclick="event.stopPropagation(); deleteStoryCharacter('${escapeInlineJsString(character.id)}')" aria-label="${escapeHtml(character.name)} 삭제">삭제</button></div>` : '';
     const tag = selectable ? 'label' : 'article';
     return `<${tag} class="aiedue-character-card ${selectable ? 'aiedue-character-card-select' : ''}">
-        ${input}${deleteButton}<h4>👤 ${escapeHtml(character.name)}</h4>
+        ${input}${ownerActions}<h4>👤 ${escapeHtml(character.name)}</h4>
+        <p class="aiedue-character-creator">만든 사람 · ${escapeHtml(creatorName)}</p>
         <dl><dt>외형</dt><dd>${escapeHtml(character.appearance)}</dd><dt>성격</dt><dd>${escapeHtml(character.personality)}</dd></dl>
     </${tag}>`;
 }
 
 window.openStoryCharacterDictionary = async function openStoryCharacterDictionary() {
-    if (!isStoryLibraryTeacher()) return alert('등장인물 사전은 교사 계정에서 사용할 수 있습니다.');
-    setStoryLibraryHeader({ title: '등장인물 사전', subtitle: '이름·외형·성격을 자세히 적어 두면 여러 동화에서 같은 인물을 사용할 수 있어요.' });
+    if (!currentUserId) return alert('로그인한 뒤 등장인물 사전을 이용해 주세요.');
+    setStoryLibraryHeader({ title: '등장인물 사전', subtitle: '모두가 만든 등장인물을 함께 보고, 내 인물은 직접 수정할 수 있어요.' });
     const content = storyLibraryElement('aiedue-library-content');
     content.innerHTML = '<div class="aiedue-library-empty"><div><span>👥</span><strong>등장인물을 불러오고 있어요.</strong></div></div>';
     try {
         await loadStoryCharacters();
         content.innerHTML = `<div class="aiedue-library-toolbar">
-            <div><h3>내 등장인물</h3><span class="aiedue-library-count">총 ${storyLibraryCharacters.length}명</span></div>
+            <div><h3>모두의 등장인물</h3><span class="aiedue-library-count">총 ${storyLibraryCharacters.length}명</span></div>
             <div class="aiedue-form-actions" style="margin:0"><button type="button" class="aiedue-library-ghost" onclick="refreshAiedueLibrary()">← 도서관</button><button type="button" class="aiedue-library-primary" onclick="openStoryCharacterEditor()">＋ 등장인물 만들기</button></div>
-        </div>${storyLibraryCharacters.length ? `<div class="aiedue-character-grid">${storyLibraryCharacters.map((character) => characterCardMarkup(character)).join('')}</div>` : '<div class="aiedue-library-empty"><div><span>🧒</span><strong>아직 등록한 등장인물이 없어요.</strong><p>등장인물 만들기를 눌러 첫 인물을 등록해 보세요.</p></div></div>'}`;
+        </div>${storyLibraryCharacters.length ? `<div class="aiedue-character-grid">${storyLibraryCharacters.map((character) => characterCardMarkup(character)).join('')}</div>` : '<div class="aiedue-library-empty"><div><span>🧒</span><strong>아직 등록한 등장인물이 없어요.</strong><p>등장인물 만들기를 눌러 첫 인물을 모두와 공유해 보세요.</p></div></div>'}`;
     } catch (error) {
         content.innerHTML = `<div class="aiedue-library-empty"><div><span>⚠️</span><strong>등장인물을 불러오지 못했어요.</strong><p>${escapeHtml(error.message)}</p></div></div>`;
     }
 };
 
-window.openStoryCharacterEditor = function openStoryCharacterEditor() {
-    if (!isStoryLibraryTeacher()) return;
-    setStoryLibraryHeader({ title: '등장인물 만들기', subtitle: 'AntiAI가 장면마다 같은 모습으로 그릴 수 있도록 외형을 구체적으로 적어 주세요.' });
+window.openStoryCharacterEditor = function openStoryCharacterEditor(characterId = '') {
+    if (!currentUserId) return;
+    const existing = characterId ? storyLibraryCharacters.find((item) => item.id === characterId) : null;
+    if (existing && !isStoryCharacterCreator(existing)) return alert('등장인물을 만든 사람만 수정할 수 있습니다.');
+    activeStoryCharacterEditId = existing?.id || null;
+    setStoryLibraryHeader({ title: existing ? '등장인물 수정' : '등장인물 만들기', subtitle: '등록한 등장인물은 모든 선생님과 학생에게 공유돼요.' });
     storyLibraryElement('aiedue-library-content').innerHTML = `<form class="aiedue-form-card" onsubmit="saveStoryCharacter(event)">
-        <h3>새 등장인물</h3><p>한 번 등록하면 책 만들기에서 계속 선택할 수 있어요.</p>
+        <h3>${existing ? '등장인물 수정' : '새 등장인물'}</h3><p>만든 사람은 ${escapeHtml(currentUserName)}(으)로 표시되고, 나중에 직접 수정할 수 있어요.</p>
         <label class="aiedue-form-label" for="story-character-name">이름</label>
-        <input id="story-character-name" class="aiedue-form-input" maxlength="40" required placeholder="예: 별이">
+        <input id="story-character-name" class="aiedue-form-input" maxlength="40" required placeholder="예: 별이" value="${escapeHtml(existing?.name || '')}">
         <label class="aiedue-form-label" for="story-character-appearance">외형</label>
-        <textarea id="story-character-appearance" class="aiedue-form-textarea" maxlength="500" required placeholder="예: 짧은 곱슬머리, 노란 우비, 빨간 장화, 동그란 안경"></textarea>
+        <textarea id="story-character-appearance" class="aiedue-form-textarea" maxlength="500" required placeholder="예: 짧은 곱슬머리, 노란 우비, 빨간 장화, 동그란 안경">${escapeHtml(existing?.appearance || '')}</textarea>
         <label class="aiedue-form-label" for="story-character-personality">성격</label>
-        <textarea id="story-character-personality" class="aiedue-form-textarea" maxlength="500" required placeholder="예: 호기심이 많고 어려운 친구를 먼저 도와줘요."></textarea>
-        <div class="aiedue-form-actions"><button type="button" class="aiedue-library-ghost" onclick="openStoryCharacterDictionary()">취소</button><button type="submit" class="aiedue-library-primary">등장인물 추가</button></div>
+        <textarea id="story-character-personality" class="aiedue-form-textarea" maxlength="500" required placeholder="예: 호기심이 많고 어려운 친구를 먼저 도와줘요.">${escapeHtml(existing?.personality || '')}</textarea>
+        <div class="aiedue-form-actions"><button type="button" class="aiedue-library-ghost" onclick="openStoryCharacterDictionary()">취소</button><button type="submit" class="aiedue-library-primary">${existing ? '수정 저장' : '등장인물 공유'}</button></div>
     </form>`;
     storyLibraryElement('story-character-name')?.focus();
 };
 
 window.saveStoryCharacter = async function saveStoryCharacter(event) {
     event?.preventDefault();
-    if (!isStoryLibraryTeacher()) return;
+    if (!currentUserId) return;
     try {
         const character = validateStoryCharacter({
             name: storyLibraryElement('story-character-name')?.value,
             appearance: storyLibraryElement('story-character-appearance')?.value,
             personality: storyLibraryElement('story-character-personality')?.value
         });
-        setStoryLibraryBusy(true, '등장인물을 저장하고 있어요.', character.name);
-        await addDoc(collection(db, 'teachers', currentUserId, 'storyCharacters'), {
-            ...character,
-            ownerUid: currentUserId,
-            teacherId: currentUserId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        });
+        const existing = activeStoryCharacterEditId ? storyLibraryCharacters.find((item) => item.id === activeStoryCharacterEditId) : null;
+        if (existing && !isStoryCharacterCreator(existing)) throw new Error('등장인물을 만든 사람만 수정할 수 있습니다.');
+        setStoryLibraryBusy(true, existing ? '등장인물을 수정하고 있어요.' : '등장인물을 공유하고 있어요.', character.name);
+        if (existing) {
+            await updateDoc(doc(db, ...existing.path.split('/')), {
+                ...character,
+                creatorName: existing.creatorName || currentUserName,
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            const ownerRoot = currentUserRole === 'teacher' ? 'teachers' : 'users';
+            await addDoc(collection(db, ownerRoot, currentUserId, 'storyCharacters'), {
+                ...character,
+                ownerUid: currentUserId,
+                creatorName: currentUserName,
+                creatorRole: currentUserRole,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+        activeStoryCharacterEditId = null;
         setStoryLibraryBusy(false);
         await window.openStoryCharacterDictionary();
     } catch (error) {
@@ -19747,12 +19775,12 @@ window.saveStoryCharacter = async function saveStoryCharacter(event) {
 };
 
 window.deleteStoryCharacter = async function deleteStoryCharacter(characterId) {
-    if (!isStoryLibraryTeacher()) return;
     const character = storyLibraryCharacters.find((item) => item.id === characterId);
-    if (!character || !confirm(`‘${character.name}’을(를) 등장인물 사전에서 삭제할까요?\n이미 저장된 동화책에는 그대로 남아 있어요.`)) return;
+    if (!isStoryCharacterCreator(character)) return alert('등장인물을 만든 사람만 삭제할 수 있습니다.');
+    if (!confirm(`‘${character.name}’을(를) 등장인물 사전에서 삭제할까요?\n이미 저장된 동화책에는 그대로 남아 있어요.`)) return;
     try {
         setStoryLibraryBusy(true, '등장인물을 삭제하고 있어요.', character.name);
-        await deleteDoc(doc(db, 'teachers', currentUserId, 'storyCharacters', characterId));
+        await deleteDoc(doc(db, ...character.path.split('/')));
         setStoryLibraryBusy(false);
         await window.openStoryCharacterDictionary();
     } catch (error) {
