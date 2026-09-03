@@ -310,7 +310,7 @@ const CHANCHAN_LESSONS = [
             { word: "다리", prompt: "다□", answer: "리", hint: "두 번째 글자를 들어 봐요." }
         ],
         pictureItems: [
-            { word: "아이", icon: "🧒" },
+            { word: "아이", icon: '<img class="word-picture-asset" src="child-portrait.webp" alt="">' },
             { word: "아버지", icon: "👨‍👧" },
             { word: "가수", icon: "🧑‍🎤" },
             { word: "가지", icon: "🍆" },
@@ -13937,7 +13937,7 @@ const LESSON13_READING_GROUPS = [
         title: 'ㅏ 단어',
         prompt: '그림을 눌러 소리를 듣고, ㅏ가 들어간 단어를 읽어요.',
         pictureItems: [
-            { word: '아이', icon: '🧒' },
+            { word: '아이', icon: '<img class="word-picture-asset" src="child-portrait.webp" alt="">' },
             { word: '아버지', icon: '👨‍👧' },
             { word: '가수', icon: '🧑‍🎤' },
             { word: '가지', icon: '🍆' },
@@ -14103,7 +14103,7 @@ const LESSON13_COMPLETION_WRITING_SETS = [
         title: '쓰기 1 · 완성해 보기',
         prompt: '그림을 보고 빠진 모음이나 자음을 떠올리며 단어를 완성해요.',
         items: [
-            { word: '아이', icon: '🧒', tiles: [{ syllable: '아', initial: 'ㅇ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '이', initial: 'ㅇ', vowel: 'ㅣ', givenSlot: 'initial' }] },
+            { word: '아이', icon: '<img class="word-picture-asset" src="child-portrait.webp" alt="">', tiles: [{ syllable: '아', initial: 'ㅇ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '이', initial: 'ㅇ', vowel: 'ㅣ', givenSlot: 'initial' }] },
             { word: '나무', icon: '🌳', tiles: [{ syllable: '나', initial: 'ㄴ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '무', initial: 'ㅁ', vowel: 'ㅜ', givenSlot: 'initial' }] },
             { word: '다리', icon: '🦵', tiles: [{ syllable: '다', initial: 'ㄷ', vowel: 'ㅏ', givenSlot: 'initial' }, { syllable: '리', initial: 'ㄹ', vowel: 'ㅣ', givenSlot: 'vowel' }] },
             { word: '가지', icon: '🍆', tiles: [{ syllable: '가', initial: 'ㄱ', vowel: 'ㅏ', givenSlot: 'vowel' }, { syllable: '지', initial: 'ㅈ', vowel: 'ㅣ', givenSlot: 'initial' }] },

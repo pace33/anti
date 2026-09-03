@@ -80,6 +80,8 @@ assert((app.match(/word:\s*["']마차["'],\s*icon:\s*'<img class="word-picture-a
 assert(existsSync(resolve(root, 'horse-carriage.webp')), '마차 이미지 파일이 없습니다.');
 assert((app.match(/word:\s*["']꼬마["'],\s*icon:\s*'<img class="word-picture-asset" src="little-child\.webp"/g) || []).length === 3 && !/word:\s*["']아이["'],\s*icon:[^\n]*little-child\.webp/.test(app), '아이와 꼬마 그림이 구분되지 않았습니다.');
 assert(existsSync(resolve(root, 'little-child.webp')), '꼬마 이미지 파일이 없습니다.');
+assert((app.match(/word:\s*["']아이["'],\s*icon:\s*'<img class="word-picture-asset" src="child-portrait\.webp"/g) || []).length === 3, '아이 그림이 새 어린이 상반신 이미지로 통일되지 않았습니다.');
+assert(existsSync(resolve(root, 'child-portrait.webp')), '아이 이미지 파일이 없습니다.');
 assert((app.match(/word:\s*["']허리["'],\s*icon:\s*'<img class="word-picture-asset waist-picture-asset" src="waist-highlight-person\.png"/g) || []).length === 3, '허리 그림이 전신 사람의 허리 부분을 강조한 이미지로 통일되지 않았습니다.');
 assert(appCss.includes('.waist-picture-asset') && appCss.includes('object-fit: contain;'), '허리 전신 이미지의 카드 표시 스타일이 없습니다.');
 assert((app.match(/word:\s*["']저고리["'],\s*icon:\s*'<img class="word-picture-asset jeogori-picture-asset" src="hanbok-jeogori\.png"/g) || []).length === 3 && !/word:\s*["']저고리["'],\s*icon:\s*["']👘["']/.test(app), '저고리 그림이 한복 상의 이미지로 통일되지 않았습니다.');
