@@ -5052,6 +5052,8 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
     const isShapeMission = mode === 'shape-mission';
     const isInfiniteDrawing = mode === 'infinite-drawing';
     const isCompactMission = isShapeMission || aiQuiz;
+    const recordsButton = document.getElementById('drawing-my-records-btn');
+    if (recordsButton) recordsButton.textContent = isShapeMission ? '📈 나의 도형' : '📈 나의 그림';
     const badge = document.getElementById('drawing-workspace-badge');
     const backButton = document.getElementById('drawing-workspace-back-btn');
     const newTemplateButton = document.getElementById('drawing-new-template-btn');
@@ -5511,6 +5513,42 @@ window.openMyShapeStats = function() {
         return `<div class="korean-embed-card p-4"><div class="flex justify-between items-center"><div class="font-black text-[#2c3e50]">${shape.label}</div><div class="text-purple-600 font-black">${acc}%</div></div><div class="text-xs text-gray-500 mt-1">시도 ${stat.attempts || 0}회 · 최고 ${stat.bestAccuracy || 0}% · 최근 ${stat.lastAccuracy || 0}%</div><div class="w-full h-3 bg-gray-100 rounded-full mt-3 overflow-hidden"><div class="h-full bg-purple-400" style="width:${Math.min(100, acc)}%"></div></div></div>`;
     }).join('');
     showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">나의 도형 정확도</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div></div>`);
+}
+
+function getDrawingWorkspaceRecords() {
+    const isPictureMission = Boolean(drawingWorkspaceMissionStep) || drawingWorkspaceMode === 'infinite-drawing';
+    const seen = new Set();
+    return [...Object.values(drawingPortfolio.missions || {}), ...(drawingPortfolio.free || [])]
+        .filter((record) => {
+            if (!record?.image || record.kind === 'shape-mission' || record.mode === 'shape-mission') return false;
+            if (isPictureMission && !['mission', 'infinite-drawing'].includes(record.kind) && !record.missionStep) return false;
+            const key = [record.kind, record.missionStep ?? '', record.template ?? '', record.savedAt ?? ''].join('|');
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        })
+        .sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
+        .slice(0, 60);
+}
+
+window.openDrawingWorkspaceRecords = function() {
+    if (drawingWorkspaceMode === 'shape-mission') {
+        openMyShapeStats();
+        return;
+    }
+    ensureDrawingPortfolioShapeFields();
+    const rows = getDrawingWorkspaceRecords().map((record) => {
+        const image = safeImageSource(record.image);
+        if (!image) return '';
+        const label = record.templateLabel || drawingTemplates[record.template] || '그림';
+        const accuracy = record.accuracy == null ? null : Number(record.accuracy);
+        const accuracyText = Number.isFinite(accuracy) ? `정확도 ${Math.max(0, Math.min(100, accuracy))}%` : '저장한 그림';
+        return `<article class="korean-embed-card p-3"><img src="${escapeHtml(image)}" alt="${escapeHtml(label)} 결과" class="w-full h-36 object-contain" loading="lazy"><h4 class="font-black mt-2">${escapeHtml(label)}</h4><p class="text-sm text-gray-500">${accuracyText} · ${escapeHtml(String(record.savedAt || '').slice(0, 10))}</p></article>`;
+    }).filter(Boolean).join('');
+    const body = rows
+        ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[65vh] overflow-y-auto custom-scrollbar">${rows}</div>`
+        : '<p class="text-center text-gray-500 py-8">아직 저장된 그림이 없어요.</p>';
+    showModal(`<div class="text-left"><h3 class="text-2xl font-black mb-4">나의 그림</h3>${body}</div>`);
 }
 
 let isDrawingEvaluating = false;
