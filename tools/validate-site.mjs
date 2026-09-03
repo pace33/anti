@@ -76,7 +76,8 @@ separatedRequiredFiles.forEach((path) => assert(existsSync(resolve(root, separat
 
 assert(/<script\s+type=["']module["']\s+src=["']app\.js(?:\?[^"']*)?["']\s*>/i.test(index), 'index.html이 app.js 모듈을 불러오지 않습니다.');
 assert((app.match(/word:\s*["']가수["'],\s*icon:\s*["']🧑‍🎤["']/g) || []).length === 3 && !/word:\s*["']가수["'],\s*icon:\s*["']🎤["']/.test(app), '가수 그림이 마이크를 든 가수 모습으로 통일되지 않았습니다.');
-assert((app.match(/word:\s*["']마차["'],\s*icon:\s*["']🐎🛒["']/g) || []).length === 2 && !/word:\s*["']마차["'],\s*icon:\s*["']🐴["']/.test(app), '마차 그림이 말이 마차를 끄는 모습으로 통일되지 않았습니다.');
+assert((app.match(/word:\s*["']마차["'],\s*icon:\s*'<img class="word-picture-asset" src="horse-carriage\.webp"/g) || []).length === 2 && !app.includes('🐎🛒'), '마차 그림이 하나의 마차 이미지로 통일되지 않았습니다.');
+assert(existsSync(resolve(root, 'horse-carriage.webp')), '마차 이미지 파일이 없습니다.');
 assert((app.match(/word:\s*["']허리["'],\s*icon:\s*'<img class="word-picture-asset waist-picture-asset" src="waist-highlight-person\.png"/g) || []).length === 3, '허리 그림이 전신 사람의 허리 부분을 강조한 이미지로 통일되지 않았습니다.');
 assert(appCss.includes('.waist-picture-asset') && appCss.includes('object-fit: contain;'), '허리 전신 이미지의 카드 표시 스타일이 없습니다.');
 assert((app.match(/word:\s*["']저고리["'],\s*icon:\s*'<img class="word-picture-asset jeogori-picture-asset" src="hanbok-jeogori\.png"/g) || []).length === 3 && !/word:\s*["']저고리["'],\s*icon:\s*["']👘["']/.test(app), '저고리 그림이 한복 상의 이미지로 통일되지 않았습니다.');

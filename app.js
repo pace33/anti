@@ -315,7 +315,7 @@ const CHANCHAN_LESSONS = [
             { word: "가수", icon: "🧑‍🎤" },
             { word: "가지", icon: "🍆" },
             { word: "나무", icon: "🌳" },
-            { word: "마차", icon: "🐎🛒" },
+            { word: "마차", icon: '<img class="word-picture-asset" src="horse-carriage.webp" alt="">' },
             { word: "기타", icon: "🎸" },
             { word: "고기", icon: "🥩" },
             { word: "다리", icon: "🦵" },
@@ -13942,7 +13942,7 @@ const LESSON13_READING_GROUPS = [
             { word: '가수', icon: '🧑‍🎤' },
             { word: '가지', icon: '🍆' },
             { word: '나무', icon: '🌳' },
-            { word: '마차', icon: '🐎🛒' }
+            { word: '마차', icon: '<img class="word-picture-asset" src="horse-carriage.webp" alt="">' }
         ],
         wordRows: [
             ['아기', '아파트', '아주머니'],
