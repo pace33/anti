@@ -12796,7 +12796,7 @@ const LESSON26_READING_GROUPS = [
         batchims: ['ㄴ', 'ㄹ', 'ㄷ'],
         pictureItems: [
             { word: '기린', icon: '🦒' }, { word: '분수', icon: '⛲' },
-            { word: '고릴라', icon: '🦍' }, { word: '갈매기', icon: '🕊️' },
+            { word: '고릴라', icon: '🦍' }, { word: '갈매기', icon: '<img class="word-picture-asset" src="seagull.webp" alt="">' },
             { word: '돋보기', icon: '🔍' }, { word: '걷다', icon: '🚶‍♀️' }
         ],
         wordRows: [
