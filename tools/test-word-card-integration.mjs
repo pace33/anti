@@ -46,6 +46,11 @@ test('새 카드는 고정 에이두 캐릭터 원본만 이미지 편집에 사
     assert.ok(app.includes("new URL('./word-card-character-reference.jpg?v=20260907-character-v1', import.meta.url)"));
     assert.ok(app.includes('fetch(WORD_CARD_CHARACTER_REFERENCE_URL'));
     assert.ok(generate.includes('createSettingsImageEditSession(characterReference'));
+    assert.ok(generate.includes('finally'));
+    assert.ok(generate.includes('closeSettingsImageEditSession(editSession)'));
+    const closeSession = section(app, 'async function closeSettingsImageEditSession', 'async function createSettingsImageEditTurn');
+    assert.ok(closeSession.includes("method: 'DELETE'"));
+    assert.ok(closeSession.includes("'X-Image-Session-Token': session.token"));
     assert.equal(generate.includes('sourceBlob'), false);
     assert.equal(app.includes('activeCurricularWordCardSourceBlob'), false);
     assert.ok(generate.includes('buildWordCardImageEditPrompt'));

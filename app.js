@@ -8466,6 +8466,7 @@ async function loadWordCardCharacterReference(signal) {
 
 async function generateSharedWordCard(word, cardReference, cardId, generationToken, signal, requestId) {
     let uploadedImagePath = '';
+    let editSession = null;
     try {
         assertSharedWordCardRequestActive(requestId, signal);
         const safe = await requestSharedWordExplanation(word, signal);
@@ -8473,7 +8474,7 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
         setSharedWordCardBusy(true, '단어를 설명하는 그림을 그리고 있어요…', '내가 준 에이두 캐릭터와 단어의 뜻을 연결하고 있어요.');
         const characterReference = await loadWordCardCharacterReference(signal);
         assertSharedWordCardRequestActive(requestId, signal);
-        const editSession = await createSettingsImageEditSession(characterReference, signal);
+        editSession = await createSettingsImageEditSession(characterReference, signal);
         const imageJob = await createSettingsImageEditTurn(editSession, buildWordCardImageEditPrompt(safe.word, safe.explanation), '1:1', signal);
         const imageInfo = await waitForStoryImageJob(imageJob, signal);
         const imageBlob = await downloadStoryImage(imageJob, imageInfo, signal);
@@ -8540,6 +8541,12 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
             });
         }).catch(() => {});
         throw error;
+    } finally {
+        if (editSession) {
+            await closeSettingsImageEditSession(editSession).catch((error) => {
+                console.warn('word card image session cleanup failed', error);
+            });
+        }
     }
 }
 
@@ -19891,6 +19898,19 @@ async function createSettingsImageEditSession(blob, signal) {
     if (!response.ok) throw settingsImageApiError(response, data, '이미지 편집을 시작');
     if (!data.id || !data.token) throw new Error('이미지 편집 세션 ID 또는 임시 토큰을 받지 못했습니다.');
     return { id: data.id, token: data.token };
+}
+
+async function closeSettingsImageEditSession(session) {
+    if (!session?.id || !session?.token) return;
+    const response = await fetchStoryResource(`/korean-ai/api/image-edit-sessions/${encodeURIComponent(session.id)}`, {
+        method: 'DELETE',
+        headers: { 'X-Image-Session-Token': session.token }
+    }, 30000);
+    if (response.status === 404) return;
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw settingsImageApiError(response, data, '이미지 편집 세션을 정리');
+    }
 }
 
 async function createSettingsImageEditTurn(session, prompt, aspectRatio, signal) {
