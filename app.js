@@ -74,7 +74,7 @@ import {
     normalizeWordCardWord,
     sortPublishedWordCards,
     validateWordCardText
-} from "./word-card-utils.mjs?v=20260907-shared-word-cards-v2";
+} from "./word-card-utils.mjs?v=20260907-shared-word-cards-v3";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

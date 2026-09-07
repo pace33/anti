@@ -65,6 +65,11 @@ test('설명·이미지 프롬프트에 단어와 교육용 제약이 포함된�
     assert.match(textPrompt, /JSON만 출력/);
     assert.match(textPrompt, /사과/);
     assert.match(imagePrompt, /같은 캐릭터/);
+    assert.match(imagePrompt, /의미 있는 행동이나 반응/);
+    assert.match(imagePrompt, /자연스러운 상호작용 한 가지/);
+    assert.match(imagePrompt, /시선, 얼굴 표정, 몸 방향, 손동작/);
+    assert.match(imagePrompt, /옆에 무관하게 서 있거나/);
+    assert.match(imagePrompt, /단순히 들고 포즈만 취하는 장면은 피하세요/);
     assert.match(imagePrompt, /순백색/);
     assert.match(imagePrompt, /글자, 자막, 말풍선/);
 });
