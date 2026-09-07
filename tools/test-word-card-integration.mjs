@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
-const [app, html, css] = await Promise.all([
+const [app, html, css, characterReference] = await Promise.all([
     readFile(new URL('../app.js', import.meta.url), 'utf8'),
     readFile(new URL('../index.html', import.meta.url), 'utf8'),
-    readFile(new URL('../app.css', import.meta.url), 'utf8')
+    readFile(new URL('../app.css', import.meta.url), 'utf8'),
+    readFile(new URL('../word-card-character-reference.jpg', import.meta.url))
 ]);
 
 function section(source, start, end) {
@@ -40,16 +41,22 @@ test('공용 카드 조회가 생성보다 먼저 실행되고 결정적 문서 
     assert.ok(ensure.indexOf("claim.resolution === 'wait'") < ensure.indexOf('generateSharedWordCard'));
 });
 
-test('새 카드는 이미지 편집 세션과 공용 게시 상태를 사용하고 원본 사진은 저장하지 않는다', () => {
+test('새 카드는 고정 에이두 캐릭터 원본만 이미지 편집에 사용하고 학습 사진은 넘기지 않는다', () => {
     const generate = section(app, 'async function generateSharedWordCard', 'async function ensureSharedWordCard');
-    assert.ok(generate.includes('createSettingsImageEditSession(sourceBlob'));
+    assert.ok(app.includes("new URL('./word-card-character-reference.jpg?v=20260907-character-v1', import.meta.url)"));
+    assert.ok(app.includes('fetch(WORD_CARD_CHARACTER_REFERENCE_URL'));
+    assert.ok(generate.includes('createSettingsImageEditSession(characterReference'));
+    assert.equal(generate.includes('sourceBlob'), false);
+    assert.equal(app.includes('activeCurricularWordCardSourceBlob'), false);
     assert.ok(generate.includes('buildWordCardImageEditPrompt'));
     assert.ok(generate.includes("status: 'published'"));
     assert.ok(generate.includes('isPublic: true'));
     assert.ok(generate.includes('buildWordCardIllustrationPath(cardId, generationToken, extension)'));
     assert.equal(generate.includes('sourceBlob:'), false);
     assert.equal(generate.includes('sourcePhoto:'), false);
-    assert.ok(app.includes("if (pendingWordBankCameraAfterSave === 'curricular-writing') activeCurricularWordCardSourceBlob = analysisFile;"));
+    assert.ok(characterReference.length > 10000);
+    assert.equal(characterReference[0], 0xff);
+    assert.equal(characterReference[1], 0xd8);
 });
 
 test('모달에 정확한 로딩 문구와 문장 클릭·별도 TTS 버튼이 있다', () => {
@@ -67,6 +74,7 @@ test('lease별 고유 이미지 경로를 게시하고 패배하거나 실패한
     assert.ok(generate.includes('buildWordCardIllustrationPath(cardId, generationToken, extension)'));
     assert.ok(app.includes('generationOwnerUid: currentUserId'));
     assert.ok(generate.includes('publishedGenerationToken: generationToken'));
+    assert.ok(generate.includes('generationVersion: WORD_CARD_GENERATION_VERSION'));
     assert.ok(generate.includes('failedGenerationToken: generationToken'));
     assert.ok(generate.includes('usedUpload: false'));
     assert.ok(generate.includes('deleteObject(storageRef(storage, uploadedImagePath))'));

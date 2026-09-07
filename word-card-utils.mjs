@@ -1,5 +1,6 @@
 const MAX_WORD_LENGTH = 30;
 const MAX_EXPLANATION_LENGTH = 180;
+export const WORD_CARD_GENERATION_VERSION = 2;
 const WORD_CARD_ID_PATTERN = /^wc1_[a-f0-9]{64}$/;
 const WORD_CARD_GENERATION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{8,100}$/;
 const WORD_CARD_IMAGE_EXTENSION_PATTERN = /^(?:png|jpe?g|webp)$/;
@@ -61,6 +62,7 @@ export async function buildWordCardId(word, cryptoApi = globalThis.crypto) {
 export function getWordCardResolution(card, nowMs = Date.now()) {
     if (card?.status === 'published'
         && card?.isPublic === true
+        && Number(card?.generationVersion || 0) >= WORD_CARD_GENERATION_VERSION
         && isValidWordCardId(card?.id)
         && card?.word
         && card?.explanation
@@ -76,13 +78,14 @@ export function buildWordCardExplanationPrompt(word) {
 
 export function buildWordCardImageEditPrompt(word, explanation) {
     const safe = validateWordCardText({ word, explanation });
-    return `업로드된 원본 사진 속 핵심 인물 또는 캐릭터를 같은 캐릭터로 유지해 주세요. 얼굴, 머리 모양, 대표 색상, 옷, 장식, 선화와 채색 스타일 등 정체성 특징을 정확히 보존합니다.\n\n단어: "${safe.word}"\n뜻: "${safe.explanation}"\n\n이 캐릭터가 '${safe.word}'의 뜻을 한눈에 보여 주는 교육용 단어 카드 그림으로 편집하세요. 캐릭터와 단어 대상은 반드시 서로 의미 있는 행동이나 반응으로 연결되어야 합니다. 단어의 뜻에 가장 잘 맞는 자연스러운 상호작용 한 가지를 중심 장면으로 선택하세요. 사물·식물·장소를 뜻하면 캐릭터가 그것을 사용하거나 만지거나 돌보거나 살펴보게 하고, 행동을 뜻하면 캐릭터가 그 행동을 직접 수행하게 하며, 감정·상태·추상 개념이면 표정과 몸짓 및 원인이 되는 상황으로 뜻을 보여 주세요. 캐릭터의 시선, 얼굴 표정, 몸 방향, 손동작이 핵심 대상이나 행동을 향하도록 하고 접촉, 움직임 또는 원인과 결과가 분명히 보이게 하세요. 캐릭터가 단어 대상 옆에 무관하게 서 있거나, 대상이 장식처럼 놓이거나, 단순히 들고 포즈만 취하는 장면은 피하세요.\n\n배경은 순백색이고 아주 옅은 바닥 그림자만 허용합니다. 불필요한 소품은 줄이고 단어를 설명하는 캐릭터와 핵심 대상의 관계를 크고 명확하게 표현합니다. 캐릭터와 핵심 대상이 잘리지 않게 중앙에 배치합니다. 원본의 교실, 책상, 다른 사람, 이름표와 개인정보는 제거합니다. 글자, 자막, 말풍선, 로고, 워터마크는 넣지 마세요. 정사각형 1:1 고품질 일러스트로 만드세요.`;
+    return `업로드된 이미지는 단어를 뽑아 낸 학습 사진이 아니라, 모든 단어 카드에 사용할 고정 캐릭터 원본입니다. 이미지 속 연두색 새싹 후드 캐릭터 한 명을 반드시 같은 캐릭터로 유지하세요. 갈색 앞머리, 큰 검은 눈, 후드의 초록 새싹 두 잎과 흰 꽃 장식, 볼의 초록 별, 연두색 후드티와 바지 및 초록·흰색 운동화, 귀여운 굵은 선화와 부드러운 채색을 정확히 보존합니다. 마인크래프트 등 단어를 발견한 학습 사진의 인물·캐릭터·화풍·배경은 절대 가져오지 마세요.\n\n단어: "${safe.word}"\n뜻: "${safe.explanation}"\n\n이 고정 캐릭터가 '${safe.word}'의 뜻을 한눈에 보여 주는 교육용 단어 카드 그림으로 편집하세요. 캐릭터와 단어 대상은 반드시 서로 의미 있는 행동이나 반응으로 연결되어야 합니다. 단어의 뜻에 가장 잘 맞는 자연스러운 상호작용 한 가지를 중심 장면으로 선택하세요. 사물·식물·장소를 뜻하면 캐릭터가 그것을 사용하거나 만지거나 돌보거나 살펴보게 하고, 행동을 뜻하면 캐릭터가 그 행동을 직접 수행하게 하며, 감정·상태·추상 개념이면 표정과 몸짓 및 원인이 되는 상황으로 뜻을 보여 주세요. 캐릭터의 시선, 얼굴 표정, 몸 방향, 손동작이 핵심 대상이나 행동을 향하도록 하고 접촉, 움직임 또는 원인과 결과가 분명히 보이게 하세요. 캐릭터가 단어 대상 옆에 무관하게 서 있거나, 대상이 장식처럼 놓이거나, 단순히 들고 포즈만 취하는 장면은 피하세요.\n\n배경은 순백색이고 아주 옅은 바닥 그림자만 허용합니다. 불필요한 소품은 줄이고 단어를 설명하는 캐릭터와 핵심 대상의 관계를 크고 명확하게 표현합니다. 캐릭터와 핵심 대상이 잘리지 않게 중앙에 배치합니다. 글자, 자막, 말풍선, 로고, 워터마크는 넣지 마세요. 정사각형 1:1 고품질 일러스트로 만드세요.`;
 }
 
 export function sortPublishedWordCards(cards = []) {
     return [...cards]
         .filter((card) => card?.status === 'published'
             && card?.isPublic === true
+            && Number(card?.generationVersion || 0) >= WORD_CARD_GENERATION_VERSION
             && isValidWordCardId(card?.id)
             && card?.word
             && card?.explanation

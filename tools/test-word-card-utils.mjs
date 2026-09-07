@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+    WORD_CARD_GENERATION_VERSION,
     buildWordCardExplanationPrompt,
     buildWordCardId,
     buildWordCardImageEditPrompt,
@@ -28,8 +29,9 @@ test('같은 정규화 단어는 같은 결정적 SHA-256 ID를 사용한다', a
 test('게시된 공개 완성 카드만 재사용하고 유효한 생성 lease는 기다린다', async () => {
     const id = await buildWordCardId('사과');
     const path = buildWordCardIllustrationPath(id, '1712345678-owner_token', 'webp');
-    const complete = { id, status: 'published', isPublic: true, word: '사과', explanation: '과일이에요.', illustration: { path } };
+    const complete = { id, status: 'published', isPublic: true, generationVersion: WORD_CARD_GENERATION_VERSION, word: '사과', explanation: '과일이에요.', illustration: { path } };
     assert.equal(getWordCardResolution(complete, 100), 'reuse');
+    assert.equal(getWordCardResolution({ ...complete, generationVersion: WORD_CARD_GENERATION_VERSION - 1 }, 100), 'generate');
     assert.equal(getWordCardResolution({ ...complete, isPublic: false }, 100), 'generate');
     assert.equal(getWordCardResolution({ ...complete, id: 'bad-id' }, 100), 'generate');
     assert.equal(getWordCardResolution({ ...complete, illustration: { path: 'SharedWordCards/other/illustration.webp' } }, 100), 'generate');
@@ -64,7 +66,9 @@ test('설명·이미지 프롬프트에 단어와 교육용 제약이 포함된�
     const imagePrompt = buildWordCardImageEditPrompt('사과', '둥글고 달콤한 과일이에요.');
     assert.match(textPrompt, /JSON만 출력/);
     assert.match(textPrompt, /사과/);
-    assert.match(imagePrompt, /같은 캐릭터/);
+    assert.match(imagePrompt, /고정 캐릭터 원본/);
+    assert.match(imagePrompt, /연두색 새싹 후드 캐릭터/);
+    assert.match(imagePrompt, /마인크래프트 등 단어를 발견한 학습 사진/);
     assert.match(imagePrompt, /의미 있는 행동이나 반응/);
     assert.match(imagePrompt, /자연스러운 상호작용 한 가지/);
     assert.match(imagePrompt, /시선, 얼굴 표정, 몸 방향, 손동작/);
@@ -79,9 +83,9 @@ test('공용 저장소에는 게시 완료된 공개 카드만 가나다순으�
     const skyId = await buildWordCardId('하늘');
     const bagId = await buildWordCardId('가방');
     const cards = sortPublishedWordCards([
-        { id: skyId, status: 'published', isPublic: true, word: '하늘', explanation: '설명', illustration: { path: buildWordCardIllustrationPath(skyId, '1-sky-token', 'webp') } },
+        { id: skyId, status: 'published', isPublic: true, generationVersion: WORD_CARD_GENERATION_VERSION, word: '하늘', explanation: '설명', illustration: { path: buildWordCardIllustrationPath(skyId, '1-sky-token', 'webp') } },
         { id: bagId, status: 'generating', isPublic: false, word: '가방', explanation: '설명', illustration: { path: buildWordCardIllustrationPath(bagId, '1-bag-token', 'webp') } },
-        { id: treeId, status: 'published', isPublic: true, word: '나무', explanation: '설명', illustration: { path: buildWordCardIllustrationPath(treeId, '1-tree-token', 'png') } },
+        { id: treeId, status: 'published', isPublic: true, generationVersion: WORD_CARD_GENERATION_VERSION, word: '나무', explanation: '설명', illustration: { path: buildWordCardIllustrationPath(treeId, '1-tree-token', 'png') } },
         { id: bagId, status: 'published', isPublic: false, word: '비공개', explanation: '설명', illustration: { path: buildWordCardIllustrationPath(bagId, '2-bag-token', 'webp') } },
         { id: 'bad-id', status: 'published', isPublic: true, word: '조작', explanation: '설명', illustration: { path: 'SharedWordCards/bad/illustration.webp' } }
     ]);

@@ -65,6 +65,7 @@ import {
     validateStoryCharacter
 } from "./story-library-utils.mjs?v=20260902-aiedue-library-v2";
 import {
+    WORD_CARD_GENERATION_VERSION,
     buildWordCardId,
     buildWordCardImageEditPrompt,
     buildWordCardIllustrationPath,
@@ -73,7 +74,7 @@ import {
     normalizeWordCardWord,
     sortPublishedWordCards,
     validateWordCardText
-} from "./word-card-utils.mjs?v=20260907-shared-word-cards-v3";
+} from "./word-card-utils.mjs?v=20260907-shared-word-cards-v4";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -254,7 +255,6 @@ let pendingCurricularWritingRoundStart = null;
 let activeDictationPhotoFile = null;
 let activeDictationPhotoDataUrl = '';
 let activeDictationImageAnalysis = '';
-let activeCurricularWordCardSourceBlob = null;
 let activeSharedWordCardContext = 'dictation';
 let activeSharedWordCardController = null;
 let activeSharedWordCardRequestId = 0;
@@ -8048,7 +8048,6 @@ window.openDictationBankCamera = function openDictationBankCamera(options = {}) 
     resetWordBankCameraModal();
     pendingWordBankCameraAfterSave = options.afterSave || null;
     if (pendingWordBankCameraAfterSave === 'curricular-writing') {
-        activeCurricularWordCardSourceBlob = null;
         activeDictationSession = null;
         activeDictationItem = null;
         activeDictationImageAnalysis = '';
@@ -8135,7 +8134,6 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         const normalized = await normalizeDictationPhotoFile(file, previewDataUrl);
         const dataUrl = normalized.dataUrl || previewDataUrl || await readImageFileAsDataUrl(normalized.file || file);
         const analysisFile = normalized.file || file;
-        if (pendingWordBankCameraAfterSave === 'curricular-writing') activeCurricularWordCardSourceBlob = analysisFile;
         if (preview && dataUrl) { preview.src = dataUrl; preview.classList.remove('hidden'); }
         if (video) video.classList.add('hidden');
         setWordBankCameraStatus('OCR+AI 분석중~~', true);
@@ -8321,6 +8319,7 @@ ${text}
 
 const SHARED_WORD_CARD_COLLECTION = 'sharedWordCardsV1';
 const SHARED_WORD_CARD_LEASE_MS = 40 * 60 * 1000;
+const WORD_CARD_CHARACTER_REFERENCE_URL = new URL('./word-card-character-reference.jpg?v=20260907-character-v1', import.meta.url).href;
 
 function sharedWordCardElement(id) {
     return document.getElementById(id);
@@ -8434,7 +8433,7 @@ async function claimSharedWordCard(word) {
             generationToken,
             generationOwnerUid: currentUserId,
             leaseExpiresAtMs: now + SHARED_WORD_CARD_LEASE_MS,
-            generationVersion: 1,
+            generationVersion: WORD_CARD_GENERATION_VERSION,
             createdBy: existing?.createdBy || currentUserId,
             createdAt: existing?.createdAt || serverTimestamp(),
             updatedAt: serverTimestamp()
@@ -8457,15 +8456,24 @@ async function requestSharedWordExplanation(word, signal) {
     return validateWordCardText({ word, explanation: data?.explanation });
 }
 
-async function generateSharedWordCard(word, cardReference, cardId, generationToken, sourceBlob, signal, requestId) {
-    if (!(sourceBlob instanceof Blob)) throw new Error('방금 촬영한 사진을 찾지 못했어요. 새 사진으로 교과 맞춤쓰기를 시작해 주세요.');
+async function loadWordCardCharacterReference(signal) {
+    const response = await fetch(WORD_CARD_CHARACTER_REFERENCE_URL, { cache: 'force-cache', signal });
+    if (!response.ok) throw new Error(`에이두 캐릭터 원본을 불러오지 못했어요. (${response.status})`);
+    const blob = await response.blob();
+    if (!blob.type.startsWith('image/') || blob.size <= 0) throw new Error('에이두 캐릭터 원본 이미지가 올바르지 않아요.');
+    return blob;
+}
+
+async function generateSharedWordCard(word, cardReference, cardId, generationToken, signal, requestId) {
     let uploadedImagePath = '';
     try {
         assertSharedWordCardRequestActive(requestId, signal);
         const safe = await requestSharedWordExplanation(word, signal);
         assertSharedWordCardRequestActive(requestId, signal);
-        setSharedWordCardBusy(true, '단어를 설명하는 그림을 그리고 있어요…', '사진 속 캐릭터를 유지하면서 흰 배경의 단어 그림을 만들고 있어요.');
-        const editSession = await createSettingsImageEditSession(sourceBlob, signal);
+        setSharedWordCardBusy(true, '단어를 설명하는 그림을 그리고 있어요…', '내가 준 에이두 캐릭터와 단어의 뜻을 연결하고 있어요.');
+        const characterReference = await loadWordCardCharacterReference(signal);
+        assertSharedWordCardRequestActive(requestId, signal);
+        const editSession = await createSettingsImageEditSession(characterReference, signal);
         const imageJob = await createSettingsImageEditTurn(editSession, buildWordCardImageEditPrompt(safe.word, safe.explanation), '1:1', signal);
         const imageInfo = await waitForStoryImageJob(imageJob, signal);
         const imageBlob = await downloadStoryImage(imageJob, imageInfo, signal);
@@ -8482,7 +8490,7 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
             illustration: { path: uploadedImagePath, mimeType: imageBlob.type, width: Number(imageInfo.width || 0), height: Number(imageInfo.height || 0) },
             status: 'published',
             isPublic: true,
-            generationVersion: 1,
+            generationVersion: WORD_CARD_GENERATION_VERSION,
             generationToken: '',
             generationOwnerUid: '',
             publishedGenerationToken: generationToken,
@@ -8524,7 +8532,7 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
                 generationOwnerUid: '',
                 failedGenerationToken: generationToken,
                 leaseExpiresAtMs: 0,
-                generationVersion: 1,
+                generationVersion: WORD_CARD_GENERATION_VERSION,
                 createdBy: latest.createdBy,
                 createdAt: latest.createdAt,
                 errorMessage: String(error?.message || '생성 실패').slice(0, 180),
@@ -8535,14 +8543,14 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
     }
 }
 
-async function ensureSharedWordCard(word, sourceBlob, signal, requestId) {
+async function ensureSharedWordCard(word, signal, requestId) {
     const normalizedWord = normalizeWordCardWord(word);
     assertSharedWordCardRequestActive(requestId, signal);
     const claim = await claimSharedWordCard(normalizedWord);
     assertSharedWordCardRequestActive(requestId, signal);
     if (claim.resolution === 'reuse') return claim.card;
     if (claim.resolution === 'wait') return waitForPublishedSharedWordCard(claim.cardReference, signal, requestId);
-    return generateSharedWordCard(normalizedWord, claim.cardReference, claim.cardId, claim.generationToken, sourceBlob, signal, requestId);
+    return generateSharedWordCard(normalizedWord, claim.cardReference, claim.cardId, claim.generationToken, signal, requestId);
 }
 
 window.openCurricularWordMeaning = async function openCurricularWordMeaning(index) {
@@ -8560,7 +8568,7 @@ window.openCurricularWordMeaning = async function openCurricularWordMeaning(inde
     if (content) content.innerHTML = '';
     setSharedWordCardBusy(true);
     try {
-        const card = await ensureSharedWordCard(word, activeCurricularWordCardSourceBlob, signal, requestId);
+        const card = await ensureSharedWordCard(word, signal, requestId);
         assertSharedWordCardRequestActive(requestId, signal);
         setSharedWordCardBusy(false);
         await renderSharedWordCardDetail(card, requestId, signal);
