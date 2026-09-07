@@ -351,11 +351,16 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationPracticeActivity()">
                         <div class="text-5xl mb-3">✍️</div>
                         <div class="text-xl font-bold">교과 맞춤쓰기 연습하기</div>
                         <p class="text-sm text-gray-500 mt-2">오답 단어/문장으로 2스텝-3스텝을 다시 연습해요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col" onclick="openSharedWordCardRepository('dictation')">
+                        <div class="text-5xl mb-3">🗂️</div>
+                        <div class="text-xl font-bold">단어 카드 저장소</div>
+                        <p class="text-sm text-violet-600 font-black mt-2">모두가 함께 보는 단어·설명·그림 카드</p>
                     </div>
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openMyDictationFromDashboard()">
                         <div class="text-5xl mb-3">📚</div>
@@ -410,12 +415,17 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
                     <!-- 한계 돌파 -->
                     <div id="literacy-limit-break-card" class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyLimitBreak()">
                         <div class="text-5xl mb-3">🚀</div>
                         <div class="text-xl font-bold">도전! 한계 돌파</div>
                         <p id="literacy-limit-break-desc" class="text-sm text-purple-600 font-black mt-2">공용 한계돌파 은행의 오답에 도전해요</p>
+                    </div>
+                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openSharedWordCardRepository('literacy')">
+                        <div class="text-5xl mb-3">🗂️</div>
+                        <div class="text-xl font-bold">단어 카드 저장소</div>
+                        <p class="text-sm text-violet-600 font-black mt-2">모두가 함께 보는 단어·설명·그림 카드</p>
                     </div>
                     <!-- 나의 기록 -->
                     <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openMyLiteracyRecord()">
@@ -1601,6 +1611,26 @@
         </div>
     </div>
 
+    <!-- [공용 단어 카드 저장소 및 단어 뜻 팝업] -->
+    <div id="shared-word-card-modal" class="shared-word-card-modal hidden" role="dialog" aria-modal="true" aria-labelledby="shared-word-card-title" aria-hidden="true" onclick="if(event.target===this) closeSharedWordCardModal()">
+        <section class="shared-word-card-shell scale-in">
+            <header class="shared-word-card-header">
+                <div>
+                    <p>🗂️ SHARED WORD CARDS</p>
+                    <h2 id="shared-word-card-title">단어 카드 저장소</h2>
+                    <span id="shared-word-card-subtitle">모두가 함께 사용하는 단어 카드예요.</span>
+                </div>
+                <button type="button" onclick="closeSharedWordCardModal()" aria-label="단어 카드 닫기">×</button>
+            </header>
+            <main id="shared-word-card-content" class="shared-word-card-content"></main>
+            <div id="shared-word-card-busy" class="shared-word-card-busy hidden" role="status" aria-live="assertive">
+                <div class="shared-word-card-spinner" aria-hidden="true"></div>
+                <strong id="shared-word-card-busy-title">단어를 설명하기 위해 생각하고 있어요…</strong>
+                <p id="shared-word-card-busy-detail">뜻과 그림을 준비하고 있어요.</p>
+            </div>
+        </section>
+    </div>
+
     <!-- [에이두 도서관: AI 동화책 · 등장인물 사전 · 두 쪽 펼침 뷰어] -->
     <div id="aiedue-library-modal" class="aiedue-library-modal hidden" role="dialog" aria-modal="true" aria-labelledby="aiedue-library-title" aria-hidden="true">
         <section class="aiedue-library-shell" aria-live="polite">
@@ -1626,7 +1656,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260903-child-portrait-v156"></script>
+    <script type="module" src="app.js?v=20260907-shared-word-cards-v1"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
