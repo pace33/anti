@@ -65,7 +65,6 @@ import {
     validateStoryCharacter
 } from "./story-library-utils.mjs?v=20260902-aiedue-library-v2";
 import {
-    buildWordCardExplanationPrompt,
     buildWordCardId,
     buildWordCardImageEditPrompt,
     buildWordCardIllustrationPath,
@@ -8348,7 +8347,7 @@ function setSharedWordCardModalOpen(open) {
     document.body.classList.toggle('modal-open', open);
 }
 
-function setSharedWordCardBusy(busy, title = '단어를 설명하기 위해 생각하고 있어요…', detail = '뜻과 그림을 준비하고 있어요.') {
+function setSharedWordCardBusy(busy, title = '단어를 설명하기 위해 생각하고 있어요..', detail = '뜻과 그림을 준비하고 있어요.') {
     const layer = sharedWordCardElement('shared-word-card-busy');
     layer?.classList.toggle('hidden', !busy);
     const titleEl = sharedWordCardElement('shared-word-card-busy-title');
@@ -8445,15 +8444,26 @@ async function claimSharedWordCard(word) {
     return { cardId, ...result };
 }
 
+async function requestSharedWordExplanation(word, signal) {
+    const response = await fetch('/korean-ai/word-explanation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word }),
+        signal
+    });
+    let data = null;
+    try { data = await response.json(); } catch { /* handled below */ }
+    if (!response.ok) throw new Error(data?.error || `단어 설명 요청 실패 (${response.status})`);
+    return validateWordCardText({ word, explanation: data?.explanation });
+}
+
 async function generateSharedWordCard(word, cardReference, cardId, generationToken, sourceBlob, signal, requestId) {
     if (!(sourceBlob instanceof Blob)) throw new Error('방금 촬영한 사진을 찾지 못했어요. 새 사진으로 교과 맞춤쓰기를 시작해 주세요.');
     let uploadedImagePath = '';
     try {
         assertSharedWordCardRequestActive(requestId, signal);
-        const raw = await callKoreanAiGenerate(buildWordCardExplanationPrompt(word), { printTimeout: '3m', signal });
+        const safe = await requestSharedWordExplanation(word, signal);
         assertSharedWordCardRequestActive(requestId, signal);
-        const parsed = parseAiJsonObject(raw, {});
-        const safe = validateWordCardText({ word, explanation: parsed.explanation });
         setSharedWordCardBusy(true, '단어를 설명하는 그림을 그리고 있어요…', '사진 속 캐릭터를 유지하면서 흰 배경의 단어 그림을 만들고 있어요.');
         const editSession = await createSettingsImageEditSession(sourceBlob, signal);
         const imageJob = await createSettingsImageEditTurn(editSession, buildWordCardImageEditPrompt(safe.word, safe.explanation), '1:1', signal);

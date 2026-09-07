@@ -53,7 +53,8 @@ test('새 카드는 이미지 편집 세션과 공용 게시 상태를 사용하
 });
 
 test('모달에 정확한 로딩 문구와 문장 클릭·별도 TTS 버튼이 있다', () => {
-    assert.ok(html.includes('단어를 설명하기 위해 생각하고 있어요…'));
+    assert.ok(html.includes('단어를 설명하기 위해 생각하고 있어요..'));
+    assert.ok(app.includes("setSharedWordCardBusy(true, '단어를 설명하는 그림을 그리고 있어요…'"));
     assert.ok(app.includes("content.querySelector('.shared-word-card-sentence')?.addEventListener('click'"));
     assert.ok(app.includes("content.querySelector('.shared-word-card-tts')?.addEventListener('click'"));
     assert.ok(app.includes('speakTextKo(card.explanation)'));
