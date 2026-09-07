@@ -69,7 +69,19 @@ test('lease별 고유 이미지 경로를 게시하고 패배하거나 실패한
     assert.ok(generate.includes('failedGenerationToken: generationToken'));
     assert.ok(generate.includes('usedUpload: false'));
     assert.ok(generate.includes('deleteObject(storageRef(storage, uploadedImagePath))'));
-    assert.ok(generate.indexOf('latest?.generationToken !== generationToken') < generate.indexOf('transaction.set(cardReference, card'));
+    assert.ok(generate.indexOf('latest?.generationToken !== generationToken') < generate.indexOf('transaction.set(cardReference, publishedCard)'));
+});
+
+test('카드 상태 전이는 완전 교체하며 문서 ID와 이전 상태 필드를 본문에 남기지 않는다', () => {
+    const claim = section(app, 'async function claimSharedWordCard', 'async function generateSharedWordCard');
+    const generate = section(app, 'async function generateSharedWordCard', 'async function ensureSharedWordCard');
+    assert.equal(claim.includes("}, { merge: true });"), false);
+    assert.ok(generate.includes('transaction.set(cardReference, publishedCard);'));
+    assert.ok(generate.includes("return { card: { id: cardId, ...publishedCard }, usedUpload: true };"));
+    assert.equal(generate.includes("id: cardId,\n            schemaVersion"), false);
+    assert.ok(generate.includes('createdBy: latest.createdBy'));
+    assert.ok(generate.includes('createdAt: latest.createdAt'));
+    assert.equal(generate.includes("}, { merge: true });"), false);
 });
 
 test('공개 저장소는 비공개 카드를 조회하지 않고 문서 ID를 인라인 HTML에 삽입하지 않는다', () => {

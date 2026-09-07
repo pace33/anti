@@ -8439,7 +8439,7 @@ async function claimSharedWordCard(word) {
             createdBy: existing?.createdBy || currentUserId,
             createdAt: existing?.createdAt || serverTimestamp(),
             updatedAt: serverTimestamp()
-        }, { merge: true });
+        });
         return { resolution: 'generate', card: existing, cardReference, generationToken };
     });
     return { cardId, ...result };
@@ -8465,7 +8465,6 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
         await uploadBytes(storageRef(storage, uploadedImagePath), imageBlob, { contentType: imageBlob.type });
         assertSharedWordCardRequestActive(requestId, signal);
         const card = {
-            id: cardId,
             schemaVersion: 1,
             word: safe.word,
             normalizedWord: safe.normalizedWord,
@@ -8486,8 +8485,13 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
             const latest = latestSnapshot.exists() ? { id: latestSnapshot.id, ...latestSnapshot.data() } : null;
             if (getWordCardResolution(latest) === 'reuse') return { card: latest, usedUpload: false };
             if (latest?.generationToken !== generationToken) throw new Error('같은 단어의 다른 생성 작업이 먼저 시작됐어요. 잠시 뒤 다시 확인해 주세요.');
-            transaction.set(cardReference, card, { merge: true });
-            return { card, usedUpload: true };
+            const publishedCard = {
+                ...card,
+                createdBy: latest.createdBy,
+                createdAt: latest.createdAt
+            };
+            transaction.set(cardReference, publishedCard);
+            return { card: { id: cardId, ...publishedCard }, usedUpload: true };
         });
         if (!publication.usedUpload && uploadedImagePath) {
             await deleteObject(storageRef(storage, uploadedImagePath)).catch(() => {});
@@ -8501,15 +8505,21 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
             const latest = latestSnapshot.exists() ? latestSnapshot.data() : null;
             if (latest?.generationToken !== generationToken) return;
             transaction.set(cardReference, {
+                schemaVersion: 1,
+                word: latest.word,
+                normalizedWord: latest.normalizedWord,
                 status: 'failed',
                 isPublic: false,
                 generationToken: '',
                 generationOwnerUid: '',
                 failedGenerationToken: generationToken,
                 leaseExpiresAtMs: 0,
+                generationVersion: 1,
+                createdBy: latest.createdBy,
+                createdAt: latest.createdAt,
                 errorMessage: String(error?.message || '생성 실패').slice(0, 180),
                 updatedAt: serverTimestamp()
-            }, { merge: true });
+            });
         }).catch(() => {});
         throw error;
     }
