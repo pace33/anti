@@ -14,6 +14,10 @@ import {
     validateWordCardText
 } from '../word-card-utils.mjs';
 
+test('데이터 서버가 허용하는 단어 카드 생성 버전 1을 사용한다', () => {
+    assert.equal(WORD_CARD_GENERATION_VERSION, 1);
+});
+
 test('단어를 NFKC와 공백 기준으로 정규화한다', () => {
     assert.equal(normalizeWordCardWord('  사   과!  '), '사 과');
     assert.equal(normalizeWordCardWord('ＳＰＡＣＥ 우주'), 'SPACE 우주');
@@ -31,7 +35,7 @@ test('게시된 공개 완성 카드만 재사용하고 유효한 생성 lease�
     const path = buildWordCardIllustrationPath(id, '1712345678-owner_token', 'webp');
     const complete = { id, status: 'published', isPublic: true, generationVersion: WORD_CARD_GENERATION_VERSION, word: '사과', explanation: '과일이에요.', illustration: { path } };
     assert.equal(getWordCardResolution(complete, 100), 'reuse');
-    assert.equal(getWordCardResolution({ ...complete, generationVersion: WORD_CARD_GENERATION_VERSION - 1 }, 100), 'generate');
+    assert.equal(getWordCardResolution({ ...complete, generationVersion: WORD_CARD_GENERATION_VERSION + 1 }, 100), 'generate');
     assert.equal(getWordCardResolution({ ...complete, isPublic: false }, 100), 'generate');
     assert.equal(getWordCardResolution({ ...complete, id: 'bad-id' }, 100), 'generate');
     assert.equal(getWordCardResolution({ ...complete, illustration: { path: 'SharedWordCards/other/illustration.webp' } }, 100), 'generate');

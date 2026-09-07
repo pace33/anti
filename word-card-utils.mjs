@@ -1,6 +1,7 @@
 const MAX_WORD_LENGTH = 30;
 const MAX_EXPLANATION_LENGTH = 180;
-export const WORD_CARD_GENERATION_VERSION = 2;
+// Data-server contract: sharedWordCardsV1 currently accepts generationVersion 1 only.
+export const WORD_CARD_GENERATION_VERSION = 1;
 const WORD_CARD_ID_PATTERN = /^wc1_[a-f0-9]{64}$/;
 const WORD_CARD_GENERATION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{8,100}$/;
 const WORD_CARD_IMAGE_EXTENSION_PATTERN = /^(?:png|jpe?g|webp)$/;
@@ -62,7 +63,7 @@ export async function buildWordCardId(word, cryptoApi = globalThis.crypto) {
 export function getWordCardResolution(card, nowMs = Date.now()) {
     if (card?.status === 'published'
         && card?.isPublic === true
-        && Number(card?.generationVersion || 0) >= WORD_CARD_GENERATION_VERSION
+        && Number(card?.generationVersion || 0) === WORD_CARD_GENERATION_VERSION
         && isValidWordCardId(card?.id)
         && card?.word
         && card?.explanation
@@ -85,7 +86,7 @@ export function sortPublishedWordCards(cards = []) {
     return [...cards]
         .filter((card) => card?.status === 'published'
             && card?.isPublic === true
-            && Number(card?.generationVersion || 0) >= WORD_CARD_GENERATION_VERSION
+            && Number(card?.generationVersion || 0) === WORD_CARD_GENERATION_VERSION
             && isValidWordCardId(card?.id)
             && card?.word
             && card?.explanation
