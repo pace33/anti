@@ -141,7 +141,8 @@ const curriculum = [
     }
 ];
 
-const areaProgress = buildMathAreaProgress([progress, geometryProgress, dueReview], curriculum);
+const fixtureNow = '2026-09-01T12:00:00+09:00';
+const areaProgress = buildMathAreaProgress([progress, geometryProgress, dueReview], curriculum, { now: fixtureNow });
 assert.deepEqual(areaProgress.find((area) => area.domain === 'number'), {
     domain: 'number', total: 2, started: 1, completed: 1, learning: 0, reviewDue: 0, rate: 50
 });
@@ -170,7 +171,7 @@ assert.deepEqual(weekly.at(-1), {
     accuracyRate: 100
 });
 
-const summary = summarizeMathStudentRecords([progress, geometryProgress, dueReview], attemptDocs);
+const summary = summarizeMathStudentRecords([progress, geometryProgress, dueReview], attemptDocs, { now: fixtureNow });
 assert.equal(summary.trackedNodes, 3);
 assert.equal(summary.completedNodes, 2);
 assert.equal(summary.learningNodes, 1);
@@ -179,7 +180,7 @@ assert.equal(summary.totalAttempts, 3);
 assert.equal(summary.correctAttempts, 2);
 assert.equal(summary.accuracyRate, 67);
 
-const recommendations = buildMathGrowthRecommendations([progress, geometryProgress, dueReview], curriculum, 2);
+const recommendations = buildMathGrowthRecommendations([progress, geometryProgress, dueReview], curriculum, 2, { now: fixtureNow });
 assert.equal(recommendations.length, 2);
 assert.equal(recommendations[0].nodeId, 'read-clock');
 assert.equal(recommendations[0].priority, 'high');

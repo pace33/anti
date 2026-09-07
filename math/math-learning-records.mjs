@@ -240,9 +240,10 @@ export function applyMathAttempt(existing, attempt = {}) {
     };
 }
 
-export function buildMathAreaProgress(progressDocs = [], curriculumLessons = []) {
+export function buildMathAreaProgress(progressDocs = [], curriculumLessons = [], options = {}) {
     const progress = uniqueProgressDocuments(progressDocs);
     const lessons = normalizeCurriculumLessons(curriculumLessons);
+    const now = new Date(options.now ?? Date.now());
     const domains = new Set(MATH_DOMAINS);
     progress.forEach((document) => domains.add(documentDomain(document)));
     lessons.forEach((lesson) => domains.add(documentDomain(lesson)));
@@ -252,7 +253,7 @@ export function buildMathAreaProgress(progressDocs = [], curriculumLessons = [])
         const curriculumNodeIds = new Set(lessons.filter((lesson) => documentDomain(lesson) === domain).map(documentNodeId));
         const total = curriculumNodeIds.size || areaProgress.length;
         const completed = areaProgress.filter(isCompletedProgress).length;
-        const reviewDue = areaProgress.filter((document) => isReviewDue(document)).length;
+        const reviewDue = areaProgress.filter((document) => isReviewDue(document, now)).length;
         return {
             domain,
             total,
@@ -265,9 +266,10 @@ export function buildMathAreaProgress(progressDocs = [], curriculumLessons = [])
     });
 }
 
-export function summarizeMathStudentRecords(progressDocs = [], attemptDocs = []) {
+export function summarizeMathStudentRecords(progressDocs = [], attemptDocs = [], options = {}) {
     const progress = uniqueProgressDocuments(progressDocs);
     const attempts = documentList(attemptDocs);
+    const now = new Date(options.now ?? Date.now());
     const completedNodes = progress.filter(isCompletedProgress).length;
     const totalAttempts = attempts.length || progress.reduce((sum, item) => sum + asNonNegativeInteger(item.attemptCount), 0);
     const correctAttempts = attempts.length
@@ -285,13 +287,13 @@ export function summarizeMathStudentRecords(progressDocs = [], attemptDocs = [])
         trackedNodes: progress.length,
         completedNodes,
         learningNodes: Math.max(0, progress.length - completedNodes),
-        reviewDueNodes: progress.filter((document) => isReviewDue(document)).length,
+        reviewDueNodes: progress.filter((document) => isReviewDue(document, now)).length,
         totalAttempts,
         correctAttempts,
         wrongAttempts,
         accuracyRate: totalAttempts ? Math.round((correctAttempts / totalAttempts) * 100) : 0,
         lastStudiedAt,
-        areas: buildMathAreaProgress(progress)
+        areas: buildMathAreaProgress(progress, [], options)
     };
 }
 
@@ -323,9 +325,10 @@ export function buildMathWeeklyProgress(attemptDocs = [], options = {}) {
     return rows;
 }
 
-export function buildMathGrowthRecommendations(progressDocs = [], curriculumLessons = [], limit = 3) {
+export function buildMathGrowthRecommendations(progressDocs = [], curriculumLessons = [], limit = 3, options = {}) {
     const progress = uniqueProgressDocuments(progressDocs);
     const lessons = normalizeCurriculumLessons(curriculumLessons);
+    const now = new Date(options.now ?? Date.now());
     const lessonById = new Map(lessons.map((lesson) => [documentNodeId(lesson), lesson]));
     const recommendations = progress.map((document) => {
         const nodeId = documentNodeId(document);
@@ -333,7 +336,7 @@ export function buildMathGrowthRecommendations(progressDocs = [], curriculumLess
         const attempts = Math.max(1, asNonNegativeInteger(document.attemptCount, 1));
         const wrongCount = asNonNegativeInteger(document.wrongCount);
         const misconceptionTotal = Object.values(document.misconceptionCounts || {}).reduce((sum, count) => sum + asNonNegativeInteger(count), 0);
-        const due = isReviewDue(document);
+        const due = isReviewDue(document, now);
         const completed = isCompletedProgress(document);
         const accuracyRate = Number.isFinite(Number(document.accuracyRate))
             ? Number(document.accuracyRate)
