@@ -24,6 +24,9 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check shape-zoo-game.js
+          node --check shape-zoo-core.mjs
+          node --check drawing-shape-catalog.mjs
           node --check math/math.js
           node --check math/math-services.js
           node --check math/math-spiral.js
@@ -32,6 +35,7 @@ jobs:
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
+          node --test tools/test-shape-zoo-core.mjs tools/test-shape-zoo-game.mjs
           node tools/test-math-learning-records.mjs
           node tools/validate-math-site.mjs
 
