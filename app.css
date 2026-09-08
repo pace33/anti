@@ -482,6 +482,23 @@ body.rpg-hud-active .page-number { bottom: 112px; }
     background: linear-gradient(135deg, #fff9dc 0%, #f4fff0 56%, #e9f8ff 100%);
 }
 
+.aiedu-porandy-shop-card {
+    grid-column: 1 / -1;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #7dd3fc;
+    background: linear-gradient(135deg, #effaff 0%, #eef2ff 52%, #f5f3ff 100%);
+}
+.aiedu-porandy-shop-card .aiedu-craft-card-hero {
+    background: linear-gradient(135deg, #1688cf, #6d5ce7);
+}
+.aiedue-lab-button {
+    border-color: #c4b5fd;
+    background: linear-gradient(145deg, #ffffff, #f5f3ff);
+    color: #5b3eb3;
+}
+.aiedue-lab-button small { color: #7c63c9; }
+
 .aiedu-craft-shop-card::after {
     content: '';
     position: absolute;

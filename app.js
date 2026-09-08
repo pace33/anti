@@ -243,6 +243,10 @@ let drawingPortfolio = { missions: {}, free: [], unlockedTemplates: [], rewarded
 let drawingWorkspaceMode = 'free';
 let drawingWorkspaceMissionStep = null;
 let drawingCanvasInitialized = false;
+let drawingAiSketchbookActive = false;
+let drawingAiSketchbookGenerated = false;
+let drawingAiSketchbookBusy = false;
+let drawingAiSketchbookController = null;
 let currentUserDictationStep = -1;
 let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [], wordStats: {} }, wrongBank: [], completedBank: [], captures: [], dictationLocked: true, hasCompletedOnce: false, curricularWriting: { activeWords: [], photoWords: [], reviewWords: [], totalRounds: 0, stepStats: {}, wordStats: {}, history: [], rewardedSessions: [] } };
 let activeDictationItem = null;
@@ -3093,6 +3097,8 @@ const SAFE_MODAL_ACTIONS = new Set([
     'openAiedueKoreanDistributeShopItem',
     'openAiedueKoreanShopItemEditor',
     'openAiedueCraftShop',
+    'openAiedueLabTimeQuiz',
+    'openAieduePorandy',
     'openKoreanStudentReport',
     'purchaseAiedueCraftAccess',
     'purchaseAiedueKoreanShopItem',
@@ -3210,6 +3216,46 @@ window.closeAiedueKoreanModal = function() {
     lastModalTrigger = null;
 }
 
+const AIEDUE_PORANDY_URL = 'https://aiedue.ddns.net/school/pokemon-defense/';
+
+function renderAieduePorandyShopCard() {
+    return `<div class="aiedu-porandy-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col">
+        <div class="aiedu-craft-card-hero">
+            <div class="aiedu-craft-card-icon" aria-hidden="true">🎮</div>
+            <div class="min-w-0">
+                <div class="text-xs font-black text-sky-100 tracking-widest">PLAY FREE</div>
+                <div class="text-2xl font-black">에이두 포랜디</div>
+                <div class="text-sm text-white/80 mt-1">몬스터를 뽑고 합치고 진화시키는 랜덤 디펜스</div>
+            </div>
+        </div>
+        <div class="flex items-center justify-between gap-3 mt-4">
+            <div><div class="text-xs font-bold text-gray-500">이용 가격</div><div class="text-xl font-black text-sky-600">무료</div></div>
+            <button type="button" class="btn-primary px-5 py-2 text-sm" onclick="openAieduePorandy()">플레이</button>
+        </div>
+    </div>`;
+}
+
+window.openAieduePorandy = function openAieduePorandy() {
+    window.location.href = AIEDUE_PORANDY_URL;
+};
+
+window.openAiedueLab = function openAiedueLab() {
+    showModal(`<div class="text-left relative">
+        <button type="button" class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()" aria-label="에이두 연구실 닫기">×</button>
+        <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">하고 싶은 활동을 골라 도전해 보세요. 활동은 계속 추가됩니다.</p></div>
+        <button type="button" class="korean-embed-card w-full p-5 text-left bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabTimeQuiz()">
+            <span class="block text-5xl mb-3" aria-hidden="true">🕒</span>
+            <strong class="block text-2xl font-black text-sky-700">시간 퀴즈</strong>
+            <span class="block mt-2 font-bold text-gray-600">시계를 읽고 난이도별 경험치를 모아 레벨업해요.</span>
+            <span class="block mt-3 text-sm font-black text-violet-600">정답 경험치 +1 · +3 · +5 · +10 EXP</span>
+        </button>
+    </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
+};
+
+window.openAiedueLabTimeQuiz = function openAiedueLabTimeQuiz() {
+    window.location.href = 'math/index.html?activity=time-quiz&from=korean-lab';
+};
+
 function renderAiedueKoreanShopItems(displayItems = []) {
     return `<div class="korean-shop-grid custom-scrollbar">
         <div class="aiedu-craft-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col">
@@ -3229,6 +3275,7 @@ function renderAiedueKoreanShopItems(displayItems = []) {
                 </div>
             </div>
         </div>
+        ${renderAieduePorandyShopCard()}
         ${displayItems.map(({ assignment, item }) => {
             const pricing = calculateKoreanShopPrice(item);
             const assignedAt = assignment.assignedAt && typeof assignment.assignedAt.toDate === 'function'
@@ -3302,7 +3349,7 @@ function renderAiedueKoreanTeacherShop(items = []) {
     return `<div class="aiedu-craft-shop-card korean-embed-card p-5 rounded-3xl shadow-sm mb-5">
         <div class="aiedu-craft-card-hero"><div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div><div><div class="text-xs font-black text-amber-200 tracking-widest">TEACHER CRAFT</div><div class="text-2xl font-black">에이두 크래프트</div><div class="text-sm text-white/80 mt-1">교사 계정으로 크래프트에 접속하고 상점을 이용할 수 있어요.</div></div></div>
         <div class="flex flex-wrap justify-end gap-2 mt-4"><button type="button" class="btn-outline px-4 py-2" onclick="enterAiedueCraftAsTeacher()">크래프트 접속</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueCraftShop()">크래프트 상점 이용</button></div>
-    </div><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 pr-10"><div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 교사 상점 관리</h3><p class="text-sm text-gray-500 font-bold">에이두 스쿨과 같은 shopItems / assignedShopItems를 관리해요.</p></div><div class="flex gap-2 flex-wrap"><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">내 학급 전체 배부</button></div></div><div class="space-y-3 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div>`;
+    </div><div class="mb-5">${renderAieduePorandyShopCard()}</div><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 pr-10"><div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 교사 상점 관리</h3><p class="text-sm text-gray-500 font-bold">에이두 스쿨과 같은 shopItems / assignedShopItems를 관리해요.</p></div><div class="flex gap-2 flex-wrap"><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">내 학급 전체 배부</button></div></div><div class="space-y-3 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div>`;
 }
 
 async function openAiedueKoreanTeacherShop() {
@@ -4659,6 +4706,10 @@ window.goHangulDashboard = function goHangulDashboard() {
 }
 
 window.goDrawingDashboard = function goDrawingDashboard() {
+    drawingAiSketchbookController?.abort();
+    drawingAiSketchbookController = null;
+    drawingAiSketchbookBusy = false;
+    drawingAiSketchbookActive = false;
     updateDrawingDashboardPreview();
     showTopLevelSection('drawing-activities-section');
 }
@@ -5057,6 +5108,11 @@ function renderMyDrawingSection() {
 
 function configureDrawingWorkspace({ mode, title, desc, template = 'blank', missionStep = null, aiQuiz = false }) {
     isDrawingEvaluating = false;
+    drawingAiSketchbookController?.abort();
+    drawingAiSketchbookController = null;
+    drawingAiSketchbookActive = mode === 'sketchbook';
+    drawingAiSketchbookGenerated = false;
+    drawingAiSketchbookBusy = false;
     ensureDrawingPortfolioShapeFields();
     drawingWorkspaceMode = mode;
     drawingWorkspaceMissionStep = missionStep;
@@ -5096,6 +5152,7 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
     document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !completionModeActive);
     document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
     document.getElementById('drawing-save-btn').classList.toggle('hidden', completionModeActive);
+    updateAiSketchbookControls();
     updateDrawingCompleteButtonCooldown();
     showTopLevelSection('drawing-workspace-section');
     requestAnimationFrame(() => {
@@ -5171,8 +5228,8 @@ window.openSketchbookActivity = function() {
     const firstUnlocked = getUnlockedDrawingTemplates()[0] || 'blank';
     configureDrawingWorkspace({
         mode: 'sketchbook',
-        title: '스케치북',
-        desc: '자유롭게 그림을 그려 봅시다.',
+        title: 'AI 스케치북',
+        desc: '그림을 그린 뒤 AI 생성으로 AntiAI가 완성하게 해 보세요.',
         template: firstUnlocked
     });
 }
@@ -5255,7 +5312,18 @@ function initializeDrawingCanvas() {
         drawingUserTracePoints.push(p);
         if (drawingUserTracePoints.length > 12000) drawingUserTracePoints.shift();
     };
-    const start = (ev) => { isDrawing = true; const p = point(ev); lastX = p.x; lastY = p.y; rememberPoint(p); };
+    const start = (ev) => {
+        if (drawingAiSketchbookActive && drawingAiSketchbookGenerated) {
+            drawingAiSketchbookGenerated = false;
+            updateAiSketchbookControls();
+            updateDrawingCompleteButtonCooldown();
+        }
+        isDrawing = true;
+        const p = point(ev);
+        lastX = p.x;
+        lastY = p.y;
+        rememberPoint(p);
+    };
     const move = (ev) => {
         if (!isDrawing) return;
         ev.preventDefault();
@@ -5455,6 +5523,13 @@ function resetDrawingCanvas() {
     const { ctx, width, height } = prepareDrawingCanvas();
     drawingUserTracePoints = [];
     drawDrawingTemplate(ctx, width, height);
+    if (drawingAiSketchbookActive) {
+        drawingAiSketchbookController?.abort();
+        drawingAiSketchbookController = null;
+        drawingAiSketchbookBusy = false;
+        drawingAiSketchbookGenerated = false;
+        updateAiSketchbookControls();
+    }
     updateDrawingCompleteButtonCooldown();
 }
 
@@ -5568,6 +5643,26 @@ window.openDrawingWorkspaceRecords = function() {
 
 let isDrawingEvaluating = false;
 
+function updateAiSketchbookControls(message = '') {
+    const button = document.getElementById('drawing-ai-generate-btn');
+    const status = document.getElementById('drawing-ai-status');
+    if (button) {
+        button.classList.toggle('hidden', !drawingAiSketchbookActive);
+        button.disabled = drawingAiSketchbookBusy;
+        button.classList.toggle('opacity-50', drawingAiSketchbookBusy);
+        button.innerHTML = drawingAiSketchbookBusy
+            ? '<span class="button-loading-spinner"></span>AntiAI 생성 중...'
+            : (drawingAiSketchbookGenerated ? '✨ 다시 AI 생성' : '✨ AI 생성');
+    }
+    if (status) {
+        const text = message || (drawingAiSketchbookGenerated
+            ? 'AI 그림이 완성됐어요. 완료하기를 누르면 친구들 그림 보기에 게시됩니다.'
+            : '그림을 그린 뒤 AI 생성을 눌러 주세요.');
+        status.textContent = text;
+        status.classList.toggle('hidden', !drawingAiSketchbookActive);
+    }
+}
+
 function setDrawingEvaluationState(evaluating) {
     isDrawingEvaluating = evaluating;
     const btn = document.getElementById('drawing-complete-mission-btn');
@@ -5591,6 +5686,12 @@ function updateDrawingCompleteButtonCooldown() {
         btn.disabled = true;
         btn.classList.add('opacity-50');
         btn.innerHTML = `<span class="button-loading-spinner"></span>채점중입니다...`;
+        return;
+    }
+    if (drawingAiSketchbookActive && !drawingAiSketchbookGenerated) {
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+        btn.innerText = drawingAiSketchbookBusy ? 'AI 생성 중...' : 'AI 생성 후 완료하기';
         return;
     }
     const waitMs = Math.max(0, Number(drawingPortfolio.unpaidCooldownUntil || 0) - Date.now());
@@ -5617,6 +5718,99 @@ function captureDrawingImage() {
     const canvas = document.getElementById('drawing-canvas');
     return canvas.toDataURL('image/png');
 }
+
+function captureDrawingBlob() {
+    const canvas = document.getElementById('drawing-canvas');
+    return new Promise((resolve, reject) => {
+        if (!canvas) {
+            reject(new Error('그림판을 찾지 못했습니다.'));
+            return;
+        }
+        canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('그림을 이미지로 준비하지 못했습니다.')), 'image/png');
+    });
+}
+
+function drawAiSketchbookBlob(blob, isCurrent = () => true) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const image = new Image();
+        image.onload = () => {
+            try {
+                if (!isCurrent()) {
+                    resolve(false);
+                    return;
+                }
+                const { ctx, width, height } = prepareDrawingCanvas();
+                const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+                const drawWidth = image.naturalWidth * scale;
+                const drawHeight = image.naturalHeight * scale;
+                ctx.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+                drawingUserTracePoints = [{ x: width / 2, y: height / 2 }];
+                resolve(true);
+            } catch (error) {
+                reject(error);
+            } finally {
+                URL.revokeObjectURL(url);
+            }
+        };
+        image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('완성된 AI 그림을 그림판에 표시하지 못했습니다.'));
+        };
+        image.src = url;
+    });
+}
+
+window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
+    if (!drawingAiSketchbookActive || drawingAiSketchbookBusy) return;
+    if (drawingUserTracePoints.length < 2) {
+        showModal('먼저 그림판에 그림을 그려 주세요. 그 그림을 바탕으로 AntiAI가 새로 그려 줍니다.');
+        return;
+    }
+
+    const controller = new AbortController();
+    drawingAiSketchbookController?.abort();
+    drawingAiSketchbookController = controller;
+    drawingAiSketchbookBusy = true;
+    drawingAiSketchbookGenerated = false;
+    updateAiSketchbookControls('내 그림을 AntiAI 대화형 세션으로 보내고 있어요…');
+    updateDrawingCompleteButtonCooldown();
+    let session = null;
+    let failureMessage = '';
+    try {
+        const sourceBlob = await captureDrawingBlob();
+        session = await createSettingsImageEditSession(sourceBlob, controller.signal);
+        if (drawingAiSketchbookController !== controller) return;
+        updateAiSketchbookControls('내 그림의 구도와 색을 살려 새 그림을 만들고 있어요. 보통 몇 분 정도 걸립니다.');
+        const prompt = '이 그림은 사용자가 직접 그린 원본입니다. 원본의 주요 대상, 배치, 포즈, 선과 색의 의도를 그대로 알아볼 수 있게 유지하면서 완성도 높은 따뜻한 디지털 일러스트로 다시 그려 주세요. 원본에 없는 글자, 로고, 워터마크는 추가하지 마세요. 흰 여백은 자연스러운 배경으로 정리하되 원본의 이야기를 바꾸지 마세요.';
+        const job = await createSettingsImageEditTurn(session, prompt, '4:3', controller.signal);
+        const imageInfo = await waitForStoryImageJob(job, controller.signal);
+        const resultBlob = await downloadStoryImage(job, imageInfo, controller.signal);
+        if (drawingAiSketchbookController !== controller || !drawingAiSketchbookActive) return;
+        const rendered = await drawAiSketchbookBlob(resultBlob, () => drawingAiSketchbookController === controller && drawingAiSketchbookActive && !controller.signal.aborted);
+        if (!rendered || drawingAiSketchbookController !== controller || !drawingAiSketchbookActive || controller.signal.aborted) return;
+        drawingAiSketchbookGenerated = true;
+        updateAiSketchbookControls();
+    } catch (error) {
+        if (error?.name !== 'AbortError' && !controller.signal.aborted) {
+            console.error('AI sketchbook generation failed:', error);
+            failureMessage = `AI 생성 실패: ${error?.message || '잠시 뒤 다시 시도해 주세요.'}`;
+            updateAiSketchbookControls(failureMessage);
+            showModal(`AI 그림을 만들지 못했어요.<br><span class="text-sm text-gray-500">${escapeHtml(error?.message || '잠시 뒤 다시 시도해 주세요.')}</span>`);
+        }
+    } finally {
+        if (drawingAiSketchbookController === controller) {
+            drawingAiSketchbookController = null;
+            drawingAiSketchbookBusy = false;
+            updateAiSketchbookControls(failureMessage);
+            updateDrawingCompleteButtonCooldown();
+        }
+        if (session) {
+            try { await closeSettingsImageEditSession(session); }
+            catch (cleanupError) { console.warn('AI sketchbook session cleanup failed:', cleanupError); }
+        }
+    }
+};
 
 function buildDrawingRecord({ image, kind, missionStep = null, savedAt, accuracy = null, rewardedPoints = 0, shapeAccuracy = null }) {
     const templateInfo = drawingActiveTargetTemplate || drawingTemplateLibrary.find((item) => item.key === drawingActiveTemplate) || drawingTemplateLibrary[0];
@@ -6124,7 +6318,13 @@ function animateAieduePointStar(points = 1) {
 }
 
 window.completeTodayDrawingMission = async function() {
+    if (isDrawingEvaluating) return;
     ensureDrawingPortfolioShapeFields();
+    if (drawingAiSketchbookActive && !drawingAiSketchbookGenerated) {
+        showModal(drawingAiSketchbookBusy ? 'AntiAI가 그림을 만드는 중이에요. 완성될 때까지 기다려 주세요.' : '먼저 AI 생성을 눌러 그림을 완성해 주세요. 완료하기를 누르면 완성된 그림이 친구들 그림 보기에 게시됩니다.');
+        updateDrawingCompleteButtonCooldown();
+        return;
+    }
     if (Date.now() < Number(drawingPortfolio.unpaidCooldownUntil || 0)) {
         updateDrawingCompleteButtonCooldown();
         showModal('조금만 기다렸다가 완료할 수 있어요.');
@@ -6254,6 +6454,10 @@ window.completeTodayDrawingMission = async function() {
         const committed = await persistDrawingRecord(completedRecord, drawingOperation);
         rewardPoints = committed.awardedDrawingPoints;
         drawingPersisted = true;
+        if (drawingAiSketchbookActive) {
+            drawingAiSketchbookGenerated = false;
+            updateAiSketchbookControls('친구들 그림 보기에 게시했어요. 새 그림을 그린 뒤 다시 AI 생성할 수 있어요.');
+        }
         if (committed.levelUpCount > 0) {
             showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${committed.aeduLevel} (보상 ${committed.levelUpPoints}포인트${committed.removedWarningTokens ? ` · 주의토큰 ${committed.removedWarningTokens}개 차감` : ''})`);
         }

@@ -52,6 +52,7 @@ const TIME_QUIZ_DIFFICULTY_LABELS = { easy: '쉬움', middle: '보통', hard: '�
 const TIME_QUIZ_EXP_REWARDS = TIME_QUIZ_REWARDS;
 const MATH_LEVEL_EXP_REQUIRED = 100;
 const MATH_LEVEL_UP_COINS = 1000;
+const MATH_LAUNCH_ACTIVITY = new URLSearchParams(window.location.search).get('activity');
 const timeQuizState = {
     difficulty: 'easy',
     consecutiveWrong: 0,
@@ -521,7 +522,10 @@ onAuthStateChanged(auth, async (user) => {
         loginSuccess = true;
         const startVisible = !document.getElementById('start-screen')?.classList.contains('hidden');
         const loginVisible = !document.getElementById('login-section')?.classList.contains('hidden');
-        if (startVisible || loginVisible) openDashboard();
+        if (startVisible || loginVisible) {
+            if (MATH_LAUNCH_ACTIVITY === 'time-quiz') openTimeQuiz();
+            else openDashboard();
+        }
         else setRpgHudVisible(true);
     } catch (error) {
         console.error('Auth state handling error:', error);
