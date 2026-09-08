@@ -3302,6 +3302,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'openAiedueKoreanShopItemEditor',
     'openAiedueLabDictationGame',
     'openAiedueLabShapeZoo',
+    'openAiedueLabWordCardGame',
     'openAiedueCraftShop',
     'openAiedueLabTimeQuiz',
     'openAieduePorandy',
@@ -3468,6 +3469,12 @@ window.openAiedueLab = function openAiedueLab() {
                 <span class="block mt-2 font-bold text-gray-600">점선을 따라 도형 과자를 만들고 사자 레오에게 간식을 줘요.</span>
                 <span class="block mt-3 text-sm font-black">나의 도형 ${drawingShapeLibrary.length}종 · 생명 3개 · 점점 빨라지는 간식 시간</span>
             </button>
+            <button type="button" class="korean-embed-card aiedue-lab-word-card p-5 text-left bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabWordCardGame()">
+                <span class="block text-5xl mb-3" aria-hidden="true">🃏</span>
+                <strong class="block text-2xl font-black text-amber-800">단어 카드 한 판</strong>
+                <span class="block mt-2 font-bold text-gray-600">친구가 낸 그림과 설명을 보고, 내 카드 네 장 중 같은 단어를 골라요.</span>
+                <span class="block mt-3 text-sm font-black text-amber-700">한글 3단계 · 저장소 카드로 매번 새 문제 · 정답 +1점</span>
+            </button>
         </div>
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
 };
@@ -3478,6 +3485,10 @@ window.openAiedueLabDictationGame = function openAiedueLabDictationGame() {
 
 window.openAiedueLabShapeZoo = function openAiedueLabShapeZoo() {
     window.openShapeZooGame?.();
+};
+
+window.openAiedueLabWordCardGame = function openAiedueLabWordCardGame() {
+    window.openWordCardTableGame?.();
 };
 
 window.openAiedueLabTimeQuiz = function openAiedueLabTimeQuiz() {
@@ -4588,6 +4599,7 @@ const topLevelSectionIds = [
     'hangul-game-section',
     'dictation-asteroid-game-section',
     'shape-zoo-game-section',
+    'word-card-table-game-section',
     'korean-records-section',
     'korean-mistakes-section',
     'korean-review-section',
@@ -4637,6 +4649,9 @@ function showTopLevelSection(sectionId) {
     const isAsteroidGame = sectionId === 'dictation-asteroid-game-section';
     if (!isAsteroidGame) window.stopAsteroidDictationGame?.();
     document.body.classList.toggle('dictation-asteroid-open', isAsteroidGame);
+    const isWordCardGame = sectionId === 'word-card-table-game-section';
+    if (!isWordCardGame) window.stopWordCardTableGame?.();
+    document.body.classList.toggle('word-card-table-open', isWordCardGame);
     if (!['start-screen', 'login-section'].includes(sectionId)) {
         stopAiedueBackgroundMusic();
     }
@@ -4648,6 +4663,7 @@ function showTopLevelSection(sectionId) {
     });
     setRpgHudVisible(Boolean(currentUserId)
         && !isShapeZoo
+        && !isWordCardGame
         && !['start-screen', 'login-section', 'dictation-asteroid-game-section'].includes(sectionId));
     const learningView = sectionId === 'korean-review-section'
         ? 'review'
@@ -4663,6 +4679,7 @@ function showTopLevelSection(sectionId) {
 window.showAiedueTopLevelSection = showTopLevelSection;
 
 function setRpgHudVisible(isVisible) {
+    isVisible = Boolean(isVisible) && !document.body.classList.contains('word-card-table-open');
     const hud = document.getElementById('aiedue-rpg-hud');
     hud?.classList.toggle('hidden', !isVisible);
     if (hud) {
@@ -8799,6 +8816,41 @@ async function getSharedWordCardImageUrl(card) {
     if (!isValidWordCardIllustrationPath(path, card?.id)) throw new Error('허용되지 않은 단어 카드 이미지 경로예요.');
     return getDownloadURL(storageRef(storage, path));
 }
+
+function requireWordCardTableUser(expectedUid = auth.currentUser?.uid) {
+    if (!expectedUid || currentUserId !== expectedUid || auth.currentUser?.uid !== expectedUid) {
+        const error = new Error('에이두에 로그인한 뒤 연구실에서 단어 카드 게임을 열어 주세요.');
+        error.code = 'cards/login-required';
+        throw error;
+    }
+    return expectedUid;
+}
+
+// Every round reads the existing public repository. This facade deliberately
+// exposes no card-generation, profile-reward, or document-writing operations.
+window.aiedueWordCardTableSource = Object.freeze({
+    async loadCards() {
+        const uid = requireWordCardTableUser();
+        const snapshot = await getDocs(query(
+            collection(db, SHARED_WORD_CARD_COLLECTION),
+            where('status', '==', 'published'),
+            where('isPublic', '==', true),
+            where('generationVersion', '==', WORD_CARD_GENERATION_VERSION),
+            queryLimit(500)
+        ));
+        requireWordCardTableUser(uid);
+        return sortPublishedWordCards(snapshot.docs.map(entry => ({ ...entry.data(), id: entry.id })));
+    },
+    async getImageUrl(card) {
+        const uid = requireWordCardTableUser();
+        if (getWordCardResolution(card) !== 'reuse') throw new Error('공개 완료된 단어 카드가 아니에요.');
+        const url = await getSharedWordCardImageUrl(card);
+        requireWordCardTableUser(uid);
+        return url;
+    },
+    speak: text => speakTextKo(String(text || '')),
+    stopSpeech: () => cancelSpeech()
+});
 
 async function renderSharedWordCardDetail(card, requestId = activeSharedWordCardRequestId, signal = activeSharedWordCardController?.signal) {
     if (getWordCardResolution(card) !== 'reuse') throw new Error('공개 완료된 단어 카드가 아니에요.');
@@ -20118,6 +20170,12 @@ document.getElementById('class-management-modal').addEventListener('click', (e) 
 });
 
 onAuthStateChanged(auth, async (user) => {
+    if ((currentUserId || null) !== (user?.uid || null)) {
+        window.stopWordCardTableGame?.();
+        if (document.getElementById('word-card-table-game-section')?.classList.contains('hidden') === false) {
+            showTopLevelSection('start-screen');
+        }
+    }
     if (currentUserId && currentUserId !== user?.uid
         && document.getElementById('shape-zoo-game-section')?.classList.contains('hidden') === false) {
         showTopLevelSection('start-screen');

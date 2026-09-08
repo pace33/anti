@@ -29,6 +29,8 @@ jobs:
           node --check shape-zoo-game.js
           node --check shape-zoo-core.mjs
           node --check drawing-shape-catalog.mjs
+          node --check word-card-table-game.js
+          node --check word-card-table-core.mjs
           node --check math/math.js
           node --check math/math-services.js
           node --check math/math-spiral.js
@@ -39,6 +41,7 @@ jobs:
           node tools/validate-site.mjs
           node --test tools/test-dictation-asteroid-game.mjs tools/test-asteroid-persistence.mjs
           node --test tools/test-shape-zoo-core.mjs tools/test-shape-zoo-game.mjs
+          node --test tools/test-word-card-table-core.mjs tools/test-word-card-table-game.mjs tools/test-word-card-table-source.mjs
           node tools/test-math-learning-records.mjs
           node tools/validate-math-site.mjs
 
