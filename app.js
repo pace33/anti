@@ -13,6 +13,7 @@ import {
     signInWithPopup
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { DRAWING_SHAPE_LIBRARY as drawingShapeLibrary } from "./drawing-shape-catalog.mjs";
 import {
     applyKoreanMasteryAttempt,
     buildKoreanAreaProgress,
@@ -3097,6 +3098,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'openAiedueKoreanDistributeShopItem',
     'openAiedueKoreanShopItemEditor',
     'openAiedueLabDictationGame',
+    'openAiedueLabShapeZoo',
     'openAiedueCraftShop',
     'openAiedueLabTimeQuiz',
     'openAieduePorandy',
@@ -3257,12 +3259,22 @@ window.openAiedueLab = function openAiedueLab() {
                 <span class="block mt-2 font-bold text-indigo-50">떨어지는 낱말을 획순대로 따라 쓰고 미사일로 소행성을 격추해요.</span>
                 <span class="block mt-3 text-sm font-black text-cyan-200">한글 2단계 방식 · 시간 제한 도전</span>
             </button>
+            <button type="button" class="korean-embed-card aiedue-lab-zoo-card p-5 text-left hover:scale-[1.01] transition-transform" onclick="openAiedueLabShapeZoo()">
+                <span class="block text-5xl mb-3" aria-hidden="true">🦁</span>
+                <strong class="block text-2xl font-black">도형 동물원</strong>
+                <span class="block mt-2 font-bold text-gray-600">점선을 따라 도형 과자를 만들고 사자 레오에게 간식을 줘요.</span>
+                <span class="block mt-3 text-sm font-black">나의 도형 ${drawingShapeLibrary.length}종 · 생명 3개 · 점점 빨라지는 간식 시간</span>
+            </button>
         </div>
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
 };
 
 window.openAiedueLabDictationGame = function openAiedueLabDictationGame() {
     window.openAsteroidDictationGame?.();
+};
+
+window.openAiedueLabShapeZoo = function openAiedueLabShapeZoo() {
+    window.openShapeZooGame?.();
 };
 
 window.openAiedueLabTimeQuiz = function openAiedueLabTimeQuiz() {
@@ -4372,6 +4384,7 @@ const topLevelSectionIds = [
     'reading-practice-section',
     'hangul-game-section',
     'dictation-asteroid-game-section',
+    'shape-zoo-game-section',
     'korean-records-section',
     'korean-mistakes-section',
     'korean-review-section',
@@ -4415,6 +4428,9 @@ function stopAiedueBackgroundMusic() {
 }
 
 function showTopLevelSection(sectionId) {
+    const isShapeZoo = sectionId === 'shape-zoo-game-section';
+    if (!isShapeZoo) window.stopShapeZooGame?.();
+    document.body.classList.toggle('shape-zoo-open', isShapeZoo);
     const isAsteroidGame = sectionId === 'dictation-asteroid-game-section';
     if (!isAsteroidGame) window.stopAsteroidDictationGame?.();
     document.body.classList.toggle('dictation-asteroid-open', isAsteroidGame);
@@ -4428,6 +4444,7 @@ function showTopLevelSection(sectionId) {
         setTopLevelSectionVisible(id, id === sectionId);
     });
     setRpgHudVisible(Boolean(currentUserId)
+        && !isShapeZoo
         && !['start-screen', 'login-section', 'dictation-asteroid-game-section'].includes(sectionId));
     const learningView = sectionId === 'korean-review-section'
         ? 'review'
@@ -4915,18 +4932,6 @@ window.openHangulGameActivity = function openHangulGameActivity() {
     });
 }
 
-const drawingShapeLibrary = [
-    { key: 'line', label: '직선', color: '#7c3aed' },
-    { key: 'wave', label: '꾸불선', color: '#0ea5e9' },
-    { key: 'circle', label: '동그라미', color: '#ef4444' },
-    { key: 'triangle', label: '세모', color: '#f97316' },
-    { key: 'square', label: '네모', color: '#22c55e' },
-    { key: 'star', label: '별', color: '#facc15' },
-    { key: 'pentagon', label: '오각형', color: '#14b8a6' },
-    { key: 'heart', label: '하트', color: '#ec4899' },
-    { key: 'diamond', label: '마름모', color: '#8b5cf6' },
-    { key: 'zigzag', label: '지그재그', color: '#64748b' }
-];
 const drawingShapeMap = Object.fromEntries(drawingShapeLibrary.map((item) => [item.key, item]));
 
 const drawingTemplateLibrary = [
@@ -19910,6 +19915,10 @@ document.getElementById('class-management-modal').addEventListener('click', (e) 
 });
 
 onAuthStateChanged(auth, async (user) => {
+    if (currentUserId && currentUserId !== user?.uid
+        && document.getElementById('shape-zoo-game-section')?.classList.contains('hidden') === false) {
+        showTopLevelSection('start-screen');
+    }
     if (!user) {
         stopAiedueSchoolProfileSync();
         loginSuccess = false;
