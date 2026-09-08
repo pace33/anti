@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260908-korean-lab-sketchbook-v1">
+    <link rel="stylesheet" href="app.css?v=20260908-dictation-asteroid-v1">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1638,6 +1638,58 @@
         </section>
     </div>
 
+    <!-- [에이두 연구실: 낱말 우주 방어대] -->
+    <section id="dictation-asteroid-game-section" class="view-section dictation-asteroid-game hidden" aria-labelledby="dictation-asteroid-title">
+        <header class="dictation-asteroid-header">
+            <button type="button" class="dictation-asteroid-home" onclick="closeAsteroidDictationGame()" aria-label="에이두 한글 홈으로 돌아가기">← 홈</button>
+            <div class="dictation-asteroid-title-wrap">
+                <span aria-hidden="true">🚀</span>
+                <div><p>AIEDUE LAB</p><h1 id="dictation-asteroid-title">낱말 우주 방어대</h1></div>
+            </div>
+            <div class="dictation-asteroid-hud" aria-label="게임 기록">
+                <span>격추 <strong id="dictation-asteroid-score">0</strong></span>
+                <span>연속 <strong id="dictation-asteroid-streak">0</strong></span>
+                <span>생명 <strong id="dictation-asteroid-lives">♥♥♥</strong></span>
+            </div>
+        </header>
+        <main class="dictation-asteroid-layout">
+            <section id="dictation-asteroid-field" class="dictation-asteroid-field" aria-label="소행성 방어 구역">
+                <div class="dictation-star-layer" aria-hidden="true"></div>
+                <div id="dictation-asteroid" class="dictation-asteroid-rock" aria-live="polite">
+                    <span id="dictation-asteroid-word">나무</span>
+                </div>
+                <div id="dictation-defense-line" class="dictation-defense-line"><span>위험 방어선</span></div>
+                <div id="dictation-asteroid-missile" class="dictation-asteroid-missile" aria-hidden="true">▲</div>
+                <div class="dictation-spaceship" aria-label="에이두가 탄 우주선">
+                    <div class="dictation-spaceship-dome"><img id="dictation-aiedue-pilot" src="assets/aiedue-space-pilot.webp" alt="새싹 후드를 쓴 에이두"></div>
+                    <div class="dictation-spaceship-body"><span>AIEDUE</span></div>
+                    <i class="dictation-spaceship-flame" aria-hidden="true"></i>
+                </div>
+                <div id="dictation-asteroid-overlay" class="dictation-asteroid-overlay">
+                    <div class="dictation-asteroid-overlay-card">
+                        <span class="dictation-asteroid-overlay-icon" aria-hidden="true">☄️</span>
+                        <h2 id="dictation-asteroid-overlay-title">낱말 소행성을 막아 주세요!</h2>
+                        <p id="dictation-asteroid-overlay-copy">소행성이 방어선을 지나기 전에 낱말을 획순대로 따라 쓰면 미사일이 자동으로 발사돼요.</p>
+                        <button id="dictation-asteroid-start" type="button">게임 시작</button>
+                    </div>
+                </div>
+            </section>
+            <section class="dictation-asteroid-writing" aria-labelledby="dictation-writing-title">
+                <div class="dictation-writing-heading">
+                    <div><span>한글 2단계 방식</span><h2 id="dictation-writing-title">✍️ 획순 따라쓰기</h2></div>
+                    <button id="dictation-asteroid-sound" type="button" aria-label="현재 낱말 다시 듣기">🔊 다시 듣기</button>
+                </div>
+                <div class="dictation-time-track" aria-label="남은 시간"><i id="dictation-time-fill"></i></div>
+                <p id="dictation-asteroid-instruction" class="dictation-asteroid-instruction" role="status" aria-live="polite">게임 시작을 눌러 주세요.</p>
+                <canvas id="dictation-asteroid-writing-canvas" class="trace-writing-canvas dictation-writing-canvas" data-guide="나/무" data-trace-hide-label data-trace-speak-once aria-label="낱말 획순 따라쓰기 판"></canvas>
+                <div class="dictation-writing-actions">
+                    <button id="dictation-asteroid-clear" type="button">↺ 다시 쓰기</button>
+                    <small>주황색 번호와 화살표 순서대로 써요.</small>
+                </div>
+            </section>
+        </main>
+    </section>
+
     <!-- [에이두 도서관: AI 동화책 · 등장인물 사전 · 두 쪽 펼침 뷰어] -->
     <div id="aiedue-library-modal" class="aiedue-library-modal hidden" role="dialog" aria-modal="true" aria-labelledby="aiedue-library-title" aria-hidden="true">
         <section class="aiedue-library-shell" aria-live="polite">
@@ -1663,7 +1715,8 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260908-porandy-netlify-link-v1"></script>
+    <script type="module" src="app.js?v=20260908-dictation-asteroid-v1"></script>
+    <script type="module" src="dictation-asteroid-game.js?v=20260908-dictation-asteroid-v1"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">

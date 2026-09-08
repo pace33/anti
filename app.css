@@ -8252,3 +8252,101 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
     .shared-word-card-copy h3 { text-align: center; }
     .word-meaning-button { width: 100%; }
 }
+
+/* ==========================================================================
+   에이두 연구실 · 낱말 우주 방어대
+   ========================================================================== */
+.aiedue-lab-activity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.aiedue-lab-space-card { border: 2px solid #6366f1; background: radial-gradient(circle at 82% 18%, rgba(34, 211, 238, .24), transparent 28%), linear-gradient(145deg, #312e81, #111827 72%); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 12px 28px rgba(49,46,129,.22); }
+body.dictation-asteroid-open { overflow: hidden; background: #050816; }
+.dictation-asteroid-game { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; overflow: hidden; color: #fff; background: linear-gradient(180deg, #111a3d, #070b1b); font-family: 'Noto Sans KR', sans-serif; }
+.dictation-asteroid-game.hidden { display: none !important; }
+.dictation-asteroid-header { min-height: 78px; display: grid; grid-template-columns: 120px 1fr auto; align-items: center; gap: 18px; padding: 12px clamp(16px, 3vw, 38px); border-bottom: 1px solid rgba(125,211,252,.24); background: rgba(8,13,35,.94); box-shadow: 0 8px 24px rgba(0,0,0,.22); }
+.dictation-asteroid-home { min-height: 46px; padding: 10px 18px; border: 2px solid #67e8f9; border-radius: 16px; color: #cffafe; background: rgba(8,145,178,.18); font-weight: 1000; }
+.dictation-asteroid-title-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
+.dictation-asteroid-title-wrap > span { font-size: 2.3rem; }
+.dictation-asteroid-title-wrap p { margin: 0; color: #67e8f9; font-size: .68rem; font-weight: 1000; letter-spacing: .18em; }
+.dictation-asteroid-title-wrap h1 { margin: 0; font-size: clamp(1.25rem, 2.4vw, 2rem); font-weight: 1000; white-space: nowrap; }
+.dictation-asteroid-hud { display: flex; gap: 9px; }
+.dictation-asteroid-hud span { min-width: 88px; padding: 9px 12px; border: 1px solid rgba(165,180,252,.3); border-radius: 13px; color: #c7d2fe; background: rgba(30,41,99,.6); font-size: .78rem; font-weight: 900; text-align: center; }
+.dictation-asteroid-hud strong { display: block; color: #fff; font-size: 1.03rem; }
+#dictation-asteroid-lives { color: #fb7185; letter-spacing: .08em; }
+.dictation-asteroid-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(420px, 1.3fr) minmax(350px, .7fr); gap: clamp(12px, 2vw, 24px); padding: clamp(12px, 2vw, 24px); }
+.dictation-asteroid-field { position: relative; min-height: 0; overflow: hidden; border: 3px solid #27386d; border-radius: 28px; background: radial-gradient(circle at 48% 120%, rgba(37,99,235,.36), transparent 48%), linear-gradient(180deg, #030617, #0e1840); box-shadow: inset 0 0 70px rgba(59,130,246,.12), 0 18px 45px rgba(0,0,0,.3); }
+.dictation-star-layer, .dictation-star-layer::before, .dictation-star-layer::after { position: absolute; inset: 0; content: ''; pointer-events: none; background-image: radial-gradient(circle, rgba(255,255,255,.92) 0 1px, transparent 1.5px); background-size: 52px 52px; }
+.dictation-star-layer { opacity: .62; animation: dictation-stars-drift 12s linear infinite; }
+.dictation-star-layer::before { background-size: 83px 83px; background-position: 18px 24px; opacity: .6; }
+.dictation-star-layer::after { background-size: 127px 127px; background-position: 40px 60px; opacity: .4; }
+@keyframes dictation-stars-drift { to { transform: translateY(52px); } }
+.dictation-asteroid-rock { --asteroid-spin: 0deg; position: absolute; z-index: 5; top: -120px; left: 50%; width: clamp(112px, 16vw, 164px); aspect-ratio: 1; display: grid; place-items: center; border: 6px solid #8b6a54; border-radius: 46% 54% 42% 58% / 55% 43% 57% 45%; background: radial-gradient(circle at 28% 30%, #c9a27c 0 8%, transparent 9%), radial-gradient(circle at 68% 66%, #6b4f43 0 11%, transparent 12%), radial-gradient(circle at 70% 22%, #a98268 0 6%, transparent 7%), linear-gradient(145deg, #a98165, #60463d); box-shadow: inset -16px -18px 0 rgba(45,29,25,.28), 0 12px 28px rgba(0,0,0,.42); transform: translateX(-50%) rotate(var(--asteroid-spin)); will-change: top, transform; }
+.dictation-asteroid-rock span { max-width: 90%; padding: 7px 12px; border: 3px solid rgba(255,255,255,.72); border-radius: 16px; color: #1f2937; background: rgba(255,255,255,.92); box-shadow: 0 5px 0 rgba(59,36,29,.24); font-size: clamp(1.55rem, 4vw, 2.55rem); font-weight: 1000; letter-spacing: .06em; }
+.dictation-asteroid-rock.is-destroyed { animation: dictation-asteroid-burst .5s ease-out forwards; }
+.dictation-asteroid-rock.is-impacting { animation: dictation-asteroid-impact .55s ease-in forwards; }
+@keyframes dictation-asteroid-burst { 35% { filter: brightness(2.4); transform: translateX(-50%) scale(1.22) rotate(var(--asteroid-spin)); } 100% { opacity: 0; filter: brightness(3); transform: translateX(-50%) scale(.08) rotate(110deg); } }
+@keyframes dictation-asteroid-impact { to { opacity: 0; transform: translateX(-50%) translateY(80px) scale(1.25); filter: saturate(.3); } }
+.dictation-defense-line { position: absolute; z-index: 3; left: 4%; right: 4%; top: 72%; height: 0; border-top: 4px dashed #fb7185; filter: drop-shadow(0 0 7px rgba(251,113,133,.9)); }
+.dictation-defense-line span { position: absolute; right: 0; top: 7px; padding: 4px 9px; border-radius: 999px; color: #fecdd3; background: rgba(136,19,55,.82); font-size: .68rem; font-weight: 1000; }
+.dictation-spaceship { position: absolute; z-index: 4; left: 50%; bottom: 14px; width: clamp(150px, 24vw, 230px); height: clamp(112px, 17vw, 160px); transform: translateX(-50%); filter: drop-shadow(0 16px 18px rgba(0,0,0,.45)); }
+.dictation-spaceship-dome { position: absolute; z-index: 2; left: 50%; top: 0; width: 45%; height: 54%; overflow: hidden; border: 5px solid #67e8f9; border-bottom: 0; border-radius: 999px 999px 24px 24px; background: linear-gradient(180deg, rgba(207,250,254,.96), rgba(34,211,238,.62)); transform: translateX(-50%); }
+.dictation-spaceship-dome img { width: 100%; height: 128%; object-fit: cover; object-position: 50% 8%; }
+.dictation-spaceship-body { position: absolute; z-index: 3; left: 8%; right: 8%; bottom: 17%; height: 48%; display: grid; place-items: center; border: 5px solid #a5b4fc; border-radius: 50% 50% 34% 34%; color: #dbeafe; background: linear-gradient(160deg, #6366f1, #312e81); box-shadow: inset 0 -12px 0 rgba(15,23,42,.22); }
+.dictation-spaceship-body::before, .dictation-spaceship-body::after { content: ''; position: absolute; bottom: -3px; width: 36%; height: 30%; border-radius: 50%; background: #4338ca; }
+.dictation-spaceship-body::before { left: -20%; transform: rotate(-18deg); }
+.dictation-spaceship-body::after { right: -20%; transform: rotate(18deg); }
+.dictation-spaceship-body span { font-size: .72rem; font-weight: 1000; letter-spacing: .17em; }
+.dictation-spaceship-flame { position: absolute; z-index: 1; left: 50%; bottom: -4px; width: 22%; height: 32%; border-radius: 50% 50% 60% 60%; background: linear-gradient(#fef08a, #fb923c 55%, transparent); transform: translateX(-50%); animation: dictation-flame .28s ease-in-out infinite alternate; }
+@keyframes dictation-flame { to { height: 24%; filter: brightness(1.3); } }
+.dictation-asteroid-missile { position: absolute; z-index: 7; left: 50%; bottom: 54px; display: none; color: #fef08a; font-size: 2rem; line-height: 1; filter: drop-shadow(0 0 8px #f97316); transform: translateX(-50%); transition: transform .4s cubic-bezier(.2,.8,.35,1), opacity .4s; }
+.dictation-asteroid-missile.is-ready { display: block; }
+.dictation-asteroid-missile.is-firing { opacity: .2; transform: translate(calc(-50% + var(--missile-x, 0px)), var(--missile-y, -300px)) scale(.55); }
+.dictation-asteroid-writing { min-height: 0; display: flex; flex-direction: column; gap: 13px; padding: clamp(18px, 2vw, 28px); overflow: hidden; border: 3px solid #334b84; border-radius: 28px; color: #1e293b; background: linear-gradient(165deg, #f8fafc, #e0f2fe); box-shadow: 0 18px 45px rgba(0,0,0,.25); }
+.dictation-writing-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dictation-writing-heading span { color: #4f46e5; font-size: .75rem; font-weight: 1000; letter-spacing: .08em; }
+.dictation-writing-heading h2 { margin: 3px 0 0; color: #172554; font-size: clamp(1.15rem, 2.2vw, 1.75rem); font-weight: 1000; white-space: nowrap; }
+.dictation-writing-heading button, .dictation-writing-actions button { min-height: 44px; padding: 9px 14px; border: 2px solid #818cf8; border-radius: 14px; color: #3730a3; background: #eef2ff; font-weight: 1000; }
+.dictation-time-track { height: 13px; overflow: hidden; border-radius: 999px; background: #cbd5e1; box-shadow: inset 0 2px 4px rgba(15,23,42,.14); }
+.dictation-time-track i { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #22c55e, #06b6d4); transition: width .08s linear; }
+.dictation-time-track i[data-danger="true"] { background: linear-gradient(90deg, #fb923c, #ef4444); }
+.dictation-asteroid-instruction { min-height: 52px; margin: 0; padding: 10px 14px; border-radius: 15px; color: #334155; background: #fff; font-size: clamp(.9rem, 1.5vw, 1.06rem); font-weight: 900; text-align: center; }
+.dictation-asteroid-instruction[data-tone="success"] { color: #047857; background: #d1fae5; }
+.dictation-asteroid-instruction[data-tone="danger"] { color: #be123c; background: #ffe4e6; }
+.dictation-writing-canvas { flex: 1; width: 100%; min-height: 220px; max-height: 440px; border: 4px solid #a5b4fc; border-radius: 22px; background: #fff; touch-action: none; box-shadow: inset 0 4px 15px rgba(79,70,229,.08); }
+.dictation-writing-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dictation-writing-actions small { color: #64748b; font-weight: 800; text-align: right; }
+.dictation-asteroid-overlay { position: absolute; inset: 0; z-index: 12; display: grid; place-items: center; padding: 20px; background: rgba(2,6,23,.78); backdrop-filter: blur(7px); }
+.dictation-asteroid-overlay.hidden { display: none; }
+.dictation-asteroid-overlay-card { width: min(460px, 92%); padding: clamp(24px, 4vw, 38px); border: 3px solid #67e8f9; border-radius: 30px; background: linear-gradient(155deg, rgba(30,41,99,.98), rgba(15,23,42,.98)); box-shadow: 0 24px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.2); text-align: center; }
+.dictation-asteroid-overlay-icon { display: block; margin-bottom: 10px; font-size: 4.3rem; }
+.dictation-asteroid-overlay-card h2 { margin: 0; font-size: clamp(1.5rem, 4vw, 2.25rem); font-weight: 1000; }
+.dictation-asteroid-overlay-card p { margin: 14px 0 22px; color: #c7d2fe; font-weight: 800; line-height: 1.65; }
+.dictation-asteroid-overlay-card button { min-width: 170px; min-height: 54px; border: 0; border-radius: 18px; color: #172554; background: linear-gradient(135deg, #67e8f9, #a5f3fc); box-shadow: 0 8px 0 #0e7490; font-size: 1.12rem; font-weight: 1000; }
+@media (max-width: 850px) {
+    .aiedue-lab-activity-grid { grid-template-columns: 1fr; }
+    .dictation-asteroid-header { grid-template-columns: auto 1fr; min-height: 68px; }
+    .dictation-asteroid-title-wrap { justify-content: flex-start; }
+    .dictation-asteroid-title-wrap > span { display: none; }
+    .dictation-asteroid-hud { grid-column: 1 / -1; justify-content: center; }
+    .dictation-asteroid-hud span { min-width: 0; flex: 1; padding: 5px 8px; }
+    .dictation-asteroid-layout { grid-template-columns: 1fr; grid-template-rows: minmax(290px, 46%) minmax(300px, 54%); overflow-y: auto; }
+    .dictation-asteroid-field { min-height: 290px; }
+    .dictation-asteroid-writing { min-height: 300px; overflow: visible; }
+    .dictation-writing-canvas { min-height: 210px; }
+}
+@media (max-width: 520px) {
+    .dictation-asteroid-header { gap: 8px; padding: 9px 10px; }
+    .dictation-asteroid-home { min-height: 40px; padding: 7px 10px; }
+    .dictation-asteroid-title-wrap h1 { font-size: 1.03rem; }
+    .dictation-asteroid-title-wrap p { font-size: .55rem; }
+    .dictation-asteroid-hud { gap: 5px; }
+    .dictation-asteroid-layout { gap: 8px; padding: 8px; grid-template-rows: 290px minmax(330px, 1fr); }
+    .dictation-asteroid-field, .dictation-asteroid-writing { border-width: 2px; border-radius: 20px; }
+    .dictation-asteroid-writing { gap: 8px; padding: 13px; }
+    .dictation-writing-heading button { padding: 7px 9px; font-size: .78rem; }
+    .dictation-asteroid-instruction { min-height: 44px; padding: 8px 10px; font-size: .82rem; }
+    .dictation-writing-canvas { min-height: 220px; border-width: 3px; }
+    .dictation-writing-actions small { font-size: .68rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .dictation-star-layer, .dictation-spaceship-flame { animation: none; }
+    .dictation-asteroid-rock, .dictation-asteroid-missile { transition-duration: .01ms; animation-duration: .01ms; }
+}

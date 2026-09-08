@@ -3096,6 +3096,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'handleModalConfirm',
     'openAiedueKoreanDistributeShopItem',
     'openAiedueKoreanShopItemEditor',
+    'openAiedueLabDictationGame',
     'openAiedueCraftShop',
     'openAiedueLabTimeQuiz',
     'openAieduePorandy',
@@ -3243,13 +3244,25 @@ window.openAiedueLab = function openAiedueLab() {
     showModal(`<div class="text-left relative">
         <button type="button" class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()" aria-label="에이두 연구실 닫기">×</button>
         <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">하고 싶은 활동을 골라 도전해 보세요. 활동은 계속 추가됩니다.</p></div>
-        <button type="button" class="korean-embed-card w-full p-5 text-left bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabTimeQuiz()">
-            <span class="block text-5xl mb-3" aria-hidden="true">🕒</span>
-            <strong class="block text-2xl font-black text-sky-700">시간 퀴즈</strong>
-            <span class="block mt-2 font-bold text-gray-600">시계를 읽고 난이도별 경험치를 모아 레벨업해요.</span>
-            <span class="block mt-3 text-sm font-black text-violet-600">정답 경험치 +1 · +3 · +5 · +10 EXP</span>
-        </button>
+        <div class="aiedue-lab-activity-grid">
+            <button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabTimeQuiz()">
+                <span class="block text-5xl mb-3" aria-hidden="true">🕒</span>
+                <strong class="block text-2xl font-black text-sky-700">시간 퀴즈</strong>
+                <span class="block mt-2 font-bold text-gray-600">시계를 읽고 난이도별 경험치를 모아 레벨업해요.</span>
+                <span class="block mt-3 text-sm font-black text-violet-600">정답 경험치 +1 · +3 · +5 · +10 EXP</span>
+            </button>
+            <button type="button" class="korean-embed-card aiedue-lab-space-card p-5 text-left hover:scale-[1.01] transition-transform" onclick="openAiedueLabDictationGame()">
+                <span class="block text-5xl mb-3" aria-hidden="true">🚀</span>
+                <strong class="block text-2xl font-black text-indigo-100">낱말 우주 방어대</strong>
+                <span class="block mt-2 font-bold text-indigo-50">떨어지는 낱말을 획순대로 따라 쓰고 미사일로 소행성을 격추해요.</span>
+                <span class="block mt-3 text-sm font-black text-cyan-200">한글 2단계 방식 · 시간 제한 도전</span>
+            </button>
+        </div>
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
+};
+
+window.openAiedueLabDictationGame = function openAiedueLabDictationGame() {
+    window.openAsteroidDictationGame?.();
 };
 
 window.openAiedueLabTimeQuiz = function openAiedueLabTimeQuiz() {
@@ -4358,6 +4371,7 @@ const topLevelSectionIds = [
     'word-listening-quiz-section',
     'reading-practice-section',
     'hangul-game-section',
+    'dictation-asteroid-game-section',
     'korean-records-section',
     'korean-mistakes-section',
     'korean-review-section',
@@ -4401,6 +4415,9 @@ function stopAiedueBackgroundMusic() {
 }
 
 function showTopLevelSection(sectionId) {
+    const isAsteroidGame = sectionId === 'dictation-asteroid-game-section';
+    if (!isAsteroidGame) window.stopAsteroidDictationGame?.();
+    document.body.classList.toggle('dictation-asteroid-open', isAsteroidGame);
     if (!['start-screen', 'login-section'].includes(sectionId)) {
         stopAiedueBackgroundMusic();
     }
@@ -4410,7 +4427,8 @@ function showTopLevelSection(sectionId) {
     topLevelSectionIds.forEach((id) => {
         setTopLevelSectionVisible(id, id === sectionId);
     });
-    setRpgHudVisible(Boolean(currentUserId) && !['start-screen', 'login-section'].includes(sectionId));
+    setRpgHudVisible(Boolean(currentUserId)
+        && !['start-screen', 'login-section', 'dictation-asteroid-game-section'].includes(sectionId));
     const learningView = sectionId === 'korean-review-section'
         ? 'review'
         : (sectionId === 'korean-records-section' || sectionId === 'korean-mistakes-section' ? 'records' : '');
@@ -4421,6 +4439,8 @@ function showTopLevelSection(sectionId) {
     // 동적으로 채우는 단계 목록이 빈 화면으로 남을 수 있다.
     refreshDynamicSectionContent(sectionId);
 }
+
+window.showAiedueTopLevelSection = showTopLevelSection;
 
 function setRpgHudVisible(isVisible) {
     const hud = document.getElementById('aiedue-rpg-hud');
@@ -18881,6 +18901,35 @@ function initializeTraceWritingCanvas(target) {
         if (document.getElementById('trace-writing-canvas') === canvas) refreshGuide();
     });
 }
+
+window.setupAsteroidTraceCanvas = function setupAsteroidTraceCanvas(target, word) {
+    const canvas = getTraceWritingCanvas(target);
+    const cleanWord = String(word || '').replace(/[^가-힣]/g, '').slice(0, 4);
+    if (!canvas || !cleanWord) return false;
+    canvas.dataset.guide = Array.from(cleanWord).join('/');
+    canvas.dataset.spokenText = cleanWord;
+    canvas.dataset.traceHideLabel = '';
+    canvas.dataset.traceSpeakOnce = '';
+    canvas._traceCompleted = {};
+    canvas._tracePaths = [];
+    delete canvas.dataset.completed;
+    delete canvas.dataset.rewarded;
+    delete canvas.dataset.traceCompletionNotified;
+    delete canvas.dataset.traceSpokenPrompt;
+    initializeTraceWritingCanvas(canvas);
+    drawTraceWritingGuide(canvas);
+    return true;
+};
+
+window.refreshAsteroidTraceCanvas = function refreshAsteroidTraceCanvas(target) {
+    const canvas = getTraceWritingCanvas(target);
+    if (!canvas) return false;
+    const ctx = canvas.getContext('2d');
+    resizeCanvasForDisplay(canvas, ctx);
+    drawTraceWritingGuide(canvas);
+    drawSavedTracePaths(ctx, canvas._tracePaths || []);
+    return true;
+};
 
 function initializeVisibleTraceWritingCanvases() {
     document.querySelectorAll('.view-section:not(.hidden) .trace-writing-canvas').forEach((canvas) => {
