@@ -8836,7 +8836,7 @@ window.aiedueWordCardTableSource = Object.freeze({
             where('status', '==', 'published'),
             where('isPublic', '==', true),
             where('generationVersion', '==', WORD_CARD_GENERATION_VERSION),
-            queryLimit(500)
+            queryLimit(100)
         ));
         requireWordCardTableUser(uid);
         return sortPublishedWordCards(snapshot.docs.map(entry => ({ ...entry.data(), id: entry.id })));
@@ -8928,16 +8928,22 @@ async function claimSharedWordCard(word) {
 }
 
 async function requestSharedWordExplanation(word, signal) {
-    const response = await fetch('/korean-ai/word-explanation', {
+    const prompt = `도구나 명령을 사용하지 말고 일반 지식으로 바로 답하세요. 한국어 단어 “${word}”의 뜻을 쉽고 정확한 한국어 한 문장으로만 설명하세요. 설명 문장 외에는 아무것도 출력하지 마세요.`;
+    const response = await fetch('/korean-ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word }),
+        body: JSON.stringify({
+            word,
+            prompt,
+            model: 'Gemini 3.6 Flash (High)',
+            printTimeout: '2m'
+        }),
         signal
     });
     let data = null;
     try { data = await response.json(); } catch { /* handled below */ }
     if (!response.ok) throw new Error(data?.error || `단어 설명 요청 실패 (${response.status})`);
-    return validateWordCardText({ word, explanation: data?.explanation });
+    return validateWordCardText({ word, explanation: data?.explanation || data?.text });
 }
 
 async function loadWordCardCharacterReference(signal) {

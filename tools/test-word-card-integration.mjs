@@ -41,6 +41,16 @@ test('공용 카드 조회가 생성보다 먼저 실행되고 결정적 문서 
     assert.ok(ensure.indexOf("claim.resolution === 'wait'") < ensure.indexOf('generateSharedWordCard'));
 });
 
+test('단어 설명은 지원되는 생성 라우트에 실제 prompt를 보내고 text 응답도 사용한다', () => {
+    const request = section(app, 'async function requestSharedWordExplanation', 'async function loadWordCardCharacterReference');
+    assert.ok(request.includes("fetch('/korean-ai/generate'"));
+    assert.ok(request.includes('prompt,'));
+    assert.ok(request.includes("model: 'Gemini 3.6 Flash (High)'"));
+    assert.ok(request.includes('data?.explanation || data?.text'));
+    assert.equal(request.includes("fetch('/korean-ai/word-explanation'"), false);
+    assert.equal(request.includes('JSON.stringify({ word })'), false);
+});
+
 test('새 카드는 고정 에이두 캐릭터 원본만 이미지 편집에 사용하고 학습 사진은 넘기지 않는다', () => {
     const generate = section(app, 'async function generateSharedWordCard', 'async function ensureSharedWordCard');
     assert.ok(app.includes("new URL('./word-card-character-reference.jpg?v=20260907-character-v1', import.meta.url)"));

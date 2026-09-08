@@ -71,7 +71,7 @@ test('the public game facade is immutable, read-only, and delegates speech to th
     assert.equal(calls.queries.length, 0); assert.equal(calls.images.length, 0);
 });
 
-test('catalog reads query published public version-1 cards at the adapter boundary with limit 500', async () => {
+test('catalog reads query published public version-1 cards within the data-server limit of 100', async () => {
     const { source, calls } = harness();
     const cards = await source.loadCards();
     assert.equal(cards.length, 1); assert.equal(cards[0].id, cardId);
@@ -81,7 +81,7 @@ test('catalog reads query published public version-1 cards at the adapter bounda
         { field: 'status', operator: '==', value: 'published' },
         { field: 'isPublic', operator: '==', value: true },
         { field: 'generationVersion', operator: '==', value: 1 },
-        { count: 500 }
+        { count: 100 }
     ]);
 });
 
