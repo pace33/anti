@@ -104,3 +104,104 @@ test('AI 스케치북은 캔버스 원본으로 편집 세션을 만들고 결�
     assert.ok(complete.indexOf('drawingPersisted = true') < complete.indexOf('drawingAiSketchbookGenerated = false'));
     assert.ok(app.includes("collection(db, FIREBASE_DRAWING_COLLECTION)"));
 });
+
+test('AntiAI 상태 조회의 일시적 시간 초과와 게이트웨이 오류는 생성 작업을 즉시 폐기하지 않는다', async () => {
+    const polling = section(app, 'async function waitForStoryImageJob', 'async function downloadStoryImage');
+    assert.ok(polling.includes('let consecutiveStatusFailures = 0'));
+    assert.ok(polling.includes('consecutiveStatusFailures >= 5'));
+    assert.ok(polling.includes('transientNetworkFailure'));
+    assert.ok(polling.includes('시간이 초과'));
+    assert.ok(polling.includes('[408, 425, 429]'));
+    assert.ok(polling.includes('response.status >= 500 && response.status < 600'));
+    assert.ok(polling.includes("response.headers.get('Retry-After')"));
+    assert.ok(polling.includes('continue;'));
+
+    const makePoller = (fetchImpl, delayImpl = async () => {}) => new Function(
+        'normalizeImageJobStatusUrl',
+        'fetchStoryResource',
+        'waitForStoryDelay',
+        `${polling}; return waitForStoryImageJob;`
+    )(
+        (url) => url,
+        fetchImpl,
+        delayImpl
+    );
+    const completed = {
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({ status: 'completed', result: { images: [{ url: '/api/image-jobs/test/images/0' }] } })
+    };
+
+    let networkAttempts = 0;
+    const afterTimeout = await makePoller(async () => {
+        networkAttempts += 1;
+        if (networkAttempts === 1) throw new Error('AntiAI 요청 시간이 초과되었습니다. 실패한 항목만 다시 시도해 주세요.');
+        return completed;
+    })({ id: 'test', token: 'token' });
+    assert.equal(networkAttempts, 2);
+    assert.equal(afterTimeout.url, '/api/image-jobs/test/images/0');
+
+    let gatewayAttempts = 0;
+    const afterGatewayError = await makePoller(async () => {
+        gatewayAttempts += 1;
+        if (gatewayAttempts === 1) return {
+            ok: false,
+            status: 507,
+            headers: { get: () => null },
+            json: async () => ({ error: 'temporary upstream failure' })
+        };
+        return completed;
+    })({ id: 'test', token: 'token' });
+    assert.equal(gatewayAttempts, 2);
+    assert.equal(afterGatewayError.url, '/api/image-jobs/test/images/0');
+
+    let consecutiveFailures = 0;
+    await assert.rejects(makePoller(async () => {
+        consecutiveFailures += 1;
+        return {
+            ok: false,
+            status: 503,
+            headers: { get: () => null },
+            json: async () => ({ error: 'temporary upstream failure' })
+        };
+    })({ id: 'test', token: 'token' }), /temporary upstream failure/);
+    assert.equal(consecutiveFailures, 5);
+
+    let resetAttempts = 0;
+    const afterCounterReset = await makePoller(async () => {
+        resetAttempts += 1;
+        if (resetAttempts === 1 || (resetAttempts >= 3 && resetAttempts <= 6)) return {
+            ok: false,
+            status: 502,
+            headers: { get: () => null },
+            json: async () => ({ error: 'temporary upstream failure' })
+        };
+        if (resetAttempts === 2) return {
+            ok: true,
+            status: 200,
+            headers: { get: () => null },
+            json: async () => ({ status: 'running' })
+        };
+        return completed;
+    })({ id: 'test', token: 'token' });
+    assert.equal(resetAttempts, 7);
+    assert.equal(afterCounterReset.url, '/api/image-jobs/test/images/0');
+
+    let permanentAttempts = 0;
+    await assert.rejects(makePoller(async () => {
+        permanentAttempts += 1;
+        throw new Error('permanent parse failure');
+    })({ id: 'test', token: 'token' }), /permanent parse failure/);
+    assert.equal(permanentAttempts, 1);
+
+    await assert.rejects(makePoller(async () => {
+        throw new DOMException('cancelled', 'AbortError');
+    })({ id: 'test', token: 'token' }), { name: 'AbortError' });
+
+    await assert.rejects(makePoller(async () => {
+        throw new TypeError('Failed to fetch');
+    }, async () => {
+        throw new DOMException('cancelled while waiting', 'AbortError');
+    })({ id: 'test', token: 'token' }), { name: 'AbortError' });
+});

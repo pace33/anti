@@ -20855,9 +20855,33 @@ async function createStoryImageJob(prompt, signal, aspectRatio = STORY_LIBRARY_I
 async function waitForStoryImageJob(job, signal) {
     const deadline = Date.now() + 25 * 60 * 1000;
     const statusUrl = normalizeImageJobStatusUrl(job.statusUrl || `/korean-ai/api/image-jobs/${encodeURIComponent(job.id)}`, job.id);
+    let consecutiveStatusFailures = 0;
     while (Date.now() < deadline) {
-        const response = await fetchStoryResource(statusUrl, { headers: { 'X-Image-Job-Token': job.token }, cache: 'no-store', signal }, 30000);
+        let response;
+        try {
+            response = await fetchStoryResource(statusUrl, { headers: { 'X-Image-Job-Token': job.token }, cache: 'no-store', signal }, 30000);
+        } catch (error) {
+            if (signal?.aborted || error?.name === 'AbortError') throw error;
+            const transientNetworkFailure = error instanceof TypeError
+                || /시간이 초과|Failed to fetch|NetworkError|Load failed/i.test(String(error?.message || ''));
+            consecutiveStatusFailures += 1;
+            if (!transientNetworkFailure || consecutiveStatusFailures >= 5) throw error;
+            await waitForStoryDelay(3000, signal);
+            continue;
+        }
         const data = await response.json().catch(() => ({}));
+        const retryableHttpStatus = [408, 425, 429].includes(response.status)
+            || (response.status >= 500 && response.status < 600);
+        if (retryableHttpStatus) {
+            consecutiveStatusFailures += 1;
+            if (consecutiveStatusFailures >= 5) {
+                throw new Error(data.error || data.message || 'AntiAI 상태 서버 연결이 불안정합니다. 잠시 뒤 다시 시도해 주세요.');
+            }
+            const retryAfterSeconds = Math.min(15, Math.max(3, Number(response.headers.get('Retry-After')) || 3));
+            await waitForStoryDelay(retryAfterSeconds * 1000, signal);
+            continue;
+        }
+        consecutiveStatusFailures = 0;
         if (!response.ok) {
             const error = new Error(data.error || data.message || `그림 상태 확인 실패 (${response.status})`);
             if ([404, 410].includes(response.status)) error.retryWithNewJob = true;
