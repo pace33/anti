@@ -53,7 +53,7 @@ test('상점 고정 앱으로 크래프트와 포랜디가 모두 노출된다',
     assert.ok(shop.includes('에이두 크래프트'));
     assert.ok(shop.includes('renderAieduePorandyShopCard()'));
     assert.ok(app.includes('에이두 포랜디'));
-    assert.ok(app.includes('/school/pokemon-defense/'));
+    assert.ok(app.includes('https://aiedue.netlify.app/pokemon-defense/play.html'));
     const safeActions = section(app, 'const SAFE_MODAL_ACTIONS = new Set([', ']);');
     assert.ok(safeActions.includes("'openAieduePorandy'"));
     assert.ok(css.includes('.aiedu-porandy-shop-card'));

@@ -3216,7 +3216,7 @@ window.closeAiedueKoreanModal = function() {
     lastModalTrigger = null;
 }
 
-const AIEDUE_PORANDY_URL = 'https://aiedue.ddns.net/school/pokemon-defense/';
+const AIEDUE_PORANDY_URL = 'https://aiedue.netlify.app/pokemon-defense/play.html';
 
 function renderAieduePorandyShopCard() {
     return `<div class="aiedu-porandy-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col">
