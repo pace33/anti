@@ -8350,3 +8350,186 @@ body.dictation-asteroid-open { overflow: hidden; background: #050816; }
     .dictation-star-layer, .dictation-spaceship-flame { animation: none; }
     .dictation-asteroid-rock, .dictation-asteroid-missile { transition-duration: .01ms; animation-duration: .01ms; }
 }
+
+/* Asteroid arena v2: single-syllable cockpit and scoreboard */
+.dictation-asteroid-game {
+    --space-cyan: #67e8f9;
+    --space-violet: #818cf8;
+    --space-ink: #050817;
+    background:
+        radial-gradient(circle at 20% 110%, rgba(29, 78, 216, .42), transparent 42%),
+        radial-gradient(circle at 88% 0%, rgba(124, 58, 237, .28), transparent 34%),
+        linear-gradient(180deg, #111a42, #050817 70%);
+}
+.dictation-asteroid-header {
+    min-height: 80px;
+    grid-template-columns: auto minmax(190px, 1fr) auto;
+    padding: 10px clamp(14px, 2.5vw, 34px);
+    background: linear-gradient(90deg, rgba(5, 8, 23, .98), rgba(21, 29, 70, .96));
+}
+.dictation-asteroid-home, .dictation-bgm-toggle { transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
+.dictation-asteroid-home:hover, .dictation-bgm-toggle:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(34, 211, 238, .2); }
+.dictation-asteroid-header-tools { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
+.dictation-bgm-toggle {
+    min-height: 43px; padding: 8px 12px; border: 1px solid rgba(103, 232, 249, .55); border-radius: 14px;
+    color: #cffafe; background: rgba(8, 145, 178, .18); font-size: .76rem; font-weight: 1000; white-space: nowrap;
+}
+.dictation-bgm-toggle span { display: inline-grid; place-items: center; width: 22px; aspect-ratio: 1; margin-right: 3px; border-radius: 50%; color: #082f49; background: #67e8f9; }
+.dictation-bgm-toggle[aria-pressed="false"] { color: #94a3b8; border-color: #475569; background: rgba(30, 41, 59, .7); }
+.dictation-bgm-toggle[aria-pressed="false"] span { color: #64748b; background: #cbd5e1; }
+.dictation-asteroid-hud span { min-width: 76px; padding: 7px 10px; line-height: 1.15; }
+.dictation-asteroid-hud .dictation-game-clock { min-width: 104px; color: #fef3c7; border-color: rgba(251, 191, 36, .5); background: rgba(146, 64, 14, .28); }
+.dictation-game-clock strong { display: inline; margin-left: 5px; color: #fbbf24; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.dictation-game-clock em { margin-left: 1px; color: #fde68a; font-size: .7rem; font-style: normal; }
+.dictation-asteroid-layout { grid-template-columns: minmax(420px, 1.35fr) minmax(340px, .65fr); }
+.dictation-asteroid-field { min-height: 300px; isolation: isolate; }
+.dictation-asteroid-field::after {
+    content: ''; position: absolute; z-index: 0; inset: auto -15% -26% -15%; height: 48%; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(14, 165, 233, .3), rgba(30, 64, 175, .08) 48%, transparent 70%);
+    filter: blur(3px); pointer-events: none;
+}
+.dictation-star-layer { animation: dictation-stars-drift 12s linear infinite, dictation-stars-twinkle 2.6s ease-in-out infinite alternate; }
+@keyframes dictation-stars-twinkle { to { opacity: .9; filter: brightness(1.35); } }
+.dictation-asteroid-rock { animation: dictation-rock-hover 2.8s ease-in-out infinite; }
+@keyframes dictation-rock-hover {
+    0%, 100% { margin-left: -5px; filter: brightness(.96); }
+    50% { margin-left: 5px; filter: brightness(1.08); }
+}
+.dictation-asteroid-rock.is-destroyed { animation: dictation-asteroid-burst .5s ease-out forwards; }
+.dictation-asteroid-rock.is-impacting { animation: dictation-asteroid-impact .55s ease-in forwards; }
+
+/* The portrait owns the whole glass area; the hull is kept below the face. */
+.dictation-spaceship {
+    z-index: 6; bottom: 7px; width: clamp(170px, 23vw, 240px); height: clamp(148px, 20vw, 188px);
+    transform-origin: 50% 75%; animation: dictation-ship-float 3.2s ease-in-out infinite;
+}
+@keyframes dictation-ship-float {
+    0%, 100% { transform: translateX(-50%) translateY(1px) rotate(-1.2deg); }
+    50% { transform: translateX(-50%) translateY(-8px) rotate(1.4deg); }
+}
+.dictation-spaceship-dome {
+    z-index: 5; top: 0; width: 104px; height: 104px; border: 5px solid #a5f3fc; border-bottom-width: 5px;
+    border-radius: 52% 52% 42% 42%; background: #dffaff;
+    box-shadow: inset 0 0 16px rgba(255,255,255,.9), 0 0 12px #22d3ee, 0 0 30px rgba(34,211,238,.65);
+    animation: dictation-cockpit-glow 1.7s ease-in-out infinite alternate;
+}
+.dictation-spaceship-dome::after { content: ''; position: absolute; inset: 5px 48% 38% 8px; border-radius: 999px; background: linear-gradient(120deg, rgba(255,255,255,.72), transparent); pointer-events: none; }
+.dictation-spaceship-dome img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; transform: scale(1.05); }
+@keyframes dictation-cockpit-glow { to { box-shadow: inset 0 0 18px #fff, 0 0 18px #67e8f9, 0 0 38px rgba(99,102,241,.7); } }
+.dictation-spaceship-body {
+    z-index: 3; left: 5%; right: 5%; top: 88px; bottom: auto; height: 58px; border-color: #a5b4fc;
+    border-radius: 48% 48% 36% 36%; background: linear-gradient(165deg, #818cf8 0 34%, #4338ca 38% 70%, #252060);
+}
+.dictation-spaceship-body span { margin-top: 8px; text-shadow: 0 1px 5px #111827; }
+.dictation-ship-light { position: absolute; right: 24%; top: 10px; width: 8px; aspect-ratio: 1; border-radius: 50%; background: #fef08a; box-shadow: 0 0 10px #fde047; animation: dictation-light-blink .75s steps(2) infinite; }
+@keyframes dictation-light-blink { 50% { opacity: .25; } }
+.dictation-spaceship-flame, .dictation-thruster { position: absolute; z-index: 1; top: 139px; bottom: auto; border-radius: 30% 30% 70% 70%; background: linear-gradient(#fff, #fef08a 22%, #fb923c 58%, rgba(239,68,68,0)); transform-origin: 50% 0; }
+.dictation-spaceship-flame { left: 50%; width: 23px; height: 45px; animation: dictation-main-flame .22s ease-in-out infinite alternate; }
+.dictation-thruster { width: 13px; height: 30px; animation: dictation-side-flame .31s ease-in-out infinite alternate; }
+.dictation-thruster-left { left: 20%; }
+.dictation-thruster-right { right: 20%; }
+@keyframes dictation-main-flame { to { height: 32px; transform: translateX(-50%) scaleX(.72); filter: brightness(1.4); } }
+@keyframes dictation-side-flame { to { height: 22px; transform: scaleX(.72); filter: brightness(1.35); } }
+
+.dictation-asteroid-missile { width: 30px; height: 78px; font-size: 0; filter: drop-shadow(0 0 8px #fff) drop-shadow(0 0 14px #fb923c); transition: transform .72s cubic-bezier(.18,.72,.28,1), opacity .72s; }
+.dictation-asteroid-missile.is-firing { opacity: 1; transform: translate(calc(-50% + var(--missile-x, 0px)), var(--missile-y, -300px)) scale(.88); }
+.dictation-missile-tip, .dictation-missile-core, .dictation-missile-trail { position: absolute; left: 50%; display: block; transform: translateX(-50%); }
+.dictation-missile-tip { top: 0; width: 0; height: 0; border-right: 9px solid transparent; border-bottom: 17px solid #fef9c3; border-left: 9px solid transparent; }
+.dictation-missile-core { top: 14px; width: 13px; height: 23px; border-radius: 3px 3px 6px 6px; background: linear-gradient(90deg, #f97316, #fff7ed, #ef4444); }
+.dictation-missile-trail { top: 35px; width: 9px; height: 30px; border-radius: 50%; background: linear-gradient(#fff, #facc15 24%, #f97316 55%, transparent); animation: dictation-missile-trail .16s ease-in-out infinite alternate; }
+@keyframes dictation-missile-trail { to { height: 42px; width: 5px; opacity: .68; } }
+
+.dictation-score-pop { position: absolute; z-index: 10; left: 50%; top: 35%; opacity: 0; color: #fef08a; font-size: clamp(2rem, 6vw, 4rem); font-weight: 1000; text-shadow: 0 3px 0 #b45309, 0 0 18px #f59e0b; pointer-events: none; transform: translate(-50%, 20px) scale(.6); }
+.dictation-score-pop.is-visible, .dictation-score-pop.show { animation: dictation-score-pop 1.3s cubic-bezier(.2,.9,.25,1.25) both; }
+@keyframes dictation-score-pop { 35% { opacity: 1; transform: translate(-50%, -5px) scale(1.12) rotate(-3deg); } 100% { opacity: 0; transform: translate(-50%, -62px) scale(.9) rotate(3deg); } }
+.dictation-explosion { position: absolute; z-index: 9; left: 50%; top: 32%; width: 10px; height: 10px; opacity: 0; pointer-events: none; }
+.dictation-explosion.is-active, .dictation-explosion.show { opacity: 1; }
+.dictation-explosion::before { content: ''; position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; border: 8px solid #fff7ae; border-radius: 50%; opacity: 0; transform: translate(-50%, -50%) scale(.2); box-shadow: 0 0 18px #fff, 0 0 40px #f97316; }
+.dictation-explosion.is-active::before, .dictation-explosion.show::before { animation: dictation-explosion-ring 1.15s ease-out both; }
+@keyframes dictation-explosion-ring { 12% { opacity: 1; } 65% { opacity: .9; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(5.6); border-width: 2px; } }
+.dictation-explosion i { --burst-distance: 76px; position: absolute; inset: 0; width: 9px; height: 18px; border-radius: 99px; background: linear-gradient(#fff, #facc15, #f97316); box-shadow: 0 0 9px #fb923c; transform: rotate(calc(var(--particle) * 30deg)) translateY(0); opacity: 0; }
+.dictation-explosion i:nth-child(1) { --particle: 0; } .dictation-explosion i:nth-child(2) { --particle: 1; } .dictation-explosion i:nth-child(3) { --particle: 2; } .dictation-explosion i:nth-child(4) { --particle: 3; }
+.dictation-explosion i:nth-child(5) { --particle: 4; } .dictation-explosion i:nth-child(6) { --particle: 5; } .dictation-explosion i:nth-child(7) { --particle: 6; } .dictation-explosion i:nth-child(8) { --particle: 7; }
+.dictation-explosion i:nth-child(9) { --particle: 8; } .dictation-explosion i:nth-child(10) { --particle: 9; } .dictation-explosion i:nth-child(11) { --particle: 10; } .dictation-explosion i:nth-child(12) { --particle: 11; }
+.dictation-explosion.is-active i, .dictation-explosion.show i { animation: dictation-particle-burst 1.15s ease-out both; }
+@keyframes dictation-particle-burst { 15% { opacity: 1; } 100% { opacity: 0; transform: rotate(calc(var(--particle) * 30deg)) translateY(calc(var(--burst-distance) * -1)) scale(.2); } }
+.dictation-asteroid-field.is-shaking, .dictation-asteroid-field.screen-shake, .dictation-asteroid-game.is-shaking { animation: dictation-screen-shake .38s linear; }
+@keyframes dictation-screen-shake { 20% { transform: translate(-5px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, -1px); } 80% { transform: translate(3px, 2px); } }
+
+.dictation-asteroid-writing { gap: 10px; background: linear-gradient(160deg, #fff 0%, #eef2ff 58%, #e0f2fe); }
+.dictation-word-preview { display: grid; grid-template-columns: 1.25fr .75fr; gap: 9px; }
+.dictation-word-preview > div { min-width: 0; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border: 2px solid #c7d2fe; border-radius: 18px; background: rgba(255,255,255,.9); box-shadow: 0 7px 15px rgba(49,46,129,.08); }
+.dictation-word-preview span { color: #6366f1; font-size: .78rem; font-weight: 1000; }
+.dictation-word-preview strong { color: #172554; font-size: clamp(1.8rem, 4vw, 2.7rem); font-weight: 1000; line-height: 1; }
+.dictation-preview-next { border-color: #818cf8 !important; background: linear-gradient(135deg, #eef2ff, #fff) !important; }
+.dictation-preview-next::before { content: 'NEXT'; margin-right: auto; margin-left: 8px; color: #a5b4fc; font: 900 .58rem/1 Outfit, sans-serif; letter-spacing: .12em; }
+.dictation-preview-after { opacity: .76; }
+.dictation-writing-canvas { min-width: 0; min-height: 220px; }
+.dictation-time-track { height: 10px; }
+
+.dictation-asteroid-overlay { overflow-y: auto; }
+.dictation-asteroid-overlay-card { width: min(500px, 94%); max-height: calc(100% - 24px); overflow-y: auto; padding: clamp(18px, 3vw, 30px); }
+.dictation-asteroid-overlay-icon { margin-bottom: 2px; font-size: 3.2rem; animation: dictation-comet-bob 2.1s ease-in-out infinite; }
+@keyframes dictation-comet-bob { 50% { transform: translateY(-7px) rotate(6deg); } }
+.dictation-asteroid-overlay-card p { margin: 9px 0 14px; }
+.dictation-result-reward:empty, .dictation-save-status:empty { display: none; }
+.dictation-result-reward { padding: 10px 14px; border: 1px solid #facc15; border-radius: 13px; color: #fef08a !important; background: rgba(146,64,14,.3); }
+.dictation-save-status { color: #a5f3fc !important; font-size: .82rem; }
+.dictation-save-retry { border: 1px solid rgba(251,191,36,.7); border-radius: 999px; padding: 7px 13px; background: rgba(120,53,15,.72); color: #fef3c7; font: inherit; font-size: .78rem; font-weight: 900; cursor: pointer; }
+.dictation-save-retry:hover, .dictation-save-retry:focus-visible { background: rgba(180,83,9,.9); outline: 3px solid rgba(251,191,36,.35); outline-offset: 2px; }
+.dictation-leaderboard { margin: 12px 0 17px; padding: 12px 14px; border: 1px solid rgba(165,180,252,.3); border-radius: 17px; background: rgba(15,23,42,.58); text-align: left; }
+.dictation-leaderboard h3 { margin: 0 0 8px; color: #fde68a; font-size: .9rem; font-weight: 1000; letter-spacing: .04em; }
+.dictation-leaderboard ol { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; counter-reset: rank; }
+.dictation-leaderboard li { counter-increment: rank; display: flex; align-items: center; gap: 9px; color: #e0e7ff; font-size: .78rem; font-weight: 800; }
+.dictation-leaderboard li::before { content: counter(rank); display: grid; place-items: center; width: 21px; aspect-ratio: 1; border-radius: 50%; color: #312e81; background: #c7d2fe; font-size: .68rem; font-weight: 1000; }
+.dictation-leaderboard li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dictation-leaderboard li strong { margin-left: auto; color: #67e8f9; }
+
+@media (max-width: 850px) {
+    .dictation-asteroid-header { grid-template-columns: auto minmax(0, 1fr); }
+    .dictation-asteroid-header-tools { grid-column: 1 / -1; justify-content: stretch; }
+    .dictation-bgm-toggle { flex: 0 0 auto; }
+    .dictation-asteroid-hud { flex: 1; }
+    .dictation-asteroid-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(300px, 46%) minmax(330px, 54%); }
+}
+@media (max-width: 520px) {
+    .dictation-asteroid-game { overflow-y: auto; }
+    .dictation-asteroid-header { position: relative; z-index: 20; min-height: 112px; flex: none; }
+    .dictation-asteroid-title-wrap { min-width: 0; }
+    .dictation-asteroid-title-wrap h1 { overflow: hidden; text-overflow: ellipsis; }
+    .dictation-asteroid-header-tools { gap: 5px; }
+    .dictation-bgm-toggle { min-height: 36px; padding: 5px 7px; font-size: .68rem; }
+    .dictation-bgm-toggle span { width: 17px; }
+    .dictation-asteroid-hud { gap: 4px; min-width: 0; }
+    .dictation-asteroid-hud span { min-width: 0; padding: 4px 5px; font-size: .62rem; }
+    .dictation-asteroid-hud strong { font-size: .88rem; }
+    .dictation-asteroid-hud .dictation-game-clock { min-width: 84px; }
+    .dictation-game-clock strong { font-size: 1.05rem; }
+    .dictation-asteroid-layout { flex: none; width: 100%; min-width: 0; grid-template-rows: 300px minmax(404px, auto); overflow: visible; }
+    .dictation-asteroid-field { width: 100%; min-width: 0; min-height: 300px; }
+    .dictation-spaceship { width: 174px; height: 150px; }
+    .dictation-spaceship-dome { width: 86px; height: 86px; }
+    .dictation-spaceship-body { top: 72px; height: 52px; }
+    .dictation-spaceship-flame, .dictation-thruster { top: 117px; }
+    .dictation-asteroid-writing { width: 100%; min-width: 0; min-height: 404px; }
+    .dictation-writing-heading h2 { font-size: 1rem; }
+    .dictation-word-preview > div { padding: 7px 10px; }
+    .dictation-word-preview strong { font-size: 1.75rem; }
+    .dictation-preview-next::before { display: none; }
+    .dictation-writing-canvas { width: 100%; min-height: 230px; }
+    .dictation-asteroid-overlay { padding: 8px; }
+    .dictation-asteroid-overlay-card { width: 96%; max-height: 284px; padding: 14px; border-radius: 20px; }
+    .dictation-asteroid-overlay-icon { display: none; }
+    .dictation-asteroid-overlay-card h2 { font-size: 1.2rem; }
+    .dictation-asteroid-overlay-card p { margin: 6px 0 9px; font-size: .75rem; line-height: 1.4; }
+    .dictation-leaderboard { margin: 7px 0 10px; padding: 8px 10px; }
+    .dictation-asteroid-overlay-card button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .dictation-asteroid-game *, .dictation-asteroid-game *::before, .dictation-asteroid-game *::after {
+        scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important;
+    }
+    .dictation-score-pop.is-visible { animation: none !important; opacity: 1; transform: translate(-50%, -24px) scale(1); }
+    .dictation-explosion.is-active::before { animation: none !important; opacity: 1; transform: translate(-50%, -50%) scale(2.4); }
+    .dictation-explosion.is-active i { animation: none !important; opacity: .9; transform: rotate(calc(var(--particle) * 30deg)) translateY(-48px) scale(.75); }
+}

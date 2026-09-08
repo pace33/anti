@@ -2459,6 +2459,209 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
     };
 }
 
+// 소행성 게임은 이 facade만 사용한다. 점수 영수증, 사용자 XP, 공개 명예의 전당을
+// 같은 트랜잭션에 넣어 네트워크 재시도나 더블 클릭으로 XP가 중복 지급되지 않게 한다.
+const AIEDUE_ASTEROID_LEADERBOARD_COLLECTION = 'aiedueKoreanAsteroidLeaderboard';
+const AIEDUE_ASTEROID_RUN_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const AIEDUE_ASTEROID_PUBLIC_FIELDS = Object.freeze([
+    'uid', 'name', 'icon', 'bestDestroyed', 'lastDestroyed', 'totalDestroyed',
+    'gamesPlayed', 'bestRunId', 'bestAchievedAt', 'updatedAt'
+]);
+
+function normalizeAsteroidCount(value, fallback = 0) {
+    const numeric = Number(value);
+    return Number.isSafeInteger(numeric) && numeric >= 0 ? numeric : fallback;
+}
+
+function normalizeAsteroidLeaderboardRow(value = {}, fallbackUid = '') {
+    const row = {
+        uid: String(value.uid || fallbackUid || ''),
+        name: String(value.name || '이름 없음').slice(0, 40),
+        icon: String(value.icon || '🐻').slice(0, 16),
+        bestDestroyed: Math.min(60, normalizeAsteroidCount(value.bestDestroyed)),
+        lastDestroyed: Math.min(60, normalizeAsteroidCount(value.lastDestroyed)),
+        totalDestroyed: normalizeAsteroidCount(value.totalDestroyed),
+        gamesPlayed: normalizeAsteroidCount(value.gamesPlayed),
+        bestRunId: AIEDUE_ASTEROID_RUN_ID_PATTERN.test(String(value.bestRunId || '')) ? String(value.bestRunId) : null,
+        bestAchievedAt: value.bestAchievedAt ?? null,
+        updatedAt: value.updatedAt ?? null
+    };
+    // Keep the public schema explicit: never leak profile, email, class, wallet, or receipt fields.
+    return Object.fromEntries(AIEDUE_ASTEROID_PUBLIC_FIELDS.map((field) => [field, row[field]]));
+}
+
+function getCurrentAsteroidPlayer() {
+    const uid = auth.currentUser?.uid;
+    if (!uid || currentUserId !== uid) return null;
+    return Object.freeze({
+        uid,
+        name: String(currentUserProfileSnapshot?.name || currentUserName || '이름 없음').slice(0, 40),
+        icon: String(currentUserProfileSnapshot?.icon || currentUserIcon || '🐻').slice(0, 16)
+    });
+}
+
+function syncAsteroidProfileState(profile = {}) {
+    currentUserProfileSnapshot = { ...currentUserProfileSnapshot, ...profile };
+    if (profile.name) currentUserName = String(profile.name);
+    if (profile.icon) currentUserIcon = String(profile.icon);
+    setCurrentAiedueSchoolWalletFromSnapshot(profile);
+    updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
+}
+
+function asteroidCanonicalResult(receipt = {}, duplicate = false) {
+    const leaderboard = normalizeAsteroidLeaderboardRow(receipt.leaderboard || {}, receipt.uid);
+    return Object.freeze({
+        saved: true,
+        duplicate,
+        runId: String(receipt.runId || ''),
+        destroyedCount: Math.min(60, normalizeAsteroidCount(receipt.destroyedCount)),
+        xpAwarded: Math.min(60, normalizeAsteroidCount(receipt.xpAwarded)),
+        aeduExperience: Math.max(0, Number(receipt.aeduExperience) || 0),
+        aeduLevel: Math.max(1, normalizeAsteroidCount(receipt.aeduLevel, 1)),
+        levelUps: normalizeAsteroidCount(receipt.levelUps),
+        levelUpPoints: normalizeAsteroidCount(receipt.levelUpPoints),
+        warningTokensReduced: normalizeAsteroidCount(receipt.warningTokensReduced),
+        leaderboard
+    });
+}
+
+async function commitAsteroidRun(runId, destroyedCount) {
+    const safeRunId = String(runId || '').trim().toLowerCase();
+    if (!AIEDUE_ASTEROID_RUN_ID_PATTERN.test(safeRunId)) {
+        throw new TypeError('runId는 UUID 형식이어야 합니다.');
+    }
+    if (!Number.isInteger(destroyedCount) || destroyedCount < 0 || destroyedCount > 60) {
+        throw new RangeError('destroyedCount는 0 이상 60 이하의 정수여야 합니다.');
+    }
+
+    const player = getCurrentAsteroidPlayer();
+    if (!player) return Object.freeze({ saved: false });
+
+    const userRef = doc(db, 'users', player.uid);
+    const receiptRef = doc(db, 'users', player.uid, 'asteroidRunReceipts', safeRunId);
+    const leaderboardRef = doc(db, AIEDUE_ASTEROID_LEADERBOARD_COLLECTION, player.uid);
+
+    const transactionResult = await runTransaction(db, async (transaction) => {
+        // The adapter (like Firestore) rejects reads after the first write. Keep all three reads first,
+        // including the duplicate path, so the transaction's conflict set is complete.
+        const userSnapshot = await transaction.get(userRef);
+        const receiptSnapshot = await transaction.get(receiptRef);
+        const leaderboardSnapshot = await transaction.get(leaderboardRef);
+
+        if (!userSnapshot.exists()) throw new Error('사용자 프로필을 찾을 수 없습니다.');
+        if (receiptSnapshot.exists()) {
+            const receipt = receiptSnapshot.data() || {};
+            if (receipt.uid && receipt.uid !== player.uid) throw new Error('잘못된 소행성 게임 영수증입니다.');
+            // Return the original run outcome, but sync local state from the current server profile;
+            // replaying an older receipt must never roll the browser wallet back.
+            return { canonical: asteroidCanonicalResult(receipt, true), profile: userSnapshot.data() || null };
+        }
+
+        const profile = userSnapshot.data() || {};
+        const normalizedLevel = normalizeAiedueLevelExperience({
+            ...profile,
+            // Do not let this helper fall back to possibly stale browser state: the transaction's
+            // server-read profile is the sole source of truth for XP and level calculations.
+            aeduExperience: profile.aeduExperience ?? profile.experience ?? profile.exp ?? 0,
+            aeduLevel: profile.aeduLevel ?? profile.level ?? profile.schoolLevel ?? 1
+        });
+        const experienceTotal = normalizedLevel.aeduExperience + destroyedCount; // exactly 1 XP per destroyed asteroid
+        const levelUps = Math.floor(experienceTotal / 100);
+        const aeduExperience = experienceTotal % 100;
+        const aeduLevel = normalizedLevel.aeduLevel + levelUps;
+        const warningTokensBefore = Math.max(0, Math.floor(asNumber(profile.warningTokens, 0)));
+        const warningTokensReduced = Math.min(warningTokensBefore, levelUps);
+        const warningTokens = warningTokensBefore - warningTokensReduced;
+        const levelUpPoints = levelUps * AIEDUE_LEVEL_UP_POINT_REWARD;
+        const walletBefore = asNumber(profile.balance ?? profile.coins ?? profile.aeduTokens, 0);
+        const balance = walletBefore + levelUpPoints;
+        const aeduTokens = asNumber(profile.aeduTokens, walletBefore) + levelUpPoints;
+        const publicName = String(profile.name || player.name || '이름 없음').slice(0, 40);
+        const publicIcon = String(profile.icon || player.icon || '🐻').slice(0, 16);
+
+        const previous = normalizeAsteroidLeaderboardRow(
+            leaderboardSnapshot.exists() ? leaderboardSnapshot.data() : {},
+            player.uid
+        );
+        const isNewBest = !leaderboardSnapshot.exists() || destroyedCount > previous.bestDestroyed;
+        const now = serverTimestamp();
+        const leaderboard = normalizeAsteroidLeaderboardRow({
+            uid: player.uid,
+            name: publicName,
+            icon: publicIcon,
+            bestDestroyed: isNewBest ? destroyedCount : previous.bestDestroyed,
+            lastDestroyed: destroyedCount,
+            totalDestroyed: previous.totalDestroyed + destroyedCount,
+            gamesPlayed: previous.gamesPlayed + 1,
+            bestRunId: isNewBest ? safeRunId : previous.bestRunId,
+            // A tie deliberately retains the first run and timestamp that achieved the best score.
+            bestAchievedAt: isNewBest ? now : previous.bestAchievedAt,
+            updatedAt: now
+        }, player.uid);
+        const nextProfile = {
+            name: publicName,
+            icon: publicIcon,
+            coins: balance,
+            balance,
+            aeduTokens,
+            warningTokens,
+            aeduExperience,
+            aeduLevel
+        };
+        const receipt = {
+            uid: player.uid,
+            runId: safeRunId,
+            destroyedCount,
+            xpAwarded: destroyedCount,
+            aeduExperience,
+            aeduLevel,
+            levelUps,
+            levelUpPoints,
+            warningTokensReduced,
+            profile: nextProfile,
+            leaderboard,
+            createdAt: now
+        };
+
+        transaction.set(userRef, { ...nextProfile, updatedAt: now }, { merge: true });
+        transaction.set(receiptRef, receipt);
+        transaction.set(leaderboardRef, leaderboard);
+        return { canonical: asteroidCanonicalResult(receipt, false), profile: nextProfile };
+    });
+
+    if (transactionResult.profile && auth.currentUser?.uid === player.uid) {
+        syncAsteroidProfileState(transactionResult.profile);
+    }
+    return transactionResult.canonical;
+}
+
+async function loadAsteroidLeaderboard() {
+    const leaderboardQuery = query(
+        collection(db, AIEDUE_ASTEROID_LEADERBOARD_COLLECTION),
+        orderBy('bestDestroyed', 'desc'),
+        queryLimit(100)
+    );
+    const snapshot = await getDocs(leaderboardQuery);
+    const timestampMillis = (value) => {
+        if (typeof value?.toMillis === 'function') return value.toMillis();
+        const parsed = Date.parse(value || '');
+        return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+    };
+    const rows = snapshot.docs.map((entry) => normalizeAsteroidLeaderboardRow(entry.data() || {}, entry.id));
+    rows.sort((left, right) => (
+        right.bestDestroyed - left.bestDestroyed
+        || timestampMillis(left.bestAchievedAt) - timestampMillis(right.bestAchievedAt)
+        || left.uid.localeCompare(right.uid, 'ko')
+    ));
+    return Object.freeze(rows.slice(0, 10).map((row) => Object.freeze(row)));
+}
+
+window.aiedueAsteroidPersistence = Object.freeze({
+    getCurrentPlayer: getCurrentAsteroidPlayer,
+    commitRun: commitAsteroidRun,
+    loadLeaderboard: loadAsteroidLeaderboard
+});
+
 function getVisibleActivityExperienceTarget() {
     const hud = document.getElementById('aiedue-rpg-hud');
     return hud && !hud.classList.contains('hidden') ? hud : null;
