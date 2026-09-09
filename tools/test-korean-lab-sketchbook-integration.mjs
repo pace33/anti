@@ -2,13 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
-const [app, html, css, math, mathQuality, mathServices] = await Promise.all([
+const [app, html, css, koreanLabTime] = await Promise.all([
     readFile(new URL('../app.js', import.meta.url), 'utf8'),
     readFile(new URL('../index.html', import.meta.url), 'utf8'),
     readFile(new URL('../app.css', import.meta.url), 'utf8'),
-    readFile(new URL('../math/math.js', import.meta.url), 'utf8'),
-    readFile(new URL('../math/math-quality-core.mjs', import.meta.url), 'utf8'),
-    readFile(new URL('../math/math-services.js', import.meta.url), 'utf8')
+    readFile(new URL('../korean-lab-time-quiz-core.mjs', import.meta.url), 'utf8')
 ]);
 
 function section(source, start, end) {
@@ -59,29 +57,27 @@ test('상점 고정 앱으로 크래프트와 포랜디가 모두 노출된다',
     assert.ok(css.includes('.aiedu-porandy-shop-card'));
 });
 
-test('연구실은 선택형 허브로 시간 퀴즈를 연다', () => {
+test('연구실은 선택형 허브로 한글 내부 시간 퀴즈를 연다', () => {
     const lab = section(app, 'window.openAiedueLab =', 'function renderAiedueKoreanShopItems');
     assert.ok(lab.includes('활동은 계속 추가됩니다'));
     assert.ok(lab.includes('시간 퀴즈'));
-    assert.ok(lab.includes("window.location.href = 'math/index.html?activity=time-quiz&from=korean-lab'"));
+    assert.ok(lab.includes('window.openKoreanLabTimeQuiz?.()'));
+    assert.equal(lab.includes('math/index.html'), false);
     const safeActions = section(app, 'const SAFE_MODAL_ACTIONS = new Set([', ']);');
     assert.ok(safeActions.includes("'openAiedueLabTimeQuiz'"));
-    assert.ok(math.includes("const MATH_LAUNCH_ACTIVITY = new URLSearchParams(window.location.search).get('activity')"));
-    assert.ok(math.includes('openTimeQuiz()'));
+    assert.ok(html.includes('id="korean-lab-time-quiz-section"'));
+    assert.ok(html.includes('src="korean-lab-time-quiz.js'));
 });
 
-test('시간 퀴즈는 난이도별 경험치·100 EXP 레벨업·1000포인트 보상을 유지한다', () => {
-    assert.ok(mathQuality.includes('easy: 1'));
-    assert.ok(mathQuality.includes('middle: 3'));
-    assert.ok(mathQuality.includes('hard: 5'));
-    assert.ok(mathQuality.includes("'very-hard': 10"));
-    assert.ok(math.includes('const MATH_LEVEL_EXP_REQUIRED = 100'));
-    assert.ok(math.includes('const MATH_LEVEL_UP_COINS = 1000'));
-    assert.ok(math.includes('attemptId: isCorrect'));
-    assert.ok(mathServices.includes('const attemptRef = doc(db, MATH_ATTEMPT_COLLECTION, attempt.attemptId)'));
-    assert.ok(mathServices.includes('const existingAttempt = await transaction.get(attemptRef)'));
-    assert.ok(mathServices.includes('if (existingAttempt.exists())'));
-    assert.ok(mathServices.includes('duplicate: true'));
+test('한글 연구실 시간 퀴즈는 난이도별 경험치와 한글 100 EXP 레벨업·1000포인트 보상을 쓴다', () => {
+    assert.ok(koreanLabTime.includes('easy: 1'));
+    assert.ok(koreanLabTime.includes('middle: 3'));
+    assert.ok(koreanLabTime.includes('hard: 5'));
+    assert.ok(koreanLabTime.includes("'very-hard': 10"));
+    assert.ok(app.includes('while (newExp >= 100)'));
+    assert.ok(app.includes('const AIEDUE_LEVEL_UP_POINT_REWARD = 1000'));
+    assert.ok(app.includes('window.aiedueKoreanLabTimeQuizData'));
+    assert.equal(app.includes('window.aiedueKoreanLabTimeQuizData = window.aiedueMathData'), false);
 });
 
 test('AI 스케치북은 캔버스 원본으로 편집 세션을 만들고 결과만 완료 게시한다', () => {

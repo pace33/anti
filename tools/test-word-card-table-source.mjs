@@ -180,12 +180,12 @@ test('the stage-3 lab action is allowlisted, launches the controller, and regist
     assert.match(html, /<script\b[^>]*type="module"[^>]*src="app\.js\?v=[^"]*word-card-table[^"]*"/);
 });
 
-test('navigation and auth integration stop obsolete games and keep the RPG HUD hidden', () => {
+test('navigation and auth integration stop obsolete games and keep the RPG HUD visible', () => {
     const navigation = between('function showTopLevelSection', 'window.showAiedueTopLevelSection');
     assert.match(navigation, /if \(!isWordCardGame\) window\.stopWordCardTableGame\?\.\(\)/);
     assert.match(navigation, /classList\.toggle\('word-card-table-open', isWordCardGame\)/);
-    assert.match(navigation, /setRpgHudVisible\([\s\S]*&& !isWordCardGame/);
-    assert.match(between('function setRpgHudVisible', 'function removeDeprecatedRpgWordBankActions'), /!document\.body\.classList\.contains\('word-card-table-open'\)/);
+    assert.doesNotMatch(navigation, /setRpgHudVisible\([\s\S]*&& !isWordCardGame/);
+    assert.doesNotMatch(between('function setRpgHudVisible', 'function removeDeprecatedRpgWordBankActions'), /!document\.body\.classList\.contains\('word-card-table-open'\)/);
     const authStart = app.indexOf('onAuthStateChanged(auth, async (user) => {');
     const guardStart = app.indexOf('\n', authStart) + 1;
     const guardEnd = app.indexOf('    if (!user) {', guardStart);

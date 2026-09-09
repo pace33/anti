@@ -2656,6 +2656,107 @@ async function loadAsteroidLeaderboard() {
     return Object.freeze(rows.slice(0, 10).map((row) => Object.freeze(row)));
 }
 
+const AIEDUE_TIME_QUIZ_REWARDS = new Set([1, 3, 5, 10]);
+
+async function commitKoreanLabTimeQuizAttempt(attemptId, expAmount) {
+    const safeAttemptId = String(attemptId || '').trim().toLowerCase();
+    const reward = Number(expAmount);
+    if (!AIEDUE_ASTEROID_RUN_ID_PATTERN.test(safeAttemptId)) {
+        throw new TypeError('시간 퀴즈 attemptId는 UUID 형식이어야 합니다.');
+    }
+    if (!AIEDUE_TIME_QUIZ_REWARDS.has(reward)) {
+        throw new RangeError('시간 퀴즈 경험치는 난이도별 고정값이어야 합니다.');
+    }
+    const uid = auth.currentUser?.uid;
+    if (!uid || currentUserId !== uid) throw new Error('로그인 정보를 확인할 수 없습니다.');
+
+    const userRef = doc(db, 'users', uid);
+    const receiptRef = doc(db, 'users', uid, 'timeQuizAttemptReceipts', safeAttemptId);
+    const result = await runTransaction(db, async (transaction) => {
+        const userSnapshot = await transaction.get(userRef);
+        const receiptSnapshot = await transaction.get(receiptRef);
+        if (!userSnapshot.exists()) throw new Error('사용자 프로필을 찾을 수 없습니다.');
+        const serverProfile = userSnapshot.data() || {};
+        if (receiptSnapshot.exists()) {
+            const receipt = receiptSnapshot.data() || {};
+            if (receipt.uid && receipt.uid !== uid) throw new Error('잘못된 시간 퀴즈 영수증입니다.');
+            return {
+                profile: serverProfile,
+                canonical: Object.freeze({ saved: true, duplicate: true, xpAwarded: Number(receipt.xpAwarded) || 0, levelUps: Number(receipt.levelUps) || 0, levelUpPoints: Number(receipt.levelUpPoints) || 0 })
+            };
+        }
+
+        const normalizedLevel = normalizeAiedueLevelExperience({
+            ...serverProfile,
+            aeduExperience: serverProfile.aeduExperience ?? serverProfile.experience ?? serverProfile.exp ?? 0,
+            aeduLevel: serverProfile.aeduLevel ?? serverProfile.level ?? serverProfile.schoolLevel ?? 1
+        });
+        const experienceTotal = normalizedLevel.aeduExperience + reward;
+        const levelUps = Math.floor(experienceTotal / 100);
+        const aeduExperience = experienceTotal % 100;
+        const aeduLevel = normalizedLevel.aeduLevel + levelUps;
+        const warningTokensBefore = Math.max(0, Math.floor(asNumber(serverProfile.warningTokens, 0)));
+        const warningTokensReduced = Math.min(warningTokensBefore, levelUps);
+        const warningTokens = warningTokensBefore - warningTokensReduced;
+        const levelUpPoints = levelUps * AIEDUE_LEVEL_UP_POINT_REWARD;
+        const walletBefore = asNumber(serverProfile.balance ?? serverProfile.coins ?? serverProfile.aeduTokens, 0);
+        const balance = walletBefore + levelUpPoints;
+        const aeduTokens = asNumber(serverProfile.aeduTokens, walletBefore) + levelUpPoints;
+        const now = serverTimestamp();
+        const activity = {
+            id: `time_quiz_${safeAttemptId}`,
+            type: 'experience',
+            source: '에이두 연구실 시간 퀴즈',
+            baseExperience: reward,
+            multiplier: 1,
+            grantedExperience: reward,
+            levelBefore: normalizedLevel.aeduLevel,
+            levelAfter: aeduLevel,
+            levelUpPoints,
+            warningTokensReduced,
+            createdAtMs: Date.now(),
+            message: `${String(serverProfile.name || currentUserName || '학생').slice(0, 40)}이 에이두 연구실 시간 퀴즈 정답으로 경험치 ${reward}%를 받았다.`
+        };
+        const koreanActivityLog = String(serverProfile.role || currentUserRole).toLowerCase() === 'student'
+            ? [activity, ...(Array.isArray(serverProfile.koreanActivityLog) ? serverProfile.koreanActivityLog : [])].slice(0, 200)
+            : (Array.isArray(serverProfile.koreanActivityLog) ? serverProfile.koreanActivityLog : []);
+        const profile = {
+            name: String(serverProfile.name || currentUserName || '이름 없음').slice(0, 40),
+            icon: String(serverProfile.icon || currentUserIcon || '🐻').slice(0, 16),
+            coins: balance,
+            balance,
+            aeduTokens,
+            warningTokens,
+            aeduExperience,
+            aeduLevel,
+            koreanActivityLog
+        };
+        const receipt = {
+            uid,
+            attemptId: safeAttemptId,
+            xpAwarded: reward,
+            aeduExperience,
+            aeduLevel,
+            levelUps,
+            levelUpPoints,
+            warningTokensReduced,
+            createdAt: now
+        };
+        transaction.set(userRef, { ...profile, updatedAt: now }, { merge: true });
+        transaction.set(receiptRef, receipt);
+        return {
+            profile,
+            canonical: Object.freeze({ saved: true, duplicate: false, xpAwarded: reward, levelUps, levelUpPoints })
+        };
+    });
+
+    if (auth.currentUser?.uid === uid) syncAsteroidProfileState(result.profile);
+    if (!result.canonical.duplicate && result.canonical.levelUps > 0 && typeof showModal === 'function') {
+        showModal(`🎉 축하합니다! 레벨업했습니다!\n보상 ${result.canonical.levelUpPoints}포인트`);
+    }
+    return result.canonical;
+}
+
 window.aiedueAsteroidPersistence = Object.freeze({
     getCurrentPlayer: getCurrentAsteroidPlayer,
     commitRun: commitAsteroidRun,
@@ -3492,8 +3593,16 @@ window.openAiedueLabWordCardGame = function openAiedueLabWordCardGame() {
 };
 
 window.openAiedueLabTimeQuiz = function openAiedueLabTimeQuiz() {
-    window.location.href = 'math/index.html?activity=time-quiz&from=korean-lab';
+    window.openKoreanLabTimeQuiz?.();
 };
+
+// 한글 연구실 전용 보상 facade. 시간 퀴즈 모듈은 수학 앱이나 수학 저장소에
+// 의존하지 않고 에이두 한글이 이미 쓰는 경험치/프로필 저장 경로만 호출한다.
+window.aiedueKoreanLabTimeQuizData = Object.freeze({
+    awardExperience(expAmount, attemptId = '') {
+        return commitKoreanLabTimeQuizAttempt(attemptId, expAmount);
+    }
+});
 
 function renderAiedueKoreanShopItems(displayItems = []) {
     return `<div class="korean-shop-grid custom-scrollbar">
@@ -4597,6 +4706,7 @@ const topLevelSectionIds = [
     'word-listening-quiz-section',
     'reading-practice-section',
     'hangul-game-section',
+    'korean-lab-time-quiz-section',
     'dictation-asteroid-game-section',
     'shape-zoo-game-section',
     'word-card-table-game-section',
@@ -4643,6 +4753,17 @@ function stopAiedueBackgroundMusic() {
 }
 
 function showTopLevelSection(sectionId) {
+    const labGameSectionIds = [
+        'korean-lab-time-quiz-section',
+        'shape-zoo-game-section',
+        'word-card-table-game-section',
+        'dictation-asteroid-game-section'
+    ];
+    const isKoreanLabGame = labGameSectionIds.includes(sectionId);
+    document.body.classList.toggle('aiedue-lab-game-open', isKoreanLabGame);
+    const isTimeQuiz = sectionId === 'korean-lab-time-quiz-section';
+    if (!isTimeQuiz) window.stopKoreanLabTimeQuiz?.();
+    document.body.classList.toggle('korean-lab-time-quiz-open', isTimeQuiz);
     const isShapeZoo = sectionId === 'shape-zoo-game-section';
     if (!isShapeZoo) window.stopShapeZooGame?.();
     document.body.classList.toggle('shape-zoo-open', isShapeZoo);
@@ -4662,9 +4783,7 @@ function showTopLevelSection(sectionId) {
         setTopLevelSectionVisible(id, id === sectionId);
     });
     setRpgHudVisible(Boolean(currentUserId)
-        && !isShapeZoo
-        && !isWordCardGame
-        && !['start-screen', 'login-section', 'dictation-asteroid-game-section'].includes(sectionId));
+        && !['start-screen', 'login-section'].includes(sectionId));
     const learningView = sectionId === 'korean-review-section'
         ? 'review'
         : (sectionId === 'korean-records-section' || sectionId === 'korean-mistakes-section' ? 'records' : '');
@@ -4679,7 +4798,7 @@ function showTopLevelSection(sectionId) {
 window.showAiedueTopLevelSection = showTopLevelSection;
 
 function setRpgHudVisible(isVisible) {
-    isVisible = Boolean(isVisible) && !document.body.classList.contains('word-card-table-open');
+    isVisible = Boolean(isVisible);
     const hud = document.getElementById('aiedue-rpg-hud');
     hud?.classList.toggle('hidden', !isVisible);
     if (hud) {

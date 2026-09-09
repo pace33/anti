@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="app.css?v=20260908-dictation-asteroid-v3">
     <link rel="stylesheet" href="shape-zoo.css?v=20260908-1">
     <link rel="stylesheet" href="word-card-table.css?v=20260908-word-card-table-v1">
+    <link rel="stylesheet" href="korean-lab-shell.css?v=20260909-3">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1640,14 +1641,52 @@
         </section>
     </div>
 
+    <!-- [에이두 연구실: 한글 전용 시간 퀴즈] -->
+    <section id="korean-lab-time-quiz-section" class="view-section aiedue-lab-game-shell korean-lab-time-quiz hidden" aria-labelledby="kltq-title" tabindex="-1">
+        <header class="kltq-header">
+            <button type="button" class="kltq-home" onclick="closeKoreanLabTimeQuiz()" aria-label="에이두 연구실로 돌아가기">← 연구실</button>
+            <div><p>AIEDUE HANGEUL LAB</p><h1 id="kltq-title">🕒 시간 퀴즈</h1></div>
+            <strong id="kltq-reward-label">정답 경험치 +1 EXP</strong>
+        </header>
+        <main class="kltq-layout">
+            <section class="kltq-clock-card" aria-label="문제 시계">
+                <p class="kltq-eyebrow">시계를 읽어 보세요</p>
+                <div id="kltq-clock" class="kltq-clock" role="img" aria-label="문제 시계">
+                    <span class="kltq-number n12">12</span><span class="kltq-number n3">3</span><span class="kltq-number n6">6</span><span class="kltq-number n9">9</span>
+                    <i id="kltq-hour-hand" class="kltq-hand kltq-hour-hand"></i>
+                    <i id="kltq-minute-hand" class="kltq-hand kltq-minute-hand"></i>
+                    <i class="kltq-clock-pin"></i>
+                </div>
+                <p id="kltq-question-count" class="kltq-question-count">문제 1</p>
+            </section>
+            <section class="kltq-answer-card" aria-labelledby="kltq-answer-title">
+                <div class="kltq-difficulties" role="group" aria-label="난이도 선택">
+                    <button type="button" data-difficulty="easy">쉬움 <small>+1</small></button>
+                    <button type="button" data-difficulty="middle">보통 <small>+3</small></button>
+                    <button type="button" data-difficulty="hard">어려움 <small>+5</small></button>
+                    <button type="button" data-difficulty="very-hard">도전 <small>+10</small></button>
+                </div>
+                <h2 id="kltq-answer-title">지금은 몇 시 몇 분일까요?</h2>
+                <div id="kltq-options" class="kltq-options"></div>
+                <div id="kltq-inputs" class="kltq-inputs hidden">
+                    <label><span>시</span><input id="kltq-hour-input" type="number" min="1" max="12" inputmode="numeric" aria-label="시 입력"></label>
+                    <strong>:</strong>
+                    <label><span>분</span><input id="kltq-minute-input" type="number" min="0" max="59" inputmode="numeric" aria-label="분 입력"></label>
+                </div>
+                <button type="button" id="kltq-check" class="kltq-check">정답 확인</button>
+                <p id="kltq-feedback" class="kltq-feedback" role="status" aria-live="polite">답을 골라 주세요.</p>
+            </section>
+        </main>
+    </section>
+
     <!-- [에이두 연구실: 도형 동물원] -->
-    <section id="shape-zoo-game-section" class="view-section shape-zoo-game hidden" aria-labelledby="shape-zoo-title"></section>
+    <section id="shape-zoo-game-section" class="view-section aiedue-lab-game-shell shape-zoo-game hidden" aria-labelledby="shape-zoo-title"></section>
 
     <!-- [에이두 연구실: 단어 카드 한 판] -->
-    <section id="word-card-table-game-section" class="view-section word-card-table-game hidden" aria-labelledby="wct-title"></section>
+    <section id="word-card-table-game-section" class="view-section aiedue-lab-game-shell word-card-table-game hidden" aria-labelledby="wct-title"></section>
 
     <!-- [에이두 연구실: 낱말 우주 방어대] -->
-    <section id="dictation-asteroid-game-section" class="view-section dictation-asteroid-game hidden" aria-labelledby="dictation-asteroid-title">
+    <section id="dictation-asteroid-game-section" class="view-section aiedue-lab-game-shell dictation-asteroid-game hidden" aria-labelledby="dictation-asteroid-title">
         <header class="dictation-asteroid-header">
             <button type="button" class="dictation-asteroid-home" onclick="closeAsteroidDictationGame()" aria-label="에이두 한글 홈으로 돌아가기">← 홈</button>
             <div class="dictation-asteroid-title-wrap">
@@ -1745,10 +1784,11 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260908-word-card-table-repair-v2"></script>
+    <script type="module" src="app.js?v=20260909-word-card-table-korean-lab-v3"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260908-dictation-asteroid-v3"></script>
     <script type="module" src="shape-zoo-game.js?v=20260908-1"></script>
     <script type="module" src="word-card-table-game.js?v=20260908-word-card-table-v1"></script>
+    <script type="module" src="korean-lab-time-quiz.js?v=20260909-3"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">

@@ -1,0 +1,137 @@
+/* 에이두 한글 연구실 공통 외곽 셸 — 게임 내부 테마와 별개로 한글 본체 규격을 유지한다. */
+body.aiedue-lab-game-open {
+    background: var(--bg-main, #f9fdf8);
+    min-height: 100dvh;
+    overflow: hidden;
+}
+body.aiedue-lab-game-open #main-container {
+    visibility: hidden;
+    pointer-events: none;
+}
+body.aiedue-lab-game-open .aiedue-rpg-hud {
+    visibility: visible;
+}
+
+/* 기본 한글 HUD는 태블릿에서 우측 상단으로 이동하지만, 연구실 게임 셸은
+   하단 HUD 공간을 예약한다. 게임 중에는 그 공간에 고정해 제목과 겹치지 않게 한다. */
+@media (max-width: 1024px) {
+    body.aiedue-lab-game-open .aiedue-rpg-hud {
+        top: auto !important;
+        right: auto !important;
+        bottom: max(12px, env(safe-area-inset-bottom)) !important;
+        left: max(12px, env(safe-area-inset-left)) !important;
+        flex-direction: row;
+        align-items: center;
+    }
+    body.aiedue-lab-game-open .aiedue-rpg-hud .rpg-action-tray {
+        top: auto;
+        right: auto;
+        bottom: calc(100% + 8px);
+        left: 0;
+        transform-origin: bottom left;
+    }
+}
+
+.aiedue-lab-game-shell.view-section {
+    box-sizing: border-box !important;
+    position: fixed !important;
+    inset: auto !important;
+    top: 12px !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(95vw, 1200px) !important;
+    max-width: 1200px !important;
+    height: min(750px, calc(100dvh - 124px)) !important;
+    max-height: calc(100dvh - 124px) !important;
+    border: 12px solid #fff !important;
+    border-radius: 50px !important;
+    box-shadow: 0 15px 45px rgba(85, 179, 70, .15) !important;
+    overflow: hidden !important;
+    z-index: 1000 !important;
+}
+.aiedue-lab-game-shell.hidden { display: none !important; }
+
+/* 기존 세 게임은 루트 자체가 스크롤 컨테이너다. 공통 외곽 셸이 모바일의
+   조작부를 잘라내지 않도록 각 게임의 원래 세로 스크롤 계약을 보존한다. */
+#shape-zoo-game-section.aiedue-lab-game-shell,
+#word-card-table-game-section.aiedue-lab-game-shell,
+#dictation-asteroid-game-section.aiedue-lab-game-shell {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+/* 한글 연구실 독립 시간 퀴즈 */
+.korean-lab-time-quiz {
+    color: #2c3e50;
+    background: linear-gradient(145deg, #f4faf0 0%, #eef8ff 52%, #fff9e8 100%);
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+}
+.kltq-header {
+    min-height: 92px;
+    padding: 18px 30px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 22px;
+    color: #2c3e50;
+    background: rgba(255,255,255,.9);
+    border-bottom: 2px solid #dcefd6;
+}
+.kltq-header p { margin: 0 0 2px; color: #7a60bf; font-size: .72rem; font-weight: 900; letter-spacing: .16em; }
+.kltq-header h1 { margin: 0; font-size: clamp(1.45rem, 2.5vw, 2.2rem); font-weight: 900; }
+.kltq-header > strong { padding: 9px 15px; border-radius: 999px; color: #287644; background: #e8f7e5; white-space: nowrap; }
+.kltq-home, .kltq-check, .kltq-difficulties button, .kltq-options button {
+    border: 0; cursor: pointer; font: inherit; font-weight: 900;
+}
+.kltq-home { padding: 11px 16px; border-radius: 16px; color: #397841; background: #eef8eb; }
+.kltq-layout { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(300px, .86fr) minmax(380px, 1.14fr); gap: 22px; padding: 24px 28px 108px; }
+.kltq-clock-card, .kltq-answer-card { min-height: 0; border: 2px solid rgba(116,184,100,.2); border-radius: 34px; background: rgba(255,255,255,.94); box-shadow: 0 12px 28px rgba(69,126,74,.09); }
+.kltq-clock-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+.kltq-eyebrow { margin: 0 0 14px; color: #55994b; font-weight: 900; }
+.kltq-clock { position: relative; width: min(31vh, 270px); aspect-ratio: 1; border: 12px solid #55b346; border-radius: 50%; background: #fffdf7; box-shadow: inset 0 0 0 5px #eaf5e6, 0 12px 24px rgba(54,113,61,.16); }
+.kltq-number { position: absolute; font-size: 1.2rem; font-weight: 900; color: #42604a; transform: translate(-50%,-50%); }
+.kltq-number.n12 { left: 50%; top: 10%; }.kltq-number.n3 { left: 90%; top: 50%; }.kltq-number.n6 { left: 50%; top: 90%; }.kltq-number.n9 { left: 10%; top: 50%; }
+.kltq-hand { position: absolute; left: 50%; bottom: 50%; width: 6px; border-radius: 999px; transform-origin: 50% 100%; transform: translateX(-50%) rotate(0deg); }
+.kltq-hour-hand { height: 27%; background: #405a49; }.kltq-minute-hand { height: 38%; width: 4px; background: #f08a62; }
+.kltq-clock-pin { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; border: 4px solid #fff; border-radius: 50%; background: #55b346; transform: translate(-50%,-50%); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+.kltq-question-count { margin: 15px 0 0; color: #7e8d81; font-weight: 800; }
+.kltq-answer-card { display: flex; flex-direction: column; padding: 22px; overflow: auto; }
+.kltq-answer-card h2 { margin: 22px 0 16px; font-size: clamp(1.35rem, 2.4vw, 2rem); font-weight: 900; text-align: center; }
+.kltq-difficulties { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.kltq-difficulties button { padding: 10px 7px; border: 2px solid #dcebd8; border-radius: 15px; color: #66806a; background: #fff; }
+.kltq-difficulties button small { display: block; color: #9a79d1; }
+.kltq-difficulties button.active { color: #fff; border-color: #55b346; background: #55b346; box-shadow: 0 8px 18px rgba(85,179,70,.25); }
+.kltq-difficulties button.active small { color: #fff; }
+.kltq-options { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.kltq-options button { min-height: 58px; padding: 10px; border: 2px solid #d9e8f0; border-radius: 18px; color: #3d6276; background: #f8fcff; font-size: 1.05rem; }
+.kltq-options button.selected { color: #7253aa; border-color: #a98bd8; background: #f3edff; box-shadow: 0 0 0 3px rgba(169,139,216,.15); }
+.kltq-options button.correct { color: #287644; border-color: #55b346; background: #e8f7e5; }
+.kltq-options button.wrong { color: #a04444; border-color: #e48787; background: #fff0f0; }
+.kltq-inputs { align-items: end; justify-content: center; gap: 10px; }
+.kltq-inputs:not(.hidden) { display: flex; }
+.kltq-inputs label { display: grid; gap: 5px; color: #708274; font-weight: 900; text-align: center; }
+.kltq-inputs input { width: 100px; padding: 12px; border: 3px solid #cce4c5; border-radius: 18px; font: 900 1.8rem/1 Outfit,sans-serif; text-align: center; }
+.kltq-inputs > strong { padding-bottom: 10px; font-size: 2rem; }
+.kltq-check { margin-top: 14px; min-height: 52px; border-radius: 18px; color: #fff; background: #7658b3; box-shadow: 0 8px 18px rgba(118,88,179,.22); }
+.kltq-check:disabled { cursor: wait; opacity: .55; }
+.kltq-feedback { min-height: 27px; margin: 12px 0 0; font-weight: 900; text-align: center; color: #75847a; }
+.kltq-feedback.ok { color: #25824a; }.kltq-feedback.error { color: #c05252; }.kltq-feedback.warn { color: #b16f1d; }
+
+@media (max-width: 760px) {
+    .aiedue-lab-game-shell.view-section { width: 95vw !important; height: calc(100dvh - 124px) !important; max-height: calc(100dvh - 124px) !important; border-width: 12px !important; border-radius: 50px !important; }
+    .kltq-header { min-height: 72px; padding: 10px 14px; gap: 9px; }
+    .kltq-header > strong { display: none; }
+    .kltq-layout { grid-template-columns: 1fr; grid-template-rows: minmax(220px, .85fr) minmax(315px, 1.15fr); gap: 10px; padding: 10px 10px 98px; overflow: auto; }
+    .kltq-clock-card, .kltq-answer-card { border-radius: 24px; }
+    .kltq-clock { width: min(21vh, 190px); border-width: 8px; }
+    .kltq-eyebrow, .kltq-question-count { margin-block: 4px; }
+    .kltq-answer-card { padding: 13px; overflow: visible; }
+    .kltq-answer-card h2 { margin: 10px 0; }
+    .kltq-difficulties button { padding: 7px 3px; font-size: .82rem; }
+    .kltq-options { gap: 7px; }
+    .kltq-options button { min-height: 49px; font-size: .92rem; }
+}
