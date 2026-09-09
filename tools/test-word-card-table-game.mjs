@@ -126,7 +126,7 @@ function harness({ loadCards = () => cards, imageMode = 'success', reducedMotion
     };
     const choices = () => el('choices').querySelectorAll('button');
     const answer = () => cards.find(card => imageUrl(card) === el('question').querySelector('img')?.src);
-    const choiceFor = card => choices().find(node => node.querySelector('img').src === imageUrl(card));
+    const choiceFor = card => choices().find(node => node.querySelector('strong')?.textContent === card.word);
     const correctChoice = () => choiceFor(answer());
     const wrongChoice = () => choices().find(node => node !== correctChoice());
     async function begin() { click('start'); await settle(); advance(650); }
@@ -135,9 +135,9 @@ function harness({ loadCards = () => cards, imageMode = 'success', reducedMotion
     return { el, click, advance, choices, answer, correctChoice, wrongChoice, begin, submit, calls, frames, timers, images, section, window, document };
 }
 
-test('repository image and explanation appear with the name concealed and four choices locked until dealt', async () => {
+test('friend image and explanation appear with the name concealed while my four cards show words only', async () => {
     const g = harness(); g.click('start'); await settle();
-    assert.equal(g.calls.loads, 1); assert.equal(g.calls.urls.length, 4);
+    assert.equal(g.calls.loads, 1); assert.equal(g.calls.urls.length, 1);
     assert.equal(g.choices().length, 4);
     assert.ok(g.choices().every(button => button.disabled));
     const answer = g.answer(), question = g.el('question');
@@ -149,6 +149,10 @@ test('repository image and explanation appear with the name concealed and four c
     assert.ok(!question.querySelector('img').alt.includes(answer.word));
     assert.equal(new Set(g.choices().map(button => button.querySelector('strong').textContent)).size, 4);
     assert.equal(g.choices().filter(button => button.querySelector('strong').textContent === answer.word).length, 1);
+    assert.ok(g.choices().every(button => button.children.length === 1));
+    assert.ok(g.choices().every(button => button.children[0].tagName === 'STRONG'));
+    assert.ok(g.choices().every(button => button.textContent === button.querySelector('strong').textContent));
+    assert.ok(g.choices().every(button => !button.querySelector('img') && !button.querySelector('p')));
     g.advance(649); assert.ok(g.choices().every(button => button.disabled));
     g.advance(1); assert.ok(g.choices().every(button => !button.disabled));
     g.click('listen'); assert.deepEqual(g.calls.speech, [answer.explanation]);
@@ -223,7 +227,7 @@ test('each next round reloads the repository and avoids immediately repeating th
         const oldAnswer = g.answer(); g.submit(index !== 2);
         g.click('next'); g.el('next').emit('click'); await settle();
         assert.equal(g.calls.loads, index + 1, 'a duplicate next click must not start another load');
-        assert.equal(g.calls.urls.length, (index + 1) * 4);
+        assert.equal(g.calls.urls.length, index + 1);
         assert.notEqual(g.answer().id, oldAnswer.id);
         assert.equal(g.el('question').querySelector('strong').textContent, '? ? ?');
         assert.equal(g.el('friend').dataset.mood, 'waiting');
@@ -256,7 +260,7 @@ test('Escape pause and resume return focus to a playable choice or next action',
 
 test('closing aborts image preparation and reopening cannot receive the abandoned result', async () => {
     const g = harness({ imageMode: 'manual' }); g.click('start'); await settle();
-    assert.equal(g.images.length, 4); assert.equal(g.timers.size, 4);
+    assert.equal(g.images.length, 1); assert.equal(g.timers.size, 1);
     const abandoned = [...g.images];
     g.window.closeWordCardTableGame(); await settle();
     assert.ok(abandoned.every(img => img.onload === null && img.onerror === null));
@@ -264,7 +268,7 @@ test('closing aborts image preparation and reopening cannot receive the abandone
     g.window.openWordCardTableGame(); g.click('start'); await settle();
     abandoned.forEach(img => img.complete()); await settle();
     assert.equal(g.choices().length, 0);
-    g.images.slice(4).forEach(img => img.complete()); await settle(); g.advance(650);
+    g.images.slice(1).forEach(img => img.complete()); await settle(); g.advance(650);
     assert.equal(g.choices().length, 4); assert.equal(g.el('score').textContent, '0');
     assert.equal(g.calls.loads, 2);
 });
@@ -278,7 +282,7 @@ test('a stale repository response cannot overwrite a newly opened game', async (
     oldLoad.resolve(cards.slice(0, 2)); await settle(); g.advance(5000);
     assert.equal(g.el('question').querySelector('img').src, currentPicture);
     assert.equal(g.el('overlay').hidden, true); assert.equal(g.choices().length, 4);
-    assert.equal(g.el('score').textContent, '0'); assert.equal(g.calls.urls.length, 4);
+    assert.equal(g.el('score').textContent, '0'); assert.equal(g.calls.urls.length, 1);
 });
 
 test('closing and reopening during flight discard the pending score and old animation', async () => {
@@ -299,7 +303,7 @@ test('failed repository images stop the round without substitute cards', async (
     assert.equal(g.el('repository').hidden, false);
     assert.equal(g.choices().length, 0); assert.equal(g.el('question').children.length, 0);
     assert.equal(g.el('score').textContent, '0'); assert.equal(g.frames.size, 0);
-    assert.equal(g.images.length, 4); assert.equal(g.timers.size, 0);
+    assert.equal(g.images.length, 1); assert.equal(g.timers.size, 0);
     assert.ok(g.images.every(img => img.url.startsWith('https://repository.example/SharedWordCards/')));
     g.click('start'); await settle(); assert.equal(g.calls.loads, 2);
 });
@@ -311,7 +315,7 @@ test('fewer than four published cards shows the real count and retry reloads the
     assert.match(g.el('overlay-copy').textContent, /지금은 3장/);
     assert.equal(g.calls.urls.length, 0); assert.equal(g.images.length, 0); assert.equal(g.choices().length, 0);
     g.click('start'); await settle(); g.advance(650);
-    assert.equal(g.calls.loads, 2); assert.equal(g.choices().length, 4); assert.equal(g.el('overlay').hidden, true);
+    assert.equal(g.calls.loads, 2); assert.equal(g.choices().length, 4); assert.equal(g.calls.urls.length, 1); assert.equal(g.el('overlay').hidden, true);
 });
 
 test('finish cannot interrupt loading, dealing, or a pending scored delivery', async () => {

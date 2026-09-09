@@ -163,7 +163,7 @@ test('each next round rereads the source and immediately reflects repository add
     }
 });
 
-test('all four images come from storage and decode before the round is returned; injected URLs are ignored', async () => {
+test('only the friend answer image comes from storage; four text choices never load media', async () => {
     const cards = fixtures.slice(0, 4).map(card => ({ ...card, imageUrl: 'https://injected.invalid/demo.webp' }));
     const loaded = [], prepared = [];
     const controller = new AbortController();
@@ -175,10 +175,11 @@ test('all four images come from storage and decode before the round is returned;
         prepareImage: async (url, signal) => { prepared.push(url); assert.strictEqual(signal, controller.signal); }
     });
     assertRound(round, cards);
-    assert.deepEqual(loaded.sort(), cards.map(card => card.id).sort());
-    assert.deepEqual(prepared.sort(), cards.map(card => `blob:repository/${card.id}`).sort());
-    assert.ok(round.choices.every(card => card.imageUrl === `blob:repository/${card.id}`));
-    assert.strictEqual(round.answer, round.choices.find(card => card.id === round.answer.id));
+    assert.deepEqual(loaded, [round.answer.id]);
+    assert.deepEqual(prepared, [`blob:repository/${round.answer.id}`]);
+    assert.equal(round.answer.imageUrl, `blob:repository/${round.answer.id}`);
+    assert.ok(round.choices.every(card => !Object.hasOwn(card, 'imageUrl')));
+    assert.notStrictEqual(round.answer, round.choices.find(card => card.id === round.answer.id));
     assert.ok(cards.every(card => card.imageUrl === 'https://injected.invalid/demo.webp'), 'source card mutated');
 });
 
@@ -239,7 +240,7 @@ test('abort while awaiting the catalog blocks all subsequent image loads', async
     assert.equal(mediaReads, 0);
 });
 
-test('abort while awaiting storage URLs prevents image preparation and returning a round', async () => {
+test('abort while awaiting the friend image URL prevents image preparation and returning a round', async () => {
     const controller = new AbortController(), image = deferred(), started = deferred();
     let prepared = 0;
     const pending = loadWordCardRound({

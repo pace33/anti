@@ -59,12 +59,10 @@ body.word-card-table-open { overflow: hidden; }
 .wct-hand-heading h2 { margin-top: 4px; font-size: 20px; letter-spacing: -.055em; }
 .wct-hand-tip { font-size: 11px; color: #6a7c65; }
 .wct-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
-.wct-choices:empty { min-height: 515px; border: 1px dashed #cbd4c2; border-radius: 19px; background: #eff1e844; }
+.wct-choices:empty { min-height: 380px; border: 1px dashed #cbd4c2; border-radius: 19px; background: #eff1e844; }
 .wct-choices .wct-card { border-color: #d5dccc; box-shadow: 0 3px 0 #c2ceb766, 0 5px 15px #253e2810; transition: transform .15s, border-color .15s, box-shadow .15s; }
-.wct-choices .wct-card-image { height: 145px; }
-.wct-choices .wct-card-word { font-size: 19px; }
-.wct-choices .wct-card-explanation { font-size: 14px; }
-.wct-card-number { position: absolute; top: 15px; left: 15px; display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; border: 1px solid #d4dcc7; background: #fffdf5ee; font-size: 11px; color: #4c6b52; font-weight: 800; }
+.wct-word-choice { min-height: 180px; justify-content: center; align-items: center; padding: 18px; }
+.wct-word-choice .wct-card-word { padding: 0; font-size: clamp(23px, 2.4vw, 32px); line-height: 1.35; }
 .wct-choices .wct-card:not(:disabled):hover { transform: translateY(-4px) rotate(-1deg); border-color: #4b8261; box-shadow: 0 5px 0 #abc5a9, 0 12px 24px #35534415; }
 .wct-choices .wct-card.is-played { border: 2px solid #387a51; padding: 8px; background: #ecf5e7; }
 .wct-status { min-height: 49px; display: flex; align-items: center; padding: 12px 2px 7px; font-size: 13px; font-weight: 650; line-height: 1.5; }
@@ -100,7 +98,6 @@ body.word-card-table-open { overflow: hidden; }
     .wct-friend { width: 174px; height: 174px; }
     .wct-hand-tip { display: none; }
     .wct-choices { gap: 11px; }
-    .wct-choices .wct-card-image { height: 110px; }
     .wct-point-pop { right: 10px; font-size: 26px; }
 }
 @media (max-width: 620px) {
@@ -129,10 +126,11 @@ body.word-card-table-open { overflow: hidden; }
     .wct-question .wct-card-image { height: 125px; }
     .wct-point-pop { top: 24px; right: 20px; }
     .wct-desk-label { left: 0; right: 0; }
-    .wct-choices .wct-card-image { height: 120px; }
     .wct-card-explanation, .wct-choices .wct-card-explanation { font-size: 13px; }
     .wct-hand-tip { display: block; }
     .wct-choices { gap: 13px; }
+    .wct-word-choice { min-height: 112px; padding: 12px; }
+    .wct-word-choice .wct-card-word { font-size: clamp(19px, 6vw, 27px); }
     .wct-choices:empty { min-height: 200px; }
     .wct-status { min-height: 54px; font-size: 12px; }
     .wct-actions { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; background: #f6f5edf5; padding: 12px 15px max(15px, env(safe-area-inset-bottom)); border-top: 1px solid #d5dece; }

@@ -53,13 +53,14 @@ export async function loadWordCardRound(source, { previousId = '', signal, rando
     const cards = await source.loadCards();
     assertActive(signal);
     const round = createWordCardRound(cards, previousId, random);
-    const choices = await Promise.all(round.choices.map(async card => {
-        const imageUrl = await source.getImageUrl(card);
-        assertActive(signal);
-        if (typeof imageUrl !== 'string' || !/^(blob:|https?:\/\/|\/)/.test(imageUrl)) throw new Error('저장소 카드 그림을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.');
-        await prepareImage(imageUrl, signal);
-        assertActive(signal);
-        return { ...card, imageUrl };
-    }));
-    return { ...round, choices, answer: choices.find(card => card.id === round.answer.id) };
+    const imageUrl = await source.getImageUrl(round.answer);
+    assertActive(signal);
+    if (typeof imageUrl !== 'string' || !/^(blob:|https?:\/\/|\/)/.test(imageUrl)) throw new Error('저장소 카드 그림을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+    await prepareImage(imageUrl, signal);
+    assertActive(signal);
+    // The friend owns the single illustrated prompt card. The player's hand is
+    // deliberately reduced to identifiers and words so media or explanations
+    // cannot accidentally leak into the four answer controls.
+    const choices = round.choices.map(({ id, word }) => ({ id, word }));
+    return { ...round, choices, answer: { ...round.answer, imageUrl } };
 }

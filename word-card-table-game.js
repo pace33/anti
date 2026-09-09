@@ -67,22 +67,25 @@ function hud() {
     ui['round-number'].textContent = String(state.attempts + (state.status === 'feedback' ? 0 : 1)).padStart(2, '0');
     controls();
 }
-function makeCard(card, { concealed = false, choice = false, index = 0 } = {}) {
+function makeCard(card, { concealed = false, choice = false, wordOnly = choice, index = 0 } = {}) {
     const node = document.createElement(choice ? 'button' : 'article');
-    node.className = 'wct-card';
+    node.className = `wct-card${wordOnly ? ' wct-word-choice' : ''}`;
     if (choice) {
         node.type = 'button'; node.setAttribute('aria-label', `${index + 1}번, ${card.word} 카드 내기`);
-        const number = document.createElement('span'); number.className = 'wct-card-number'; number.textContent = String(index + 1); node.append(number);
+    }
+    const word = document.createElement('strong'); word.className = `wct-card-word${concealed ? ' is-secret' : ''}`;
+    word.textContent = concealed ? '? ? ?' : card.word;
+    if (concealed) word.setAttribute('aria-label', '가려진 단어 이름');
+    if (wordOnly) {
+        node.append(word);
+        if (choice) node.addEventListener('click', () => play(card.id, node));
+        return node;
     }
     const picture = document.createElement('img'); picture.className = 'wct-card-image';
     picture.alt = concealed ? '어떤 단어인지 알려 주는 문제 그림' : `${card.word} 그림`;
     picture.src = card.imageUrl; picture.draggable = false;
-    const word = document.createElement('strong'); word.className = `wct-card-word${concealed ? ' is-secret' : ''}`;
-    word.textContent = concealed ? '? ? ?' : card.word;
-    if (concealed) word.setAttribute('aria-label', '가려진 단어 이름');
     const explanation = document.createElement('p'); explanation.className = 'wct-card-explanation'; explanation.textContent = card.explanation;
     node.append(picture, word, explanation);
-    if (choice) node.addEventListener('click', () => play(card.id, node));
     return node;
 }
 
@@ -110,7 +113,7 @@ async function deal() {
     ui['friend-says'].textContent = '저장소에서 새 카드를 골라 볼게!';
     ui.question.classList.remove('is-dealt'); ui.question.replaceChildren(); ui.choices.replaceChildren();
     ui.question.setAttribute('aria-busy', 'true');
-    say('단어 카드 저장소에서 새 카드 네 장을 불러오고 있어요…');
+    say('단어 카드 저장소에서 새 문제와 단어 선택지를 불러오고 있어요…');
     try {
         const loaded = await loadWordCardRound(source, { previousId, signal: controller.signal, prepareImage });
         if (request !== generation) return;
@@ -141,7 +144,7 @@ function play(id, node) {
     ui.choices.querySelectorAll('button').forEach(button => button.classList.toggle('is-played', button === node));
     const start = node.getBoundingClientRect(), target = ui.question.getBoundingClientRect();
     const card = round.choices.find(item => item.id === id);
-    ui.flying.replaceChildren(makeCard(card)); ui.flying.hidden = false;
+    ui.flying.replaceChildren(makeCard(card, { wordOnly: true })); ui.flying.hidden = false;
     ui.flying.style.width = `${start.width}px`; ui.flying.style.left = `${start.left}px`; ui.flying.style.top = `${start.top}px`;
     flight = { x: target.left + target.width * .30 - start.left, y: target.top + target.height * .13 - start.top, scale: target.width / start.width * .86 };
     ui.flying.style.transform = 'translate(0, 0)'; elapsed = 0;
