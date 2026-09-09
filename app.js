@@ -6609,28 +6609,14 @@ async function loadFriendsDrawingsFromFirebase() {
     if (!currentUserId) return [];
     const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
     // 친구들 그림은 공개용 필드만 담은 별도 컬렉션이므로 로그인 사용자의 작품을 모두 조회한다.
-    // 규칙 배포가 아직 반영되지 않은 동안에도 본인 작품은 보이도록 소유자 쿼리를 fallback으로 둔다.
-    const queryPlans = [
-        query(collectionRef, queryLimit(80)),
-        query(collectionRef, where('userId', '==', currentUserId), queryLimit(80))
-    ];
+    // 전체 조회 실패를 본인 작품으로 숨기지 않는다. 친구들 갤러리는 항상 공용 컬렉션을 기준으로 한다.
+    const snap = await getDocs(query(collectionRef, queryLimit(500)));
     const merged = new Map();
-    for (const q of queryPlans) {
-        try {
-            const snap = await getDocs(q);
-            if (snap && snap.docs) {
-                snap.docs.map(normalizeFirebaseDrawingDoc).forEach((item) => addDrawingGalleryItem(merged, item, 'shared'));
-            }
-            if (merged.size >= 60) break;
-        } catch (error) {
-            console.warn('Firebase drawing gallery query failed', error);
-        }
+    if (snap && snap.docs) {
+        snap.docs.map(normalizeFirebaseDrawingDoc).forEach((item) => addDrawingGalleryItem(merged, item, 'shared'));
     }
-    const portfolioFallbacks = await loadFriendsDrawingsFromUserPortfolios();
-    portfolioFallbacks.forEach((item) => addDrawingGalleryItem(merged, item, 'portfolio'));
     return Array.from(merged.values())
-        .sort((a, b) => getDrawingTimestampValue(b) - getDrawingTimestampValue(a))
-        .slice(0, 60);
+        .sort((a, b) => getDrawingTimestampValue(b) - getDrawingTimestampValue(a));
 }
 
 window.saveCurrentDrawing = async function() {
@@ -6861,9 +6847,19 @@ window.completeTodayDrawingMission = async function() {
 }
 
 window.openFriendsDrawingGallery = async function() {
-    const firebaseDrawings = await loadFriendsDrawingsFromFirebase();
+    let firebaseDrawings = [];
+    try {
+        firebaseDrawings = await loadFriendsDrawingsFromFirebase();
+    } catch (error) {
+        console.error('Failed to load friends drawing gallery', error);
+        showModal('친구들 그림을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        return;
+    }
     const localWorks = (drawingPortfolio.free || []).map((item) => ({ ...item, userName: currentUserName, userIcon: currentUserIcon, kind: item.kind || 'sketchbook' }));
-    const merged = [...firebaseDrawings, ...localWorks].filter((item) => item?.image).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))).slice(0, 60);
+    const mergedMap = new Map();
+    firebaseDrawings.forEach((item) => addDrawingGalleryItem(mergedMap, item, 'shared'));
+    localWorks.forEach((item) => addDrawingGalleryItem(mergedMap, item, 'portfolio'));
+    const merged = Array.from(mergedMap.values()).filter((item) => item?.image).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')));
     const body = merged.length ? `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
             ${merged.map((item) => {

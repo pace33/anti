@@ -344,6 +344,7 @@ const drawingHelpers = section(app, 'function normalizeDrawingPortfolioForPersis
 const drawingSharedRecord = section(app, 'function buildSharedDrawingGalleryRecord', 'async function persistDrawingRecord');
 const drawingPersist = section(app, 'async function persistDrawingRecord', 'function normalizeFirebaseDrawingDoc');
 const drawingGalleryLoad = section(app, 'async function loadFriendsDrawingsFromFirebase', 'window.saveCurrentDrawing');
+const drawingGalleryOpen = section(app, 'window.openFriendsDrawingGallery', 'const dictationItems');
 const drawingSave = section(app, 'window.saveCurrentDrawing', 'function showAiedueAutoToast');
 const drawingComplete = section(app, 'window.completeTodayDrawingMission', 'window.openFriendsDrawingGallery');
 const literacyId = section(app, 'const SHARED_LITERACY_COLLECTION', 'function writeWrongToSharedBankTransaction');
@@ -368,8 +369,12 @@ assert(drawingPersist.includes('const shouldGrantExperience = isNewRecord && (!m
 assert(drawingPersist.includes('mergeDrawingShapeStats(serverPortfolio.shapeStats'), '서버 최신 도형 통계 병합이 없습니다.');
 assert(drawingPersist.includes('compressDrawingImage(record.image, 120)') && drawingPersist.includes('fitDrawingPortfolioToFirestore({'), '사용자 그림 문서에 소형 썸네일/용량 예산이 적용되지 않습니다.');
 assert(drawingPersist.includes('buildSharedDrawingGalleryRecord('), '친구들 그림이 공개 필드 전용 payload를 사용하지 않습니다.');
-assert(drawingGalleryLoad.includes('query(collectionRef, queryLimit(80))'), '친구들 그림이 로그인 사용자의 공유 작품 전체를 조회하지 않습니다.');
-assert(drawingGalleryLoad.indexOf('query(collectionRef, queryLimit(80))') < drawingGalleryLoad.indexOf("where('userId', '==', currentUserId)"), '친구들 그림 전체 조회보다 본인 fallback이 먼저 실행됩니다.');
+assert(drawingGalleryLoad.includes('query(collectionRef, queryLimit(500))'), '친구들 그림이 로그인 사용자의 공유 작품 전체를 최대 500개까지 조회하지 않습니다.');
+assert(!drawingGalleryLoad.includes('merged.size >= 60') && !drawingGalleryLoad.includes('.slice(0, 60)'), '친구들 그림 로더가 60개에서 중단하거나 결과를 잘라냅니다.');
+assert(!drawingGalleryOpen.includes('.slice(0, 60)'), '친구들 그림 화면이 병합된 결과를 60개로 잘라냅니다.');
+assert(!drawingGalleryLoad.includes("where('userId', '==', currentUserId)") && !drawingGalleryLoad.includes('loadFriendsDrawingsFromUserPortfolios'), '친구들 그림 전체 조회 실패를 본인 전용 결과로 숨기는 fallback이 남아 있습니다.');
+assert(drawingGalleryOpen.includes('const mergedMap = new Map();') && drawingGalleryOpen.includes("addDrawingGalleryItem(mergedMap, item, 'shared')") && drawingGalleryOpen.includes("addDrawingGalleryItem(mergedMap, item, 'portfolio')"), '공유 그림과 로컬 그림을 drawingId 기준으로 중복 제거하지 않습니다.');
+assert(drawingGalleryOpen.includes("showModal('친구들 그림을 불러오지 못했어요."), '친구들 그림 전체 조회 실패가 사용자에게 명확히 안내되지 않습니다.');
 assert(drawingPersist.includes('const serverClassId = String(userData.teacherId') && /buildSharedDrawingGalleryRecord\([\s\S]*?serverClassId\s*\)/.test(drawingPersist), '친구들 그림 학급 키가 트랜잭션에서 읽은 최신 사용자 문서를 사용하지 않습니다.');
 ['email', 'shapeAccuracy', 'coins', 'balance', 'aeduTokens', 'warningTokens', 'userCode', 'role', 'teacherId', 'classCode', 'className'].forEach((field) => {
     assert(!drawingSharedRecord.includes(`${field}:`), `친구들 그림 공유 payload에 개인/불필요 필드가 포함됐습니다: ${field}`);
