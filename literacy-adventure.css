@@ -1,0 +1,28 @@
+.literacy-adventure-game { min-height: 100dvh; overflow-y: auto; display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; background: radial-gradient(circle at 15% 10%,#cffafe,transparent 28%),linear-gradient(145deg,#eff6ff,#f0fdfa); color:#203a43; }
+.literacy-adventure-game > .literacy-adventure-header { position:sticky; top:0; z-index:30; width:100%; box-sizing:border-box; flex:0 0 auto; min-height:108px; padding:18px 26px; display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:20px; background:rgba(255,255,255,.94); border-bottom:4px solid #a5f3fc; box-shadow:0 10px 28px rgba(8,145,178,.12); }
+.literacy-adventure-hud { display:flex; align-items:center; gap:10px; font-weight:900; }
+.literacy-adventure-hud span,.literacy-adventure-hud strong { padding:10px 14px; border-radius:16px; background:#ecfeff; color:#0e7490; }
+.literacy-adventure-layout { width:min(1420px,calc(100% - 36px)); margin:24px auto 40px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(250px,.75fr) minmax(0,1fr); gap:20px; align-items:stretch; }
+.literacy-adventure-layout > section { min-width:0; min-height:520px; padding:26px; border:4px solid rgba(6,182,212,.14); border-radius:30px; background:#fff; box-shadow:0 18px 36px rgba(8,145,178,.1); }
+.literacy-adventure-layout h2 { margin:0 0 18px; color:#164e63; font-size:1.65rem; font-weight:900; }
+.literacy-adventure-kicker { margin:0 0 6px; color:#0891b2; font-size:.84rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+#literacy-adventure-passage { max-height:58vh; overflow:auto; color:#334155; font-size:1.22rem; font-weight:750; line-height:2; white-space:pre-wrap; }
+#literacy-adventure-steps { display:grid; gap:12px; margin:0 0 22px; padding:0; list-style:none; }
+#literacy-adventure-steps li { padding:13px 15px; border-radius:16px; background:#f1f5f9; color:#64748b; font-weight:900; }
+#literacy-adventure-steps li.active { color:#fff; background:linear-gradient(135deg,#0891b2,#14b8a6); box-shadow:0 8px 18px rgba(8,145,178,.23); }
+#literacy-adventure-steps li.done { color:#0f766e; background:#ccfbf1; }
+#literacy-adventure-clue { min-height:112px; padding:18px; border-radius:20px; background:#ecfeff; color:#155e75; font-weight:850; line-height:1.7; }
+#literacy-adventure-next,#literacy-adventure-submit,#literacy-adventure-restart,#literacy-adventure-start { width:100%; margin-top:18px; padding:15px 18px; border:0; border-radius:18px; color:#fff; background:linear-gradient(135deg,#0891b2,#0d9488); font:900 1.05rem inherit; cursor:pointer; box-shadow:0 10px 20px rgba(8,145,178,.22); }
+.literacy-adventure-answer { opacity:.55; filter:saturate(.55); transition:.25s ease; }
+.literacy-adventure-answer.unlocked { opacity:1; filter:none; }
+#literacy-adventure-question { margin-bottom:18px; color:#1e293b; font-size:1.22rem; font-weight:900; line-height:1.65; }
+#literacy-adventure-options { display:grid; gap:12px; }
+#literacy-adventure-options button { width:100%; padding:14px; border:3px solid #bae6fd; border-radius:17px; background:#f0f9ff; color:#164e63; text-align:left; font:850 1rem inherit; cursor:pointer; }
+#literacy-adventure-options button:hover { border-color:#06b6d4; background:#cffafe; }
+#literacy-adventure-input { width:100%; box-sizing:border-box; padding:15px; border:3px solid #bae6fd; border-radius:18px; font:750 1rem/1.6 inherit; resize:vertical; }
+#literacy-adventure-feedback { margin-top:18px; color:#0f766e; font-weight:900; line-height:1.65; }
+.literacy-adventure-overlay { position:absolute; inset:0; z-index:20; display:grid; place-items:center; padding:22px; background:rgba(15,23,42,.58); backdrop-filter:blur(8px); }
+.literacy-adventure-overlay > div { width:min(480px,100%); padding:38px; border-radius:34px; background:#fff; text-align:center; box-shadow:0 30px 70px rgba(15,23,42,.3); }
+.literacy-adventure-overlay span { font-size:5rem; }.literacy-adventure-overlay h2 { margin:10px 0; color:#164e63; font-size:2.2rem; }.literacy-adventure-overlay p { color:#475569; font-weight:800; line-height:1.7; }
+@media (max-width:1000px) { .literacy-adventure-layout { grid-template-columns:1fr 1fr; } .literacy-adventure-passage { grid-column:1 / -1; min-height:320px!important; } }
+@media (max-width:680px) { .literacy-adventure-header { grid-template-columns:auto minmax(0,1fr); padding:12px; gap:10px; }.literacy-adventure-header .aiedue-lab-brand img{width:44px;height:34px}.literacy-adventure-header .aiedue-lab-brand h1{font-size:1.05rem}.literacy-adventure-header .aiedue-lab-brand p{font-size:.68rem}.literacy-adventure-hud{grid-column:1/-1;justify-content:center}.literacy-adventure-layout{width:calc(100% - 20px);grid-template-columns:1fr;margin-top:12px}.literacy-adventure-passage{grid-column:auto}.literacy-adventure-layout>section{min-height:auto;padding:20px}.literacy-adventure-overlay>div{padding:26px 20px} }

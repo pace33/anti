@@ -3580,46 +3580,71 @@ window.openAiedueLab = function openAiedueLab() {
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
 };
 
+const AIEDUE_LAB_STAGE_SECTIONS = Object.freeze({
+    '1': 'drawing-activities-section', '2': 'hangul-activities-section',
+    '3': 'dictation-activities-section', '4': 'literacy-activities-section'
+});
+
 window.rememberAiedueLabReturnFocus = function rememberAiedueLabReturnFocus(fallbackId) {
     const active = document.activeElement;
-    window.aiedueLabReturnFocus = active instanceof HTMLElement && active.classList.contains('dashboard-lab-card')
+    const target = active instanceof HTMLElement && active !== document.body
         ? active
         : document.getElementById(fallbackId);
+    const stage = String(target?.dataset?.stageGameEntry || '').trim();
+    window.aiedueLabReturnContext = {
+        target,
+        sectionId: AIEDUE_LAB_STAGE_SECTIONS[stage] || 'dashboard-section'
+    };
 };
 
 window.restoreAiedueLabReturnFocus = function restoreAiedueLabReturnFocus(fallbackId) {
-    const target = window.aiedueLabReturnFocus?.isConnected
-        ? window.aiedueLabReturnFocus
-        : document.getElementById(fallbackId);
-    window.aiedueLabReturnFocus = null;
+    const context = window.aiedueLabReturnContext;
+    window.aiedueLabReturnContext = null;
+    const target = context?.target?.isConnected ? context.target : document.getElementById(fallbackId);
+    showAiedueTopLevelSection(context?.sectionId || 'dashboard-section');
     const focusTarget = () => {
         const currentTarget = target?.isConnected ? target : document.getElementById(fallbackId);
         currentTarget?.focus?.();
     };
-    window.setTimeout(focusTarget, 0);
+    requestAnimationFrame(() => requestAnimationFrame(focusTarget));
     window.setTimeout(() => {
         if (!document.activeElement || document.activeElement === document.body) focusTarget();
-    }, 120);
+    }, 160);
 };
 
 window.openAiedueLabDictationGame = function openAiedueLabDictationGame() {
-    window.rememberAiedueLabReturnFocus?.('dashboard-lab-asteroid');
+    window.rememberAiedueLabReturnFocus?.('card-level-2');
     window.openAsteroidDictationGame?.();
 };
 
 window.openAiedueLabShapeZoo = function openAiedueLabShapeZoo() {
-    window.rememberAiedueLabReturnFocus?.('dashboard-lab-shape');
+    window.rememberAiedueLabReturnFocus?.('card-level-1');
     window.openShapeZooGame?.();
 };
 
 window.openAiedueLabWordCardGame = function openAiedueLabWordCardGame() {
-    window.rememberAiedueLabReturnFocus?.('dashboard-lab-word-card');
+    window.rememberAiedueLabReturnFocus?.('card-level-3');
     window.openWordCardTableGame?.();
 };
 
 window.openAiedueLabTimeQuiz = function openAiedueLabTimeQuiz() {
-    window.rememberAiedueLabReturnFocus?.('dashboard-lab-time');
+    window.rememberAiedueLabReturnFocus?.('card-level-4');
     window.openKoreanLabTimeQuiz?.();
+};
+
+window.openLiteracyAdventureGame = function openLiteracyAdventureGame() {
+    window.rememberAiedueLabReturnFocus?.('card-level-4');
+    showAiedueTopLevelSection('literacy-adventure-game-section');
+    window.initLiteracyAdventureGame?.();
+};
+
+window.showLiteracyAdventureGameSection = function showLiteracyAdventureGameSection() {
+    showAiedueTopLevelSection('literacy-adventure-game-section');
+};
+
+window.closeLiteracyAdventureGame = function closeLiteracyAdventureGame() {
+    showAiedueTopLevelSection('literacy-activities-section');
+    window.restoreAiedueLabReturnFocus?.('stage-4-game-literacy');
 };
 
 // 한글 연구실 전용 보상 facade. 시간 퀴즈 모듈은 수학 앱이나 수학 저장소에
@@ -4736,6 +4761,7 @@ const topLevelSectionIds = [
     'dictation-asteroid-game-section',
     'shape-zoo-game-section',
     'word-card-table-game-section',
+    'literacy-adventure-game-section',
     'korean-records-section',
     'korean-mistakes-section',
     'korean-review-section',
@@ -4783,7 +4809,8 @@ function showTopLevelSection(sectionId) {
         'korean-lab-time-quiz-section',
         'shape-zoo-game-section',
         'word-card-table-game-section',
-        'dictation-asteroid-game-section'
+        'dictation-asteroid-game-section',
+        'literacy-adventure-game-section'
     ];
     const isKoreanLabGame = labGameSectionIds.includes(sectionId);
     document.body.classList.toggle('aiedue-lab-game-open', isKoreanLabGame);
@@ -10160,37 +10187,126 @@ window.openTodayLiteracyMission = function() {
     window.startTodayLiteracyMission(plan.difficulty, plan.type);
 };
 
+async function createLiteracyMissionQuestion(diff, type) {
+    const generationContext = buildLiteracyGenerationContext(diff, type);
+    let responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, generationContext), { printTimeout: '3m' });
+    let questionData = parseAiQuestionResponse(responseText);
+    if (!questionData || !questionData.passage || !questionData.question) throw new Error('AI가 문해력 문제를 올바르게 생성하지 못했습니다.');
+
+    const coverage = countLiteracyBankWordCoverage(questionData, generationContext.primaryWords);
+    if (generationContext.primaryWords.length >= 3 && coverage < 2) {
+        const retryContext = { ...generationContext, forceDiversityRetry: true };
+        responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, retryContext), { printTimeout: '3m' });
+        const retryQuestionData = parseAiQuestionResponse(responseText);
+        if (retryQuestionData?.passage && retryQuestionData?.question) questionData = retryQuestionData;
+    }
+
+    questionData.difficulty = diff;
+    questionData.type = type;
+    questionData.literacyDan = getLiteracyDanPlan().dan;
+    questionData.sourceBankWords = generationContext.primaryWords;
+    questionData.diversityFrame = generationContext.frame;
+    return questionData;
+}
+
 window.startTodayLiteracyMission = async function(diff, type) {
     showActivityLoading('문해력 문제 로딩중...');
     try {
-        const generationContext = buildLiteracyGenerationContext(diff, type);
-        let responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, generationContext), { printTimeout: '3m' });
-        let questionData = parseAiQuestionResponse(responseText);
-        if (!questionData || !questionData.passage || !questionData.question) throw new Error("AI가 문해력 문제를 올바르게 생성하지 못했습니다.");
-
-        const coverage = countLiteracyBankWordCoverage(questionData, generationContext.primaryWords);
-        if (generationContext.primaryWords.length >= 3 && coverage < 2) {
-            const retryContext = { ...generationContext, forceDiversityRetry: true };
-            responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, retryContext), { printTimeout: '3m' });
-            const retryQuestionData = parseAiQuestionResponse(responseText);
-            if (retryQuestionData?.passage && retryQuestionData?.question) {
-                questionData = retryQuestionData;
-            }
-        }
-
-        questionData.difficulty = diff;
-        questionData.type = type;
-        questionData.literacyDan = getLiteracyDanPlan().dan;
-        questionData.sourceBankWords = generationContext.primaryWords;
-        questionData.diversityFrame = generationContext.frame;
+        const questionData = await createLiteracyMissionQuestion(diff, type);
         hideActivityLoading();
         setupLiteracyWorkspace(questionData, false);
+        return questionData;
     } catch (e) {
         hideActivityLoading();
         console.error(e);
         showModal(`문제 생성에 실패했습니다: ${escapeHtml(e.message || e)}. 다시 시도해 주세요.`);
+        return null;
     }
 };
+
+async function gradeLiteracyEssayQuestion(question, studentAnswer) {
+    const difficulty = String(question.difficulty || 'easy').toLowerCase();
+    const keywords = normalizeLiteracyKeywords(question);
+    const prompt = `지문: ${question.passage}
+난이도: ${difficulty}
+질문: ${question.question}
+예시답안: ${question.sampleAnswer}
+학생에게 제공된 핵심어: ${keywords.join(', ')}
+학생답안: ${studentAnswer}
+
+위 학생답안을 예시답안을 기준으로 100점 만점으로 정밀하게 채점해 주세요.
+지문 내용과 부합하는지, 그리고 핵심 의도를 파악하고 작성했는지 평가하세요.
+핵심어는 문자 그대로 같지 않아도 동의어나 같은 뜻의 표현이면 인정하세요.
+${['easy', 'normal'].includes(difficulty) ? '이 문제는 한 문장 답변용입니다. 한 문장 안에 핵심 의미가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : '근거와 논리적 연결을 충분히 갖추었는지 평가하세요.'}
+반드시 백틱이나 다른 군더더기 없이 다음 JSON 형식만 반환하세요: {"score": 85, "feedback": "여기에 채점 총평 및 친절한 피드백을 적으세요."}`;
+    const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
+    const cleaned = String(responseText || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(match ? match[0] : cleaned);
+    const score = Number(parsed.score) || 0;
+    return {
+        score,
+        feedback: String(parsed.feedback || '채점을 완료했습니다.'),
+        isCorrect: score >= 80
+    };
+}
+
+window.aiedueLiteracyAdventureData = Object.freeze({
+    async createRound() {
+        const plan = getLiteracyDanPlan();
+        const question = await createLiteracyMissionQuestion(plan.difficulty, plan.type);
+        activeLiteracyQuestion = question;
+        isLiteracyLimitBreakMode = false;
+        userLiteracyAnswerChecked = false;
+        return {
+            ...question,
+            dan: plan.dan,
+            keywords: Array.isArray(question.keywords) ? [...question.keywords] : []
+        };
+    },
+    async submitAnswer(answer) {
+        if (!activeLiteracyQuestion) throw new Error('먼저 탐험 문제를 불러와 주세요.');
+        const question = activeLiteracyQuestion;
+        const value = String(answer ?? '').trim();
+        let isCorrect = false;
+        let detail = '';
+        let score = null;
+        let userAnswerText = value;
+        let correctAnswerText = String(question.answer || question.sampleAnswer || '');
+        if (question.type === 'multipleChoice') {
+            const selected = Number(answer);
+            if (!Number.isInteger(selected) || selected < 0 || selected >= (question.options || []).length) throw new Error('답을 먼저 골라 주세요.');
+            isCorrect = selected === Number(question.answerIndex);
+            userAnswerText = String(question.options[selected] || '');
+            correctAnswerText = String(question.options?.[Number(question.answerIndex)] || '');
+            detail = isCorrect ? '정확한 답을 찾았어요.' : `정답은 ${Number(question.answerIndex) + 1}번이에요.`;
+        } else if (question.type === 'shortAnswer') {
+            if (!value) throw new Error('답을 먼저 적어 주세요.');
+            const normalize = (text) => String(text || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+            const answers = [question.answer, ...(Array.isArray(question.acceptableAnswers) ? question.acceptableAnswers : [])]
+                .map(normalize).filter(Boolean);
+            const normalized = normalize(value);
+            isCorrect = answers.some((candidate) => candidate === normalized || candidate.includes(normalized) || normalized.includes(candidate));
+            detail = isCorrect ? '핵심 답을 정확히 썼어요.' : `모범 답: ${question.answer}`;
+        } else if (question.type === 'essay') {
+            if (!value) throw new Error('답을 먼저 적어 주세요.');
+            const evaluation = await gradeLiteracyEssayQuestion(question, value);
+            isCorrect = evaluation.isCorrect;
+            score = evaluation.score;
+            detail = evaluation.feedback;
+        } else {
+            throw new Error('지원하지 않는 문해력 문제 유형이에요.');
+        }
+        const saved = await showLiteracyResult(isCorrect, {
+            score,
+            feedback: detail,
+            correctAnswerText,
+            userAnswerText
+        });
+        if (!saved) throw new Error('결과를 저장하지 못했어요. 같은 답으로 다시 시도해 주세요.');
+        return { isCorrect, detail, score, correctAnswer: correctAnswerText, explanation: question.explanation || '' };
+    }
+});
 
 window.nextLiteracyQuestion = function() {
     const plan = getLiteracyDanPlan();
@@ -10430,29 +10546,11 @@ window.submitLiteracyEssayAnswer = async function() {
     userLiteracyAnswerChecked = true;
     showActivityLoading();
     try {
-        const essayDifficulty = String(activeLiteracyQuestion.difficulty || 'easy').toLowerCase();
-        const essayKeywords = normalizeLiteracyKeywords(activeLiteracyQuestion);
-        const prompt = `지문: ${activeLiteracyQuestion.passage}
-난이도: ${essayDifficulty}
-질문: ${activeLiteracyQuestion.question}
-예시답안: ${activeLiteracyQuestion.sampleAnswer}
-학생에게 제공된 핵심어: ${essayKeywords.join(', ')}
-학생답안: ${input}
-
-위 학생답안을 예시답안을 기준으로 100점 만점으로 정밀하게 채점해 주세요.
-지문 내용과 부합하는지, 그리고 핵심 의도를 파악하고 작성했는지 평가하세요.
-핵심어는 문자 그대로 같지 않아도 동의어나 같은 뜻의 표현이면 인정하세요.
-${['easy', 'normal'].includes(essayDifficulty) ? '이 문제는 한 문장 답변용입니다. 한 문장 안에 핵심 의미가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : '근거와 논리적 연결을 충분히 갖추었는지 평가하세요.'}
-반드시 백틱이나 다른 군더더기 없이 다음 JSON 형식만 반환하세요: {"score": 85, "feedback": "여기에 채점 총평 및 친절한 피드백을 적으세요."}`;
-
-        const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
-        const cleaned = String(responseText || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-        const match = cleaned.match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(match ? match[0] : cleaned);
-        const score = Number(parsed.score) || 0;
-        const feedback = parsed.feedback || '채점을 완료했습니다.';
+        const evaluation = await gradeLiteracyEssayQuestion(activeLiteracyQuestion, input);
+        const score = evaluation.score;
+        const feedback = evaluation.feedback;
         hideActivityLoading();
-        const isCorrect = score >= 80;
+        const isCorrect = evaluation.isCorrect;
         await showLiteracyResult(isCorrect, {
             score: score,
             feedback: feedback,

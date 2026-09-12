@@ -17,10 +17,11 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260912-lab-stage-v3">
+    <link rel="stylesheet" href="app.css?v=20260912-stage-inside-v4">
     <link rel="stylesheet" href="shape-zoo.css?v=20260912-lab-stage-v2">
     <link rel="stylesheet" href="word-card-table.css?v=20260909-word-only-choices-v2">
-    <link rel="stylesheet" href="korean-lab-shell.css?v=20260912-lab-stage-v2">
+    <link rel="stylesheet" href="korean-lab-shell.css?v=20260912-stage-inside-v4">
+    <link rel="stylesheet" href="literacy-adventure.css?v=20260912-stage-inside-v4">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -222,32 +223,12 @@
                 </div>
             </div>
 
-            <!-- 메인 단계 선택: 각 단계 아래에 해당 연구소 게임을 함께 배치 -->
-            <div class="dashboard-stage-board" role="group" aria-label="에이두 한글 단계와 연구소 게임 선택">
-                <div class="dashboard-stage-column">
-                    <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('drawing')" id="card-level-1">
-                        <span class="stage-badge">STEP 1</span><span class="stage-emoji" aria-hidden="true">🎨</span><span class="level-title">1단계</span><span class="level-desc">그리기</span>
-                    </button>
-                    <button type="button" id="dashboard-lab-shape" class="dashboard-lab-card" onclick="openAiedueLabShapeZoo()" aria-label="1단계 연구소 게임 도형 동물원 열기"><span aria-hidden="true">🦁</span><span><small>1단계 연구소</small><strong>도형 동물원</strong></span><i aria-hidden="true">→</i></button>
-                </div>
-                <div class="dashboard-stage-column">
-                    <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('hangul')" id="card-level-2">
-                        <span class="stage-badge">STEP 2</span><span class="stage-emoji hangul-icon" aria-hidden="true">ㄱㄴㄷ</span><span class="level-title">2단계</span><span class="level-desc">한글 해득</span>
-                    </button>
-                    <button type="button" id="dashboard-lab-asteroid" class="dashboard-lab-card" onclick="openAiedueLabDictationGame()" aria-label="2단계 연구소 게임 낱말 우주 방어대 열기"><span aria-hidden="true">🚀</span><span><small>2단계 연구소</small><strong>낱말 우주 방어대</strong></span><i aria-hidden="true">→</i></button>
-                </div>
-                <div class="dashboard-stage-column">
-                    <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('dictation')" id="card-level-3">
-                        <span class="stage-badge">STEP 3</span><span class="stage-emoji" aria-hidden="true">✍️</span><span class="level-title">3단계</span><span class="level-desc">교과 맞춤쓰기</span>
-                    </button>
-                    <button type="button" id="dashboard-lab-word-card" class="dashboard-lab-card" onclick="openAiedueLabWordCardGame()" aria-label="3단계 연구소 게임 단어 카드 한 판 열기"><span aria-hidden="true">🃏</span><span><small>3단계 연구소</small><strong>단어 카드 한 판</strong></span><i aria-hidden="true">→</i></button>
-                </div>
-                <div class="dashboard-stage-column">
-                    <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('literacy')" id="card-level-4">
-                        <span class="stage-badge">STEP 4</span><span class="stage-emoji" aria-hidden="true">📚</span><span class="level-title">4단계</span><span class="level-desc">문해력</span>
-                    </button>
-                    <button type="button" id="dashboard-lab-time" class="dashboard-lab-card" onclick="openAiedueLabTimeQuiz()" aria-label="4단계 연구소 게임 시간 퀴즈 열기"><span aria-hidden="true">🕒</span><span><small>4단계 연구소</small><strong>시간 퀴즈</strong></span><i aria-hidden="true">→</i></button>
-                </div>
+            <!-- 메인 단계 선택 -->
+            <div class="dashboard-stage-board" role="group" aria-label="에이두 한글 단계 선택">
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('drawing')" id="card-level-1"><span class="stage-badge">STEP 1</span><span class="stage-emoji" aria-hidden="true">🎨</span><span class="level-title">1단계</span><span class="level-desc">그리기</span></button>
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('hangul')" id="card-level-2"><span class="stage-badge">STEP 2</span><span class="stage-emoji hangul-icon" aria-hidden="true">ㄱㄴㄷ</span><span class="level-title">2단계</span><span class="level-desc">한글 해득</span></button>
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('dictation')" id="card-level-3"><span class="stage-badge">STEP 3</span><span class="stage-emoji" aria-hidden="true">✍️</span><span class="level-title">3단계</span><span class="level-desc">교과 맞춤쓰기</span></button>
+                <button type="button" class="dashboard-stage-card level-card" onclick="openActivityPage('literacy')" id="card-level-4"><span class="stage-badge">STEP 4</span><span class="stage-emoji" aria-hidden="true">📚</span><span class="level-title">4단계</span><span class="level-desc">문해력</span></button>
             </div>
 
         </div>
@@ -279,8 +260,8 @@
             </div>
 
             <div class="drawing-dashboard-content w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <!-- 상단 주요 활동: 그림 미션 / 도형 미션 -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
+                <!-- 상단 주요 활동: 그림 미션 / 도형 미션 / 도형 동물원 -->
+                <div class="stage-game-grid grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-6">
                     <div class="grid-item drawing-action-card p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff] border-purple-100" onclick="openCurrentDrawingMission()">
                         <div class="drawing-card-art drawing-art-sample">🦋</div>
                         <div id="drawing-mission-badge" class="aiedu-badge bg-purple-500 mb-6">오늘의 미션[1단계]</div>
@@ -292,6 +273,7 @@
                         <div class="aiedu-badge bg-purple-500 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">도형 미션</h3>
                     </div>
+                    <button type="button" id="stage-1-game-shape" data-stage-game-entry="1" class="grid-item stage-game-entry" onclick="openAiedueLabShapeZoo()"><span class="stage-game-entry-icon" aria-hidden="true">🦁</span><span class="aiedu-badge bg-emerald-500">1단계 게임</span><strong>도형 동물원</strong><small>도형을 그려 동물 친구를 완성해요</small></button>
                 </div>
 
                 <!-- 하단 활동: 나의 그림 / 친구들 그림 / AI 스케치북 -->
@@ -345,13 +327,14 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <div class="grid grid-cols-1 gap-8 w-full mb-6">
+                <div class="stage-game-grid grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
                     <div id="dictation-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-red-50" onclick="openTodayDictationActivity()">
                         <div id="dictation-lock-badge" class="aiedu-badge bg-red-500 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">교과 맞춤쓰기</h3>
                         <p id="dictation-mission-desc" class="text-2xl text-red-500 font-bold">공부하고 싶은 내용을 사진 찍고 함께 공부해요.</p>
                         <p id="dictation-dan-summary" class="hidden mt-4 rounded-2xl bg-white px-5 py-3 text-base font-black text-red-600 shadow-sm"></p>
                     </div>
+                    <button type="button" id="stage-3-game-word-card" data-stage-game-entry="3" class="grid-item stage-game-entry" onclick="openAiedueLabWordCardGame()"><span class="stage-game-entry-icon" aria-hidden="true">🃏</span><span class="aiedu-badge bg-violet-500">3단계 게임</span><strong>단어 카드 한 판</strong><small>내 단어 카드로 친구와 겨뤄요</small></button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
@@ -409,13 +392,14 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <div class="grid grid-cols-1 gap-8 w-full mb-6">
+                <div class="stage-game-grid grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
                     <!-- 오늘의 미션 -->
                     <div id="literacy-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-blue-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openTodayLiteracyMission()">
                         <div class="aiedu-badge bg-blue-600 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">문해력 문제</h3>
                         <p id="literacy-mission-desc" class="text-xl text-blue-600 font-bold">내 문해력 단증에 맞춰 자동으로 문제가 나와요!</p><div id="literacy-dan-dashboard-badge" class="mt-4 px-4 py-2 rounded-2xl bg-white text-blue-700 font-black shadow-sm">문해력 1단</div>
                     </div>
+                    <button type="button" id="stage-4-game-literacy" data-stage-game-entry="4" class="grid-item stage-game-entry" onclick="openLiteracyAdventureGame()"><span class="stage-game-entry-icon" aria-hidden="true">🧭</span><span class="aiedu-badge bg-cyan-600">4단계 게임</span><strong>문해력 탐험대</strong><small>지문 속 단서를 찾아 문제를 해결해요</small></button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
@@ -546,7 +530,7 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
+                <div class="stage-game-grid grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-6">
                     <div class="grid-item p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#f0faf9]" onclick="openMyKoreanFromDashboard()">
                         <div class="text-7xl mb-6">📚</div>
                         <div class="text-5xl font-black text-[#2c3e50]">나의 한글</div>
@@ -557,6 +541,7 @@
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">오늘의 한글</h3>
                         <p id="today-korean-step-label" class="text-2xl text-[#46b3a5] font-bold">배움 시작 활동</p>
                     </div>
+                    <button type="button" id="stage-2-game-asteroid" data-stage-game-entry="2" class="grid-item stage-game-entry stage-game-entry-dark" onclick="openAiedueLabDictationGame()"><span class="stage-game-entry-icon" aria-hidden="true">🚀</span><span class="aiedu-badge bg-indigo-500">2단계 게임</span><strong>낱말 우주 방어대</strong><small>글자를 획순대로 써서 소행성을 막아요</small></button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
@@ -1698,6 +1683,21 @@
         </main>
     </section>
 
+    <!-- [4단계 게임: 문해력 탐험대] -->
+    <section id="literacy-adventure-game-section" class="view-section aiedue-lab-game-shell literacy-adventure-game hidden" aria-labelledby="literacy-adventure-title">
+        <header class="literacy-adventure-header">
+            <button type="button" id="literacy-adventure-back" class="aiedue-lab-home" onclick="closeLiteracyAdventureGame()" aria-label="4단계 문해력 화면으로 돌아가기">← 4단계</button>
+            <div class="aiedue-lab-brand"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"><div><p>4단계 · AIEDUE LAB</p><h1 id="literacy-adventure-title">🧭 문해력 탐험대</h1></div></div>
+            <div class="literacy-adventure-hud"><span id="literacy-adventure-dan">문해력 1단</span><strong id="literacy-adventure-score">⭐ 0</strong></div>
+        </header>
+        <main class="literacy-adventure-layout">
+            <section class="literacy-adventure-passage" aria-labelledby="literacy-adventure-passage-title"><p class="literacy-adventure-kicker">탐험 지도</p><h2 id="literacy-adventure-passage-title">📖 지문</h2><div id="literacy-adventure-passage">탐험을 시작하면 내 문해력 단에 맞는 지문이 나타나요.</div></section>
+            <section class="literacy-adventure-quest" aria-labelledby="literacy-adventure-quest-title"><p class="literacy-adventure-kicker">단서 찾기</p><h2 id="literacy-adventure-quest-title">4개 관문</h2><ol id="literacy-adventure-steps"><li class="active">1. 지문 읽기</li><li>2. 핵심 낱말</li><li>3. 문제 단서</li><li>4. 최종 해결</li></ol><div id="literacy-adventure-clue">지문을 천천히 읽고 준비되면 다음 관문으로 가요.</div><button type="button" id="literacy-adventure-next">탐험 시작</button></section>
+            <section id="literacy-adventure-answer" class="literacy-adventure-answer" aria-labelledby="literacy-adventure-answer-title"><p class="literacy-adventure-kicker">최종 문제</p><h2 id="literacy-adventure-answer-title">문제를 해결해요</h2><div id="literacy-adventure-question">아직 문제를 불러오지 않았어요.</div><div id="literacy-adventure-options"></div><div id="literacy-adventure-input-wrap" class="hidden"><textarea id="literacy-adventure-input" rows="4" placeholder="답을 적어 보세요."></textarea><button type="button" id="literacy-adventure-submit">정답 제출</button></div><div id="literacy-adventure-feedback" role="status" aria-live="polite"></div><button type="button" id="literacy-adventure-restart" class="hidden">새 탐험 시작</button></section>
+        </main>
+        <div id="literacy-adventure-loading" class="literacy-adventure-overlay"><div><span aria-hidden="true">🧭</span><h2>문해력 탐험대</h2><p>내 문해력 단증과 단어 은행으로 새로운 탐험을 만들어요.</p><button type="button" id="literacy-adventure-start">탐험 시작하기</button></div></div>
+    </section>
+
     <!-- [에이두 연구실: 도형 동물원] -->
     <section id="shape-zoo-game-section" class="view-section aiedue-lab-game-shell shape-zoo-game hidden" aria-labelledby="shape-zoo-title"></section>
 
@@ -1803,11 +1803,12 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260912-lab-stage-v5"></script>
+    <script type="module" src="app.js?v=20260912-stage-inside-v4"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260912-lab-stage-v3"></script>
     <script type="module" src="shape-zoo-game.js?v=20260912-lab-stage-v2"></script>
     <script type="module" src="word-card-table-game.js?v=20260912-lab-stage-v2"></script>
     <script type="module" src="korean-lab-time-quiz.js?v=20260912-lab-stage-v2"></script>
+    <script type="module" src="literacy-adventure-game.js?v=20260912-stage-inside-v4"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">

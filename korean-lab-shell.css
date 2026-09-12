@@ -75,7 +75,8 @@ body.aiedue-lab-game-open .aiedue-rpg-hud {
    조작부를 잘라내지 않도록 각 게임의 원래 세로 스크롤 계약을 보존한다. */
 #shape-zoo-game-section.aiedue-lab-game-shell,
 #word-card-table-game-section.aiedue-lab-game-shell,
-#dictation-asteroid-game-section.aiedue-lab-game-shell {
+#dictation-asteroid-game-section.aiedue-lab-game-shell,
+#literacy-adventure-game-section.aiedue-lab-game-shell {
     overflow-x: hidden !important;
     overflow-y: auto !important;
 }
