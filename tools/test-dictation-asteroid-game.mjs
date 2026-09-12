@@ -45,7 +45,7 @@ test('화면은 60초·한 글자 쓰기·다음 두 글자·연출·명예의 �
         'id="dictation-leaderboard-list"', 'id="dictation-result-reward"', 'id="dictation-save-status"'
     ]) assert.ok(screen.includes(marker), `게임 화면 마커 없음: ${marker}`);
     assert.equal((screen.match(/id="dictation-explosion"[\s\S]*?<\/div>/)?.[0].match(/<i>/g) || []).length, 12);
-    assert.ok(html.includes('dictation-asteroid-game.js?v=20260908-dictation-asteroid-v3'));
+    assert.ok(html.includes('dictation-asteroid-game.js?v=20260912-lab-stage-v3'));
     assert.ok(game.includes("./dictation-asteroid-core.mjs?v=20260908-dictation-asteroid-v3"));
 });
 
@@ -100,6 +100,17 @@ test('한 글자 완료가 미사일·폭발·점수와 다음 큐로 이어진�
     assert.ok(css.includes('@keyframes dictation-missile-trail'));
     assert.ok(css.includes('@keyframes dictation-particle-burst'));
     assert.match(css, /\.dictation-spaceship-dome img[^{]*\{[^}]*object-position:\s*50% 42%/s);
+    assert.ok(game.includes("classList.add('is-ready')"));
+    assert.ok(game.includes('void elements.missile.offsetWidth'));
+    assert.ok(game.includes('missileRect.left + missileRect.width / 2'));
+    assert.ok(game.includes('missileRect.top + missileRect.height / 2'));
+    assert.ok(game.includes("querySelector('.dictation-spaceship')"));
+    assert.ok(game.includes('spaceshipRect.top'));
+    assert.ok(game.includes("addEventListener('transitionend', flightTransitionHandler)"));
+    assert.ok(game.includes("event.propertyName === 'transform'"));
+    assert.ok(game.includes('scheduleResolution(completeFlight, 1200)'));
+    assert.ok(game.includes("removeEventListener('transitionend', flightTransitionHandler)"));
+    assert.ok(css.includes('bottom: 54px'));
 });
 
 test('Web Audio BGM은 시작 클릭 이후 재생되고 종료 시 정리된다', () => {
@@ -131,8 +142,21 @@ test('백그라운드 일시정지와 이탈 시 타이머·음성·오디오를
     assert.ok(app.includes('window.stopAsteroidDictationGame?.()'));
 });
 
+test('비행 중 일시정지는 transition 완료를 소비하지 않고 재개 시 명중을 이어간다', () => {
+    const launch = section(game, 'function launchMissile()', 'function destroyAsteroid()');
+    const pausedCheck = launch.indexOf("if (state.status === 'paused') return");
+    const completedWrite = launch.indexOf('flightCompleted = true', pausedCheck);
+    assert.ok(pausedCheck >= 0, '정지 중 비행 완료를 보류하는 검사 없음');
+    assert.ok(completedWrite >= 0, '비행 완료 단일 실행 보호 없음');
+    assert.ok(pausedCheck < completedWrite, '정지 상태를 확인하기 전에 비행 완료를 소비하면 안 됨');
+    assert.ok(launch.includes('generation !== lifecycleGeneration'));
+    assert.ok(launch.includes("state.status !== 'playing'"));
+    assert.ok(game.includes('scheduleResolution(pendingResolution.callback, pendingResolution.remaining)'));
+});
+
 test('모바일 폭과 reduced motion 보호 규칙이 있다', () => {
-    assert.ok(css.includes('@media (max-width: 520px)'));
+    assert.match(css, /\.dictation-asteroid-game\s*\{[^}]*justify-content:\s*flex-start/s, '넘치는 모바일 게임 콘텐츠가 헤더를 위로 밀지 않아야 한다');
+    assert.match(css, /@media \(max-width: 520px\)/);
     assert.ok(css.includes('grid-template-rows: 300px'));
     assert.ok(css.includes('min-height: 230px'));
     assert.ok(css.includes('@media (prefers-reduced-motion: reduce)'));

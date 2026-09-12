@@ -3580,19 +3580,45 @@ window.openAiedueLab = function openAiedueLab() {
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
 };
 
+window.rememberAiedueLabReturnFocus = function rememberAiedueLabReturnFocus(fallbackId) {
+    const active = document.activeElement;
+    window.aiedueLabReturnFocus = active instanceof HTMLElement && active.classList.contains('dashboard-lab-card')
+        ? active
+        : document.getElementById(fallbackId);
+};
+
+window.restoreAiedueLabReturnFocus = function restoreAiedueLabReturnFocus(fallbackId) {
+    const target = window.aiedueLabReturnFocus?.isConnected
+        ? window.aiedueLabReturnFocus
+        : document.getElementById(fallbackId);
+    window.aiedueLabReturnFocus = null;
+    const focusTarget = () => {
+        const currentTarget = target?.isConnected ? target : document.getElementById(fallbackId);
+        currentTarget?.focus?.();
+    };
+    window.setTimeout(focusTarget, 0);
+    window.setTimeout(() => {
+        if (!document.activeElement || document.activeElement === document.body) focusTarget();
+    }, 120);
+};
+
 window.openAiedueLabDictationGame = function openAiedueLabDictationGame() {
+    window.rememberAiedueLabReturnFocus?.('dashboard-lab-asteroid');
     window.openAsteroidDictationGame?.();
 };
 
 window.openAiedueLabShapeZoo = function openAiedueLabShapeZoo() {
+    window.rememberAiedueLabReturnFocus?.('dashboard-lab-shape');
     window.openShapeZooGame?.();
 };
 
 window.openAiedueLabWordCardGame = function openAiedueLabWordCardGame() {
+    window.rememberAiedueLabReturnFocus?.('dashboard-lab-word-card');
     window.openWordCardTableGame?.();
 };
 
 window.openAiedueLabTimeQuiz = function openAiedueLabTimeQuiz() {
+    window.rememberAiedueLabReturnFocus?.('dashboard-lab-time');
     window.openKoreanLabTimeQuiz?.();
 };
 

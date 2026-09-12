@@ -30,6 +30,7 @@ let bgmTimer = 0;
 let bgmStep = 0;
 let lifecycleGeneration = 0;
 let leaderboardRequest = 0;
+let missileFlightEndHandler = null;
 const auxiliaryTimers = new Set();
 const auxiliaryFrames = new Set();
 
@@ -160,6 +161,8 @@ function cancelGameLoops() {
     animationFrame = 0;
     cancelResolution();
     cancelAuxiliaryWork();
+    if (missileFlightEndHandler) elements.missile?.removeEventListener('transitionend', missileFlightEndHandler);
+    missileFlightEndHandler = null;
     lifecycleGeneration += 1;
 }
 
@@ -297,24 +300,66 @@ function launchMissile() {
     }
     resolving = true;
     fallRemaining = Math.max(0, fallDuration - (now - fallStartedAt));
-    const fieldRect = elements.field.getBoundingClientRect();
-    const asteroidRect = elements.asteroid.getBoundingClientRect();
-    const missileRect = elements.missile.getBoundingClientRect();
-    const targetX = asteroidRect.left + asteroidRect.width / 2 - (fieldRect.left + fieldRect.width / 2);
-    const targetY = asteroidRect.top + asteroidRect.height / 2 - (fieldRect.bottom - missileRect.height - 32);
+    elements.missile.classList.remove('is-firing');
+    elements.missile.style.removeProperty('bottom');
     elements.missile.classList.add('is-ready');
+
+    // 숨김 상태에서는 크기가 0이므로 먼저 표시한 뒤 실제 로켓 기수에 맞춘다.
+    void elements.missile.offsetWidth;
+    const spaceship = elements.field.querySelector('.dictation-spaceship');
+    const spaceshipRect = spaceship.getBoundingClientRect();
+    let missileRect = elements.missile.getBoundingClientRect();
+    const currentBottom = Number.parseFloat(getComputedStyle(elements.missile).bottom) || 0;
+    elements.missile.style.bottom = `${currentBottom + missileRect.top - spaceshipRect.top}px`;
+    void elements.missile.offsetWidth;
+
+    const asteroidRect = elements.asteroid.getBoundingClientRect();
+    missileRect = elements.missile.getBoundingClientRect();
+    const targetX = asteroidRect.left + asteroidRect.width / 2 - (missileRect.left + missileRect.width / 2);
+    const targetY = asteroidRect.top + asteroidRect.height / 2 - (missileRect.top + missileRect.height / 2);
     elements.missile.style.setProperty('--missile-x', `${targetX}px`);
     elements.missile.style.setProperty('--missile-y', `${targetY}px`);
     announce('정확해요! 에이두 미사일 발사!', 'success');
     playMissileSound();
-    // The writing succeeded before the deadline, so secure the point now; only the visual impact is delayed.
+    // 제한시간 전에 성공한 점수는 즉시 확정하고, 명중 연출만 비행 완료까지 기다린다.
     state = resolveAsteroidHit(state);
     updateHud();
+
     const generation = lifecycleGeneration;
+    let flightCompleted = false;
+    let flightTransitionHandler = null;
+    const clearFlightTransitionHandler = () => {
+        if (flightTransitionHandler) elements.missile.removeEventListener('transitionend', flightTransitionHandler);
+        if (missileFlightEndHandler === flightTransitionHandler) missileFlightEndHandler = null;
+        flightTransitionHandler = null;
+    };
+    const completeFlight = () => {
+        if (flightCompleted) return;
+        if (generation !== lifecycleGeneration) {
+            flightCompleted = true;
+            clearFlightTransitionHandler();
+            return;
+        }
+        // 정지 중 transitionend가 와도 완료를 소비하지 않는다. 재개 시 보존된 fallback이 다시 처리한다.
+        if (state.status === 'paused') return;
+        flightCompleted = true;
+        clearFlightTransitionHandler();
+        if (state.status !== 'playing') return;
+        cancelResolution();
+        destroyAsteroid();
+    };
+    flightTransitionHandler = (event) => {
+        if (event.propertyName === 'transform') completeFlight();
+    };
+    missileFlightEndHandler = flightTransitionHandler;
+    elements.missile.addEventListener('transitionend', flightTransitionHandler);
+
+    // 로켓 출발 상태가 그려진 다음 프레임에 비행을 시작한다.
     trackedFrame(() => {
         if (generation === lifecycleGeneration && state.status === 'playing') elements.missile.classList.add('is-firing');
     });
-    scheduleResolution(destroyAsteroid, 720);
+    // transitionend가 누락되는 환경에서만 동작하는 안전 장치다.
+    scheduleResolution(completeFlight, 1200);
 }
 
 function destroyAsteroid() {
@@ -553,7 +598,7 @@ window.stopAsteroidDictationGame = function stopAsteroidDictationGame() {
 window.closeAsteroidDictationGame = function closeAsteroidDictationGame() {
     window.stopAsteroidDictationGame();
     window.showAiedueTopLevelSection?.('dashboard-section');
-    document.getElementById('dashboard-section')?.focus?.();
+    window.restoreAiedueLabReturnFocus?.('dashboard-lab-asteroid');
 };
 
 initializeGame();

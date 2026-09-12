@@ -192,7 +192,7 @@ window.closeKoreanLabTimeQuiz = function closeKoreanLabTimeQuiz() {
     window.stopKoreanLabTimeQuiz();
     document.body.classList.remove('korean-lab-time-quiz-open');
     window.showAiedueTopLevelSection?.('dashboard-section');
-    window.openAiedueLab?.();
+    window.restoreAiedueLabReturnFocus?.('dashboard-lab-time');
 };
 
 initialize();

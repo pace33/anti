@@ -3,8 +3,8 @@ import { ZOO_SHAPES, createZooState, createZooShapeDeck, getDrawingDuration, eva
 const section = document.getElementById('shape-zoo-game-section');
 const markup = `
     <header class="zoo-header">
-        <button type="button" id="zoo-home" class="zoo-back">← <span>연구실</span></button>
-        <div class="zoo-brand"><span class="zoo-brand-mark" aria-hidden="true">◒</span><div><p>AIEDUE LAB <span>/ PLAY & LEARN</span></p><h1 id="shape-zoo-title">도형 동물원</h1></div></div>
+        <button type="button" id="zoo-home" class="zoo-back aiedue-lab-home">← <span>홈</span></button>
+        <div class="zoo-brand aiedue-lab-brand"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"><div><p>1단계 · AIEDUE LAB</p><h1 id="shape-zoo-title">🦁 도형 동물원</h1></div></div>
         <div class="zoo-header-actions"><span class="zoo-lab-tag">생각이 자라는 놀이터</span><button type="button" id="zoo-pause" class="zoo-icon-button" aria-label="게임 일시정지" disabled>Ⅱ</button></div>
     </header>
     <main class="zoo-main">
@@ -32,7 +32,7 @@ const markup = `
         <footer class="zoo-footer"><span><b>01</b> 말풍선 속 도형을 봐요</span><i>→</i><span><b>02</b> 점선을 따라 그려요</span><i>→</i><span><b>03</b> 완료를 눌러 과자를 줘요</span><small>성공할수록 시간이 조금씩 줄어요!</small></footer>
     </main>
     <div id="zoo-overlay" class="zoo-overlay" role="dialog" aria-modal="true" aria-labelledby="zoo-overlay-title" aria-describedby="zoo-overlay-copy">
-        <div class="zoo-overlay-card"><span class="zoo-eyebrow" id="zoo-overlay-eyebrow">WELCOME TO SHAPE ZOO</span><span class="zoo-overlay-symbol" aria-hidden="true">◯ △ □</span><h2 id="zoo-overlay-title">레오의 간식을 만들어 볼까요?</h2><p id="zoo-overlay-copy">말풍선 속 도형을 점선 따라 그리고 완료를 눌러요. 잘 그리면 과자 +1개! 모양이 다르거나 시간이 지나면 생명이 1개 줄어요.</p><div id="zoo-overlay-chips" class="zoo-overlay-chips"><span>생명 3개</span><span>18초부터 시작</span><span>나의 도형 ${ZOO_SHAPES.length}종</span></div><button id="zoo-start" type="button" class="zoo-primary">게임 시작 <span aria-hidden="true">→</span></button><button id="zoo-overlay-home" type="button" class="zoo-text-button">연구실로 돌아가기</button></div>
+        <div class="zoo-overlay-card"><span class="zoo-eyebrow" id="zoo-overlay-eyebrow">WELCOME TO SHAPE ZOO</span><span class="zoo-overlay-symbol" aria-hidden="true">◯ △ □</span><h2 id="zoo-overlay-title">레오의 간식을 만들어 볼까요?</h2><p id="zoo-overlay-copy">말풍선 속 도형을 점선 따라 그리고 완료를 눌러요. 잘 그리면 과자 +1개! 모양이 다르거나 시간이 지나면 생명이 1개 줄어요.</p><div id="zoo-overlay-chips" class="zoo-overlay-chips"><span>생명 3개</span><span>18초부터 시작</span><span>나의 도형 ${ZOO_SHAPES.length}종</span></div><button id="zoo-start" type="button" class="zoo-primary">게임 시작 <span aria-hidden="true">→</span></button><button id="zoo-overlay-home" type="button" class="zoo-text-button">에이두 한글 홈</button></div>
     </div>
     <canvas id="zoo-cookie" class="zoo-cookie" width="160" height="160" aria-hidden="true" hidden></canvas>
 `;
@@ -320,8 +320,8 @@ function open() {
 function close() {
     stop(); document.body.classList.remove('shape-zoo-open');
     if (section.hasAttribute('data-standalone')) { window.location.href = 'index.html'; return; }
-    window.showAiedueTopLevelSection?.('dashboard-section'); window.openAiedueLab?.();
-    if (previousFocus?.isConnected) previousFocus.focus();
+    window.showAiedueTopLevelSection?.('dashboard-section');
+    window.restoreAiedueLabReturnFocus?.('dashboard-lab-shape');
 }
 window.openShapeZooGame = open;
 window.stopShapeZooGame = stop;

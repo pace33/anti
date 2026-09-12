@@ -38,8 +38,8 @@ test('연구실 네 게임은 에이두 한글 공통 둥근 카드 셸을 쓴�
     }
     assert.ok(html.includes('href="korean-lab-shell.css'));
     assert.match(html, /<script\b[^>]*type="module"[^>]*src="app\.js\?v=[^"]+"/);
-    assert.ok(html.includes('korean-lab-shell.css?v=20260909-3'));
-    assert.ok(html.includes('korean-lab-time-quiz.js?v=20260909-3'));
+    assert.ok(html.includes('korean-lab-shell.css?v=20260912-lab-stage-v2'));
+    assert.ok(html.includes('korean-lab-time-quiz.js?v=20260912-lab-stage-v2'));
     assert.ok(timeQuizEntry.includes("./korean-lab-time-quiz-core.mjs?v=20260909-3"));
     assert.ok(labCss.includes('width: min(95vw, 1200px) !important'));
     assert.ok(labCss.includes('border: 12px solid #fff !important'));
@@ -80,4 +80,33 @@ test('시간 퀴즈는 같은 문제의 저장 재시도에 같은 영수증 ID�
     assert.match(timeQuizEntry, /const attemptId = state\.attemptId;/);
     const checkAnswer = timeQuizEntry.slice(timeQuizEntry.indexOf('async function checkAnswer'), timeQuizEntry.indexOf('window.openKoreanLabTimeQuiz'));
     assert.doesNotMatch(checkAnswer, /const attemptId = createKoreanLabAttemptId\(\)/);
+});
+
+test('각 단계 카드 아래에 해당 연구소 게임이 배치되고 공통 한글 브랜드를 쓴다', () => {
+    for (const [step, opener, title] of [
+        [1, 'openAiedueLabShapeZoo()', '도형 동물원'],
+        [2, 'openAiedueLabDictationGame()', '낱말 우주 방어대'],
+        [3, 'openAiedueLabWordCardGame()', '단어 카드 한 판'],
+        [4, 'openAiedueLabTimeQuiz()', '시간 퀴즈']
+    ]) {
+        const columnStart = html.indexOf(`id="card-level-${step}"`);
+        const columnEnd = html.indexOf('</div>', columnStart);
+        const column = html.slice(columnStart, columnEnd);
+        assert.ok(column.includes(opener), `${step}단계 연구소 진입점 없음`);
+        assert.ok(column.includes(title), `${step}단계 연구소 제목 없음`);
+    }
+    assert.equal((html.match(/class="dashboard-stage-column"/g) || []).length, 4);
+    assert.equal((html.match(/class="dashboard-lab-card"/g) || []).length, 4);
+    assert.ok(labCss.includes('.aiedue-lab-brand > img'));
+});
+
+test('연구소 게임을 닫으면 해당 단계 카드로 키보드 포커스를 복원한다', () => {
+    for (const id of ['dashboard-lab-shape', 'dashboard-lab-asteroid', 'dashboard-lab-word-card', 'dashboard-lab-time']) {
+        assert.ok(html.includes(`id="${id}"`), `포커스 대상 없음: ${id}`);
+        assert.ok(app.includes(`'${id}'`), `포커스 기억 연결 없음: ${id}`);
+    }
+    assert.ok(app.includes('window.restoreAiedueLabReturnFocus'));
+    assert.ok(app.includes('const currentTarget = target?.isConnected ? target : document.getElementById(fallbackId)'));
+    assert.ok(app.includes('currentTarget?.focus?.()'));
+    assert.ok(app.includes('document.activeElement === document.body) focusTarget()'));
 });

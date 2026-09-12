@@ -2,7 +2,7 @@ import { createWordCardState, resolveWordCardAnswer, loadWordCardRound } from '.
 
 const section = document.getElementById('word-card-table-game-section');
 const markup = `
-    <header class="wct-header"><button type="button" id="wct-home" class="wct-back">← 연구실</button><div class="wct-brand"><span aria-hidden="true">▤</span><div><p>AIEDUE LAB <i>LEVEL 03</i></p><h1 id="wct-title">단어 카드 한 판</h1></div></div><button type="button" id="wct-finish" class="wct-back" disabled>게임 마치기</button></header>
+    <header class="wct-header"><button type="button" id="wct-home" class="wct-back aiedue-lab-home">← 홈</button><div class="wct-brand aiedue-lab-brand"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"><div><p>3단계 · AIEDUE LAB</p><h1 id="wct-title">🃏 단어 카드 한 판</h1></div></div><button type="button" id="wct-finish" class="wct-back" disabled>게임 마치기</button></header>
     <main class="wct-main">
         <div class="wct-intro"><div><span class="wct-eyebrow">친구와 마주 앉아, 낱말 놀이</span><h2>그림과 설명을 보고 <em>내 카드를 내요!</em></h2></div><div class="wct-stats"><span>내 점수 <strong id="wct-score">0</strong></span><span>도전 <strong id="wct-attempts">0<small>번</small></strong></span></div></div>
         <div class="wct-match">
@@ -231,7 +231,8 @@ function open() {
 function close() {
     stop(); document.body.classList.remove('word-card-table-open');
     if (section.hasAttribute('data-standalone')) { window.location.href = 'index.html'; return; }
-    window.showAiedueTopLevelSection?.('dashboard-section'); window.openAiedueLab?.();
+    window.showAiedueTopLevelSection?.('dashboard-section');
+    window.restoreAiedueLabReturnFocus?.('dashboard-lab-word-card');
 }
 window.openWordCardTableGame = open;
 window.stopWordCardTableGame = stop;

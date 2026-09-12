@@ -134,12 +134,23 @@ test('persisted navigation pauses for a usable browser-back restore', () => {
 test('lab navigation uses an allowlisted action and registers the section and assets', () => {
     const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
     const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const standaloneHtml = readFileSync(new URL('../shape-zoo.html', import.meta.url), 'utf8');
+    const zooCss = readFileSync(new URL('../shape-zoo.css', import.meta.url), 'utf8');
     assert.match(app, /SAFE_MODAL_ACTIONS = new Set\(\[[\s\S]*?'openAiedueLabShapeZoo'/);
     assert.match(app, /onclick="openAiedueLabShapeZoo\(\)"/);
     assert.match(app, /if \(!isShapeZoo\) window\.stopShapeZooGame\?\.\(\)/);
     assert.match(html, /id="shape-zoo-game-section"/);
     assert.match(html, /src="shape-zoo-game\.js/);
     assert.match(html, /href="shape-zoo\.css/);
+    const mainScriptVersion = html.match(/src="shape-zoo-game\.js\?v=([^"]+)"/)?.[1];
+    const standaloneScriptVersion = standaloneHtml.match(/src="shape-zoo-game\.js\?v=([^"]+)"/)?.[1];
+    const mainCssVersion = html.match(/href="shape-zoo\.css\?v=([^"]+)"/)?.[1];
+    const standaloneCssVersion = standaloneHtml.match(/href="shape-zoo\.css\?v=([^"]+)"/)?.[1];
+    assert.ok(mainScriptVersion, '메인 페이지 도형 동물원 JS 캐시 키가 필요하다');
+    assert.equal(standaloneScriptVersion, mainScriptVersion, '독립 페이지도 메인과 같은 도형 동물원 JS를 불러야 한다');
+    assert.equal(mainCssVersion, mainScriptVersion, '변경된 도형 동물원 CSS와 JS는 같은 캐시 릴리스 키를 사용해야 한다');
+    assert.equal(standaloneCssVersion, mainCssVersion, '독립 페이지도 메인과 같은 도형 동물원 CSS를 불러야 한다');
+    assert.match(zooCss, /\.zoo-brand\s*>\s*img\s*\{[^}]*width:[^;}]+;[^}]*height:[^;}]+;/s, '독립 페이지에서도 한글 로고 크기를 제한해야 한다');
     assert.match(app, /DRAWING_SHAPE_LIBRARY as drawingShapeLibrary/);
 });
 

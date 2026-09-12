@@ -53,6 +53,24 @@ body.aiedue-lab-game-open .aiedue-rpg-hud {
 }
 .aiedue-lab-game-shell.hidden { display: none !important; }
 
+/* 네 연구소 게임이 공유하는 에이두 한글 브랜드 헤더 */
+.aiedue-lab-brand { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 12px; }
+.aiedue-lab-brand > img { width: 68px; height: 50px; flex: 0 0 auto; object-fit: contain; border: 2px solid #dcefd6; border-radius: 16px; background: #fff; box-shadow: 0 5px 14px rgba(85,179,70,.13); }
+.aiedue-lab-brand > div { min-width: 0; }
+.aiedue-lab-brand p { margin: 0 0 2px !important; color: #397841 !important; font-size: .7rem !important; font-weight: 900 !important; letter-spacing: .1em !important; }
+.aiedue-lab-brand h1 { margin: 0 !important; overflow: hidden; color: #2c3e50; font-weight: 900 !important; text-overflow: ellipsis; white-space: nowrap; }
+.aiedue-lab-home { border: 2px solid #b7e4a1 !important; border-radius: 16px !important; color: #397841 !important; background: #f4fbf1 !important; box-shadow: 0 4px 0 #dcefd6; font-weight: 900 !important; }
+.aiedue-lab-home:hover { background: #fff !important; transform: translateY(-2px); }
+#dictation-asteroid-game-section .aiedue-lab-brand > img { border-color: rgba(103,232,249,.65); }
+#dictation-asteroid-game-section .aiedue-lab-brand h1 { color: #fff; }
+#dictation-asteroid-game-section .aiedue-lab-brand p { color: #67e8f9 !important; }
+
+@media (max-width: 760px) {
+    .aiedue-lab-brand { gap: 7px; justify-content: flex-start; }
+    .aiedue-lab-brand > img { width: 45px; height: 36px; border-radius: 11px; }
+    .aiedue-lab-brand p { font-size: .56rem !important; letter-spacing: .04em !important; }
+}
+
 /* 기존 세 게임은 루트 자체가 스크롤 컨테이너다. 공통 외곽 셸이 모바일의
    조작부를 잘라내지 않도록 각 게임의 원래 세로 스크롤 계약을 보존한다. */
 #shape-zoo-game-section.aiedue-lab-game-shell,

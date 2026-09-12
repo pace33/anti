@@ -9,6 +9,7 @@ body.shape-zoo-open { overflow: hidden; }
 .zoo-header { flex-shrink: 0; min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px clamp(20px, 4vw, 64px); border-bottom: 1px solid #dce1d5; background: #fbfbf4; }
 .zoo-back { border: 1px solid #d1d9ce; border-radius: 12px; padding: 11px 17px; background: transparent; color: #54665a; font-size: 14px !important; font-weight: 700 !important; }
 .zoo-brand { display: flex; align-items: center; gap: 12px; }
+.zoo-brand > img { width: 68px; height: 50px; flex: 0 0 auto; object-fit: contain; border: 2px solid #dcefd6; border-radius: 16px; background: #fff; box-shadow: 0 5px 14px rgba(85,179,70,.13); }
 .zoo-brand-mark { font-size: 42px; line-height: 1; color: #cc8839; transform: rotate(-25deg); }
 .zoo-brand p { font: 700 10px 'Outfit', sans-serif; color: #497060; letter-spacing: .18em; }
 .zoo-brand p span { margin-left: 6px; color: #929e91; }
@@ -130,6 +131,7 @@ body.shape-zoo-open { overflow: hidden; }
     .zoo-header { min-height: 65px; gap: 10px; padding: 9px 14px; }
     .zoo-back { min-height: 42px; padding: 9px 11px; font-size: 12px !important; }
     .zoo-brand { gap: 7px; }
+    .zoo-brand > img { width: 45px; height: 36px; border-radius: 11px; }
     .zoo-brand-mark { font-size: 29px; }
     .zoo-brand p { font-size: 8px; }
     .zoo-brand p span { display: none; }
