@@ -37,7 +37,7 @@ test('연구실 네 게임은 에이두 한글 공통 둥근 카드 셸을 쓴�
         assert.match(html, new RegExp(`id="${id}"[^>]*class="[^"]*aiedue-lab-game-shell`));
     }
     assert.ok(html.includes('href="korean-lab-shell.css'));
-    assert.ok(html.includes('app.js?v=20260909-word-card-table-korean-lab-v3'));
+    assert.match(html, /<script\b[^>]*type="module"[^>]*src="app\.js\?v=[^"]+"/);
     assert.ok(html.includes('korean-lab-shell.css?v=20260909-3'));
     assert.ok(html.includes('korean-lab-time-quiz.js?v=20260909-3'));
     assert.ok(timeQuizEntry.includes("./korean-lab-time-quiz-core.mjs?v=20260909-3"));

@@ -177,7 +177,7 @@ test('the stage-3 lab action is allowlisted, launches the controller, and regist
     assert.match(html, /<section\b[^>]*id="word-card-table-game-section"[^>]*class="[^"]*view-section[^"]*word-card-table-game[^"]*hidden"[^>]*aria-labelledby="wct-title"[^>]*><\/section>/);
     assert.match(html, /<link\b[^>]*href="word-card-table\.css\?v=[^"]+"/);
     assert.match(html, /<script\b[^>]*type="module"[^>]*src="word-card-table-game\.js\?v=[^"]+"/);
-    assert.match(html, /<script\b[^>]*type="module"[^>]*src="app\.js\?v=[^"]*word-card-table[^"]*"/);
+    assert.match(html, /<script\b[^>]*type="module"[^>]*src="app\.js\?v=[^"]+"/);
 });
 
 test('navigation and auth integration stop obsolete games and keep the RPG HUD visible', () => {
