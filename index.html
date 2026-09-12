@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260902-aiedue-library-v146">
+    <meta name="aiedue-korean-build" content="20260912-drawing-brand-v147">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260908-dictation-asteroid-v3">
+    <link rel="stylesheet" href="app.css?v=20260912-drawing-brand-v147">
     <link rel="stylesheet" href="shape-zoo.css?v=20260908-1">
     <link rel="stylesheet" href="word-card-table.css?v=20260909-word-only-choices-v2">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260909-3">
@@ -253,12 +253,12 @@
         </div>
 
         <!-- [3-1. 에이두 그리기 대시보드 섹션 - 1단계] -->
-        <div id="drawing-activities-section" class="view-section hidden bg-white">
+        <div id="drawing-activities-section" class="view-section hidden bg-white drawing-branded-section">
             <!-- Official Header Integration -->
-            <div class="absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
-                <div class="pointer-events-auto cursor-pointer" onclick="openDashboard()">
-                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo" style="width: 180px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));">
-                </div>
+            <div class="drawing-brand-header drawing-dashboard-header absolute top-0 left-0 w-full p-10 flex justify-between items-start z-50 pointer-events-none">
+                <button type="button" class="drawing-logo-button pointer-events-auto cursor-pointer" onclick="openDashboard()" aria-label="에이두 한글 홈으로 돌아가기">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo">
+                </button>
                 <div class="pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
                     <div class="text-right">
                         <div class="flex items-center justify-end gap-2">
@@ -278,7 +278,7 @@
                 </div>
             </div>
 
-            <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
+            <div class="drawing-dashboard-content w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
                 <!-- 상단 주요 활동: 그림 미션 / 도형 미션 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
                     <div class="grid-item drawing-action-card p-10 flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#fdf0ff] border-purple-100" onclick="openCurrentDrawingMission()">
@@ -580,11 +580,21 @@
         </div>
 
         <!-- [그리기 시리즈: 그림 미션] -->
-        <div id="my-drawing-section" class="fade-in hidden">
-            <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
-                <button type="button" class="flex flex-col gap-1 items-start text-left" onclick="goDrawingDashboard()">
-                    <span class="aiedu-badge bg-purple-500">뒤로 가기</span>
-                    <span class="text-4xl font-bold text-[#7c3aed] tracking-tight">나의 그림</span>
+        <div id="my-drawing-section" class="view-section fade-in hidden bg-white drawing-branded-section">
+            <div class="drawing-brand-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-center z-50 pointer-events-none">
+                <button type="button" class="drawing-logo-button pointer-events-auto" onclick="goDrawingDashboard()" aria-label="에이두 그리기로 돌아가기">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo">
+                </button>
+                <div class="drawing-brand-context" aria-label="현재 위치: 에이두 그리기, 나의 그림">
+                    <span class="drawing-brand-context-icon" aria-hidden="true">🎨</span>
+                    <span><small>에이두 그리기</small><strong>나의 그림</strong></span>
+                </div>
+            </div>
+            <div class="drawing-page-heading flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
+                <button type="button" class="drawing-page-title flex flex-col gap-1 items-start text-left" onclick="goDrawingDashboard()">
+                    <span class="aiedu-badge bg-purple-500">← 그리기 홈</span>
+                    <span class="text-4xl font-bold text-[#5f3dc4] tracking-tight">나의 그림</span>
+                    <span class="drawing-page-subtitle">완료한 미션과 내가 만든 작품을 한눈에 살펴봐요.</span>
                 </button>
                 <div class="drawing-header-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
                     <div class="text-right">
@@ -631,7 +641,16 @@
         </div>
 
         <!-- [그리기 시리즈: 공용 작업실] -->
-        <div id="drawing-workspace-section" class="fade-in hidden">
+        <div id="drawing-workspace-section" class="view-section fade-in hidden bg-white drawing-branded-section">
+            <div class="drawing-brand-header absolute top-0 left-0 w-full px-10 pt-7 flex justify-between items-center z-50 pointer-events-none">
+                <button type="button" class="drawing-logo-button pointer-events-auto" onclick="goDrawingDashboard()" aria-label="에이두 그리기로 돌아가기">
+                    <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo">
+                </button>
+                <div class="drawing-brand-context" aria-label="현재 위치: 에이두 그리기, 그림 작업실">
+                    <span class="drawing-brand-context-icon" aria-hidden="true">🖍️</span>
+                    <span><small>에이두 그리기</small><strong>그림 작업실</strong></span>
+                </div>
+            </div>
             <div class="drawing-workspace-top">
                 <div class="flex items-center gap-4">
                     <div>
