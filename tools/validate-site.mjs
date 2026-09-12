@@ -403,9 +403,10 @@ assert(sharedBankLoad.includes('queryLimit(200)'), '한계돌파 공용 오답 �
 assert(!sharedBankLoad.includes('currentUserId') && !sharedBankLoad.includes("where('userId'"), '한계돌파 조회가 현재 학생이 아닌 다른 학생의 오답을 제외합니다.');
 assert(limitBreakFlow.includes('setupLiteracyWorkspace(randomQuestion, true)'), '다른 학생의 공용 오답이 한계돌파 풀이 화면으로 전달되지 않습니다.');
 const essaySubmit = section(app, 'window.submitLiteracyEssayAnswer', 'function cloneLiteracyValue');
-assert(essaySubmit.indexOf('userLiteracyAnswerChecked = true;') < essaySubmit.indexOf('callKoreanAiGenerate'), '서술형 AI 채점 요청 전에 중복 제출 잠금이 설정되지 않습니다.');
+const essayGrader = section(app, 'async function gradeLiteracyEssayQuestion', 'window.aiedueLiteracyAdventureData');
+assert(essaySubmit.indexOf('userLiteracyAnswerChecked = true;') < essaySubmit.indexOf('gradeLiteracyEssayQuestion'), '서술형 AI 채점 요청 전에 중복 제출 잠금이 설정되지 않습니다.');
+assert(essayGrader.includes('callKoreanAiGenerate') && essayGrader.includes('학생에게 제공된 핵심어') && essayGrader.includes('답이 짧다는 이유만으로 감점하지 마세요'), '공용 서술형 채점이 AI 호출, 공개 핵심어 및 easy/normal 한 문장 기준을 사용하지 않습니다.');
 assert(essaySubmit.includes('await showLiteracyResult') && essaySubmit.includes('userLiteracyAnswerChecked = false;'), '서술형 결과 저장 대기 또는 채점 실패 시 제출 잠금 해제가 없습니다.');
-assert(essaySubmit.includes('학생에게 제공된 핵심어') && essaySubmit.includes('답이 짧다는 이유만으로 감점하지 마세요'), '서술형 채점이 공개 핵심어 및 easy/normal 한 문장 기준을 사용하지 않습니다.');
 assert(literacyPrompt.includes('학생이 쉬운 낱말을 사용한 한 문장') && literacyPrompt.includes('학생이 근거 하나를 담은 한 문장'), 'easy/normal 서술형이 한 문장 저난도 답변으로 제한되지 않습니다.');
 assert(literacyPrompt.includes('"keywords": ["핵심어1"') && literacyPrompt.includes('모든 난이도에서 학생에게 미리 보여 줄 핵심어'), '모든 서술형 난이도에서 핵심어 생성을 요구하지 않습니다.');
 assert(index.includes('id="literacy-keywords-container"'), '서술형 핵심어 표시 영역이 없습니다.');
