@@ -150,7 +150,10 @@ test('lab navigation uses an allowlisted action and registers the section and as
     assert.equal(standaloneScriptVersion, mainScriptVersion, '독립 페이지도 메인과 같은 도형 동물원 JS를 불러야 한다');
     assert.equal(mainCssVersion, mainScriptVersion, '변경된 도형 동물원 CSS와 JS는 같은 캐시 릴리스 키를 사용해야 한다');
     assert.equal(standaloneCssVersion, mainCssVersion, '독립 페이지도 메인과 같은 도형 동물원 CSS를 불러야 한다');
-    assert.match(zooCss, /\.zoo-brand\s*>\s*img\s*\{[^}]*width:[^;}]+;[^}]*height:[^;}]+;/s, '독립 페이지에서도 한글 로고 크기를 제한해야 한다');
+    assert.match(zooCss, /\.zoo-back\.aiedue-lab-logo-home\s+img\s*\{[^}]*width:[^;}]+;[^}]*height:[^;}]+;/s, '독립 페이지에서도 홈 로고 크기를 제한해야 한다');
+    assert.match(zooCss, /\.zoo-header\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*30;/s, '독립 페이지 헤더가 시작 오버레이보다 위에 있어야 한다');
+    assert.match(zooCss, /\.zoo-overlay\s*\{[^}]*inset:\s*88px 0 0;/s, '독립 페이지 오버레이는 로고 헤더 아래에서 시작해야 한다');
+    assert.ok(source.includes("document.activeElement === ui.home"), '오버레이 포커스 순환에 홈 로고가 포함돼야 한다');
     assert.match(app, /DRAWING_SHAPE_LIBRARY as drawingShapeLibrary/);
 });
 

@@ -2,7 +2,7 @@ import { createWordCardState, resolveWordCardAnswer, loadWordCardRound } from '.
 
 const section = document.getElementById('word-card-table-game-section');
 const markup = `
-    <header class="wct-header"><button type="button" id="wct-home" class="wct-back aiedue-lab-home">← 홈</button><div class="wct-brand aiedue-lab-brand"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"><div><p>3단계 · AIEDUE LAB</p><h1 id="wct-title">🃏 단어 카드 한 판</h1></div></div><button type="button" id="wct-finish" class="wct-back" disabled>게임 마치기</button></header>
+    <header class="wct-header"><button type="button" id="wct-home" class="wct-back aiedue-lab-home aiedue-lab-logo-home" aria-label="3단계 교과 맞춤쓰기 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"></button><div class="wct-brand aiedue-lab-brand"><div><p>3단계 · AIEDUE LAB</p><h1 id="wct-title">🃏 단어 카드 한 판</h1></div></div><button type="button" id="wct-finish" class="wct-back" disabled>게임 마치기</button></header>
     <main class="wct-main">
         <div class="wct-intro"><div><span class="wct-eyebrow">친구와 마주 앉아, 낱말 놀이</span><h2>그림과 설명을 보고 <em>내 카드를 내요!</em></h2></div><div class="wct-stats"><span>내 점수 <strong id="wct-score">0</strong></span><span>도전 <strong id="wct-attempts">0<small>번</small></strong></span></div></div>
         <div class="wct-match">
@@ -41,8 +41,10 @@ function initialize() {
     section.addEventListener('keydown', event => {
         if (event.key === 'Escape' && ['dealing','choosing','playing','feedback'].includes(state.status)) { event.preventDefault(); pause(); }
         if (event.key === 'Tab' && !ui.overlay.hidden) {
-            if (event.shiftKey && document.activeElement === ui.start) { event.preventDefault(); ui['overlay-home'].focus(); }
-            else if (!event.shiftKey && document.activeElement === ui['overlay-home']) { event.preventDefault(); ui.start.focus(); }
+            if (event.shiftKey && document.activeElement === ui.home) { event.preventDefault(); ui['overlay-home'].focus(); }
+            else if (!event.shiftKey && document.activeElement === ui.home) { event.preventDefault(); ui.start.focus(); }
+            else if (event.shiftKey && document.activeElement === ui.start) { event.preventDefault(); ui.home.focus(); }
+            else if (!event.shiftKey && document.activeElement === ui['overlay-home']) { event.preventDefault(); ui.home.focus(); }
         }
     });
     document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
@@ -183,13 +185,13 @@ function tick(now) {
 }
 function startFrame() { cancelAnimationFrame(frame); lastTime = performance.now(); frame = requestAnimationFrame(tick); }
 function showOverlay(title, copy, button, label) {
-    ui.overlay.hidden = false; ui.main.inert = true; ui.header.inert = true;
+    ui.overlay.hidden = false; ui.main.inert = true;
     ui['overlay-title'].textContent = title; ui['overlay-copy'].textContent = copy;
     ui['overlay-label'].textContent = label; ui.start.textContent = button;
     ui.rules.hidden = state.status !== 'ready'; ui.repository.hidden = state.status !== 'error';
     controls(); ui.start.focus();
 }
-function hideOverlay() { ui.overlay.hidden = true; ui.main.inert = false; ui.header.inert = false; ui.status.dataset.tone = ''; }
+function hideOverlay() { ui.overlay.hidden = true; ui.main.inert = false; ui.status.dataset.tone = ''; }
 function start() {
     if (state.status === 'paused') { resume(); return; }
     if (state.status === 'summary') { state = createWordCardState(); previousId = ''; hud(); }

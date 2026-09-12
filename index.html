@@ -17,11 +17,11 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260912-stage-inside-v4">
-    <link rel="stylesheet" href="shape-zoo.css?v=20260912-lab-stage-v2">
+    <link rel="stylesheet" href="app.css?v=20260912-dashboard-game-layout-v5">
+    <link rel="stylesheet" href="shape-zoo.css?v=20260912-dashboard-game-layout-v5">
     <link rel="stylesheet" href="word-card-table.css?v=20260909-word-only-choices-v2">
-    <link rel="stylesheet" href="korean-lab-shell.css?v=20260912-stage-inside-v4">
-    <link rel="stylesheet" href="literacy-adventure.css?v=20260912-stage-inside-v4">
+    <link rel="stylesheet" href="korean-lab-shell.css?v=20260912-dashboard-game-layout-v5">
+    <link rel="stylesheet" href="literacy-adventure.css?v=20260912-dashboard-game-layout-v5">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1648,8 +1648,8 @@
     <!-- [에이두 연구실: 한글 전용 시간 퀴즈] -->
     <section id="korean-lab-time-quiz-section" class="view-section aiedue-lab-game-shell korean-lab-time-quiz hidden" aria-labelledby="kltq-title" tabindex="-1">
         <header class="kltq-header">
-            <button type="button" class="kltq-home aiedue-lab-home" onclick="closeKoreanLabTimeQuiz()" aria-label="에이두 한글 홈으로 돌아가기">← 홈</button>
-            <div class="aiedue-lab-brand"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"><div><p>4단계 · AIEDUE LAB</p><h1 id="kltq-title">🕒 시간 퀴즈</h1></div></div>
+            <button type="button" class="kltq-home aiedue-lab-home aiedue-lab-logo-home" onclick="closeKoreanLabTimeQuiz()" aria-label="에이두 한글 홈으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"></button>
+            <div class="aiedue-lab-brand"><div><p>4단계 · AIEDUE LAB</p><h1 id="kltq-title">🕒 시간 퀴즈</h1></div></div>
             <strong id="kltq-reward-label">정답 경험치 +1 EXP</strong>
         </header>
         <main class="kltq-layout">
@@ -1686,8 +1686,8 @@
     <!-- [4단계 게임: 문해력 탐험대] -->
     <section id="literacy-adventure-game-section" class="view-section aiedue-lab-game-shell literacy-adventure-game hidden" aria-labelledby="literacy-adventure-title">
         <header class="literacy-adventure-header">
-            <button type="button" id="literacy-adventure-back" class="aiedue-lab-home" onclick="closeLiteracyAdventureGame()" aria-label="4단계 문해력 화면으로 돌아가기">← 4단계</button>
-            <div class="aiedue-lab-brand"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"><div><p>4단계 · AIEDUE LAB</p><h1 id="literacy-adventure-title">🧭 문해력 탐험대</h1></div></div>
+            <button type="button" id="literacy-adventure-back" class="aiedue-lab-home aiedue-lab-logo-home" onclick="closeLiteracyAdventureGame()" aria-label="4단계 문해력 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"></button>
+            <div class="aiedue-lab-brand"><div><p>4단계 · AIEDUE LAB</p><h1 id="literacy-adventure-title">🧭 문해력 탐험대</h1></div></div>
             <div class="literacy-adventure-hud"><span id="literacy-adventure-dan">문해력 1단</span><strong id="literacy-adventure-score">⭐ 0</strong></div>
         </header>
         <main class="literacy-adventure-layout">
@@ -1707,9 +1707,8 @@
     <!-- [에이두 연구실: 낱말 우주 방어대] -->
     <section id="dictation-asteroid-game-section" class="view-section aiedue-lab-game-shell dictation-asteroid-game hidden" aria-labelledby="dictation-asteroid-title">
         <header class="dictation-asteroid-header">
-            <button type="button" class="dictation-asteroid-home aiedue-lab-home" onclick="closeAsteroidDictationGame()" aria-label="에이두 한글 홈으로 돌아가기">← 홈</button>
+            <button type="button" class="dictation-asteroid-home aiedue-lab-home aiedue-lab-logo-home" onclick="closeAsteroidDictationGame()" aria-label="2단계 한글 해득 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"></button>
             <div class="dictation-asteroid-title-wrap aiedue-lab-brand">
-                <img src="aiedu_hangul_logo.webp" alt="에이두 한글">
                 <div><p>2단계 · AIEDUE LAB</p><h1 id="dictation-asteroid-title">🚀 낱말 우주 방어대</h1></div>
             </div>
             <div class="dictation-asteroid-header-tools">
@@ -1803,12 +1802,12 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260912-stage-inside-v4"></script>
+    <script type="module" src="app.js?v=20260912-dashboard-game-layout-v5"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260912-lab-stage-v3"></script>
-    <script type="module" src="shape-zoo-game.js?v=20260912-lab-stage-v2"></script>
-    <script type="module" src="word-card-table-game.js?v=20260912-lab-stage-v2"></script>
-    <script type="module" src="korean-lab-time-quiz.js?v=20260912-lab-stage-v2"></script>
-    <script type="module" src="literacy-adventure-game.js?v=20260912-stage-inside-v4"></script>
+    <script type="module" src="shape-zoo-game.js?v=20260912-dashboard-game-layout-v5"></script>
+    <script type="module" src="word-card-table-game.js?v=20260912-dashboard-game-layout-v5"></script>
+    <script type="module" src="korean-lab-time-quiz.js?v=20260912-dashboard-game-layout-v5"></script>
+    <script type="module" src="literacy-adventure-game.js?v=20260912-dashboard-game-layout-v5"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">

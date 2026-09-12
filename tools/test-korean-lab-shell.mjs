@@ -3,13 +3,16 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
-const [app, html, labCss, timeQuizEntry, literacyGame, literacyCss] = await Promise.all([
+const [app, appCss, html, labCss, timeQuizEntry, literacyGame, literacyCss, shapeGame, wordCardGame] = await Promise.all([
     readFile(new URL('app.js', root), 'utf8'),
+    readFile(new URL('app.css', root), 'utf8'),
     readFile(new URL('index.html', root), 'utf8'),
     readFile(new URL('korean-lab-shell.css', root), 'utf8'),
     readFile(new URL('korean-lab-time-quiz.js', root), 'utf8'),
     readFile(new URL('literacy-adventure-game.js', root), 'utf8').catch(() => ''),
-    readFile(new URL('literacy-adventure.css', root), 'utf8').catch(() => '')
+    readFile(new URL('literacy-adventure.css', root), 'utf8').catch(() => ''),
+    readFile(new URL('shape-zoo-game.js', root), 'utf8'),
+    readFile(new URL('word-card-table-game.js', root), 'utf8')
 ]);
 
 function section(source, start, end) {
@@ -43,6 +46,37 @@ test('연구실 게임은 에이두 한글 공통 둥근 카드 셸을 쓴다', 
     assert.ok(labCss.includes('border: 12px solid #fff !important'));
     assert.ok(labCss.includes('border-radius: 50px !important'));
     assert.ok(labCss.includes('body.aiedue-lab-game-open .aiedue-rpg-hud'));
+});
+
+test('대시보드는 좁은 화면에서도 1~4단계를 한 줄로 유지하고 내 정보 배너를 왼쪽 아래에 둔다', () => {
+    assert.ok(app.includes("document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section')"));
+    assert.ok(app.includes("hud.classList.toggle('rpg-collapsed', !dashboardViewActive)"));
+    assert.ok(appCss.includes('body.dashboard-view-active .aiedue-rpg-hud'));
+    assert.ok(appCss.includes('bottom: max(18px, env(safe-area-inset-bottom)) !important'));
+    assert.ok(appCss.includes('left: max(18px, calc((100vw - 1100px) / 2 + 18px)) !important'));
+    const tablet = section(appCss, '@media (max-width: 992px)', '@media (max-width: 576px)');
+    const mobile = section(appCss, '@media (max-width: 576px)', '/* Hermes drawing UX refinements */');
+    assert.ok(tablet.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'));
+    assert.ok(mobile.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'));
+});
+
+test('놀이 화면은 뷰포트 중앙에 오고 왼쪽 위 한글 로고가 복귀 버튼이다', () => {
+    assert.ok(labCss.includes('top: 50% !important'));
+    assert.ok(labCss.includes('transform: translate(-50%, -50%) !important'));
+    assert.ok(labCss.includes('.aiedue-lab-logo-home img'));
+    assert.match(labCss, /\.zoo-header,[\s\S]*?\.literacy-adventure-header\s*\{[^}]*z-index:\s*30/s);
+    for (const source of [shapeGame, wordCardGame]) {
+        assert.ok(!source.includes('ui.header.inert = true'));
+    }
+    assert.ok(shapeGame.includes('ui.main.inert = true'));
+    assert.ok(wordCardGame.includes('ui.main.inert = true'));
+    for (const source of [html, shapeGame, wordCardGame]) {
+        assert.ok(source.includes('aiedue-lab-logo-home'));
+        assert.match(source, /aiedue-lab-logo-home[^>]*[\s\S]*?<img src="aiedu_hangul_logo\.webp"/);
+    }
+    assert.equal(html.includes('class="aiedue-lab-brand"><img'), false);
+    assert.equal(shapeGame.includes('class="zoo-brand aiedue-lab-brand"><img'), false);
+    assert.equal(wordCardGame.includes('class="wct-brand aiedue-lab-brand"><img'), false);
 });
 
 test('홈에는 네 단계 카드만 있고 단계별 게임 카드를 노출하지 않는다', () => {

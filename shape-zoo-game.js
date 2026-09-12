@@ -3,8 +3,8 @@ import { ZOO_SHAPES, createZooState, createZooShapeDeck, getDrawingDuration, eva
 const section = document.getElementById('shape-zoo-game-section');
 const markup = `
     <header class="zoo-header">
-        <button type="button" id="zoo-home" class="zoo-back aiedue-lab-home">← <span>홈</span></button>
-        <div class="zoo-brand aiedue-lab-brand"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"><div><p>1단계 · AIEDUE LAB</p><h1 id="shape-zoo-title">🦁 도형 동물원</h1></div></div>
+        <button type="button" id="zoo-home" class="zoo-back aiedue-lab-home aiedue-lab-logo-home" aria-label="1단계 그리기 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"></button>
+        <div class="zoo-brand aiedue-lab-brand"><div><p>1단계 · AIEDUE LAB</p><h1 id="shape-zoo-title">🦁 도형 동물원</h1></div></div>
         <div class="zoo-header-actions"><span class="zoo-lab-tag">생각이 자라는 놀이터</span><button type="button" id="zoo-pause" class="zoo-icon-button" aria-label="게임 일시정지" disabled>Ⅱ</button></div>
     </header>
     <main class="zoo-main">
@@ -247,10 +247,10 @@ function overlay(title, copy, button, eyebrow) {
     ui['overlay-title'].textContent = title; ui['overlay-copy'].textContent = copy;
     ui['overlay-eyebrow'].textContent = eyebrow; ui.start.textContent = button;
     ui['overlay-chips'].hidden = state.status !== 'ready';
-    ui.main.inert = true; ui.header.inert = true;
+    ui.main.inert = true;
     ui.start.focus();
 }
-function hideOverlay() { ui.overlay.hidden = true; ui.main.inert = false; ui.header.inert = false; }
+function hideOverlay() { ui.overlay.hidden = true; ui.main.inert = false; }
 function gameOver() {
     state.status = 'gameover'; controls();
     overlay(`도형 과자 ${state.score}개 완성!`, state.score ? `레오와 ${state.round}번째 간식 시간까지 함께했어요. 다시 도전해서 더 많은 도형 과자를 만들어 볼까요?` : '괜찮아요! 점선을 천천히 따라가면 만들 수 있어요. 레오가 다시 기다릴게요.', '다시 도전하기', 'GREAT LITTLE ZOOKEEPER');
@@ -286,8 +286,10 @@ function initialize() {
     section.addEventListener('keydown', event => {
         if (event.key === 'Escape') { event.preventDefault(); if (state.status !== 'paused') pause(); else resume(); }
         if (event.key === 'Tab' && !ui.overlay.hidden) {
-            if (event.shiftKey && document.activeElement === ui.start) { event.preventDefault(); ui['overlay-home'].focus(); }
-            else if (!event.shiftKey && document.activeElement === ui['overlay-home']) { event.preventDefault(); ui.start.focus(); }
+            if (event.shiftKey && document.activeElement === ui.home) { event.preventDefault(); ui['overlay-home'].focus(); }
+            else if (!event.shiftKey && document.activeElement === ui.home) { event.preventDefault(); ui.start.focus(); }
+            else if (event.shiftKey && document.activeElement === ui.start) { event.preventDefault(); ui.home.focus(); }
+            else if (!event.shiftKey && document.activeElement === ui['overlay-home']) { event.preventDefault(); ui.home.focus(); }
         }
     });
     document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });

@@ -4814,6 +4814,7 @@ function showTopLevelSection(sectionId) {
     ];
     const isKoreanLabGame = labGameSectionIds.includes(sectionId);
     document.body.classList.toggle('aiedue-lab-game-open', isKoreanLabGame);
+    document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section');
     const isTimeQuiz = sectionId === 'korean-lab-time-quiz-section';
     if (!isTimeQuiz) window.stopKoreanLabTimeQuiz?.();
     document.body.classList.toggle('korean-lab-time-quiz-open', isTimeQuiz);
@@ -4855,11 +4856,12 @@ function setRpgHudVisible(isVisible) {
     const hud = document.getElementById('aiedue-rpg-hud');
     hud?.classList.toggle('hidden', !isVisible);
     if (hud) {
+        const dashboardViewActive = document.body.classList.contains('dashboard-view-active');
         removeDeprecatedRpgWordBankActions(hud);
-        hud.classList.add('rpg-collapsed');
+        hud.classList.toggle('rpg-collapsed', !dashboardViewActive);
         const portrait = hud.querySelector('.rpg-profile-portrait');
-        portrait?.setAttribute('aria-expanded', 'false');
-        portrait?.setAttribute('aria-label', '메뉴 펼치기');
+        portrait?.setAttribute('aria-expanded', String(dashboardViewActive));
+        portrait?.setAttribute('aria-label', dashboardViewActive ? '메뉴 접기' : '메뉴 펼치기');
         hud.classList.remove('actions-open');
         hud.querySelector('.rpg-expand-button')?.setAttribute('aria-expanded', 'false');
         hud.querySelector('.rpg-expand-button')?.setAttribute('aria-label', '하단 메뉴 펼치기');
