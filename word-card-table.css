@@ -12,7 +12,7 @@ body.word-card-table-open { overflow: hidden; }
 .word-card-table-game button:disabled { cursor: default; }
 .word-card-table-game button:focus-visible { outline: 3px solid #1271ae; outline-offset: 4px; }
 .word-card-table-game h1, .word-card-table-game h2, .word-card-table-game p { margin: 0; }
-.wct-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 17px max(24px, calc((100vw - 1040px) / 2)); border-bottom: 1px solid #daddd2; }
+.wct-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 17px 24px; border-bottom: 1px solid #daddd2; }
 .wct-brand { display: flex; align-items: center; gap: 12px; }
 .wct-brand > span { background: var(--wct-green); color: #fff9e9; width: 43px; height: 46px; display: grid; place-items: center; border-radius: 9px; transform: rotate(-7deg); font-size: 30px; }
 .wct-brand p { font-size: 9px; font-weight: 800; letter-spacing: .16em; }
@@ -102,9 +102,9 @@ body.word-card-table-open { overflow: hidden; }
 }
 @media (max-width: 620px) {
     .wct-header { gap: 10px; padding: 12px 13px; }
-    .wct-brand { gap: 7px; }
+    .wct-brand { flex: 1 1 auto; gap: 7px; }
     .wct-brand > span { width: 29px; height: 33px; font-size: 22px; }
-    .wct-brand h1 { font-size: 17px; }
+    .wct-brand h1 { font-size: 16px; line-height: 1.2; }
     .wct-brand p { font-size: 7px; letter-spacing: .08em; }
     .wct-brand i { display: none; }
     .wct-back { padding: 7px 10px; font-size: 10px !important; }

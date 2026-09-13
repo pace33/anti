@@ -105,7 +105,15 @@ test('놀이 화면은 뷰포트 중앙에 오고 왼쪽 위 한글 로고가 �
     assert.match(shapeCss, /\.zoo-back\.aiedue-lab-logo-home\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/s);
     assert.match(shapeCss, /@media \(max-width:\s*860px\)[\s\S]*?\.zoo-back\.aiedue-lab-logo-home img\s*\{\s*width:\s*126px;/);
     assert.match(shapeCss, /@media \(max-width:\s*520px\)[\s\S]*?\.zoo-back\.aiedue-lab-logo-home img\s*\{\s*width:\s*104px;/);
-    assert.match(labCss, /\.zoo-header,[\s\S]*?\.literacy-adventure-header\s*\{[^}]*z-index:\s*30/s);
+    assert.match(labCss, /\.zoo-header,[\s\S]*?\.literacy-adventure-header\s*\{[^}]*z-index:\s*30[^}]*width:\s*100%/s);
+    assert.match(labCss, /\.aiedue-lab-brand\s*\{[^}]*justify-content:\s*flex-start/s);
+    assert.match(labCss, /#word-card-table-game-section \.wct-overlay\s*\{\s*top:\s*146px\s*!important/s);
+    assert.match(labCss, /@media \(max-width:\s*860px\)[\s\S]*#word-card-table-game-section \.wct-overlay\s*\{\s*top:\s*121px\s*!important/s);
+    assert.match(labCss, /@media \(max-width:\s*520px\)[\s\S]*#word-card-table-game-section \.wct-overlay\s*\{\s*top:\s*104px\s*!important/s);
+    assert.match(appCss, /\.dictation-asteroid-game\s*\{[^}]*align-items:\s*stretch/s);
+    assert.match(appCss, /\.dictation-writing-heading button\s*\{[^}]*white-space:\s*nowrap/s);
+    assert.match(appCss, /@media \(min-width:\s*851px\)\s*\{\s*\.dictation-asteroid-writing \.dictation-writing-canvas\s*\{\s*min-height:\s*160px/s);
+    assert.match(appCss, /@media \(min-width:\s*851px\) and \(max-height:\s*800px\)[\s\S]*\.dictation-asteroid-writing \.dictation-writing-canvas\s*\{\s*min-height:\s*110px/s);
     for (const source of [shapeGame, wordCardGame]) {
         assert.ok(!source.includes('ui.header.inert = true'));
     }

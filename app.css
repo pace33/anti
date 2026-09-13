@@ -8599,6 +8599,7 @@ body.dictation-asteroid-open { overflow: hidden; background: #050816; }
     --space-cyan: #67e8f9;
     --space-violet: #818cf8;
     --space-ink: #050817;
+    align-items: stretch;
     background:
         radial-gradient(circle at 20% 110%, rgba(29, 78, 216, .42), transparent 42%),
         radial-gradient(circle at 88% 0%, rgba(124, 58, 237, .28), transparent 34%),
@@ -8700,6 +8701,22 @@ body.dictation-asteroid-open { overflow: hidden; background: #050816; }
 @keyframes dictation-screen-shake { 20% { transform: translate(-5px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, -1px); } 80% { transform: translate(3px, 2px); } }
 
 .dictation-asteroid-writing { gap: 10px; background: linear-gradient(160deg, #fff 0%, #eef2ff 58%, #e0f2fe); }
+.dictation-writing-heading > div { min-width: 0; }
+.dictation-writing-heading button { flex: 0 0 auto; white-space: nowrap; }
+.dictation-writing-actions { flex: 0 0 auto; }
+@media (min-width: 851px) {
+    .dictation-asteroid-writing .dictation-writing-canvas { min-height: 160px; }
+}
+@media (min-width: 851px) and (max-height: 800px) {
+    .dictation-asteroid-layout { gap: 12px; padding: 12px; }
+    .dictation-asteroid-writing { gap: 6px; padding: 14px; }
+    .dictation-writing-heading h2 { font-size: 1rem; }
+    .dictation-writing-heading button { min-height: 40px; padding: 7px 9px; font-size: .78rem; }
+    .dictation-asteroid-writing .dictation-word-preview > div { padding: 7px 10px; }
+    .dictation-asteroid-instruction { min-height: 44px; padding: 8px 10px; }
+    .dictation-asteroid-writing .dictation-writing-canvas { min-height: 110px; }
+    .dictation-writing-actions small { font-size: .68rem; }
+}
 .dictation-word-preview { display: grid; grid-template-columns: 1.25fr .75fr; gap: 9px; }
 .dictation-word-preview > div { min-width: 0; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border: 2px solid #c7d2fe; border-radius: 18px; background: rgba(255,255,255,.9); box-shadow: 0 7px 15px rgba(49,46,129,.08); }
 .dictation-word-preview span { color: #6366f1; font-size: .78rem; font-weight: 1000; }
