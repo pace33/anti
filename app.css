@@ -293,6 +293,67 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
 .lesson-photo-button strong { font-size: 1rem; font-weight: 1000; }
 .lesson-photo-button small { color: #dd7a39; font-size: .72rem; font-weight: 900; }
 .lesson-photo-icon { font-size: 1.8rem; }
+
+/* 단계 화면의 게임 진입은 오른쪽 위에 고정한다. 3·4단계는 카메라 다음,
+   즉 오른쪽 끝에 게임 버튼이 오도록 DOM 순서를 그대로 따른다. */
+.stage-header-actions {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.stage-header-actions > * { flex: 0 0 auto; }
+/* 회원 정보는 하단 RPG HUD가 정본이므로 단계 헤더에서는 중복 노출하지 않는다. */
+.stage-header-actions > [onclick="toggleInfoDrawer()"] { display: none !important; }
+.stage-header-game-button {
+    min-height: 78px;
+    max-width: 220px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    border: 2px solid rgba(124, 88, 196, .28);
+    border-radius: 22px;
+    color: #60449c;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 12px 30px rgba(73, 53, 116, .14);
+    text-align: left;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.stage-header-game-button:hover {
+    background: #f9f5ff;
+    box-shadow: 0 17px 34px rgba(73, 53, 116, .2);
+    transform: translateY(-3px);
+}
+.stage-header-game-button:focus-visible { outline: 4px solid rgba(124, 88, 196, .3); outline-offset: 3px; }
+.stage-header-game-button > span:last-child { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.stage-header-game-button strong { font-size: 1rem; font-weight: 1000; white-space: nowrap; }
+.stage-header-game-button small { color: #8b70c3; font-size: .72rem; font-weight: 900; }
+.stage-header-game-icon { font-size: 1.8rem; }
+
+@media (max-width: 1100px) {
+    .stage-header-actions { gap: 7px; }
+    .stage-header-actions .lesson-photo-button { max-width: 220px; padding-inline: 12px; }
+    .stage-header-actions .lesson-photo-button small,
+    .stage-header-game-button small { display: none; }
+    .stage-header-game-button { max-width: 190px; padding-inline: 13px; }
+    .stage-header-game-button strong { font-size: .88rem; }
+}
+
+@media (max-width: 760px) {
+    .stage-dashboard-header { padding: 18px !important; align-items: center !important; gap: 12px; }
+    .stage-header-actions { align-items: center; gap: 6px; }
+    .stage-header-actions > div:first-child { width: 54px; height: 54px; padding: 3px !important; justify-content: center; border-width: 2px !important; border-radius: 18px !important; }
+    .stage-header-actions > div:first-child > div:first-child { display: none; }
+    .stage-header-actions > div:first-child .sync-user-icon { width: 42px; height: 42px; font-size: 1.35rem; }
+    .stage-header-actions .lesson-photo-button,
+    .stage-header-game-button { width: 54px; min-width: 54px; height: 54px; min-height: 54px; padding: 0; justify-content: center; border-radius: 18px; }
+    .stage-header-actions .lesson-photo-button > span:last-child,
+    .stage-header-game-button > span:last-child { display: none; }
+    .lesson-photo-icon,
+    .stage-header-game-icon { font-size: 1.55rem; }
+}
 .dashboard-quick-actions { display: flex; align-items: flex-start; gap: 10px; }
 
 @media (max-width: 860px) {

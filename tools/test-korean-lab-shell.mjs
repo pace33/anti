@@ -127,32 +127,36 @@ test('홈에는 네 단계 카드만 있고 단계별 게임 카드를 노출하
     assert.doesNotMatch(dashboard, /\bdashboard-lab-card\b/);
 });
 
-test('각 게임은 해당 단계의 두 번째 활동 줄 두 번째 칸에 배치된다', () => {
+test('각 단계 게임은 오른쪽 위 헤더에 있고 3·4단계 카메라는 게임 왼쪽에 있다', () => {
     const contracts = [
-        ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원', 'openMyDrawingFromDashboard()', 'openFriendsDrawingGallery()'],
-        ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '낱말 우주 방어대', 'openLetterWritingActivity()', 'openReadingPracticeActivity()'],
-        ['dictation-activities-section', 'literacy-activities-section', 'stage-3-game-word-card', 'openAiedueLabWordCardGame()', '단어 카드 한 판', 'openDictationPracticeActivity()', "openSharedWordCardRepository('dictation')"],
-        ['literacy-activities-section', 'literacy-workspace-section', 'stage-4-game-literacy', 'openLiteracyAdventureGame()', '문해력 탐험대', 'openLiteracyLimitBreak()', "openSharedWordCardRepository('literacy')"]
+        ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원', false],
+        ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '낱말 우주 방어대', false],
+        ['dictation-activities-section', 'literacy-activities-section', 'stage-3-game-word-card', 'openAiedueLabWordCardGame()', '단어 카드 한 판', true],
+        ['literacy-activities-section', 'literacy-workspace-section', 'stage-4-game-literacy', 'openLiteracyAdventureGame()', '문해력 탐험대', true]
     ];
-    for (const [start, end, id, opener, title, secondRowFirst, secondRowThird] of contracts) {
+    for (const [start, end, id, opener, title, hasCamera] of contracts) {
         const stage = section(html, `id="${start}"`, `id="${end}"`);
-        const firstIndex = stage.indexOf(secondRowFirst);
-        const gameIndex = stage.indexOf(`id="${id}"`);
-        const thirdIndex = stage.indexOf(secondRowThird);
-        assert.ok(firstIndex >= 0, `${start} 두 번째 활동 줄 첫 카드 없음`);
-        const secondGridStart = stage.lastIndexOf('<div class="grid grid-cols-1', firstIndex);
-        assert.ok(secondGridStart >= 0, `${start} 두 번째 활동 그리드 없음`);
-        const directChildren = directChildrenOfDivAt(stage, secondGridStart);
-        assert.ok(gameIndex > firstIndex && gameIndex < thirdIndex, `${id}가 두 번째 활동 줄 두 번째 칸에 있지 않음`);
-        assert.ok(directChildren[0]?.includes(secondRowFirst), `${start} 두 번째 활동 줄 첫 직접 자식이 바뀜`);
-        assert.ok(directChildren[1]?.includes(`id="${id}"`), `${id}가 두 번째 직접 자식이 아님`);
-        assert.ok(directChildren[2]?.includes(secondRowThird), `${start} 두 번째 활동 줄 세 번째 직접 자식이 바뀜`);
+        const actionsStart = stage.indexOf('<div class="stage-header-actions">');
+        assert.ok(actionsStart >= 0, `${start} 오른쪽 위 액션 묶음 없음`);
+        const directChildren = directChildrenOfDivAt(stage, actionsStart);
+        const gameIndex = directChildren.findIndex((child) => child.includes(`id="${id}"`));
+        assert.equal(gameIndex, hasCamera ? 2 : 1, `${id}가 헤더 오른쪽 끝에 있지 않음`);
+        assert.ok(directChildren[gameIndex]?.includes('stage-header-game-button'), `${id}가 상단 게임 버튼 스타일을 쓰지 않음`);
+        if (hasCamera) {
+            assert.ok(directChildren[1]?.includes('lesson-photo-button'), `${start} 카메라가 게임 바로 왼쪽에 있지 않음`);
+        } else {
+            assert.equal(stage.includes('lesson-photo-button'), false, `${start}에는 카메라 버튼이 없어야 함`);
+        }
+        assert.equal((stage.match(new RegExp(`id="${id}"`, 'g')) || []).length, 1, `${id}가 중복 배치됨`);
         assert.ok(stage.includes(opener), `${opener} 없음`);
         assert.ok(stage.includes(title), `${title} 없음`);
     }
     const literacy = section(html, 'id="literacy-activities-section"', 'id="literacy-workspace-section"');
     assert.doesNotMatch(literacy, /openAiedueLabTimeQuiz\(\)/);
     assert.equal((html.match(/data-stage-game-entry=/g) || []).length, 4);
+    assert.ok(appCss.includes('.stage-header-actions'));
+    assert.ok(appCss.includes('.stage-header-game-button'));
+    assert.ok(appCss.includes('.stage-header-actions > [onclick="toggleInfoDrawer()"] { display: none !important; }'));
 });
 
 test('4단계 게임은 기존 문해력 생성·채점·원자 저장 facade를 사용한다', () => {
