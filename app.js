@@ -12068,6 +12068,51 @@ let koreanSummaryCache = {};
 const KOREAN_ATTEMPT_HISTORY_LIMIT = 500;
 let koreanAttemptDocumentStorageAvailable = true;
 
+const KOREAN_STAGE_GAMES = Object.freeze({
+    'shape-zoo': Object.freeze({ stage: 1, title: '도형 동물원', successLabel: '완성한 도형' }),
+    'dictation-asteroid': Object.freeze({ stage: 2, title: '낱말 우주 방어대', successLabel: '격추한 소행성' }),
+    'word-card-table': Object.freeze({ stage: 3, title: '단어 카드 한 판', successLabel: '맞힌 카드' }),
+    'literacy-detective': Object.freeze({ stage: 4, title: '문해력 탐정단', successLabel: '해결한 사건' })
+});
+
+function normalizeKoreanStageGameStats(rawStats = {}) {
+    return Object.fromEntries(Object.entries(KOREAN_STAGE_GAMES).map(([gameId, game]) => {
+        const raw = rawStats?.[gameId] || {};
+        const attempts = Math.max(0, Math.floor(Number(raw.attempts || 0)));
+        const successes = Math.max(0, Math.min(attempts, Math.floor(Number(raw.successes || 0))));
+        const plays = Math.max(0, Math.floor(Number(raw.plays || 0)));
+        return [gameId, {
+            gameId,
+            stage: game.stage,
+            title: game.title,
+            successLabel: game.successLabel,
+            successes,
+            attempts,
+            plays,
+            successRate: attempts ? Math.round((successes / attempts) * 100) : null,
+            lastPlayedAt: raw.lastPlayedAt || null
+        }];
+    }));
+}
+
+function getKoreanStageGameReport(student, stage) {
+    const stats = normalizeKoreanStageGameStats(student?.koreanStageGameStats || student?.koreanProgressSummary?.gameStats || {});
+    return Object.values(stats).find((item) => item.stage === Number(stage)) || null;
+}
+
+function renderKoreanStageGameReport(student, stage) {
+    const report = getKoreanStageGameReport(student, stage);
+    if (!report) return '';
+    const rateText = report.successRate == null ? '기록 없음' : `${report.successRate}%`;
+    const detail = report.attempts
+        ? `${report.successLabel} ${report.successes} / ${report.attempts}회 · 게임 ${report.plays}판`
+        : '게임을 시작하면 성공률이 여기에 표시됩니다.';
+    return `<section class="p-4 rounded-3xl bg-amber-50 border border-amber-100 mb-4" data-stage-game-report="${report.stage}">
+        <div class="flex items-center justify-between gap-3"><div><div class="text-xs font-black text-amber-600">${report.stage}단계 게임</div><h4 class="text-lg font-black text-[#2c3e50] mt-1">${escapeHtml(report.title)}</h4></div><div class="text-right"><div class="text-xs font-black text-gray-500">성공률</div><div class="text-3xl font-black text-amber-600">${rateText}</div></div></div>
+        <div class="text-xs font-bold text-gray-500 mt-2">${escapeHtml(detail)}</div>
+    </section>`;
+}
+
 function getStoredKoreanAttempts() {
     return koreanAttemptCache;
 }
@@ -12155,7 +12200,9 @@ function resetKoreanRetryIndex({ lessonId, activityType, word, answer } = {}) {
 function summarizeKoreanAttempts(studentId, attempts) {
     const studentAttempts = attempts.filter((attempt) => attempt.studentId === studentId);
     const studentName = studentAttempts.at(-1)?.studentName || currentUserName || '이름 없음';
-    const correctAttempts = studentAttempts.filter((attempt) => attempt.isCorrect).length;
+    const learningAttempts = studentAttempts.filter((attempt) => attempt.attemptSource !== 'stage-game' && !attempt.gameId);
+    const gameAttempts = studentAttempts.filter((attempt) => attempt.attemptSource === 'stage-game' || attempt.gameId);
+    const correctAttempts = learningAttempts.filter((attempt) => attempt.isCorrect).length;
     const completedActivityKeys = new Set();
     const completedLessons = new Set();
     const errorCounts = {};
@@ -12163,7 +12210,7 @@ function summarizeKoreanAttempts(studentId, attempts) {
     let totalRetryCount = 0;
     let lastStudiedAt = null;
 
-    studentAttempts.forEach((attempt) => {
+    learningAttempts.forEach((attempt) => {
         if (attempt.isCorrect) {
             completedActivityKeys.add(`${attempt.lessonId}:${attempt.activityType}:${attempt.word || attempt.prompt || attempt.answer || ''}`);
             completedLessons.add(String(attempt.lessonId));
@@ -12177,26 +12224,41 @@ function summarizeKoreanAttempts(studentId, attempts) {
     });
 
     const topErrorTypes = Object.entries(errorCounts).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([type, count]) => ({ type, count }));
-    const recentWrongWords = studentAttempts.filter((attempt) => !attempt.isCorrect).slice(-8).reverse().map((attempt) => attempt.word || attempt.prompt || attempt.answer || attempt.userAnswer).filter(Boolean);
+    const recentWrongWords = learningAttempts.filter((attempt) => !attempt.isCorrect).slice(-8).reverse().map((attempt) => attempt.word || attempt.prompt || attempt.answer || attempt.userAnswer).filter(Boolean);
     const difficultLessons = Object.entries(lessonErrors).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([lessonId, count]) => ({
         lessonId,
         title: getLessonTitleForReport(lessonId),
         count
     }));
     const recommendedLessons = recommendKoreanLessons(topErrorTypes, recentWrongWords);
+    const gameStats = {};
+    gameAttempts.forEach((attempt) => {
+        const game = KOREAN_STAGE_GAMES[attempt.gameId];
+        if (!game) return;
+        const current = gameStats[attempt.gameId] || { successes: 0, attempts: 0, plays: 0, recentRunIds: [], lastPlayedAt: null };
+        current.successes += Math.max(0, Math.floor(Number(attempt.successCount ?? (attempt.isCorrect ? 1 : 0))));
+        current.attempts += Math.max(1, Math.floor(Number(attempt.attemptCount || 1)));
+        if (!attempt.runId || !current.recentRunIds.includes(attempt.runId)) {
+            current.plays += 1;
+            if (attempt.runId) current.recentRunIds.push(attempt.runId);
+        }
+        if (!current.lastPlayedAt || String(attempt.createdAt || '') > String(current.lastPlayedAt)) current.lastPlayedAt = attempt.createdAt;
+        gameStats[attempt.gameId] = current;
+    });
     return {
         studentId,
         studentName,
         completedLessonCount: completedLessons.size,
         completedActivityCount: completedActivityKeys.size,
-        totalAttempts: studentAttempts.length,
+        totalAttempts: learningAttempts.length,
         correctAttempts,
-        accuracyRate: studentAttempts.length ? Math.round((correctAttempts / studentAttempts.length) * 100) : 0,
+        accuracyRate: learningAttempts.length ? Math.round((correctAttempts / learningAttempts.length) * 100) : 0,
         totalRetryCount,
         topErrorTypes,
         recentWrongWords: Array.from(new Set(recentWrongWords)).slice(0, 6),
         difficultLessons,
         recommendedLessons,
+        gameStats,
         lastStudiedAt
     };
 }
@@ -12255,6 +12317,7 @@ function inferKoreanQuestionType({ activityType = '', answer = '', word = '', pr
 }
 
 async function recordKoreanAttempt({
+    attemptId = '',
     studentId = currentUserId || 'local_student',
     studentName = currentUserName || '이름 없음',
     lessonId = currentLearningActivityStep || 'start',
@@ -12280,24 +12343,32 @@ async function recordKoreanAttempt({
     similarityScore = null,
     passThreshold = null,
     attemptSource = 'normal',
-    canvasJudgement = null
+    canvasJudgement = null,
+    stage = 2,
+    gameId = '',
+    gameTitle = '',
+    successCount = null,
+    attemptCount = null,
+    runId = ''
 } = {}) {
     const authenticatedStudentId = auth.currentUser?.uid || currentUserId || studentId || 'local_student';
     studentId = authenticatedStudentId;
     const lesson = getChanchanLesson(lessonId);
     const normalizedLessonTitle = lessonTitle || lesson?.title || getLessonTitleForReport(lessonId);
     const normalizedUnitId = unitId || lesson?.unit || getUnitIdForLesson(lessonId);
-    const normalizedErrorType = isCorrect ? null : (errorType || inferKoreanErrorType({ lessonId, activityType, answer, word }));
+    const normalizedErrorType = attemptSource === 'stage-game'
+        ? null
+        : (isCorrect ? null : (errorType || inferKoreanErrorType({ lessonId, activityType, answer, word })));
     const normalizedInputType = inputType || inferKoreanAttemptInputType(activityType);
     const normalizedQuestionType = questionType || inferKoreanQuestionType({ activityType, answer, word, prompt });
     const normalizedQuestionId = questionId || buildKoreanQuestionId({ lessonId, activityType, answer, word, prompt });
     const createdAt = new Date();
     const localDate = new Date(createdAt.getTime() - createdAt.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     const attempt = {
-        attemptId: (crypto?.randomUUID?.() || `attempt_${Date.now()}_${Math.random().toString(16).slice(2)}`),
+        attemptId: attemptId || (crypto?.randomUUID?.() || `attempt_${Date.now()}_${Math.random().toString(16).slice(2)}`),
         studentId,
         studentName,
-        stage: 2,
+        stage: Math.max(1, Math.min(4, Number(stage || 2))),
         lessonId,
         lessonTitle: normalizedLessonTitle,
         unitId: normalizedUnitId,
@@ -12317,7 +12388,7 @@ async function recordKoreanAttempt({
         passThreshold: passThreshold !== null && passThreshold !== '' && Number.isFinite(Number(passThreshold)) ? Number(passThreshold) : null,
         isCorrect: Boolean(isCorrect),
         errorType: normalizedErrorType,
-        attemptSource: attemptSource === 'review' ? 'review' : 'normal',
+        attemptSource: ['review', 'stage-game'].includes(attemptSource) ? attemptSource : 'normal',
         canvasJudgement: normalizedInputType === 'canvas' ? (canvasJudgement || 'completion') : null,
         skillTags,
         retryIndex: Number(retryIndex || 1),
@@ -12326,16 +12397,27 @@ async function recordKoreanAttempt({
         durationMs: Number(durationMs || 0),
         ...(readCount !== null ? { readCount: Number(readCount) } : {}),
         localDate,
-        createdAt: createdAt.toISOString()
+        createdAt: createdAt.toISOString(),
+        ...(gameId ? {
+            gameId,
+            gameTitle: gameTitle || KOREAN_STAGE_GAMES[gameId]?.title || gameId,
+            successCount: Math.max(0, Math.floor(Number(successCount ?? (isCorrect ? 1 : 0)))),
+            attemptCount: Math.max(1, Math.floor(Number(attemptCount || 1))),
+            runId: runId || attemptId || ''
+        } : {})
     };
 
+    let cloudSaved = studentId === 'local_student';
+    let cloudErrorCode = '';
     try {
         const attempts = getStoredKoreanAttempts();
+        const localIndex = attempts.findIndex((item) => item.attemptId === attempt.attemptId);
+        if (localIndex >= 0) attempts.splice(localIndex, 1);
         attempts.push(attempt);
         setStoredKoreanAttempts(attempts.slice(-KOREAN_ATTEMPT_HISTORY_LIMIT));
         updateKoreanProgressSummary(attempt);
         const masteryKey = getKoreanMasteryKey(attempt);
-        const nextLocalMastery = applyKoreanMasteryAttempt(koreanMasteryCache[masteryKey], attempt);
+        const nextLocalMastery = attempt.gameId ? null : applyKoreanMasteryAttempt(koreanMasteryCache[masteryKey], attempt);
         if (nextLocalMastery) koreanMasteryCache = { ...koreanMasteryCache, [masteryKey]: nextLocalMastery };
         if (studentId && studentId !== 'local_student') {
             await runTransaction(db, async (transaction) => {
@@ -12343,20 +12425,61 @@ async function recordKoreanAttempt({
                 const userSnapshot = await transaction.get(userRef);
                 const userData = userSnapshot.data() || {};
                 const remoteAttempts = Array.isArray(userData.koreanLearningAttempts) ? userData.koreanLearningAttempts : [];
-                const nextRemoteAttempts = [...remoteAttempts, attempt].slice(-KOREAN_ATTEMPT_HISTORY_LIMIT);
+                const attemptReceiptRef = attempt.gameId
+                    ? doc(db, 'users', studentId, 'koreanAttempts', attempt.attemptId)
+                    : null;
+                const runReceiptRef = attempt.gameId && attempt.runId
+                    ? doc(db, 'users', studentId, 'koreanGameRuns', encodeURIComponent(`${attempt.gameId}:${attempt.runId}`))
+                    : null;
+                const attemptReceiptSnapshot = attemptReceiptRef ? await transaction.get(attemptReceiptRef) : null;
+                const runReceiptSnapshot = runReceiptRef ? await transaction.get(runReceiptRef) : null;
+                const duplicateAttempt = Boolean(attemptReceiptSnapshot?.exists?.())
+                    || remoteAttempts.some((item) => item.attemptId === attempt.attemptId);
+                const nextRemoteAttempts = [...remoteAttempts.filter((item) => item.attemptId !== attempt.attemptId), attempt].slice(-KOREAN_ATTEMPT_HISTORY_LIMIT);
                 const remoteMastery = userData.koreanQuestionMastery || {};
-                const nextRemoteMastery = applyKoreanMasteryAttempt(remoteMastery[masteryKey], attempt);
+                const nextRemoteMastery = attempt.gameId ? null : applyKoreanMasteryAttempt(remoteMastery[masteryKey], attempt);
                 const masteryMap = nextRemoteMastery ? { ...remoteMastery, [masteryKey]: nextRemoteMastery } : remoteMastery;
                 const remoteReport = summarizeKoreanAttempts(studentId, nextRemoteAttempts);
+                let koreanStageGameStats = userData.koreanStageGameStats || {};
+                if (attempt.gameId && KOREAN_STAGE_GAMES[attempt.gameId] && !duplicateAttempt) {
+                    const previousGame = koreanStageGameStats[attempt.gameId] || {};
+                    const recentRunIds = Array.isArray(previousGame.recentRunIds) ? previousGame.recentRunIds.filter(Boolean) : [];
+                    const isNewPlay = !attempt.runId
+                        || (!runReceiptSnapshot?.exists?.() && !recentRunIds.includes(attempt.runId));
+                    koreanStageGameStats = {
+                        ...koreanStageGameStats,
+                        [attempt.gameId]: {
+                            successes: Math.max(0, Math.floor(Number(previousGame.successes || 0))) + attempt.successCount,
+                            attempts: Math.max(0, Math.floor(Number(previousGame.attempts || 0))) + attempt.attemptCount,
+                            plays: Math.max(0, Math.floor(Number(previousGame.plays || 0))) + (isNewPlay ? 1 : 0),
+                            recentRunIds: isNewPlay && attempt.runId ? [...recentRunIds, attempt.runId].slice(-100) : recentRunIds,
+                            lastPlayedAt: attempt.createdAt
+                        }
+                    };
+                }
+                if (attemptReceiptRef && !duplicateAttempt) {
+                    transaction.set(attemptReceiptRef, attempt);
+                }
+                if (runReceiptRef && !runReceiptSnapshot?.exists?.()) {
+                    transaction.set(runReceiptRef, {
+                        gameId: attempt.gameId,
+                        runId: attempt.runId,
+                        studentId,
+                        firstAttemptId: attempt.attemptId,
+                        createdAt: attempt.createdAt
+                    });
+                }
                 transaction.set(userRef, {
                     koreanLearningAttempts: nextRemoteAttempts,
                     koreanProgressSummary: remoteReport,
                     koreanQuestionMastery: masteryMap,
+                    koreanStageGameStats,
                     koreanProgressUpdatedAt: attempt.createdAt
                 }, { merge: true });
                 koreanMasteryCache = masteryMap;
             });
-            if (koreanAttemptDocumentStorageAvailable) {
+            cloudSaved = true;
+            if (!attempt.gameId && koreanAttemptDocumentStorageAvailable) {
                 try {
                     await setDoc(doc(db, 'users', studentId, 'koreanAttempts', attempt.attemptId), attempt);
                 } catch (documentError) {
@@ -12366,16 +12489,110 @@ async function recordKoreanAttempt({
             }
         }
     } catch (error) {
+        cloudSaved = false;
+        cloudErrorCode = String(error?.code || 'unknown');
         if (error?.code === 'permission-denied') {
             console.warn('Korean attempt cloud save skipped: permission denied.');
         } else {
             console.error('Korean attempt Firebase save failed:', error);
         }
     }
-    return attempt;
+    return { ...attempt, cloudSaved, cloudErrorCode };
 }
 
+const koreanStageGameOutbox = new Map();
+let koreanStageGameOutboxFlushActive = false;
+let koreanStageGameOutboxRetryTimer = 0;
+
+function getKoreanStageGameOutbox() {
+    return [...koreanStageGameOutbox.values()];
+}
+
+function enqueueKoreanStageGameResult(payload) {
+    koreanStageGameOutbox.set(payload.attemptId, payload);
+}
+
+function removeKoreanStageGameResult(attemptId) {
+    koreanStageGameOutbox.delete(attemptId);
+}
+
+function scheduleKoreanStageGameOutboxFlush() {
+    if (koreanStageGameOutboxRetryTimer || !koreanStageGameOutbox.size) return;
+    koreanStageGameOutboxRetryTimer = window.setTimeout(() => {
+        koreanStageGameOutboxRetryTimer = 0;
+        void flushKoreanStageGameOutbox();
+    }, 5000);
+}
+
+async function persistKoreanStageGameResult(payload) {
+    const game = KOREAN_STAGE_GAMES[payload.gameId];
+    if (!game || !payload.studentId || payload.studentId !== (auth.currentUser?.uid || currentUserId)) return null;
+    enqueueKoreanStageGameResult(payload);
+    const result = await recordKoreanAttempt({
+        attemptId: payload.attemptId,
+        studentId: payload.studentId,
+        studentName: currentUserName,
+        lessonId: `stage-${game.stage}-game`,
+        lessonTitle: `${game.stage}단계 게임: ${game.title}`,
+        unitId: null,
+        activityType: 'stageGame',
+        isCorrect: payload.successCount === payload.attemptCount,
+        errorType: null,
+        attemptSource: 'stage-game',
+        stage: game.stage,
+        gameId: payload.gameId,
+        gameTitle: game.title,
+        successCount: payload.successCount,
+        attemptCount: payload.attemptCount,
+        runId: payload.runId
+    });
+    if (result?.cloudSaved !== false || result?.cloudErrorCode === 'permission-denied') {
+        removeKoreanStageGameResult(payload.attemptId);
+    } else {
+        scheduleKoreanStageGameOutboxFlush();
+    }
+    return result;
+}
+
+async function flushKoreanStageGameOutbox() {
+    const studentId = auth.currentUser?.uid || currentUserId;
+    if (!studentId || koreanStageGameOutboxFlushActive) return;
+    koreanStageGameOutboxFlushActive = true;
+    try {
+        for (const payload of getKoreanStageGameOutbox().filter((item) => item.studentId === studentId)) {
+            const result = await persistKoreanStageGameResult(payload);
+            if (result?.cloudSaved === false) break;
+        }
+    } finally {
+        koreanStageGameOutboxFlushActive = false;
+        const activeStudentId = auth.currentUser?.uid || currentUserId;
+        if (activeStudentId && getKoreanStageGameOutbox().some((item) => item.studentId === activeStudentId)) {
+            scheduleKoreanStageGameOutboxFlush();
+        }
+    }
+}
+
+window.addEventListener('online', () => { void flushKoreanStageGameOutbox(); });
 window.recordKoreanAttempt = recordKoreanAttempt;
+window.recordKoreanStageGameResult = function recordKoreanStageGameResult({ gameId, successCount = 0, attemptCount = 1, runId = '' } = {}) {
+    const game = KOREAN_STAGE_GAMES[gameId];
+    if (!game) return Promise.resolve(null);
+    const studentId = auth.currentUser?.uid || currentUserId;
+    if (!studentId) return Promise.resolve(null);
+    const normalizedAttempts = Math.max(1, Math.floor(Number(attemptCount || 1)));
+    const normalizedSuccesses = Math.max(0, Math.min(normalizedAttempts, Math.floor(Number(successCount || 0))));
+    const stableRunId = String(runId || crypto?.randomUUID?.() || `run_${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    const attemptEventId = String(crypto?.randomUUID?.() || `attempt_${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    const payload = {
+        attemptId: `stage_game_${gameId}_${attemptEventId}`,
+        studentId,
+        gameId,
+        successCount: normalizedSuccesses,
+        attemptCount: normalizedAttempts,
+        runId: stableRunId
+    };
+    return persistKoreanStageGameResult(payload);
+};
 window.buildKoreanStudentReport = function buildKoreanStudentReport(studentId) {
     const summary = getStoredKoreanSummary();
     if (summary[studentId]) return summary[studentId];
@@ -12411,6 +12628,7 @@ async function loadKoreanLearningRecords(studentId = currentUserId) {
         let nextMastery = { ...(studentData.koreanQuestionMastery || koreanMasteryCache) };
         const existingMasteryKeys = new Set(Object.keys(nextMastery));
         attempts.forEach((rawAttempt) => {
+            if (rawAttempt.attemptSource === 'stage-game' || rawAttempt.gameId) return;
             const attempt = {
                 ...rawAttempt,
                 stage: rawAttempt.stage || 2,
@@ -12430,6 +12648,7 @@ async function loadKoreanLearningRecords(studentId = currentUserId) {
         if (Object.keys(nextMastery).length) {
             await setDoc(doc(db, 'users', studentId), { koreanQuestionMastery: nextMastery }, { merge: true });
         }
+        void flushKoreanStageGameOutbox();
     } catch (error) {
         console.warn('Korean learning records could not be loaded.', error);
     }
@@ -12458,7 +12677,7 @@ function getKoreanMasteryDisplayText(item) {
 function renderKoreanRecordDashboard() {
     const root = document.getElementById('korean-records-content');
     if (!root) return;
-    const attempts = getStoredKoreanAttempts().filter((attempt) => attempt.studentId === currentUserId);
+    const attempts = getStoredKoreanAttempts().filter((attempt) => attempt.studentId === currentUserId && attempt.attemptSource !== 'stage-game' && !attempt.gameId);
     const summary = summarizeKoreanStudentRecords(attempts, koreanMasteryCache);
     const reviewItems = getTodayReviewQuestions(koreanMasteryCache, 6);
     if (!attempts.length && !Object.keys(koreanMasteryCache).length) {
@@ -19793,6 +20012,12 @@ function buildTestUserProfile(user, account) {
         currentDictationStep: 5,
         unlockedLevels: [1, 2, 3, 4],
         warningTokens: 0,
+        ...(account.role === 'student' ? { koreanStageGameStats: {
+            'shape-zoo': { successes: 8, attempts: 10, plays: 2, lastPlayedAt: new Date().toISOString() },
+            'dictation-asteroid': { successes: 15, attempts: 20, plays: 1, lastPlayedAt: new Date().toISOString() },
+            'word-card-table': { successes: 7, attempts: 10, plays: 2, lastPlayedAt: new Date().toISOString() },
+            'literacy-detective': { successes: 3, attempts: 5, plays: 5, lastPlayedAt: new Date().toISOString() }
+        } } : {}),
         testAccount: true,
         updatedAt: serverTimestamp(),
         ...(account.role === 'student' ? { createdBy: 'test-login-button' } : {})
@@ -20132,9 +20357,14 @@ function renderTeacherClassProgressRows() {
             const active = unlocked.includes(level);
             return `<button type="button" class="toggle-btn ${active ? 'active' : ''}" onclick="toggleLevelLock('${escapeInlineJsString(sid)}',${level},${active})">${level}단계</button>`;
         }).join('');
+        const gameRates = [1, 2, 3, 4].map((stage) => {
+            const report = getKoreanStageGameReport(student, stage);
+            const rate = report?.successRate == null ? '기록 없음' : `${report.successRate}%`;
+            return `<span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-black text-amber-700">${stage}단계 ${rate}</span>`;
+        }).join('');
         return `<tr class="border-b border-gray-100 align-top">
             <td class="py-4 px-3"><div class="font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</div><div class="text-xs text-teal-600 font-bold">${escapeHtml(student.userCode || student.code || '-')}</div></td>
-            <td class="py-4 px-3"><div class="flex flex-wrap gap-2"><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','drawing')">그리기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','hangul')">한글 해득</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','dictation')">교과 맞춤쓰기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','literacy')">문해력</button></div></td>
+            <td class="py-4 px-3"><div class="flex flex-wrap gap-2"><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','drawing')">1단계 그리기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','hangul')">2단계 한글 해득</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','dictation')">3단계 교과 맞춤쓰기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','literacy')">4단계 문해력</button></div><div class="flex flex-wrap gap-1 mt-2" aria-label="단계별 게임 성공률">${gameRates}</div></td>
             <td class="py-4 px-3"><div class="flex flex-wrap gap-2">${toggles}</div></td>
         </tr>`;
     }).join('') : classEmptyRow(3);
@@ -20358,7 +20588,9 @@ window.openStudentProgressDetail = function openStudentProgressDetail(sid, type)
     if (!student) return showModal('학생 정보를 찾지 못했습니다.');
     let title = '';
     let body = '';
+    let stage = 4;
     if (type === 'drawing') {
+        stage = 1;
         title = '그리기 · 도형별 정확도';
         const stats = student.drawingPortfolio?.shapeStats || {};
         const shapes = Array.isArray(drawingShapeLibrary) ? drawingShapeLibrary : [];
@@ -20368,11 +20600,13 @@ window.openStudentProgressDetail = function openStudentProgressDetail(sid, type)
             return `<div class="p-3 rounded-2xl bg-purple-50"><div class="flex justify-between gap-3"><span class="font-black">${escapeHtml(shape.label || shape.key)}</span><span class="font-black text-purple-600">${accuracy}%</span></div><div class="text-xs text-gray-500 mt-1">시도 ${asNumber(stat.attempts, 0)}회 · 최고 ${asNumber(stat.bestAccuracy, 0)}%</div></div>`;
         }).join('') || '<p class="text-gray-400 font-bold">아직 도형 정확도 기록이 없습니다.</p>';
     } else if (type === 'hangul') {
+        stage = 2;
         title = '한글 해득 · 현재 진도';
         const completedStep = Math.max(-1, Math.floor(asNumber(student.currentLearningStep, -1)));
         const nextStep = Math.min(35, completedStep + 2);
         body = `<div class="p-6 rounded-3xl bg-green-50 text-center"><div class="text-sm font-black text-green-600">현재 할 차례</div><div class="text-3xl font-black text-[#2c3e50] mt-2">배움 ${nextStep} 활동 차례</div><div class="text-sm text-gray-500 mt-2">완료한 배움 ${Math.max(0, completedStep + 1)}개</div></div>`;
     } else if (type === 'dictation') {
+        stage = 3;
         title = '교과 맞춤쓰기 · 나의 기록';
         const records = Object.entries(student.dictationPortfolio?.missions || {}).sort((a, b) => Number(b[0]) - Number(a[0])).slice(0, 30);
         body = records.length ? records.map(([step, record]) => `<div class="p-3 rounded-2xl bg-blue-50"><div class="font-black">${escapeHtml(record?.title || `${step}단계`)}</div><div class="text-sm text-gray-600 mt-1">${record?.score != null ? `점수 ${escapeHtml(record.score)}` : (record?.correct ? '정답' : '완료')} ${record?.answer ? `· 답 ${escapeHtml(record.answer)}` : ''}</div></div>`).join('') : '<p class="text-gray-400 font-bold">아직 교과 맞춤쓰기 기록이 없습니다.</p>';
@@ -20381,7 +20615,7 @@ window.openStudentProgressDetail = function openStudentProgressDetail(sid, type)
         body = buildTeacherLiteracyProgressBody(student);
     }
     const bodyClass = type === 'literacy' ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-3';
-    showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-1">${escapeHtml(student.name || '학생')}</h3><p class="font-black text-teal-600 mb-4">${escapeHtml(title)}</p><div class="${bodyClass} max-h-[65vh] overflow-y-auto custom-scrollbar pr-1">${body}</div></div>`);
+    showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-1">${escapeHtml(student.name || '학생')}</h3><p class="font-black text-teal-600 mb-4">${escapeHtml(title)}</p>${renderKoreanStageGameReport(student, stage)}<div class="${bodyClass} max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">${body}</div></div>`);
 }
 
 window.toggleLevelLock = async function(sid, level, currentActive) {

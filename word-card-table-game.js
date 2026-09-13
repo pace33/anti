@@ -24,7 +24,7 @@ const markup = `
 
 let state = createWordCardState(), round = null, pendingOutcome = null, previousId = '';
 let controller = null, generation = 0, frame = 0, lastTime = 0, elapsed = 0, pausedStatus = '', flight = null;
-let initialized = false, source = null;
+let initialized = false, source = null, gameRunId = '';
 const ui = {};
 
 function initialize() {
@@ -143,6 +143,12 @@ function play(id, node) {
     const result = resolveWordCardAnswer(state, round, id);
     if (result === state) return;
     pendingOutcome = result; state.status = 'playing'; controls(); source?.stopSpeech?.();
+    window.recordKoreanStageGameResult?.({
+        gameId: 'word-card-table',
+        successCount: result.correct ? 1 : 0,
+        attemptCount: 1,
+        runId: gameRunId
+    })?.catch?.(() => {});
     ui.choices.querySelectorAll('button').forEach(button => button.classList.toggle('is-played', button === node));
     const start = node.getBoundingClientRect(), target = ui.question.getBoundingClientRect();
     const card = round.choices.find(item => item.id === id);
@@ -194,7 +200,9 @@ function showOverlay(title, copy, button, label) {
 function hideOverlay() { ui.overlay.hidden = true; ui.main.inert = false; ui.status.dataset.tone = ''; }
 function start() {
     if (state.status === 'paused') { resume(); return; }
+    const startsNewSession = ['ready', 'summary'].includes(state.status);
     if (state.status === 'summary') { state = createWordCardState(); previousId = ''; hud(); }
+    if (startsNewSession) gameRunId = globalThis.crypto?.randomUUID?.() || `word-card-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     if (state.status === 'ready' || state.status === 'error') void deal();
 }
 function pause() {
@@ -218,7 +226,7 @@ function finish() {
 function stop() {
     controller?.abort(); controller = null; generation++; cancelAnimationFrame(frame); frame = 0;
     if (!initialized) return;
-    source?.stopSpeech?.(); state = { ...createWordCardState(), status: 'closed' }; round = null; pendingOutcome = null; previousId = ''; flight = null;
+    source?.stopSpeech?.(); state = { ...createWordCardState(), status: 'closed' }; round = null; pendingOutcome = null; previousId = ''; flight = null; gameRunId = '';
     ui.flying.hidden = true; ui.flying.replaceChildren(); ui.question.replaceChildren(); ui.choices.replaceChildren();
     ui.main.inert = false; ui.header.inert = false;
 }

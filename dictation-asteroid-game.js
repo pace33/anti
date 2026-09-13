@@ -460,6 +460,12 @@ function finishGame() {
     elements.overlay.classList.remove('hidden');
     elements.start.focus();
     completedRun = Object.freeze({ runId, score: state.score });
+    window.recordKoreanStageGameResult?.({
+        gameId: 'dictation-asteroid',
+        successCount: state.score,
+        attemptCount: state.score + state.missed,
+        runId
+    })?.catch?.(() => {});
     saveRunResult(completedRun.runId, completedRun.score, lifecycleGeneration);
 }
 

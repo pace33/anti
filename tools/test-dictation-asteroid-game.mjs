@@ -45,7 +45,7 @@ test('화면은 60초·한 글자 쓰기·다음 두 글자·연출·명예의 �
         'id="dictation-leaderboard-list"', 'id="dictation-result-reward"', 'id="dictation-save-status"'
     ]) assert.ok(screen.includes(marker), `게임 화면 마커 없음: ${marker}`);
     assert.equal((screen.match(/id="dictation-explosion"[\s\S]*?<\/div>/)?.[0].match(/<i>/g) || []).length, 12);
-    assert.ok(html.includes('dictation-asteroid-game.js?v=20260912-lab-stage-v3'));
+    assert.ok(html.includes('dictation-asteroid-game.js?v=20260914-stage-game-reports-v1'));
     assert.ok(game.includes("./dictation-asteroid-core.mjs?v=20260908-dictation-asteroid-v3"));
 });
 

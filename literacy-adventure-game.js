@@ -4,7 +4,8 @@ const state = {
     score: 0,
     initialized: false,
     selectedAnswer: null,
-    submitted: false
+    submitted: false,
+    runId: ''
 };
 
 const $ = (id) => document.getElementById(id);
@@ -206,6 +207,12 @@ async function submit() {
     try {
         const result = await window.aiedueLiteracyAdventureData.submitAnswer(value);
         state.submitted = true;
+        window.recordKoreanStageGameResult?.({
+            gameId: 'literacy-detective',
+            successCount: result.isCorrect ? 1 : 0,
+            attemptCount: 1,
+            runId: state.runId
+        })?.catch?.(() => {});
         if (result.isCorrect) state.score += 1;
         $('literacy-adventure-score').textContent = `해결 ${state.score}`;
         $('literacy-adventure-game-section')?.classList.add(result.isCorrect ? 'case-solved' : 'case-recheck');
@@ -238,6 +245,7 @@ async function submit() {
 }
 
 window.initLiteracyAdventureGame = function initLiteracyAdventureGame() {
+    state.runId = globalThis.crypto?.randomUUID?.() || `literacy-detective-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     if (!state.initialized) {
         $('literacy-adventure-start')?.addEventListener('click', startRound);
         $('literacy-adventure-submit')?.addEventListener('click', submit);

@@ -41,7 +41,7 @@ const starterShape = ZOO_SHAPES.find(item => item.id === 'circle');
 let state = createZooState(), shape = starterShape, shapeQueue = [], strokes = [], activeStroke = null, pointerId = null;
 let frame = 0, lastTime = 0, elapsed = 0, remaining = 18000, duration = 18000, pausedStatus = '';
 let verdict = null, timedOut = false, overflow = false, flight = null, resizeObserver = null;
-let initialized = false, keyboardDown = false, cursor = { x: .5, y: .19 }, previousFocus = null;
+let initialized = false, keyboardDown = false, cursor = { x: .5, y: .19 }, previousFocus = null, gameRunId = '';
 const ui = {};
 const $ = id => document.getElementById(`zoo-${id}`);
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -202,6 +202,12 @@ function submit(expired = false) {
     lastTime = performance.now(); timedOut = expired || remaining <= 0;
     releasePen(); verdict = overflow ? { passed: false, reason: 'scribble' } : evaluateZooTrace(shape, strokes);
     if (timedOut) verdict = { ...verdict, passed: false, reason: 'timeout' };
+    window.recordKoreanStageGameResult?.({
+        gameId: 'shape-zoo',
+        successCount: verdict.passed ? 1 : 0,
+        attemptCount: 1,
+        runId: gameRunId
+    })?.catch?.(() => {});
     state.status = 'delivering'; elapsed = 0; controls(); timer();
     ui['timer-caption'].textContent = '이번 도형 그리기 끝!';
     feedback(timedOut ? '시간이 다 됐어요! 레오가 기다리고 있어요.' : '내가 그린 도형 과자가 레오에게 가요!');
@@ -259,6 +265,7 @@ function start() {
     if (document.hidden) return;
     if (state.status === 'paused') { resume(); return; }
     if (!['ready', 'gameover'].includes(state.status)) return;
+    gameRunId = globalThis.crypto?.randomUUID?.() || `shape-zoo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     state = createZooState(); hideOverlay(); nextRound(true); startFrame(); ui.canvas.focus({ preventScroll: true });
 }
 function pause() {
