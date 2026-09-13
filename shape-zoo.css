@@ -8,8 +8,8 @@ body.shape-zoo-open { overflow: hidden; }
 .shape-zoo-game h1, .shape-zoo-game h2, .shape-zoo-game p { margin: 0; }
 .zoo-header { position: relative; z-index: 30; flex-shrink: 0; min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px clamp(20px, 4vw, 64px); border-bottom: 1px solid #dce1d5; background: #fbfbf4; }
 .zoo-back { border: 1px solid #d1d9ce; border-radius: 12px; padding: 11px 17px; background: transparent; color: #54665a; font-size: 14px !important; font-weight: 700 !important; }
-.zoo-back.aiedue-lab-logo-home { width: 94px; height: 64px; display: grid; place-items: center; padding: 3px 7px; overflow: hidden; border: 2px solid #b7e4a1; border-radius: 16px; background: #f4fbf1; box-shadow: 0 4px 0 #dcefd6; }
-.zoo-back.aiedue-lab-logo-home img { display: block; width: 80px; height: 54px; object-fit: contain; }
+.zoo-back.aiedue-lab-logo-home { appearance: none; width: auto; height: auto; display: inline-flex; align-items: center; justify-content: flex-start; padding: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; line-height: 0; }
+.zoo-back.aiedue-lab-logo-home img { display: block; width: 148px; height: auto; margin: 0; object-fit: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,.1)); }
 .zoo-brand { display: flex; align-items: center; gap: 12px; }
 .zoo-brand > img { width: 68px; height: 50px; flex: 0 0 auto; object-fit: contain; border: 2px solid #dcefd6; border-radius: 16px; background: #fff; box-shadow: 0 5px 14px rgba(85,179,70,.13); }
 .zoo-brand-mark { font-size: 42px; line-height: 1; color: #cc8839; transform: rotate(-25deg); }
@@ -129,6 +129,9 @@ body.shape-zoo-open { overflow: hidden; }
     .zoo-footer { gap: 10px; justify-content: center; flex-wrap: wrap; }
     .zoo-footer small { display: none; }
 }
+@media (max-width: 860px) {
+    .zoo-back.aiedue-lab-logo-home img { width: 126px; }
+}
 @media (max-width: 620px) {
     .zoo-header { min-height: 65px; gap: 10px; padding: 9px 14px; }
     .zoo-back { min-height: 42px; padding: 9px 11px; font-size: 12px !important; }
@@ -172,6 +175,9 @@ body.shape-zoo-open { overflow: hidden; }
     .zoo-overlay { padding: 17px; }
     .zoo-overlay-card { padding: 28px 23px 19px; }
     .zoo-overlay-card h2 { font-size: 22px; }
+}
+@media (max-width: 520px) {
+    .zoo-back.aiedue-lab-logo-home img { width: 104px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .shape-zoo-game *, .shape-zoo-game *::before, .shape-zoo-game *::after { animation: none !important; transition: none !important; }

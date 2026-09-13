@@ -3,7 +3,7 @@ import { ZOO_SHAPES, createZooState, createZooShapeDeck, getDrawingDuration, eva
 const section = document.getElementById('shape-zoo-game-section');
 const markup = `
     <header class="zoo-header">
-        <button type="button" id="zoo-home" class="zoo-back aiedue-lab-home aiedue-lab-logo-home" aria-label="1단계 그리기 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글"></button>
+        <button type="button" id="zoo-home" class="zoo-back aiedue-lab-home aiedue-lab-logo-home" aria-label="1단계 그리기 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글" class="login-mini-logo"></button>
         <div class="zoo-brand aiedue-lab-brand"><div><p>1단계 · AIEDUE LAB</p><h1 id="shape-zoo-title">🦁 도형 동물원</h1></div></div>
         <div class="zoo-header-actions"><span class="zoo-lab-tag">생각이 자라는 놀이터</span><button type="button" id="zoo-pause" class="zoo-icon-button" aria-label="게임 일시정지" disabled>Ⅱ</button></div>
     </header>

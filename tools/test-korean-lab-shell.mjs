@@ -3,11 +3,12 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
-const [app, appCss, html, labCss, timeQuizEntry, literacyGame, literacyCss, shapeGame, wordCardGame] = await Promise.all([
+const [app, appCss, html, labCss, shapeCss, timeQuizEntry, literacyGame, literacyCss, shapeGame, wordCardGame] = await Promise.all([
     readFile(new URL('app.js', root), 'utf8'),
     readFile(new URL('app.css', root), 'utf8'),
     readFile(new URL('index.html', root), 'utf8'),
     readFile(new URL('korean-lab-shell.css', root), 'utf8'),
+    readFile(new URL('shape-zoo.css', root), 'utf8'),
     readFile(new URL('korean-lab-time-quiz.js', root), 'utf8'),
     readFile(new URL('literacy-adventure-game.js', root), 'utf8').catch(() => ''),
     readFile(new URL('literacy-adventure.css', root), 'utf8').catch(() => ''),
@@ -21,6 +22,34 @@ function section(source, start, end) {
     const to = source.indexOf(end, from + start.length);
     assert.notEqual(to, -1, `끝 마커 없음: ${end}`);
     return source.slice(from, to);
+}
+
+function directChildrenOfDivAt(source, start) {
+    const tags = /<\/?([a-z][\w-]*)(?:\s[^<>]*?)?>/gi;
+    const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+    tags.lastIndex = start;
+    let depth = 0;
+    let started = false;
+    const children = [];
+    for (let match; (match = tags.exec(source));) {
+        const raw = match[0];
+        const tag = match[1].toLowerCase();
+        const closing = raw.startsWith('</');
+        if (!started) {
+            assert.equal(tag, 'div', '활동 그리드 시작 태그가 div가 아님');
+            started = true;
+            depth = 1;
+            continue;
+        }
+        if (closing) {
+            depth -= 1;
+            if (depth === 0) return children;
+            continue;
+        }
+        if (depth === 1) children.push(raw);
+        if (!voidTags.has(tag) && !raw.endsWith('/>')) depth += 1;
+    }
+    assert.fail('활동 그리드 닫는 태그 없음');
 }
 
 test('시간 퀴즈는 에이두 한글 내부의 독립 연구실 기능이다', () => {
@@ -64,6 +93,18 @@ test('놀이 화면은 뷰포트 중앙에 오고 왼쪽 위 한글 로고가 �
     assert.ok(labCss.includes('top: 50% !important'));
     assert.ok(labCss.includes('transform: translate(-50%, -50%) !important'));
     assert.ok(labCss.includes('.aiedue-lab-logo-home img'));
+    const logoHome = section(labCss, '.aiedue-lab-home {', '#dictation-asteroid-game-section');
+    assert.ok(logoHome.includes('border: 0 !important'));
+    assert.ok(logoHome.includes('background: transparent !important'));
+    assert.ok(logoHome.includes('box-shadow: none !important'));
+    assert.ok(logoHome.includes('width: 148px'));
+    assert.ok(labCss.includes('@media (max-width: 860px)'));
+    assert.ok(labCss.includes('.aiedue-lab-logo-home img { width: 126px'));
+    assert.ok(labCss.includes('@media (max-width: 520px)'));
+    assert.ok(labCss.includes('.aiedue-lab-logo-home img { width: 104px'));
+    assert.match(shapeCss, /\.zoo-back\.aiedue-lab-logo-home\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/s);
+    assert.match(shapeCss, /@media \(max-width:\s*860px\)[\s\S]*?\.zoo-back\.aiedue-lab-logo-home img\s*\{\s*width:\s*126px;/);
+    assert.match(shapeCss, /@media \(max-width:\s*520px\)[\s\S]*?\.zoo-back\.aiedue-lab-logo-home img\s*\{\s*width:\s*104px;/);
     assert.match(labCss, /\.zoo-header,[\s\S]*?\.literacy-adventure-header\s*\{[^}]*z-index:\s*30/s);
     for (const source of [shapeGame, wordCardGame]) {
         assert.ok(!source.includes('ui.header.inert = true'));
@@ -86,17 +127,26 @@ test('홈에는 네 단계 카드만 있고 단계별 게임 카드를 노출하
     assert.doesNotMatch(dashboard, /\bdashboard-lab-card\b/);
 });
 
-test('각 게임은 해당 단계 내부 2~3열 활동 영역에 배치된다', () => {
+test('각 게임은 해당 단계의 두 번째 활동 줄 두 번째 칸에 배치된다', () => {
     const contracts = [
-        ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원'],
-        ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '낱말 우주 방어대'],
-        ['dictation-activities-section', 'literacy-activities-section', 'stage-3-game-word-card', 'openAiedueLabWordCardGame()', '단어 카드 한 판'],
-        ['literacy-activities-section', 'literacy-workspace-section', 'stage-4-game-literacy', 'openLiteracyAdventureGame()', '문해력 탐험대']
+        ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원', 'openMyDrawingFromDashboard()', 'openFriendsDrawingGallery()'],
+        ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '낱말 우주 방어대', 'openLetterWritingActivity()', 'openReadingPracticeActivity()'],
+        ['dictation-activities-section', 'literacy-activities-section', 'stage-3-game-word-card', 'openAiedueLabWordCardGame()', '단어 카드 한 판', 'openDictationPracticeActivity()', "openSharedWordCardRepository('dictation')"],
+        ['literacy-activities-section', 'literacy-workspace-section', 'stage-4-game-literacy', 'openLiteracyAdventureGame()', '문해력 탐험대', 'openLiteracyLimitBreak()', "openSharedWordCardRepository('literacy')"]
     ];
-    for (const [start, end, id, opener, title] of contracts) {
+    for (const [start, end, id, opener, title, secondRowFirst, secondRowThird] of contracts) {
         const stage = section(html, `id="${start}"`, `id="${end}"`);
-        assert.ok(stage.includes('stage-game-grid'), `${start} 게임 그리드 없음`);
-        assert.ok(stage.includes(`id="${id}"`), `${id} 없음`);
+        const firstIndex = stage.indexOf(secondRowFirst);
+        const gameIndex = stage.indexOf(`id="${id}"`);
+        const thirdIndex = stage.indexOf(secondRowThird);
+        assert.ok(firstIndex >= 0, `${start} 두 번째 활동 줄 첫 카드 없음`);
+        const secondGridStart = stage.lastIndexOf('<div class="grid grid-cols-1', firstIndex);
+        assert.ok(secondGridStart >= 0, `${start} 두 번째 활동 그리드 없음`);
+        const directChildren = directChildrenOfDivAt(stage, secondGridStart);
+        assert.ok(gameIndex > firstIndex && gameIndex < thirdIndex, `${id}가 두 번째 활동 줄 두 번째 칸에 있지 않음`);
+        assert.ok(directChildren[0]?.includes(secondRowFirst), `${start} 두 번째 활동 줄 첫 직접 자식이 바뀜`);
+        assert.ok(directChildren[1]?.includes(`id="${id}"`), `${id}가 두 번째 직접 자식이 아님`);
+        assert.ok(directChildren[2]?.includes(secondRowThird), `${start} 두 번째 활동 줄 세 번째 직접 자식이 바뀜`);
         assert.ok(stage.includes(opener), `${opener} 없음`);
         assert.ok(stage.includes(title), `${title} 없음`);
     }

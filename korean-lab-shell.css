@@ -67,18 +67,21 @@ body.aiedue-lab-game-open .aiedue-rpg-hud {
 .aiedue-lab-brand > div { min-width: 0; }
 .aiedue-lab-brand p { margin: 0 0 2px !important; color: #397841 !important; font-size: .7rem !important; font-weight: 900 !important; letter-spacing: .1em !important; }
 .aiedue-lab-brand h1 { margin: 0 !important; overflow: hidden; color: #2c3e50; font-weight: 900 !important; text-overflow: ellipsis; white-space: nowrap; }
-.aiedue-lab-home { border: 2px solid #b7e4a1 !important; border-radius: 16px !important; color: #397841 !important; background: #f4fbf1 !important; box-shadow: 0 4px 0 #dcefd6; font-weight: 900 !important; }
-.aiedue-lab-logo-home { width: 94px; height: 64px; display: grid; place-items: center; padding: 3px 7px !important; overflow: hidden; }
-.aiedue-lab-logo-home img { display: block; width: 80px; height: 54px; object-fit: contain; }
-.aiedue-lab-home:hover { background: #fff !important; transform: translateY(-2px); }
+.aiedue-lab-home { appearance: none; border: 0 !important; border-radius: 0 !important; color: #397841 !important; background: transparent !important; box-shadow: none !important; font-weight: 900 !important; }
+.aiedue-lab-logo-home { width: auto; height: auto; display: inline-flex; align-items: center; justify-content: flex-start; padding: 0 !important; overflow: visible; line-height: 0; }
+.aiedue-lab-logo-home img { display: block; width: 148px; height: auto; margin: 0; object-fit: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,.1)); }
+.aiedue-lab-home:hover { background: transparent !important; transform: translateY(-2px) scale(1.025); }
 #dictation-asteroid-game-section .aiedue-lab-brand h1 { color: #fff; }
 #dictation-asteroid-game-section .aiedue-lab-brand p { color: #67e8f9 !important; }
 
-@media (max-width: 760px) {
+@media (max-width: 860px) {
     .aiedue-lab-brand { gap: 7px; justify-content: flex-start; }
-    .aiedue-lab-logo-home { width: 72px; height: 50px; padding: 2px 5px !important; border-radius: 13px !important; }
-    .aiedue-lab-logo-home img { width: 62px; height: 43px; }
+    .aiedue-lab-logo-home { width: auto; height: auto; padding: 0 !important; border-radius: 0 !important; }
+    .aiedue-lab-logo-home img { width: 126px; height: auto; }
     .aiedue-lab-brand p { font-size: .56rem !important; letter-spacing: .04em !important; }
+}
+@media (max-width: 520px) {
+    .aiedue-lab-logo-home img { width: 104px; }
 }
 
 /* 기존 세 게임은 루트 자체가 스크롤 컨테이너다. 공통 외곽 셸이 모바일의
