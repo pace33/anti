@@ -17,13 +17,40 @@ function section(source, start, end) {
     return source.slice(from, to);
 }
 
-test('홈 오른쪽 빠른 메뉴에는 연구실만 있고 노트 촬영과 도서관은 없다', () => {
+test('홈 오른쪽 빠른 메뉴는 역할 버튼을 연구실 왼쪽에 두고 노트 촬영과 도서관은 두지 않는다', () => {
     const dashboard = section(html, 'id="dashboard-section"', 'id="drawing-activities-section"');
     const quickActions = section(dashboard, 'class="dashboard-quick-actions', '</div>');
+    const teacherButton = quickActions.indexOf('id="dashboard-teacher-class-button"');
+    const studentButton = quickActions.indexOf('id="dashboard-student-shop-button"');
+    const labButton = quickActions.indexOf('openAiedueLab()');
+    assert.ok(teacherButton >= 0);
+    assert.ok(studentButton >= 0);
+    assert.ok(teacherButton < labButton);
+    assert.ok(studentButton < labButton);
+    assert.ok(quickActions.includes('onclick="openClassManagement()"'));
+    assert.ok(quickActions.includes('onclick="openAiedueKoreanShop()"'));
+    assert.ok(quickActions.includes('dashboard-teacher-class-button hidden'));
+    assert.ok(quickActions.includes('dashboard-student-shop-button hidden'));
     assert.ok(quickActions.includes('openAiedueLab()'));
     assert.ok(quickActions.includes('에이두 연구실'));
     assert.equal(quickActions.includes('triggerLessonPhotoCapture()'), false);
     assert.equal(quickActions.includes('openAiedueLibrary()'), false);
+});
+
+test('로그인 역할에 따라 홈의 학급 관리와 상점 버튼을 서로 바꾸고 로그아웃 때 모두 숨긴다', () => {
+    const update = section(app, 'function updateDashboardExperience', '// Profile UI Upgrade');
+    const sync = section(app, 'function startAiedueSchoolProfileSync', 'const topLevelSectionIds');
+    const logout = section(app, 'window.handleLogout =', 'window.checkStudentLogin =');
+    assert.ok(update.includes("dashboardTeacherClassButton?.classList.remove('hidden')"));
+    assert.ok(update.includes("dashboardStudentShopButton?.classList.add('hidden')"));
+    assert.ok(update.includes("dashboardTeacherClassButton?.classList.add('hidden')"));
+    assert.ok(update.includes("dashboardStudentShopButton?.classList.remove('hidden')"));
+    assert.ok(logout.includes("getElementById('dashboard-teacher-class-button')?.classList.add('hidden')"));
+    assert.ok(logout.includes("getElementById('dashboard-student-shop-button')?.classList.add('hidden')"));
+    assert.ok(sync.includes("auth.currentUser?.uid !== uid || currentUserId !== uid || lastSyncedProfileUid !== uid"));
+    assert.ok(css.includes('width: min(52vw, 360px)'));
+    assert.ok(css.includes('@media (max-width: 480px)'));
+    assert.ok(css.includes('padding-top: 180px'));
 });
 
 test('노트 촬영은 3·4단계에만 유지되고 도서관은 4단계 두 번째 줄에 있다', () => {

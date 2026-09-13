@@ -387,7 +387,7 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     .rpg-experience-track { left: 62px; right: 5px; }
     .rpg-experience-label { right: 9px; }
     body.rpg-hud-active .page-number { bottom: 110px; }
-    .dashboard-quick-actions { position: absolute; top: 94px; left: 14px; right: 14px; align-items: stretch; justify-content: space-between; gap: 8px; }
+    .dashboard-quick-actions { position: absolute; top: 104px; left: auto; right: 14px; width: min(52vw, 360px); align-items: stretch; justify-content: flex-end; gap: 8px; }
     .lesson-photo-button { position: static; flex: 1 1 0; min-width: 0; max-width: 235px; padding: 8px 11px; }
     .lesson-photo-icon { font-size: 1.35rem; }
     .lesson-photo-button strong { font-size: .76rem; }
@@ -576,6 +576,18 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     color: #5b3eb3;
 }
 .aiedue-lab-button small { color: #7c63c9; }
+.aiedue-library-button.dashboard-teacher-class-button {
+    border-color: #99e3d1;
+    background: linear-gradient(145deg, #ffffff, #ecfdf8);
+    color: #17735f;
+}
+.aiedue-library-button.dashboard-teacher-class-button small { color: #3d917f; }
+.aiedue-library-button.dashboard-student-shop-button {
+    border-color: #f8cf76;
+    background: linear-gradient(145deg, #ffffff, #fff8df);
+    color: #9a6417;
+}
+.aiedue-library-button.dashboard-student-shop-button small { color: #b17a28; }
 
 .aiedu-craft-shop-card::after {
     content: '';
@@ -6087,6 +6099,18 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     .dashboard-stage-card.level-card .level-desc {
         font-size: .68rem;
         line-height: 1.2;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-quick-actions {
+        top: 170px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+    }
+    .dashboard-stage-board {
+        padding-top: 180px;
     }
 }
 

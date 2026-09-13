@@ -4613,12 +4613,18 @@ function updateDashboardExperience(userData = {}) {
 
     // 교사가 학생 계정에 저장한 단계만 활성화한다. 교사는 전체 단계를 확인할 수 있다.
     unlockedLevels = normalizeUnlockedLevels(userData?.unlockedLevels, currentUserRole);
+    const dashboardTeacherClassButton = document.getElementById('dashboard-teacher-class-button');
+    const dashboardStudentShopButton = document.getElementById('dashboard-student-shop-button');
     if (currentUserRole === 'teacher') {
         document.getElementById('teacher-manage-btn').classList.remove('hidden');
+        dashboardTeacherClassButton?.classList.remove('hidden');
+        dashboardStudentShopButton?.classList.add('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     } else {
         document.getElementById('teacher-manage-btn').classList.add('hidden');
+        dashboardTeacherClassButton?.classList.add('hidden');
+        dashboardStudentShopButton?.classList.remove('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     }
@@ -4715,6 +4721,7 @@ function startAiedueSchoolProfileSync(uid) {
             const teacherId = userData.teacherId || null;
             const classId = userData.classId || userData.classCode || null;
             await loadKoreanExperienceMultipliers(teacherId, classId);
+            if (auth.currentUser?.uid !== uid || currentUserId !== uid || lastSyncedProfileUid !== uid) return;
             updateDashboardExperience(userData);
             updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
             const visibleActivityRoute = getVisibleActivityRoute();
@@ -19597,6 +19604,8 @@ window.handleLogout = async function handleLogout() {
         document.getElementById('info-drawer')?.classList.remove('open');
         document.getElementById('drawer-overlay')?.classList.remove('open', 'visible');
         document.getElementById('teacher-manage-btn')?.classList.add('hidden');
+        document.getElementById('dashboard-teacher-class-button')?.classList.add('hidden');
+        document.getElementById('dashboard-student-shop-button')?.classList.add('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.add('hidden');
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
         setRpgHudVisible(false);
@@ -20480,6 +20489,7 @@ onAuthStateChanged(auth, async (user) => {
         const teacherId = userData.teacherId || null;
         const classId = userData.classId || userData.classCode || null;
         await loadKoreanExperienceMultipliers(teacherId, classId);
+        if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
 
         updateDashboardExperience(userData);
         await loadKoreanLearningRecords(user.uid);
