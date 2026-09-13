@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="shape-zoo.css?v=20260912-game-row-logo-v6">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260913-game-layout-fix-v7">
-    <link rel="stylesheet" href="literacy-adventure.css?v=20260912-game-row-logo-v6">
+    <link rel="stylesheet" href="literacy-adventure.css?v=20260913-literacy-newsroom-v7">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -394,7 +394,7 @@
                     <span class="lesson-photo-icon" aria-hidden="true">📷</span>
                     <span><strong>오늘의 노트 사진 찍기</strong><small>4단계 지문 소재 단어를 모아요</small></span>
                 </button>
-                <button type="button" id="stage-4-game-literacy" data-stage-game-entry="4" class="stage-header-game-button pointer-events-auto" onclick="openLiteracyAdventureGame()" aria-label="4단계 게임 문해력 탐험대 열기"><span class="stage-header-game-icon" aria-hidden="true">🧭</span><span><strong>문해력 탐험대</strong><small>지문 속 단서를 찾아 문제를 해결해요</small></span></button>
+                <button type="button" id="stage-4-game-literacy" data-stage-game-entry="4" class="stage-header-game-button pointer-events-auto" onclick="openLiteracyAdventureGame()" aria-label="4단계 게임 문해력 편집국 열기"><span class="stage-header-game-icon" aria-hidden="true">📰</span><span><strong>문해력 편집국</strong><small>기사에서 근거를 골라 오늘의 답을 발행해요</small></span></button>
                 </div>
             </div>
 
@@ -1691,19 +1691,18 @@
         </main>
     </section>
 
-    <!-- [4단계 게임: 문해력 탐험대] -->
+    <!-- [4단계 게임: 문해력 편집국] -->
     <section id="literacy-adventure-game-section" class="view-section aiedue-lab-game-shell literacy-adventure-game hidden" aria-labelledby="literacy-adventure-title">
         <header class="literacy-adventure-header">
             <button type="button" id="literacy-adventure-back" class="aiedue-lab-home aiedue-lab-logo-home" onclick="closeLiteracyAdventureGame()" aria-label="4단계 문해력 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글" class="login-mini-logo"></button>
-            <div class="aiedue-lab-brand"><div><p>4단계 · AIEDUE LAB</p><h1 id="literacy-adventure-title">🧭 문해력 탐험대</h1></div></div>
-            <div class="literacy-adventure-hud"><span id="literacy-adventure-dan">문해력 1단</span><strong id="literacy-adventure-score">⭐ 0</strong></div>
+            <div class="aiedue-lab-brand"><div><p>4단계 · AIEDUE NEWSROOM</p><h1 id="literacy-adventure-title">📰 문해력 편집국</h1></div></div>
+            <div class="literacy-adventure-hud"><span id="literacy-adventure-dan">문해력 1단</span><strong id="literacy-adventure-score">발행 0</strong></div>
         </header>
         <main class="literacy-adventure-layout">
-            <section class="literacy-adventure-passage" aria-labelledby="literacy-adventure-passage-title"><p class="literacy-adventure-kicker">탐험 지도</p><h2 id="literacy-adventure-passage-title">📖 지문</h2><div id="literacy-adventure-passage">탐험을 시작하면 내 문해력 단에 맞는 지문이 나타나요.</div></section>
-            <section class="literacy-adventure-quest" aria-labelledby="literacy-adventure-quest-title"><p class="literacy-adventure-kicker">단서 찾기</p><h2 id="literacy-adventure-quest-title">4개 관문</h2><ol id="literacy-adventure-steps"><li class="active">1. 지문 읽기</li><li>2. 핵심 낱말</li><li>3. 문제 단서</li><li>4. 최종 해결</li></ol><div id="literacy-adventure-clue">지문을 천천히 읽고 준비되면 다음 관문으로 가요.</div><button type="button" id="literacy-adventure-next">탐험 시작</button></section>
-            <section id="literacy-adventure-answer" class="literacy-adventure-answer" aria-labelledby="literacy-adventure-answer-title"><p class="literacy-adventure-kicker">최종 문제</p><h2 id="literacy-adventure-answer-title">문제를 해결해요</h2><div id="literacy-adventure-question">아직 문제를 불러오지 않았어요.</div><div id="literacy-adventure-options"></div><div id="literacy-adventure-input-wrap" class="hidden"><textarea id="literacy-adventure-input" rows="4" placeholder="답을 적어 보세요."></textarea><button type="button" id="literacy-adventure-submit">정답 제출</button></div><div id="literacy-adventure-feedback" role="status" aria-live="polite"></div><button type="button" id="literacy-adventure-restart" class="hidden">새 탐험 시작</button></section>
+            <section class="literacy-adventure-passage" aria-labelledby="literacy-adventure-passage-title"><p class="literacy-adventure-kicker">TODAY'S SOURCE</p><h2 id="literacy-adventure-passage-title">오늘의 취재 자료</h2><div class="literacy-news-meta"><span id="literacy-adventure-difficulty">맞춤</span><span id="literacy-adventure-type">문해력</span></div><p class="literacy-news-instruction">질문에 답할 근거가 되는 문장을 하나 누르세요.</p><div id="literacy-adventure-passage">편집 회의를 시작하면 오늘의 취재 자료가 도착합니다.</div></section>
+            <section id="literacy-adventure-answer" class="literacy-adventure-answer" tabindex="-1" aria-labelledby="literacy-adventure-answer-title"><p class="literacy-adventure-kicker">EDITOR'S DESK</p><h2 id="literacy-adventure-answer-title">오늘의 헤드라인을 완성하세요</h2><ol id="literacy-adventure-steps" aria-label="기사 발행 단계"><li class="done">기사 읽기</li><li class="active">근거 선택</li><li>답안 발행</li></ol><div id="literacy-adventure-question">아직 취재 자료를 불러오지 않았어요.</div><div id="literacy-adventure-clue"><span>취재 메모</span><strong>아직 고른 근거가 없습니다.</strong><small>왼쪽 기사에서 중요한 문장을 하나 누르세요.</small></div><div id="literacy-adventure-options"></div><div id="literacy-adventure-input-wrap" class="hidden"><textarea id="literacy-adventure-input" rows="4" placeholder="기사에 실을 답을 적어 보세요."></textarea></div><button type="button" id="literacy-adventure-submit" disabled>기사 발행</button><div id="literacy-adventure-feedback" role="status" aria-live="polite"></div><button type="button" id="literacy-adventure-restart" class="hidden">다음 취재 시작</button></section>
         </main>
-        <div id="literacy-adventure-loading" class="literacy-adventure-overlay"><div><span aria-hidden="true">🧭</span><h2>문해력 탐험대</h2><p>내 문해력 단증과 단어 은행으로 새로운 탐험을 만들어요.</p><button type="button" id="literacy-adventure-start">탐험 시작하기</button></div></div>
+        <div id="literacy-adventure-loading" class="literacy-adventure-overlay"><div><span aria-hidden="true">📰</span><h2>문해력 편집국</h2><p>오늘의 취재 자료를 읽고, 근거를 골라 정확한 답을 발행하세요.</p><button type="button" id="literacy-adventure-start">오늘의 편집 회의 시작</button></div></div>
     </section>
 
     <!-- [에이두 연구실: 도형 동물원] -->
@@ -1810,12 +1809,12 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260912-game-row-logo-v6"></script>
+    <script type="module" src="app.js?v=20260913-literacy-newsroom-v7"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260912-lab-stage-v3"></script>
     <script type="module" src="shape-zoo-game.js?v=20260912-game-row-logo-v6"></script>
     <script type="module" src="word-card-table-game.js?v=20260912-game-row-logo-v6"></script>
     <script type="module" src="korean-lab-time-quiz.js?v=20260912-game-row-logo-v6"></script>
-    <script type="module" src="literacy-adventure-game.js?v=20260912-game-row-logo-v6"></script>
+    <script type="module" src="literacy-adventure-game.js?v=20260913-literacy-newsroom-v7"></script>
 
     <!-- [설정 팝업] -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden flex justify-center items-center z-[1100] p-4" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
