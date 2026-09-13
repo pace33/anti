@@ -8,7 +8,7 @@
     background:
         linear-gradient(rgba(30, 41, 59, .035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(30, 41, 59, .035) 1px, transparent 1px),
-        #f3efe4;
+        #f2ead8;
     background-size: 24px 24px;
     color: #172033;
 }
@@ -26,15 +26,15 @@
     align-items: center;
     gap: 20px;
     background: #fffdf7;
-    border-bottom: 5px solid #dc2626;
+    border-bottom: 5px solid #d6a83f;
     box-shadow: 0 10px 28px rgba(15, 23, 42, .14);
 }
-.literacy-adventure-header .aiedue-lab-brand p { color: #dc2626 !important; }
-.literacy-adventure-header .aiedue-lab-brand h1 { color: #172033 !important; }
+.literacy-adventure-header .aiedue-lab-brand p { color: #7a4c2a !important; }
+.literacy-adventure-header .aiedue-lab-brand h1 { color: #3f2d20 !important; }
 .literacy-adventure-hud { display: flex; align-items: center; gap: 9px; font-weight: 900; }
 .literacy-adventure-hud span,
 .literacy-adventure-hud strong { padding: 10px 14px; border: 2px solid #cbd5e1; border-radius: 999px; background: #fff; color: #172033; }
-.literacy-adventure-hud strong { border-color: #fecaca; color: #b91c1c; }
+.literacy-adventure-hud strong { border-color: #e7c66d; color: #6d431f; background: #fff8df; }
 .literacy-adventure-layout {
     width: min(1140px, calc(100% - 36px));
     margin: 22px auto 34px;
@@ -54,12 +54,19 @@
     box-shadow: 0 16px 34px rgba(15, 23, 42, .12);
 }
 .literacy-adventure-layout h2 { margin: 0; color: #172033; font: 950 clamp(1.35rem, 2vw, 1.8rem)/1.25 inherit; }
-.literacy-adventure-kicker { margin: 0 0 7px; color: #b91c1c; font-size: .78rem; font-weight: 950; letter-spacing: .16em; }
+.literacy-adventure-kicker { margin: 0 0 7px; color: #7a4c2a; font-size: .78rem; font-weight: 950; letter-spacing: .16em; }
 .literacy-adventure-passage { position: relative; overflow: hidden; }
-.literacy-adventure-passage::before { content: ''; position: absolute; top: 0; bottom: 0; left: 12px; width: 1px; background: #fecaca; }
+.literacy-adventure-passage::before { content: ''; position: absolute; top: 0; bottom: 0; left: 12px; width: 1px; background: #dfc98f; }
+.literacy-detective-guide { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 12px; margin: 13px 0; padding: 9px 13px 9px 7px; border: 2px solid #dfc98f; border-radius: 15px; background: #fff8df; overflow: hidden; }
+.literacy-detective-guide img { width: 76px; height: 86px; object-fit: cover; object-position: center 7%; mix-blend-mode: multiply; transition: transform .24s ease; }
+.literacy-detective-guide p { display: grid; gap: 3px; margin: 0; line-height: 1.4; }
+.literacy-detective-guide strong { color: #5b371e; font-size: .9rem; }
+.literacy-detective-guide span { color: #475569; font-size: .82rem; font-weight: 800; }
+.literacy-adventure-game.has-clue .literacy-detective-guide img { transform: rotate(-3deg) scale(1.06); }
+.literacy-adventure-game.case-solved .literacy-detective-guide img { animation: detective-case-solved .55s ease both; }
 .literacy-news-meta { display: flex; flex-wrap: wrap; gap: 7px; margin: 15px 0; }
 .literacy-news-meta span { padding: 6px 10px; border-radius: 999px; background: #e2e8f0; color: #334155; font-size: .76rem; font-weight: 900; }
-.literacy-news-instruction { margin: 0 0 14px; padding: 11px 13px; border-left: 4px solid #2563eb; background: #eff6ff; color: #1e3a8a; font-weight: 850; line-height: 1.55; }
+.literacy-news-instruction { margin: 0 0 14px; padding: 11px 13px; border-left: 4px solid #2f6f55; background: #eef8f0; color: #245842; font-weight: 850; line-height: 1.55; }
 #literacy-adventure-passage { display: grid; gap: 8px; max-height: 470px; overflow-y: auto; padding: 2px 5px 2px 14px; }
 .literacy-news-sentence {
     width: 100%;
@@ -78,32 +85,32 @@
 }
 .literacy-news-sentence > span:first-child { display: grid; place-items: center; width: 26px; height: 26px; margin-top: 2px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: .74rem; font-weight: 950; }
 .literacy-news-sentence:hover { background: #f8fafc; border-color: #cbd5e1; }
-.literacy-news-sentence.selected { border-color: #2563eb; background: #eff6ff; color: #172554; box-shadow: 0 5px 13px rgba(37, 99, 235, .12); }
-.literacy-news-sentence.selected > span:first-child { background: #2563eb; color: #fff; }
+.literacy-news-sentence.selected { border-color: #2f6f55; background: #eef8f0; color: #183d2e; box-shadow: 0 5px 13px rgba(47, 111, 85, .14); }
+.literacy-news-sentence.selected > span:first-child { background: #2f6f55; color: #fff; }
 .literacy-adventure-answer { display: flex; flex-direction: column; scroll-margin-top: 184px; }
 #literacy-adventure-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 15px 0; padding: 0; list-style: none; counter-reset: desk-step; }
 #literacy-adventure-steps li { min-width: 0; padding: 9px 6px; border-bottom: 4px solid #cbd5e1; color: #64748b; text-align: center; font-size: .76rem; font-weight: 900; }
-#literacy-adventure-steps li.active { border-color: #2563eb; color: #1d4ed8; }
+#literacy-adventure-steps li.active { border-color: #d6a83f; color: #7a4c2a; }
 #literacy-adventure-steps li.done { border-color: #16a34a; color: #15803d; }
 #literacy-adventure-question { margin: 4px 0 13px; color: #172033; font-size: 1.12rem; font-weight: 950; line-height: 1.55; }
 #literacy-adventure-clue { display: grid; gap: 5px; min-height: 82px; box-sizing: border-box; margin-bottom: 13px; padding: 12px 14px; border: 2px dashed #cbd5e1; border-radius: 13px; background: #f8fafc; color: #475569; }
-#literacy-adventure-clue span { color: #2563eb; font-size: .72rem; font-weight: 950; letter-spacing: .12em; }
+#literacy-adventure-clue span { color: #2f6f55; font-size: .72rem; font-weight: 950; letter-spacing: .12em; }
 #literacy-adventure-clue strong { color: #1e293b; font-size: .91rem; line-height: 1.45; }
 #literacy-adventure-clue small { font-weight: 800; }
 #literacy-adventure-options { display: grid; gap: 8px; }
 #literacy-adventure-options button { width: 100%; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 9px; align-items: center; padding: 10px 12px; border: 2px solid #d7d2c7; border-radius: 12px; background: #fff; color: #253247; text-align: left; cursor: pointer; }
 #literacy-adventure-options button span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; background: #e2e8f0; font-weight: 950; }
 #literacy-adventure-options button strong { font: 850 .92rem/1.4 inherit; }
-#literacy-adventure-options button:hover { border-color: #60a5fa; }
-#literacy-adventure-options button.selected { border-color: #2563eb; background: #eff6ff; }
-#literacy-adventure-options button.selected span { background: #2563eb; color: #fff; }
+#literacy-adventure-options button:hover { border-color: #85ae91; }
+#literacy-adventure-options button.selected { border-color: #2f6f55; background: #eef8f0; }
+#literacy-adventure-options button.selected span { background: #2f6f55; color: #fff; }
 #literacy-adventure-input { width: 100%; min-height: 104px; box-sizing: border-box; padding: 13px; border: 2px solid #cbd5e1; border-radius: 12px; background: #fff; font: 750 .95rem/1.55 inherit; resize: vertical; }
-#literacy-adventure-input:focus { border-color: #2563eb; outline: 3px solid rgba(37, 99, 235, .16); }
+#literacy-adventure-input:focus { border-color: #2f6f55; outline: 3px solid rgba(47, 111, 85, .16); }
 #literacy-adventure-submit,
 #literacy-adventure-restart,
-#literacy-adventure-start { width: 100%; min-height: 48px; margin-top: 13px; padding: 12px 16px; border: 0; border-radius: 12px; color: #fff; background: #dc2626; font: 950 1rem inherit; cursor: pointer; box-shadow: 0 8px 17px rgba(185, 28, 28, .2); }
+#literacy-adventure-start { width: 100%; min-height: 48px; margin-top: 13px; padding: 12px 16px; border: 0; border-radius: 12px; color: #fff; background: #6d431f; font: 950 1rem inherit; cursor: pointer; box-shadow: 0 8px 17px rgba(76, 45, 24, .24); }
 #literacy-adventure-submit:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; }
-#literacy-adventure-restart { background: #172033; }
+#literacy-adventure-restart { background: #2f6f55; }
 #literacy-adventure-feedback { display: grid; gap: 7px; margin-top: 12px; line-height: 1.5; }
 #literacy-adventure-feedback strong { font-size: 1.15rem; }
 #literacy-adventure-feedback span { font-weight: 800; }
@@ -111,12 +118,14 @@
 #literacy-adventure-feedback.published { padding: 13px; border: 2px solid #86efac; border-radius: 12px; background: #f0fdf4; color: #166534; }
 #literacy-adventure-feedback.revision { padding: 13px; border: 2px solid #fdba74; border-radius: 12px; background: #fff7ed; color: #9a3412; }
 #literacy-adventure-feedback.checking { color: #1d4ed8; font-weight: 900; }
-.literacy-adventure-overlay { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 22px; background: rgba(15, 23, 42, .7); backdrop-filter: blur(7px); }
-.literacy-adventure-overlay > div { width: min(470px, 100%); box-sizing: border-box; padding: 34px; border-top: 9px solid #dc2626; border-radius: 8px 8px 20px 20px; background: #fffdf7; text-align: center; box-shadow: 0 30px 70px rgba(15, 23, 42, .38); }
-.literacy-adventure-overlay span { font-size: 4.5rem; }
+.literacy-adventure-overlay { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 22px; background: rgba(55, 39, 27, .76); backdrop-filter: blur(7px); }
+.literacy-adventure-overlay > div { width: min(470px, 100%); box-sizing: border-box; padding: 25px 34px 30px; border-top: 9px solid #d6a83f; border-radius: 8px 8px 20px 20px; background: #fffdf7; text-align: center; box-shadow: 0 30px 70px rgba(42, 28, 18, .42); }
+.literacy-detective-hero { display: block; width: 148px; height: 184px; margin: -12px auto -8px; object-fit: cover; object-position: center 6%; mix-blend-mode: multiply; }
 .literacy-adventure-overlay h2 { margin: 8px 0; color: #172033; font-size: 2rem; }
 .literacy-adventure-overlay p { color: #475569; font-weight: 800; line-height: 1.7; }
 .literacy-adventure-game button:focus-visible { outline: 4px solid #f59e0b; outline-offset: 3px; }
+@keyframes detective-case-solved { 0% { transform: scale(1); } 45% { transform: rotate(-5deg) scale(1.12); } 100% { transform: rotate(0) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .literacy-detective-guide img { transition: none; animation: none !important; } }
 @media (max-width: 900px) {
     .literacy-adventure-layout { grid-template-columns: 1fr; }
     .literacy-adventure-layout > section { min-height: auto; }

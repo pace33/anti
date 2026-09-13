@@ -10267,7 +10267,7 @@ window.aiedueLiteracyAdventureData = Object.freeze({
         };
     },
     async submitAnswer(answer) {
-        if (!activeLiteracyQuestion) throw new Error('먼저 취재 자료를 불러와 주세요.');
+        if (!activeLiteracyQuestion) throw new Error('먼저 사건 기록을 불러와 주세요.');
         const question = activeLiteracyQuestion;
         const value = String(answer ?? '').trim();
         let isCorrect = false;
