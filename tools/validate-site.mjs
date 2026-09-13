@@ -407,7 +407,7 @@ const essayGrader = section(app, 'async function gradeLiteracyEssayQuestion', 'w
 assert(essaySubmit.indexOf('userLiteracyAnswerChecked = true;') < essaySubmit.indexOf('gradeLiteracyEssayQuestion'), '서술형 AI 채점 요청 전에 중복 제출 잠금이 설정되지 않습니다.');
 assert(essayGrader.includes('callKoreanAiGenerate') && essayGrader.includes('학생에게 제공된 핵심어') && essayGrader.includes('답이 짧다는 이유만으로 감점하지 마세요'), '공용 서술형 채점이 AI 호출, 공개 핵심어 및 easy/normal 한 문장 기준을 사용하지 않습니다.');
 assert(essaySubmit.includes('await showLiteracyResult') && essaySubmit.includes('userLiteracyAnswerChecked = false;'), '서술형 결과 저장 대기 또는 채점 실패 시 제출 잠금 해제가 없습니다.');
-assert(literacyPrompt.includes('학생이 쉬운 낱말을 사용한 한 문장') && literacyPrompt.includes('학생이 근거 하나를 담은 한 문장'), 'easy/normal 서술형이 한 문장 저난도 답변으로 제한되지 않습니다.');
+assert(literacyPrompt.includes('추리 결론과 핵심 근거 하나를 쉬운 한 문장') && literacyPrompt.includes('결론과 근거를 한두 문장'), 'easy/normal 서술형이 저난도 추리 결론+근거 답변으로 제한되지 않습니다.');
 assert(literacyPrompt.includes('"keywords": ["핵심어1"') && literacyPrompt.includes('모든 난이도에서 학생에게 미리 보여 줄 핵심어'), '모든 서술형 난이도에서 핵심어 생성을 요구하지 않습니다.');
 assert(index.includes('id="literacy-keywords-container"'), '서술형 핵심어 표시 영역이 없습니다.');
 assert(literacyAttemptMerge.includes('serverData.literacyPortfolio ?? fallback.literacyPortfolio') && literacyAttemptMerge.includes('advanceLiteracyDanIfReady(portfolio)'), '사용자 최신 문해력 기록에 이번 답안 변화량을 병합하지 않습니다.');
@@ -458,12 +458,13 @@ const loadedQuestion = { id: 'stored-field-id', passage: '가', question: '나' 
 loadedQuestion[literacyIdApi.SHARED_LITERACY_DOC_ID] = 'actual-firestore-id';
 assert(await literacyIdApi.getSharedLiteracyQuestionId(loadedQuestion) === 'actual-firestore-id', '실제 Firestore 문서 ID 표식이 재사용되지 않습니다.');
 const normalizedLegacyQuestion = literacyIdApi.buildSharedLiteracyPublicQuestion({
-    passage: '기존 지문', question: '기존 질문', difficulty: 'easy', type: 'essay',
+    passage: '기존 지문', question: '기존 질문', difficulty: 'easy', type: 'essay', acceptableAnswers: ['같은 답', ' 같은 답 ', '', 'x'.repeat(81)],
     literacyDan: 3, pendingReviewRewardId: 'private', id: 'legacy-id'
 }, { sampleAnswer: '모범 답안', explanation: '해설' });
 assert(normalizedLegacyQuestion.sampleAnswer === '모범 답안' && normalizedLegacyQuestion.explanation === '해설', '기존 공용 오답 문서 정규화 때 누락된 공개 필드가 보충되지 않습니다.');
 assert(!('literacyDan' in normalizedLegacyQuestion) && !('pendingReviewRewardId' in normalizedLegacyQuestion) && !('id' in normalizedLegacyQuestion), '기존 공용 오답 문서 정규화 뒤 비공개/임시 필드가 남습니다.');
 assert(Array.isArray(normalizedLegacyQuestion.keywords) && normalizedLegacyQuestion.keywords.length > 0, '기존 서술형 문제의 예시답안에서 핵심어를 보충하지 못합니다.');
+assert(JSON.stringify(normalizedLegacyQuestion.acceptableAnswers) === JSON.stringify(['같은 답']), '단답형 허용 답안이 공용 오답 문서에 안전하게 정규화되지 않습니다.');
 
 [
     'anti-db/db-api',

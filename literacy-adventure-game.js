@@ -3,7 +3,6 @@ const state = {
     busy: false,
     score: 0,
     initialized: false,
-    selectedEvidence: '',
     selectedAnswer: null,
     submitted: false
 };
@@ -11,9 +10,15 @@ const state = {
 const $ = (id) => document.getElementById(id);
 
 const TYPE_LABELS = Object.freeze({
-    multipleChoice: '선택형',
+    multipleChoice: '객관식 · 4지선다',
     shortAnswer: '단답형',
     essay: '서술형'
+});
+
+const RESPONSE_GUIDES = Object.freeze({
+    multipleChoice: '지문의 시간·장소·인물 행동을 연결해 가장 타당한 추리를 고르세요.',
+    shortAnswer: '여러 단서가 가리키는 핵심 인물·물건·원인을 짧게 적으세요.',
+    essay: '추리한 결론을 먼저 쓰고, 그렇게 판단한 지문 속 근거를 함께 설명하세요.'
 });
 
 const DIFFICULTY_LABELS = Object.freeze({
@@ -24,7 +29,7 @@ const DIFFICULTY_LABELS = Object.freeze({
 });
 
 function setWorkspaceDisabled(disabled) {
-    document.querySelectorAll('#literacy-adventure-passage button, #literacy-adventure-options button, #literacy-adventure-input')
+    document.querySelectorAll('#literacy-adventure-options button, #literacy-adventure-input')
         .forEach((element) => { element.disabled = disabled; });
 }
 
@@ -32,65 +37,43 @@ function isGameVisible() {
     return !$('literacy-adventure-game-section')?.classList.contains('hidden');
 }
 
-function splitPassageIntoSentences(passage) {
-    const paragraphs = String(passage || '').split(/\n+/).map((text) => text.trim()).filter(Boolean);
-    const sentences = paragraphs.flatMap((paragraph) => paragraph.match(/[^.!?。！？]+[.!?。！？]?/g) || [paragraph]);
-    return sentences.map((sentence) => sentence.trim()).filter(Boolean);
+function hasCurrentAnswer() {
+    return state.round?.type === 'multipleChoice'
+        ? Number.isInteger(state.selectedAnswer)
+        : Boolean(String($('literacy-adventure-input')?.value || '').trim());
 }
 
 function updateProgress() {
-    const hasEvidence = Boolean(state.selectedEvidence);
-    const hasAnswer = state.round?.type === 'multipleChoice'
-        ? Number.isInteger(state.selectedAnswer)
-        : Boolean(String($('literacy-adventure-input')?.value || '').trim());
+    const hasAnswer = hasCurrentAnswer();
     document.querySelectorAll('#literacy-adventure-steps li').forEach((item, index) => {
-        const done = index === 0 || (index === 1 && hasEvidence) || (index === 2 && state.submitted);
-        const active = !state.submitted && ((index === 1 && !hasEvidence) || (index === 2 && hasEvidence));
+        const done = index === 0 || (index === 1 && hasAnswer) || (index === 2 && state.submitted);
+        const active = !state.submitted && ((index === 1 && !hasAnswer) || (index === 2 && hasAnswer));
         item.classList.toggle('done', done);
         item.classList.toggle('active', active);
     });
-    $('literacy-adventure-answer')?.classList.toggle('unlocked', hasEvidence);
+    $('literacy-adventure-game-section')?.classList.toggle('has-response', hasAnswer);
     const submit = $('literacy-adventure-submit');
-    if (submit) submit.disabled = state.busy || state.submitted || !hasEvidence || !hasAnswer;
-}
-
-function chooseEvidence(sentence, button) {
-    if (state.busy || state.submitted) return;
-    state.selectedEvidence = sentence;
-    document.querySelectorAll('#literacy-adventure-passage button').forEach((item) => {
-        const selected = item === button;
-        item.classList.toggle('selected', selected);
-        item.setAttribute('aria-pressed', String(selected));
-    });
-    const clue = $('literacy-adventure-clue');
-    clue.querySelector('span').textContent = '단서 수첩';
-    clue.querySelector('strong').textContent = `“${sentence}”`;
-    clue.querySelector('small').textContent = '이 단서를 바탕으로 사건의 답을 완성하세요.';
-    $('literacy-adventure-game-section')?.classList.add('has-clue');
-    updateProgress();
-    if (window.matchMedia('(max-width: 900px)').matches) {
-        const answer = $('literacy-adventure-answer');
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        answer?.focus({ preventScroll: true });
-        answer?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    }
+    if (submit) submit.disabled = state.busy || state.submitted || !hasAnswer;
 }
 
 function renderPassage() {
     const passage = $('literacy-adventure-passage');
-    passage.innerHTML = '';
-    splitPassageIntoSentences(state.round?.passage).forEach((sentence, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'literacy-news-sentence';
-        button.setAttribute('aria-pressed', 'false');
-        const number = document.createElement('span');
-        number.textContent = String(index + 1);
-        const text = document.createElement('span');
-        text.textContent = sentence;
-        button.append(number, text);
-        button.addEventListener('click', () => chooseEvidence(sentence, button));
-        passage.appendChild(button);
+    passage.replaceChildren();
+    const paragraphs = String(state.round?.passage || '')
+        .split(/\n+/)
+        .map((text) => text.trim())
+        .filter(Boolean);
+    (paragraphs.length ? paragraphs : ['사건 지문을 불러오지 못했어요.']).forEach((text, index) => {
+        const paragraph = document.createElement('p');
+        paragraph.className = 'literacy-case-paragraph';
+        const marker = document.createElement('span');
+        marker.className = 'literacy-case-paragraph-marker';
+        marker.textContent = String(index + 1).padStart(2, '0');
+        marker.setAttribute('aria-hidden', 'true');
+        const copy = document.createElement('span');
+        copy.textContent = text;
+        paragraph.append(marker, copy);
+        passage.appendChild(paragraph);
     });
 }
 
@@ -109,10 +92,11 @@ function renderAnswer() {
     const round = state.round;
     $('literacy-adventure-question').textContent = round.question;
     $('literacy-adventure-difficulty').textContent = DIFFICULTY_LABELS[round.difficulty] || round.difficulty || '맞춤';
-    $('literacy-adventure-type').textContent = TYPE_LABELS[round.type] || '문해력';
+    $('literacy-adventure-type').textContent = TYPE_LABELS[round.type] || '추리 문제';
+    $('literacy-adventure-response-guide').textContent = RESPONSE_GUIDES[round.type] || RESPONSE_GUIDES.essay;
     const options = $('literacy-adventure-options');
     const inputWrap = $('literacy-adventure-input-wrap');
-    options.innerHTML = '';
+    options.replaceChildren();
     inputWrap.classList.toggle('hidden', round.type === 'multipleChoice');
     if (round.type === 'multipleChoice') {
         (round.options || []).forEach((option, index) => {
@@ -131,19 +115,19 @@ function renderAnswer() {
         const input = $('literacy-adventure-input');
         input.disabled = false;
         input.value = '';
+        input.rows = round.type === 'essay' ? 6 : 2;
+        input.maxLength = round.type === 'essay' ? 800 : 80;
         input.placeholder = round.type === 'essay'
-            ? '선택한 단서를 활용해 내 추리를 적어 보세요.'
-            : '사건 기록에서 찾은 답을 짧게 적어 보세요.';
+            ? '예: 제 추리는 ○○입니다. 왜냐하면 지문에서 …'
+            : '추리한 답을 짧게 적어 보세요.';
     }
     updateProgress();
 }
 
 function resetDesk() {
-    state.selectedEvidence = '';
     state.selectedAnswer = null;
     state.submitted = false;
-    $('literacy-adventure-clue').innerHTML = '<span>단서 수첩</span><strong>아직 고른 단서가 없습니다.</strong><small>왼쪽 사건 기록에서 중요한 문장을 하나 누르세요.</small>';
-    $('literacy-adventure-game-section')?.classList.remove('has-clue', 'case-solved', 'case-recheck');
+    $('literacy-adventure-game-section')?.classList.remove('has-response', 'case-solved', 'case-recheck');
     $('literacy-adventure-feedback').className = '';
     $('literacy-adventure-feedback').textContent = '';
     const restart = $('literacy-adventure-restart');
@@ -179,7 +163,7 @@ async function startRound() {
         renderPassage();
         renderAnswer();
         $('literacy-adventure-loading').classList.add('hidden');
-        if (isGameVisible()) document.querySelector('#literacy-adventure-passage button')?.focus({ preventScroll: true });
+        if (isGameVisible()) $('literacy-adventure-passage')?.focus({ preventScroll: true });
     } catch (error) {
         if (isNextRound) {
             restart.disabled = false;
@@ -199,19 +183,15 @@ async function startRound() {
 
 async function submit() {
     if (state.busy || !state.round || state.submitted) return;
-    if (!state.selectedEvidence) {
-        $('literacy-adventure-feedback').textContent = '사건 기록에서 결정적 단서 문장을 먼저 골라 주세요.';
-        return;
-    }
     const value = state.round.type === 'multipleChoice'
         ? state.selectedAnswer
         : $('literacy-adventure-input').value;
     if (state.round.type === 'multipleChoice' && !Number.isInteger(value)) {
-        $('literacy-adventure-feedback').textContent = '사건의 답을 먼저 골라 주세요.';
+        $('literacy-adventure-feedback').textContent = '가장 타당한 추리를 먼저 골라 주세요.';
         return;
     }
     if (state.round.type !== 'multipleChoice' && !String(value).trim()) {
-        $('literacy-adventure-feedback').textContent = '사건의 답을 먼저 적어 주세요.';
+        $('literacy-adventure-feedback').textContent = '지문을 바탕으로 추리한 답을 적어 주세요.';
         return;
     }
     const answerPanel = $('literacy-adventure-answer');
@@ -221,8 +201,8 @@ async function submit() {
     updateProgress();
     $('literacy-adventure-feedback').className = 'checking';
     $('literacy-adventure-feedback').textContent = state.round.type === 'essay'
-        ? '에이두 탐정이 단서와 추리를 함께 확인하고 있어요…'
-        : '사건의 단서와 답을 대조하고 있어요…';
+        ? '에이두 탐정이 결론과 지문 근거를 함께 확인하고 있어요…'
+        : '사건 기록의 단서와 추리를 대조하고 있어요…';
     try {
         const result = await window.aiedueLiteracyAdventureData.submitAnswer(value);
         state.submitted = true;
@@ -237,7 +217,9 @@ async function submit() {
         const detail = document.createElement('span');
         detail.textContent = `${result.detail}${result.explanation ? ` ${result.explanation}` : ''}`;
         const evidence = document.createElement('small');
-        evidence.textContent = `내가 고른 근거: “${state.selectedEvidence}”`;
+        evidence.textContent = result.isCorrect
+            ? '지문 속 여러 정보를 연결해 타당한 결론을 찾았어요.'
+            : '인물의 행동, 시간, 장소, 원인 사이에 모순이 없는지 다시 살펴보세요.';
         feedback.append(headline, detail, evidence);
         $('literacy-adventure-submit').classList.add('hidden');
         $('literacy-adventure-restart').classList.remove('hidden');

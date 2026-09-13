@@ -190,38 +190,52 @@ test('4단계 게임은 기존 문해력 생성·채점·원자 저장 facade를
     assert.equal(literacyGame.includes('aiedueKoreanLabTimeQuizData'), false);
 });
 
-test('4단계 문해력 탐정단은 사건 기록에서 단서를 고른 뒤 추리를 제출한다', () => {
+test('4단계 문해력 탐정단은 왼쪽 추리 지문과 오른쪽 유형별 답변으로 사건을 해결한다', () => {
     assert.ok(html.includes('🔎 문해력 탐정단'));
-    assert.ok(html.includes('오늘의 사건 기록'));
-    assert.ok(html.includes('사건의 진실을 밝혀내세요'));
+    assert.ok(html.includes('사건 추리 지문'));
+    assert.ok(html.includes('추리해서 답해 보세요'));
     assert.ok(html.includes('assets/aiedue-literacy-detective.webp'));
     assert.ok(html.includes('에이두 탐정의 수사 팁'));
     assert.equal(html.includes('문해력 편집국'), false);
     assert.ok(html.includes('id="literacy-adventure-difficulty"'));
     assert.ok(html.includes('id="literacy-adventure-type"'));
-    assert.equal(html.includes('4개 관문'), false);
+    assert.ok(html.includes('id="literacy-adventure-response-guide"'));
+    assert.match(html, /id="literacy-adventure-options"[^>]*role="group"[^>]*aria-labelledby="literacy-adventure-question"/);
+    assert.match(html, /id="literacy-adventure-input"[^>]*aria-labelledby="literacy-adventure-question"[^>]*aria-describedby="literacy-adventure-response-guide"/);
+    assert.equal(html.includes('단서 선택'), false);
+    assert.equal(html.includes('id="literacy-adventure-clue"'), false);
     assert.equal(html.includes('id="literacy-adventure-next"'), false);
-    assert.ok(literacyGame.includes('splitPassageIntoSentences'));
-    assert.ok(literacyGame.includes('chooseEvidence(sentence, button)'));
+    assert.ok(literacyGame.includes('renderPassage'));
+    assert.equal(literacyGame.includes('chooseEvidence'), false);
+    assert.equal(literacyGame.includes('selectedEvidence'), false);
     assert.ok(literacyGame.includes("button.addEventListener('click', () => chooseOption(index, button))"));
     assert.ok(literacyGame.includes("$('literacy-adventure-submit')?.addEventListener('click', submit)"));
-    assert.ok(literacyGame.includes('if (!state.selectedEvidence)'));
+    assert.ok(literacyGame.includes('const hasAnswer ='));
+    assert.ok(literacyGame.includes("$('literacy-adventure-game-section')?.classList.toggle('has-response', hasAnswer)"));
     assert.ok(literacyGame.includes('function setWorkspaceDisabled(disabled)'));
     assert.match(literacyGame, /input\.disabled\s*=\s*false/);
     assert.match(literacyGame, /async function submit\(\)[\s\S]*?state\.busy\s*=\s*true;[\s\S]*?setWorkspaceDisabled\(true\)/);
     assert.match(literacyGame, /catch \(error\)[\s\S]*?setWorkspaceDisabled\(false\)/);
-    assert.ok(literacyGame.includes("matchMedia('(prefers-reduced-motion: reduce)')"));
     assert.ok(literacyGame.includes("restart.textContent = '사건 기록을 받는 중…'"));
     assert.ok(literacyGame.includes("answerPanel?.setAttribute('aria-busy', 'true')"));
     assert.ok(literacyGame.includes('start.disabled = state.busy'));
     assert.equal(literacyGame.includes('showLiteracyAdventureGameSection'), false);
     assert.ok(literacyGame.includes('facade.createRound()'));
     assert.ok(literacyGame.includes('window.aiedueLiteracyAdventureData.submitAnswer(value)'));
-    assert.match(literacyCss, /\.literacy-news-sentence\.selected/);
+    assert.match(literacyCss, /\.literacy-case-paragraph/);
+    assert.match(literacyCss, /#literacy-adventure-response-guide/);
     assert.match(literacyCss, /\.literacy-detective-guide/);
     assert.match(literacyCss, /\.case-solved/);
     assert.match(literacyCss, /#literacy-adventure-feedback\.published/);
     assert.match(literacyCss, /\.literacy-adventure-answer\s*\{[^}]*scroll-margin-top:\s*184px/);
+
+    const prompt = section(app, 'function generateLiteracyPrompt', 'function parseAiQuestionResponse');
+    assert.ok(prompt.includes('추리형 독해 사건'));
+    assert.ok(prompt.includes('두 가지 이상의 단서'));
+    assert.ok(prompt.includes('지문에 직접 적힌 문장을 그대로 찾기만'));
+    assert.ok(prompt.includes('객관식(4지선다형)'));
+    assert.ok(prompt.includes('단답형'));
+    assert.ok(prompt.includes('서술형'));
 });
 
 test('게임을 닫으면 홈이 아니라 해당 단계 내부 카드로 복원한다', () => {

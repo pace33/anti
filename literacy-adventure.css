@@ -62,41 +62,36 @@
 .literacy-detective-guide p { display: grid; gap: 3px; margin: 0; line-height: 1.4; }
 .literacy-detective-guide strong { color: #5b371e; font-size: .9rem; }
 .literacy-detective-guide span { color: #475569; font-size: .82rem; font-weight: 800; }
-.literacy-adventure-game.has-clue .literacy-detective-guide img { transform: rotate(-3deg) scale(1.06); }
+.literacy-adventure-game.has-response .literacy-detective-guide img { transform: rotate(-3deg) scale(1.06); }
 .literacy-adventure-game.case-solved .literacy-detective-guide img { animation: detective-case-solved .55s ease both; }
 .literacy-news-meta { display: flex; flex-wrap: wrap; gap: 7px; margin: 15px 0; }
 .literacy-news-meta span { padding: 6px 10px; border-radius: 999px; background: #e2e8f0; color: #334155; font-size: .76rem; font-weight: 900; }
 .literacy-news-instruction { margin: 0 0 14px; padding: 11px 13px; border-left: 4px solid #2f6f55; background: #eef8f0; color: #245842; font-weight: 850; line-height: 1.55; }
-#literacy-adventure-passage { display: grid; gap: 8px; max-height: 470px; overflow-y: auto; padding: 2px 5px 2px 14px; }
-.literacy-news-sentence {
-    width: 100%;
+#literacy-adventure-passage { display: grid; gap: 11px; max-height: 470px; overflow-y: auto; padding: 3px 6px 3px 14px; border-radius: 12px; }
+#literacy-adventure-passage:focus-visible { outline: 4px solid rgba(245, 158, 11, .42); outline-offset: 3px; }
+.literacy-case-paragraph {
+    margin: 0;
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr);
     gap: 10px;
     align-items: start;
-    padding: 11px 12px;
-    border: 2px solid transparent;
+    padding: 13px 14px;
+    border: 1px solid #e1d8c7;
     border-radius: 12px;
-    background: transparent;
+    background: #fffefa;
     color: #283548;
-    text-align: left;
     font: 750 1.02rem/1.75 inherit;
-    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(61, 45, 31, .05);
 }
-.literacy-news-sentence > span:first-child { display: grid; place-items: center; width: 26px; height: 26px; margin-top: 2px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: .74rem; font-weight: 950; }
-.literacy-news-sentence:hover { background: #f8fafc; border-color: #cbd5e1; }
-.literacy-news-sentence.selected { border-color: #2f6f55; background: #eef8f0; color: #183d2e; box-shadow: 0 5px 13px rgba(47, 111, 85, .14); }
-.literacy-news-sentence.selected > span:first-child { background: #2f6f55; color: #fff; }
+.literacy-case-paragraph:nth-child(even) { background: #f7fbf7; }
+.literacy-case-paragraph-marker { display: grid; place-items: center; width: 27px; height: 27px; margin-top: 2px; border-radius: 8px; background: #2f6f55; color: #fff; font-size: .68rem; font-weight: 950; letter-spacing: .04em; }
 .literacy-adventure-answer { display: flex; flex-direction: column; scroll-margin-top: 184px; }
 #literacy-adventure-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 15px 0; padding: 0; list-style: none; counter-reset: desk-step; }
 #literacy-adventure-steps li { min-width: 0; padding: 9px 6px; border-bottom: 4px solid #cbd5e1; color: #64748b; text-align: center; font-size: .76rem; font-weight: 900; }
 #literacy-adventure-steps li.active { border-color: #d6a83f; color: #7a4c2a; }
 #literacy-adventure-steps li.done { border-color: #16a34a; color: #15803d; }
 #literacy-adventure-question { margin: 4px 0 13px; color: #172033; font-size: 1.12rem; font-weight: 950; line-height: 1.55; }
-#literacy-adventure-clue { display: grid; gap: 5px; min-height: 82px; box-sizing: border-box; margin-bottom: 13px; padding: 12px 14px; border: 2px dashed #cbd5e1; border-radius: 13px; background: #f8fafc; color: #475569; }
-#literacy-adventure-clue span { color: #2f6f55; font-size: .72rem; font-weight: 950; letter-spacing: .12em; }
-#literacy-adventure-clue strong { color: #1e293b; font-size: .91rem; line-height: 1.45; }
-#literacy-adventure-clue small { font-weight: 800; }
+#literacy-adventure-response-guide { margin: 0 0 14px; padding: 11px 13px; border-left: 4px solid #d6a83f; border-radius: 0 10px 10px 0; background: #fff8df; color: #6d431f; font-size: .88rem; font-weight: 850; line-height: 1.5; }
 #literacy-adventure-options { display: grid; gap: 8px; }
 #literacy-adventure-options button { width: 100%; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 9px; align-items: center; padding: 10px 12px; border: 2px solid #d7d2c7; border-radius: 12px; background: #fff; color: #253247; text-align: left; cursor: pointer; }
 #literacy-adventure-options button span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; background: #e2e8f0; font-weight: 950; }
@@ -105,6 +100,8 @@
 #literacy-adventure-options button.selected { border-color: #2f6f55; background: #eef8f0; }
 #literacy-adventure-options button.selected span { background: #2f6f55; color: #fff; }
 #literacy-adventure-input { width: 100%; min-height: 104px; box-sizing: border-box; padding: 13px; border: 2px solid #cbd5e1; border-radius: 12px; background: #fff; font: 750 .95rem/1.55 inherit; resize: vertical; }
+#literacy-adventure-input[rows="2"] { min-height: 72px; }
+#literacy-adventure-input[rows="6"] { min-height: 148px; }
 #literacy-adventure-input:focus { border-color: #2f6f55; outline: 3px solid rgba(47, 111, 85, .16); }
 #literacy-adventure-submit,
 #literacy-adventure-restart,
@@ -140,7 +137,7 @@
     .literacy-adventure-hud strong { padding: 7px 10px; font-size: .82rem; }
     .literacy-adventure-layout { width: calc(100% - 18px); margin: 10px auto 24px; gap: 12px; }
     .literacy-adventure-layout > section { padding: 18px 15px; border-radius: 14px; }
-    .literacy-news-sentence { grid-template-columns: 25px minmax(0, 1fr); gap: 7px; padding: 9px 7px; font-size: .95rem; }
+    .literacy-case-paragraph { grid-template-columns: 25px minmax(0, 1fr); gap: 8px; padding: 11px 9px; font-size: .95rem; }
     #literacy-adventure-steps li { font-size: .68rem; }
     .literacy-adventure-overlay > div { padding: 25px 18px; }
     .literacy-adventure-overlay h2 { font-size: 1.65rem; }
