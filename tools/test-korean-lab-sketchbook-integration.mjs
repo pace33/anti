@@ -124,10 +124,13 @@ test('연구실은 선택형 허브로 한글 내부 시간 퀴즈를 연다', (
     const lab = section(app, 'window.openAiedueLab =', 'function renderAiedueKoreanShopItems');
     assert.ok(lab.includes('활동은 계속 추가됩니다'));
     assert.ok(lab.includes('시간 퀴즈'));
+    assert.equal(lab.includes('음절 슬로우 리더'), false);
+    assert.equal(lab.includes('window.openSyllableSlowReader?.()'), false);
     assert.ok(lab.includes('window.openKoreanLabTimeQuiz?.()'));
     assert.equal(lab.includes('math/index.html'), false);
     const safeActions = section(app, 'const SAFE_MODAL_ACTIONS = new Set([', ']);');
     assert.ok(safeActions.includes("'openAiedueLabTimeQuiz'"));
+    assert.equal(safeActions.includes("'openAiedueLabSyllableReader'"), false);
     assert.ok(html.includes('id="korean-lab-time-quiz-section"'));
     assert.ok(html.includes('src="korean-lab-time-quiz.js'));
 });

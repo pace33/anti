@@ -53,7 +53,7 @@ body.aiedue-lab-game-open .aiedue-rpg-hud {
 }
 .aiedue-lab-game-shell.hidden { display: none !important; }
 
-/* 네 연구소 게임이 공유하는 에이두 한글 브랜드 헤더 */
+/* 연구소 활동이 공유하는 에이두 한글 브랜드 헤더 */
 /* 시작·결과 오버레이 중에도 왼쪽 위 한글 로고 복귀 버튼은 항상 보이고 눌려야 한다. */
 .zoo-header,
 .wct-header,

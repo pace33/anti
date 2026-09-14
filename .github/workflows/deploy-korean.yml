@@ -31,6 +31,8 @@ jobs:
           node --check drawing-shape-catalog.mjs
           node --check word-card-table-game.js
           node --check word-card-table-core.mjs
+          node --check syllable-slow-reader.js
+          node --check syllable-slow-reader-core.mjs
           node --check math/math.js
           node --check math/math-services.js
           node --check math/math-spiral.js
@@ -42,6 +44,8 @@ jobs:
           node --test tools/test-dictation-asteroid-game.mjs tools/test-asteroid-persistence.mjs
           node --test tools/test-shape-zoo-core.mjs tools/test-shape-zoo-game.mjs
           node --test tools/test-word-card-table-core.mjs tools/test-word-card-table-game.mjs tools/test-word-card-table-source.mjs
+          node --test tools/test-syllable-slow-reader-core.mjs tools/test-syllable-slow-reader-game.mjs
+          node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs
           node tools/test-math-learning-records.mjs
           node tools/validate-math-site.mjs
 
@@ -150,7 +154,17 @@ jobs:
           if ($html -notmatch 'src="app.js') { throw 'Public page did not reference app.js.' }
           if ($html -notmatch 'href="app.css') { throw 'Public page did not reference app.css.' }
           if ($html -notmatch 'dashboard-warning-tokens-header') { throw 'Public page did not include warning-token header marker.' }
+          if ($html -notmatch 'data-reading-category="batchim"[\s\S]*data-reading-category="custom"' -or $html -notmatch 'reading-custom-maker' -or $html -notmatch 'syllable-slow-reader.js') { throw 'Public page did not include the Hangul-card custom-maker syllable reader.' }
           if ($html -notmatch 'sync-warning-tokens') { throw 'Public page did not include warning-token sync markers.' }
+
+          $slowReader = (Invoke-WebRequest -UseBasicParsing -Uri "$base/syllable-slow-reader.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          $slowReaderCore = (Invoke-WebRequest -UseBasicParsing -Uri "$base/syllable-slow-reader-core.mjs?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          $slowReaderCss = (Invoke-WebRequest -UseBasicParsing -Uri "$base/syllable-slow-reader.css?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          $appCss = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.css?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
+          if ($slowReader -notmatch 'window\.speakTextKo' -or $slowReader -notmatch 'window\.openSyllableSlowReader') { throw 'Public slow-reader controller was missing or stale.' }
+          if ($slowReaderCore -notmatch 'buildSyllableReaderTokens' -or $slowReaderCore -notmatch 'Intl\.Segmenter') { throw 'Public slow-reader core was missing or stale.' }
+          if ($slowReaderCss -notmatch '\.syllable-slow-reader' -or $slowReaderCss -notmatch '@media \(max-width: 760px\)') { throw 'Public slow-reader CSS was missing or stale.' }
+          if ($appCss -notmatch '@media \(max-width:820px\).*reading-category-tabs' -or $appCss -notmatch 'reading-practice-section.*padding-bottom:7rem') { throw 'Public app.css was missing the custom-maker responsive layout.' }
 
           $app = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
           if ($app -notmatch 'aiedueKoreanDrawingsV2') { throw 'Public app.js did not include protected drawing persistence.' }

@@ -27,6 +27,9 @@ const requiredFiles = [
     'word-card-table-core.mjs',
     'word-card-table-game.js',
     'word-card-table.css',
+    'syllable-slow-reader-core.mjs',
+    'syllable-slow-reader.js',
+    'syllable-slow-reader.css',
     'assets/word-card-friend.png',
     'drawing.html',
     'hangul.html',
@@ -149,6 +152,14 @@ assert(dataAdapter.includes('firebaseBridge: config.firebaseBridge === true'), '
 assert(!dataAdapter.includes('config.firebaseBridge !== false'), 'Firebase 데이터 bridge가 기본 활성화되어 있습니다.');
 assert(app.includes("const AIEDUE_CRAFT_URL = 'https://aiedue.ddns.net/Aiedue_Craft.html';"), '에이두 크래프트가 운영 서버 주소를 사용하지 않습니다.');
 assert(app.includes('function stopAiedueBackgroundMusic()') && app.includes("if (!['start-screen', 'login-section'].includes(sectionId))"), '한글 활동 시작 시 배경음악을 멈추는 공통 처리가 없습니다.');
+const readingTabsStart = index.indexOf('id="reading-category-tabs"');
+const readingTabsEnd = index.indexOf('id="reading-cards-grid"', readingTabsStart);
+const readingTabs = index.slice(readingTabsStart, readingTabsEnd);
+assert(readingTabs.indexOf('data-reading-category="custom"') > readingTabs.indexOf('data-reading-category="batchim"') && index.includes('id="reading-custom-maker"') && index.includes('src="syllable-slow-reader.js'), '한글 카드의 받침 낱말 오른쪽 직접 만들기 탭에 음절 리더가 연결되지 않았습니다.');
+assert(!index.includes('id="syllable-slow-reader-section"') && !app.includes('openAiedueLabSyllableReader') && app.includes("activeReadingCategory === 'custom'") && app.includes('window.openSyllableSlowReader?.()'), '음절 리더가 연구실에서 완전히 제거되어 한글 카드 직접 만들기 탭으로 이전되지 않았습니다.');
+const syllableReader = read('syllable-slow-reader.js');
+assert(syllableReader.includes('window.speakTextKo?.(') && syllableReader.includes('window.cancelSpeech?.()'), '음절 슬로우 리더가 공용 에이두 TTS/취소 경로를 쓰지 않습니다.');
+assert(!/generativelanguage\.googleapis\.com|\bapiKey\b|gemini-2\.5-flash-preview-tts/.test(syllableReader), '음절 슬로우 리더가 브라우저에서 Gemini 키 또는 직접 TTS API를 사용합니다.');
 assert(app.includes('bgm.pause();') && app.includes('bgm.currentTime = 0;') && app.includes("settingsButton.textContent = '켜기';"), '활동 시작 시 배경음악 상태가 완전히 초기화되지 않습니다.');
 assert(!app.includes("const AIEDUE_CRAFT_URL = 'https://aiedue.netlify.app/Aiedue_Craft.html';"), '폐기된 Netlify 크래프트 주소가 남아 있습니다.');
 assert(app.includes("const AIEDUE_PORANDY_URL = 'https://aiedue.netlify.app/pokemon-defense/play.html';"), '에이두 포랜디가 지정된 Netlify play.html 주소를 사용하지 않습니다.');

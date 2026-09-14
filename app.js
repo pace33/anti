@@ -3589,7 +3589,7 @@ const AIEDUE_LAB_STAGE_SECTIONS = Object.freeze({
 
 window.rememberAiedueLabReturnFocus = function rememberAiedueLabReturnFocus(fallbackId) {
     const active = document.activeElement;
-    const target = active instanceof HTMLElement && active !== document.body
+    const target = active instanceof HTMLElement && active !== document.body && !active.closest('#result-modal')
         ? active
         : document.getElementById(fallbackId);
     const stage = String(target?.dataset?.stageGameEntry || '').trim();
@@ -4894,6 +4894,8 @@ function stopAiedueBackgroundMusic() {
 }
 
 function showTopLevelSection(sectionId) {
+    if (sectionId !== 'reading-practice-section' && (readingSlowTimer || readingActiveCard)) clearReadingSpeechState();
+    clearCombineTtsQueue();
     const labGameSectionIds = [
         'korean-lab-time-quiz-section',
         'shape-zoo-game-section',
@@ -4904,6 +4906,7 @@ function showTopLevelSection(sectionId) {
     const isKoreanLabGame = labGameSectionIds.includes(sectionId);
     document.body.classList.toggle('aiedue-lab-game-open', isKoreanLabGame);
     document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section');
+    if (sectionId !== 'reading-practice-section') window.stopSyllableSlowReader?.();
     const isTimeQuiz = sectionId === 'korean-lab-time-quiz-section';
     if (!isTimeQuiz) window.stopKoreanLabTimeQuiz?.();
     document.body.classList.toggle('korean-lab-time-quiz-open', isTimeQuiz);
@@ -5023,6 +5026,7 @@ window.goBackFromRpgHud = function goBackFromRpgHud() {
         showTopLevelSection('literacy-activities-section');
         return;
     }
+
     if (['my-korean-section', 'learning-start-section', 'learning-detail-section', 'letter-writing-section', 'word-writing-quiz-section', 'word-listening-quiz-section', 'reading-practice-section', 'hangul-game-section'].includes(visibleSectionId)) {
         goHangulDashboard();
         return;
@@ -5377,7 +5381,30 @@ function speakReadingPhraseSlowly(card, phrase) {
 
 function renderReadingPracticeCards() {
     const grid = document.getElementById('reading-cards-grid');
-    if (!grid) return;
+    const customMaker = document.getElementById('reading-custom-maker');
+    const slowToggle = document.getElementById('reading-slow-toggle');
+    const title = document.getElementById('reading-practice-title');
+    const description = document.getElementById('reading-practice-description');
+    if (!grid || !customMaker) return;
+
+    const isCustomMaker = activeReadingCategory === 'custom';
+    grid.classList.toggle('hidden', isCustomMaker);
+    customMaker.classList.toggle('hidden', !isCustomMaker);
+    slowToggle?.classList.toggle('hidden', isCustomMaker);
+    if (title) title.textContent = isCustomMaker ? '한글 카드 직접 만들기' : '한글 그림 카드';
+    if (description) {
+        description.textContent = isCustomMaker
+            ? '원하는 글자와 문장을 입력하고, 음절 카드를 한 글자씩 천천히 들어요.'
+            : '배움에서 본 그림 카드를 누르면 낱말을 읽어줘요. 느리게 읽기를 켜면 한 글자씩 강조해요.';
+    }
+    grid.setAttribute('aria-labelledby', `reading-tab-${activeReadingCategory}`);
+    if (isCustomMaker) {
+        grid.replaceChildren();
+        window.openSyllableSlowReader?.();
+        return;
+    }
+
+    window.stopSyllableSlowReader?.();
     const readingPracticeCards = getReadingPracticeCards();
     const cards = readingPracticeCards[activeReadingCategory] || readingPracticeCards.basic;
     grid.innerHTML = cards.map((item, index) => {
@@ -5397,12 +5424,26 @@ function renderReadingPracticeCards() {
     });
 }
 
-document.querySelectorAll('[data-reading-category]').forEach((button) => {
+const readingCategoryTabs = Array.from(document.querySelectorAll('[data-reading-category]'));
+readingCategoryTabs.forEach((button, index) => {
     button.addEventListener('click', () => {
         clearReadingSpeechState();
         activeReadingCategory = button.dataset.readingCategory;
-        document.querySelectorAll('[data-reading-category]').forEach((item) => item.classList.toggle('active', item === button));
+        document.querySelectorAll('[data-reading-category]').forEach((item) => {
+            const isActive = item === button;
+            item.classList.toggle('active', isActive);
+            item.setAttribute('aria-selected', String(isActive));
+            item.tabIndex = isActive ? 0 : -1;
+        });
         renderReadingPracticeCards();
+    });
+    button.addEventListener('keydown', (event) => {
+        const keyMoves = { ArrowRight: 1, ArrowLeft: -1, Home: -index, End: readingCategoryTabs.length - 1 - index };
+        if (!(event.key in keyMoves)) return;
+        event.preventDefault();
+        const targetIndex = (index + keyMoves[event.key] + readingCategoryTabs.length) % readingCategoryTabs.length;
+        readingCategoryTabs[targetIndex].click();
+        requestAnimationFrame(() => readingCategoryTabs[targetIndex].focus());
     });
 });
 
@@ -7047,6 +7088,7 @@ let audioUnlockPromise = null;
 let activeTtsRequestId = 0;
 let activeTtsAbortController = null;
 let activeTtsObjectUrl = '';
+let activeTtsAudioCancel = null;
 const AIEDUE_SCHOOL_TTS_ENDPOINT = 'https://us-central1-mansungcoin-c6e06.cloudfunctions.net/ttsHandler';
 const AIEDUE_TTS_CHUNK_LIMIT = 180;
 const AIEDUE_TTS_RATE_MULTIPLIER = 1.2;
@@ -7078,6 +7120,8 @@ function cancelSpeech() {
     activeTtsRequestId += 1;
     activeTtsAbortController?.abort();
     activeTtsAbortController = null;
+    activeTtsAudioCancel?.();
+    activeTtsAudioCancel = null;
     if (globalTtsAudio) {
         globalTtsAudio.pause();
         globalTtsAudio.currentTime = 0;
@@ -7109,10 +7153,21 @@ function splitAiedueTtsText(text) {
 
 function waitForAiedueTtsAudio(audio, requestId) {
     return new Promise((resolve, reject) => {
-        audio.onended = () => requestId === activeTtsRequestId ? resolve() : reject(new DOMException('재생이 취소됐습니다.', 'AbortError'));
-        audio.onerror = () => reject(new Error('TTS 오디오를 재생하지 못했습니다.'));
+        let settled = false;
+        const finish = (callback, value) => {
+            if (settled) return;
+            settled = true;
+            audio.onended = null;
+            audio.onerror = null;
+            if (activeTtsAudioCancel === cancelAudioWait) activeTtsAudioCancel = null;
+            callback(value);
+        };
+        const cancelAudioWait = () => finish(reject, new DOMException('재생이 취소됐습니다.', 'AbortError'));
+        activeTtsAudioCancel = cancelAudioWait;
+        audio.onended = () => requestId === activeTtsRequestId ? finish(resolve) : cancelAudioWait();
+        audio.onerror = () => finish(reject, new Error('TTS 오디오를 재생하지 못했습니다.'));
         const playPromise = audio.play();
-        if (playPromise) playPromise.catch(reject);
+        if (playPromise) playPromise.catch((error) => finish(reject, error));
     });
 }
 
@@ -7226,6 +7281,13 @@ window.speakChar = function(char) {
 
 // 결합 카드 클릭 시 애니메이션 재시작 + 순차적 자모음 음성(므, 아, 마) 출력
 let activeTtsTimeouts = [];
+function clearCombineTtsQueue() {
+    if (!activeTtsTimeouts.length) return;
+    activeTtsTimeouts.forEach((timer) => clearTimeout(timer));
+    activeTtsTimeouts = [];
+    cancelSpeech();
+}
+
 window.restartCombineAnim = function(card, options = {}) {
     if (!card) return;
 
@@ -7264,9 +7326,7 @@ window.restartCombineAnim = function(card, options = {}) {
     });
 
     // 기존 진행 중인 모든 합성 음성 대기열 취소
-    activeTtsTimeouts.forEach(t => clearTimeout(t));
-    activeTtsTimeouts = [];
-    cancelSpeech();
+    clearCombineTtsQueue();
 
     const combosAttr = card.getAttribute('data-combos');
     if (combosAttr && options.speak !== false) {

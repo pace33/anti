@@ -17,10 +17,11 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260913-role-quick-actions-v1">
+    <link rel="stylesheet" href="app.css?v=20260914-syllable-reader-tab-v2">
     <link rel="stylesheet" href="shape-zoo.css?v=20260914-stage-game-reports-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
-    <link rel="stylesheet" href="korean-lab-shell.css?v=20260914-time-clock-scale-v1">
+    <link rel="stylesheet" href="korean-lab-shell.css?v=20260914-card-custom-tab-v2">
+    <link rel="stylesheet" href="syllable-slow-reader.css?v=20260914-syllable-reader-tab-v2">
     <link rel="stylesheet" href="literacy-adventure.css?v=20260913-detective-inference-v1">
 </head>
 <body>
@@ -1145,15 +1146,35 @@
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-8 overflow-y-auto custom-scrollbar">
                 <div class="w-full text-center mb-8">
                     <div class="aiedu-badge bg-indigo-500 mb-4">한글 카드</div>
-                    <h2 class="text-5xl font-black text-[#2c3e50] mb-3">한글 그림 카드</h2>
-                    <p class="text-xl text-gray-500 font-bold">배움에서 본 그림 카드를 누르면 낱말을 읽어줘요. 느리게 읽기를 켜면 한 글자씩 강조해요.</p>
+                    <h2 id="reading-practice-title" class="text-5xl font-black text-[#2c3e50] mb-3">한글 그림 카드</h2>
+                    <p id="reading-practice-description" class="text-xl text-gray-500 font-bold">배움에서 본 그림 카드를 누르면 낱말을 읽어줘요. 느리게 읽기를 켜면 한 글자씩 강조해요.</p>
                 </div>
                 <div id="reading-category-tabs" class="reading-category-tabs" role="tablist" aria-label="한글 그림 카드 묶음">
-                    <button type="button" class="nav-tab active" data-reading-category="basic">받침 없는 낱말</button>
-                    <button type="button" class="nav-tab" data-reading-category="complex">복잡한 모음</button>
-                    <button type="button" class="nav-tab" data-reading-category="batchim">받침 낱말</button>
+                    <button type="button" id="reading-tab-basic" class="nav-tab active" role="tab" tabindex="0" aria-selected="true" aria-controls="reading-cards-grid" data-reading-category="basic">받침 없는 낱말</button>
+                    <button type="button" id="reading-tab-complex" class="nav-tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="reading-cards-grid" data-reading-category="complex">복잡한 모음</button>
+                    <button type="button" id="reading-tab-batchim" class="nav-tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="reading-cards-grid" data-reading-category="batchim">받침 낱말</button>
+                    <button type="button" id="reading-tab-custom" class="nav-tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="reading-custom-maker" data-reading-category="custom">직접 만들기</button>
                 </div>
-                <div id="reading-cards-grid" class="reading-cards-grid w-full" aria-live="polite"></div>
+                <div id="reading-cards-grid" class="reading-cards-grid w-full" role="tabpanel" aria-labelledby="reading-tab-basic" aria-live="polite"></div>
+                <div id="reading-custom-maker" class="syllable-slow-reader reading-custom-maker hidden w-full" role="tabpanel" aria-labelledby="reading-tab-custom ssr-title">
+                    <div class="ssr-panel">
+                        <div class="ssr-inline-heading"><span aria-hidden="true">🔊</span><div><p>내가 원하는 글자와 문장</p><h3 id="ssr-title">직접 만들어 천천히 읽기</h3></div></div>
+                        <section class="ssr-field" aria-labelledby="ssr-input-label">
+                            <div class="ssr-field-heading"><label id="ssr-input-label" for="ssr-text-input">읽을 글자를 입력하세요</label><span id="ssr-count">0/80</span></div>
+                            <textarea id="ssr-text-input" rows="2" spellcheck="false" placeholder="예: 동해물과 백두산이"></textarea>
+                            <div class="ssr-field-actions"><button type="button" id="ssr-clear">모두 지우기</button><button type="button" id="ssr-sample">예시 바꾸기</button></div>
+                        </section>
+                        <section class="ssr-board-wrap" aria-labelledby="ssr-board-label">
+                            <p id="ssr-board-label" class="ssr-board-label">글자를 누르면 하나만 들을 수 있어요</p>
+                            <div id="ssr-board" class="ssr-board"><p id="ssr-empty" class="ssr-empty">글자를 입력하면 음절 카드가 나타나요.</p></div>
+                        </section>
+                        <div class="ssr-controls">
+                            <label class="ssr-gap-control" for="ssr-gap-range"><span>⏱ 음절 쉬는 간격</span><input type="range" id="ssr-gap-range" min="1" max="4" step="1" value="2"><strong id="ssr-gap-display">보통 (0.4초)</strong></label>
+                            <button type="button" id="ssr-play" class="ssr-play" aria-pressed="false"><span id="ssr-play-icon" aria-hidden="true">▶</span><span id="ssr-play-text">천천히 읽기</span></button>
+                        </div>
+                        <div class="ssr-status-wrap"><p id="ssr-status" role="status" aria-live="polite">준비 완료. 재생 버튼을 누르면 한 글자씩 읽어 줍니다.</p><p class="ssr-device-hint">휴대전화에서 소리가 안 나면 무음 모드를 확인해 주세요.</p></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1667,7 +1688,6 @@
             </div>
         </section>
     </div>
-
     <!-- [에이두 연구실: 한글 전용 시간 퀴즈] -->
     <section id="korean-lab-time-quiz-section" class="view-section aiedue-lab-game-shell korean-lab-time-quiz hidden" aria-labelledby="kltq-title" tabindex="-1">
         <header class="kltq-header">
@@ -1825,7 +1845,8 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260914-class-shop-management-v1"></script>
+    <script type="module" src="app.js?v=20260914-syllable-reader-tab-v2"></script>
+    <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="word-card-table-game.js?v=20260914-stage-game-reports-v1"></script>
