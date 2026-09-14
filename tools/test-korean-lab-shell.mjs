@@ -102,7 +102,7 @@ test('연구실 게임은 에이두 한글 공통 둥근 카드 셸을 쓴다', 
 
 test('대시보드는 좁은 화면에서도 1~4단계를 한 줄로 유지하고 내 정보 배너를 왼쪽 아래에 둔다', () => {
     assert.ok(app.includes("document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section')"));
-    assert.ok(app.includes("hud.classList.toggle('rpg-collapsed', !dashboardViewActive)"));
+    assert.ok(app.includes("hud.classList.remove('rpg-collapsed')"));
     assert.ok(appCss.includes('body.dashboard-view-active .aiedue-rpg-hud'));
     assert.ok(appCss.includes('position: fixed !important'));
     assert.ok(appCss.includes('bottom: max(18px, env(safe-area-inset-bottom)) !important'));

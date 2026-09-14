@@ -10,8 +10,13 @@ import {
     onAuthStateChanged,
     signOut,
     GoogleAuthProvider,
-    signInWithPopup
+    signInWithPopup,
+    setPersistence,
+    inMemoryPersistence
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { installClassroomTools } from './classroom-tools.js';
+import { createClassroomService } from './classroom-service.js';
+import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
 import { canManageTeacherShopItem, isCurrentClassShopRequest } from "./korean-class-shop-core.mjs?v=20260914-class-shop-management-v1";
 import { DRAWING_SHAPE_LIBRARY as drawingShapeLibrary } from "./drawing-shape-catalog.mjs";
@@ -161,22 +166,16 @@ function getKoreanStudentViewFromLocation() {
     return ['records', 'mistakes', 'review'].includes(view) ? view : null;
 }
 
-function showActivityLoading(message = '로딩중...') {
-    const overlay = document.getElementById('activity-loading-overlay');
-    if (!overlay) return;
-    const text = overlay.querySelector('.activity-loading-text');
-    if (text) text.innerText = message;
-    overlay.classList.add('show');
-    overlay.setAttribute('aria-hidden', 'false');
-    overlay.setAttribute('aria-busy', 'true');
+const aieduLoading = createAieduLoading(document);
+let activityLoadingToken;
+function showActivityLoading(message = '로딩중...', kind = getVisibleActivityRoute() || getActivityRouteFromLocation() || 'literacy') {
+    if (activityLoadingToken && aieduLoading.isActive(activityLoadingToken)) {
+        aieduLoading.update(activityLoadingToken, message);
+    } else activityLoadingToken = aieduLoading.start(message, kind);
 }
-
-function hideActivityLoading() {
-    const overlay = document.getElementById('activity-loading-overlay');
-    if (!overlay) return;
-    overlay.classList.remove('show');
-    overlay.setAttribute('aria-hidden', 'true');
-    overlay.setAttribute('aria-busy', 'false');
+function hideActivityLoading(success = false) {
+    aieduLoading.finish(activityLoadingToken, success === true);
+    activityLoadingToken = null;
 }
 
 function getVisibleActivityRoute() {
@@ -4041,6 +4040,8 @@ const SAFE_MODAL_ACTIONS = new Set([
     'openAiedueLabTimeQuiz',
     'openAieduePorandy',
     'openKoreanStudentReport',
+    'printClassShop',
+    'openClassCurrency',
     'purchaseAiedueCraftAccess',
     'purchaseAiedueKoreanShopItem',
     'saveAiedueKoreanShopItem',
@@ -4389,7 +4390,7 @@ function renderAiedueKoreanTeacherShopManager(items = [], { embedded = false } =
     return `<section class="${embedded ? 'bg-amber-50/40 border border-amber-100 rounded-3xl p-4 md:p-5' : ''}">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
             <div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 상점 물품 관리</h3><p class="text-sm text-gray-500 font-bold mt-1">물품을 만든 뒤 학생별로 배부하면 학생 상점에 표시됩니다. · 등록 ${items.length}개</p></div>
-            <div class="flex gap-2 flex-wrap"><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">물품 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">전체 학생에게 모두 배부</button></div>
+            <div class="flex gap-2 flex-wrap"><button type="button" class="btn-outline px-4 py-2" onclick="printClassShop()">상점 물품 표로 출력하기</button><button type="button" class="btn-outline px-4 py-2" onclick="openClassCurrency()">종이 화폐 출력</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">물품 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">전체 학생에게 모두 배부</button></div>
         </div>
         <div class="space-y-3 ${embedded ? '' : 'max-h-[55vh] overflow-y-auto custom-scrollbar pr-1'}">${rows}</div>
     </section>`;
@@ -5545,6 +5546,9 @@ function showTopLevelSection(sectionId) {
     const isKoreanLabGame = labGameSectionIds.includes(sectionId);
     document.body.classList.toggle('aiedue-lab-game-open', isKoreanLabGame);
     document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section');
+    const learningStage = protectedStageSections[sectionId]?.[0];
+    if (learningStage) document.body.dataset.learningStage = String(learningStage);
+    else delete document.body.dataset.learningStage;
     if (sectionId !== 'reading-practice-section') window.stopSyllableSlowReader?.();
     const isTimeQuiz = sectionId === 'korean-lab-time-quiz-section';
     if (!isTimeQuiz) window.stopKoreanLabTimeQuiz?.();
@@ -5587,12 +5591,11 @@ function setRpgHudVisible(isVisible) {
     const hud = document.getElementById('aiedue-rpg-hud');
     hud?.classList.toggle('hidden', !isVisible);
     if (hud) {
-        const dashboardViewActive = document.body.classList.contains('dashboard-view-active');
         removeDeprecatedRpgWordBankActions(hud);
-        hud.classList.toggle('rpg-collapsed', !dashboardViewActive);
+        hud.classList.remove('rpg-collapsed');
         const portrait = hud.querySelector('.rpg-profile-portrait');
-        portrait?.setAttribute('aria-expanded', String(dashboardViewActive));
-        portrait?.setAttribute('aria-label', dashboardViewActive ? '메뉴 접기' : '메뉴 펼치기');
+        portrait?.setAttribute('aria-expanded', 'true');
+        portrait?.setAttribute('aria-label', '메뉴 접기');
         hud.classList.remove('actions-open');
         hud.querySelector('.rpg-expand-button')?.setAttribute('aria-expanded', 'false');
         hud.querySelector('.rpg-expand-button')?.setAttribute('aria-label', '하단 메뉴 펼치기');
@@ -7061,6 +7064,7 @@ window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
     drawingAiSketchbookSaved = false;
     drawingAiSketchbookPendingRecord = null;
     updateAiSketchbookControls('내 그림을 AntiAI 대화형 세션으로 보내고 있어요…');
+    const loadingToken = aieduLoading.start('화가 에이두가 내 그림을 완성하고 있어요', 'drawing');
     let session = null;
     let failureMessage = '';
     try {
@@ -7094,6 +7098,7 @@ window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
             showModal(`AI 그림을 만들지 못했어요.<br><span class="text-sm text-gray-500">${escapeHtml(error?.message || '잠시 뒤 다시 시도해 주세요.')}</span>`);
         }
     } finally {
+        aieduLoading.finish(loadingToken, drawingAiSketchbookGenerated && !controller.signal.aborted);
         if (drawingAiSketchbookController === controller) {
             drawingAiSketchbookController = null;
             drawingAiSketchbookBusy = false;
@@ -9686,6 +9691,8 @@ function renderWordBankCameraResult(words, duplicateCount = 0) {
 }
 
 async function processWordBankCameraPhoto(file, previewDataUrl = '') {
+    const loadingToken = aieduLoading.start('에이두가 사진을 살펴보고 노트에 단어를 적고 있어요', 'dictation');
+    let loadingSucceeded = false;
     const capture = document.getElementById('word-bank-camera-capture-btn');
     const preview = document.getElementById('word-bank-camera-preview');
     const video = document.getElementById('word-bank-camera-video');
@@ -9750,6 +9757,7 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
             setWordBankCameraStatus('AI 2차 선별이 끝났어요!');
         }
         renderWordBankCameraResult(pendingWordBankCameraAfterSave === 'curricular-writing' ? (dictationPortfolio.curricularWriting?.activeWords || candidateWords) : newWords, duplicateCount);
+        loadingSucceeded = true;
         if (pendingWordBankCameraAfterSave === 'curricular-writing') {
             setTimeout(() => {
                 const modal = document.getElementById('word-bank-camera-modal');
@@ -9761,6 +9769,7 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         setWordBankCameraStatus(error.message || '사진 분석에 실패했어요. 다시 찍어주세요.');
         retry?.classList.remove('hidden');
     } finally {
+        aieduLoading.finish(loadingToken, loadingSucceeded);
         if (capture) capture.disabled = false;
     }
 }
@@ -10695,7 +10704,8 @@ window.completeDictationItem = async function() {
         }
         const saveBtn = document.getElementById('dictation-save-btn');
         if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = '로딩중...'; }
-        showActivityLoading('3스텝 받아쓰기 문제를 준비하는 중...');
+        const preparationToken = aieduLoading.start('에이두가 노트에 받아쓰기 문제를 준비하고 있어요', 'dictation');
+        let preparationSucceeded = false;
         await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 40)));
         try {
             const traceWords = traceItems.map((item) => item.word).filter(Boolean);
@@ -10706,19 +10716,20 @@ window.completeDictationItem = async function() {
             } else {
                 const nextSession = createDictationMissionSession();
                 if (!nextSession) {
-                    hideActivityLoading();
+                    aieduLoading.finish(preparationToken, false);
                     openDictationBankCamera({ afterSave: 'curricular-writing' });
                     showModal('새 사진에서 고른 단어를 찾지 못했어요. 1스텝 사진을 다시 찍어주세요.');
                     return;
                 }
                 configureDictationWorkspace(nextSession, { badge: '3스텝 받아쓰기', title: '교과 맞춤쓰기 받아쓰기', desc: getCurricularGateText() });
             }
+            preparationSucceeded = true;
         } catch (error) {
             console.error('curricular trace next failed', error);
             showModal(`3스텝 준비에 실패했어요: ${escapeHtml(error.message || error)}`);
             if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = '다음'; }
         } finally {
-            setTimeout(hideActivityLoading, 220);
+            aieduLoading.finish(preparationToken, preparationSucceeded);
         }
         return;
     }
@@ -11161,10 +11172,10 @@ async function createLiteracyMissionQuestion(diff, type, { detective = false } =
 }
 
 window.startTodayLiteracyMission = async function(diff, type) {
-    showActivityLoading('문해력 문제 로딩중...');
+    showActivityLoading('에이두가 책을 읽으며 문해력 문제를 준비하고 있어요', 'literacy');
     try {
         const questionData = await createLiteracyMissionQuestion(diff, type);
-        hideActivityLoading();
+        hideActivityLoading(true);
         setupLiteracyWorkspace(questionData, false);
         return questionData;
     } catch (e) {
@@ -23087,3 +23098,14 @@ window.saveGeneratedStoryBook = async function saveGeneratedStoryBook() {
         }
     }
 };
+
+installClassroomTools(createClassroomService({
+    db, doc, collection, query, where, getDoc, getDocs, runTransaction, serverTimestamp,
+    initializeApp, getAuth, firebaseConfig, setPersistence, inMemoryPersistence,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, PDFDocument,
+    current: () => ({ id: currentUserId, role: currentUserRole }),
+    notify: message => showModal(escapeHtml(message)),
+    safeImage: safeImageSource,
+    refreshStudents: () => window.loadStudents(),
+    getShopItems: () => loadAiedueKoreanTeacherShopItems(currentUserId, { updateCache: false })
+}));

@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260914-time-quiz-tablet-v1">
     <link rel="stylesheet" href="syllable-slow-reader.css?v=20260914-syllable-reader-tab-v2">
     <link rel="stylesheet" href="literacy-adventure.css?v=20260913-detective-inference-v1">
+    <link rel="stylesheet" href="classroom-refresh.css?v=20260914-classroom-v1">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1300,10 +1301,13 @@
 
 
     <!-- 활동 이동 로딩 오버레이 -->
-    <div id="activity-loading-overlay" class="activity-loading-overlay" role="status" aria-live="polite" aria-busy="false" aria-hidden="true">
+    <div id="activity-loading-overlay" class="activity-loading-overlay" role="dialog" aria-modal="true" aria-labelledby="activity-loading-message" tabindex="-1" aria-busy="false" aria-hidden="true">
         <div class="activity-loading-card">
-            <div class="activity-loading-spinner"></div>
-            <div class="activity-loading-text">로딩중...</div>
+            <div class="aiedu-loading-scene" data-actor="reader"><img src="assets/classroom/loading-reader.webp" alt="책을 읽는 에이두"><span class="aiedu-loading-spark" aria-hidden="true"></span></div>
+            <div id="activity-loading-message" class="activity-loading-text" role="status" aria-live="polite">로딩중...</div>
+            <span class="aiedu-loading-value" aria-hidden="true">0%</span>
+            <div class="aiedu-loading-progress" role="progressbar" aria-label="예상 준비 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+            <p class="aiedu-loading-hint">예상 진행률이에요. 준비가 끝나면 100%가 돼요.</p>
         </div>
     </div>
 
@@ -1411,7 +1415,7 @@
         <div class="modal-content max-w-7xl w-full max-h-[94vh] overflow-hidden flex flex-col">
             <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-5 shrink-0">
                 <div><h3 class="text-3xl font-black text-[#2c3e50]">🏫 우리 학급 관리</h3><p class="text-sm text-gray-500 font-bold mt-1">학생을 선택해 포인트, 진도와 실시간 활동을 관리합니다.</p></div>
-                <div class="flex gap-2"><button type="button" class="btn-primary px-4 py-2" onclick="openTeacherStudentAddPanel()">학생 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="closeClassManagement()">닫기</button></div>
+                <div class="flex gap-2 flex-wrap justify-end"><button type="button" class="btn-outline px-4 py-2" onclick="printClassRoster()">학급 명단 출력</button><button type="button" class="btn-outline px-4 py-2" onclick="openTeacherStudentAddPanel()">(기존)학생 추가</button><button type="button" class="btn-primary px-4 py-2" onclick="openNewClassStudents()">신규 학생 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="closeClassManagement()">닫기</button></div>
             </div>
 
             <div id="teacher-student-add-panel" class="hidden bg-emerald-50 border border-emerald-100 p-4 rounded-3xl mb-5 shrink-0">
@@ -1809,7 +1813,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260914-student-onboarding-v161"></script>
+    <script type="module" src="app.js?v=20260914-classroom-refresh-v162"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>
