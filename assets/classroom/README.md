@@ -1,7 +1,8 @@
 # 학급 화면 이미지
 
 - `stage-select.png`: 사용자가 제공한 글자 없는 단계 선택 배경 원본.
-- `stage-1.webp` ~ `stage-4.webp`: 사용자 배경과 에이두 캐릭터를 참조해 built-in ImageGen으로 생성한 그리기·한글·교과 쓰기·문해력 배경. 생성 결과의 구도와 색은 그대로 두고 WebP로 인코딩.
+- 현재 단계 배경은 `classroom-refresh.css`의 단순한 파스텔 그라데이션을 사용합니다.
+- 이전 시안 보관용 `stage-1.webp` ~ `stage-4.webp`: 사용자 배경과 에이두 캐릭터를 참조해 built-in ImageGen으로 생성한 그리기·한글·교과 쓰기·문해력 배경. 생성 결과의 구도와 색은 그대로 두고 WebP로 인코딩.
 - `loading-painter.webp`, `loading-writer.webp`, `loading-reader.webp`: 사용자 에이두 캐릭터 기반 생성 이미지. 실제 움직임, 카메라 빛, 생각 효과와 진행률은 CSS/JS에서 처리.
 - `currency-100.png`, `currency-500.png`, `currency-1000.png`, `currency-5000.png`, `currency-10000.png`, `currency-50000.png`: 사용자가 제공한 화폐 원본. 상점 관리에서 원본 다운로드와 금액별 A4 PDF 생성에 사용.
 

@@ -524,6 +524,7 @@ const TEACHER_ONBOARDING_DIALOGUE = Object.freeze([
 let studentOnboardingState = null;
 let studentOnboardingUid = null;
 let studentOnboardingPersisting = false;
+let studentOnboardingRetake = false;
 let studentOnboardingAutoTimer = null;
 let studentOnboardingAutoScheduledUid = null;
 let roleOnboardingMode = 'diagnostic';
@@ -655,14 +656,8 @@ window.openRoleTutorial = function openRoleTutorial() {
         return;
     }
     if (currentUserRole !== 'student') return;
-    const needsDiagnostic = shouldRunStudentDiagnostic({
-        role: currentUserRole,
-        assignedLevel: Number(currentUserProfileSnapshot?.assignedLevel),
-        diagnosticStatus: currentUserProfileSnapshot?.diagnosticStatus,
-        diagnosticVersion: currentUserProfileSnapshot?.diagnosticVersion
-    });
-    if (needsDiagnostic) openStudentOnboarding();
-    else openRoleOnboardingGuide('student');
+    // A deliberate tutorial replay starts a fresh assessment, even after completion.
+    openStudentOnboarding({ force: true });
 };
 
 function openRoleOnboardingGuide(role) {
@@ -696,6 +691,7 @@ function openStudentOnboarding({ force = false, profile = currentUserProfileSnap
     if (!modal) return;
     studentOnboardingUid = currentUserId;
     roleOnboardingMode = 'diagnostic';
+    studentOnboardingRetake = force;
     roleOnboardingIndex = 0;
     studentOnboardingState = createInitialDiagnosticState();
     studentOnboardingPersisting = false;
@@ -718,6 +714,7 @@ function closeStudentOnboarding() {
     document.getElementById('main-container')?.removeAttribute('inert');
     document.getElementById('main-container')?.removeAttribute('aria-hidden');
     studentOnboardingState = null;
+    studentOnboardingRetake = false;
     studentOnboardingUid = null;
     studentOnboardingPersisting = false;
     const returnFocus = roleOnboardingReturnFocus;
@@ -816,6 +813,7 @@ window.playStudentDiagnosticSound = function playStudentDiagnosticSound() {
 async function persistStudentPlacement() {
     const uid = studentOnboardingUid;
     const state = studentOnboardingState;
+    const isRetake = studentOnboardingRetake;
     if (!uid || !state?.assignedLevel || auth.currentUser?.uid !== uid || currentUserId !== uid) return;
     studentOnboardingPersisting = true;
     const errorBox = document.getElementById('student-onboarding-error');
@@ -839,7 +837,7 @@ async function persistStudentPlacement() {
             if (!existingSnapshot.exists()) throw new Error('사용자 프로필을 찾을 수 없습니다.');
             const existingProfile = existingSnapshot.data() || {};
             const existingAccess = deriveStageAccessFromProfile(existingProfile);
-            if (existingAccess.length === 1) return;
+            if (existingAccess.length === 1 && !isRetake) return;
             transaction.set(userRef, payload, { merge: true });
         });
         if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'student') return;
