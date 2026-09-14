@@ -256,14 +256,34 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 
 body.rpg-hud-active .page-number { bottom: 112px; }
 
-/* 메인 단계 화면에서는 내 정보를 프레임 왼쪽 아래의 펼친 배너로 보여 준다. */
+/* 메인 단계 화면에서는 내 정보 바와 빠른 메뉴를 viewport의 고정 좌표에 둔다. */
+body.dashboard-view-active #main-container,
+body.dashboard-view-active #dashboard-section {
+    animation: none !important;
+    transform: none !important;
+}
 body.dashboard-view-active .aiedue-rpg-hud {
+    position: fixed !important;
     top: auto !important;
     right: auto !important;
     bottom: max(18px, env(safe-area-inset-bottom)) !important;
-    left: max(18px, calc((100vw - 1100px) / 2 + 18px)) !important;
+    left: max(18px, env(safe-area-inset-left)) !important;
     flex-direction: row;
     align-items: center;
+    transform: none !important;
+}
+body.dashboard-view-active #dashboard-section .dashboard-quick-actions {
+    position: fixed !important;
+    top: max(24px, env(safe-area-inset-top)) !important;
+    right: max(24px, env(safe-area-inset-right)) !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: auto;
+    max-width: calc(100vw - 48px);
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px;
+    transform: none !important;
 }
 body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     top: auto;
@@ -368,6 +388,19 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     .lesson-photo-button strong { font-size: .88rem; }
 }
 
+@media (max-width: 767px) {
+    body.dashboard-view-active #dashboard-section .dashboard-quick-actions {
+        top: max(14px, env(safe-area-inset-top)) !important;
+        right: max(14px, env(safe-area-inset-right)) !important;
+        width: min(56vw, 260px) !important;
+        max-width: min(56vw, 260px) !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+        gap: 8px;
+    }
+}
+
 @media (max-width: 640px) {
     .aiedue-rpg-hud { right: 9px; }
     .rpg-profile-banner { width: 100%; min-width: 0; height: 86px; padding: 8px 6px 18px 72px; gap: 4px; }
@@ -388,6 +421,20 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     .rpg-experience-label { right: 9px; }
     body.rpg-hud-active .page-number { bottom: 110px; }
     .dashboard-quick-actions { position: absolute; top: 104px; left: auto; right: 14px; width: min(52vw, 360px); align-items: stretch; justify-content: flex-end; gap: 8px; }
+    body.dashboard-view-active #dashboard-section .dashboard-quick-actions {
+        top: max(14px, env(safe-area-inset-top)) !important;
+        right: max(14px, env(safe-area-inset-right)) !important;
+        width: min(56vw, 260px) !important;
+        max-width: min(56vw, 260px);
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+    body.dashboard-view-active .aiedue-rpg-hud {
+        bottom: max(14px, env(safe-area-inset-bottom)) !important;
+        left: max(14px, env(safe-area-inset-left)) !important;
+    }
     .lesson-photo-button { position: static; flex: 1 1 0; min-width: 0; max-width: 235px; padding: 8px 11px; }
     .lesson-photo-icon { font-size: 1.35rem; }
     .lesson-photo-button strong { font-size: .76rem; }
@@ -395,6 +442,11 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
 }
 
 @media (max-width: 520px) {
+    body.dashboard-view-active #dashboard-section .dashboard-quick-actions {
+        top: calc(max(14px, env(safe-area-inset-top)) + 150px) !important;
+        width: 160px !important;
+        max-width: 160px !important;
+    }
     .rpg-profile-copy { min-width: 54px; }
     .rpg-profile-copy strong { max-width: 72px; }
     .rpg-wallet-line { gap: 4px; }
@@ -6374,6 +6426,148 @@ body.drawing-tutorial-open { overflow: hidden; }
     .drawing-tutorial-actions button { padding-inline: 13px; }
 }
 @media (prefers-reduced-motion: reduce) { .drawing-tutorial-card { animation: none; } }
+
+/* 학생 전체 온보딩 + 진단평가 */
+.student-onboarding-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    min-width: 320px;
+    min-height: 100dvh;
+    overflow: hidden;
+    color: #244437;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(255,255,255,.95) 0 6%, transparent 6.4%),
+        linear-gradient(155deg, #d9f6e7 0%, #f8ffe9 48%, #ffeed6 100%);
+}
+.student-onboarding-modal.hidden { display: none; }
+.student-onboarding-close { position: absolute; z-index: 7; top: max(14px, env(safe-area-inset-top)); right: 18px; width: 52px; height: 52px; border: 3px solid #75bb66; border-radius: 50%; color: #347044; background: rgba(255,255,255,.96); box-shadow: 0 8px 22px rgba(41,77,49,.18); font-size: 2rem; font-weight: 900; line-height: 1; }
+.student-onboarding-close.hidden { display: none; }
+.student-onboarding-close:focus-visible { outline: 5px solid rgba(56,139,208,.42); outline-offset: 4px; }
+.student-onboarding-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.student-onboarding-sky::before,
+.student-onboarding-sky::after { content: ''; position: absolute; left: -8%; right: -8%; bottom: 0; height: 36%; border-radius: 50% 50% 0 0; background: rgba(115,190,92,.18); transform: translateY(44%); }
+.student-onboarding-sky::after { bottom: 8%; height: 27%; background: rgba(255,207,112,.16); transform: translate(28%, 55%); }
+.student-onboarding-sky span { position: absolute; width: 82px; height: 32px; border-radius: 99px; background: rgba(255,255,255,.72); filter: blur(.2px); }
+.student-onboarding-sky span::before,
+.student-onboarding-sky span::after { content: ''; position: absolute; bottom: 2px; border-radius: 50%; background: inherit; }
+.student-onboarding-sky span::before { left: 13px; width: 36px; height: 36px; }
+.student-onboarding-sky span::after { right: 11px; width: 29px; height: 29px; }
+.student-onboarding-sky span:nth-child(1) { top: 13%; left: 8%; }
+.student-onboarding-sky span:nth-child(2) { top: 22%; right: 18%; transform: scale(.72); }
+.student-onboarding-sky span:nth-child(3) { top: 6%; left: 48%; transform: scale(.5); }
+.student-onboarding-character {
+    position: absolute;
+    z-index: 3;
+    right: clamp(8px, 3vw, 48px);
+    bottom: clamp(142px, 20vh, 220px);
+    width: min(39vw, 520px);
+    max-height: calc(100dvh - 175px);
+    object-fit: contain;
+    object-position: right bottom;
+    filter: drop-shadow(0 24px 24px rgba(52,92,55,.2));
+    animation: studentAiedueEnter .38s cubic-bezier(.18,.78,.24,1) both;
+    pointer-events: none;
+}
+@keyframes studentAiedueEnter { from { opacity: 0; transform: translateX(30px) scale(.96); } to { opacity: 1; transform: none; } }
+.student-onboarding-dialogue {
+    position: absolute;
+    z-index: 5;
+    left: clamp(14px, 4vw, 58px);
+    right: clamp(14px, 4vw, 58px);
+    bottom: max(18px, env(safe-area-inset-bottom));
+    min-height: 144px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 24px 28px 24px 32px;
+    border: 5px solid #75bb66;
+    border-radius: 34px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 26px 70px rgba(41,77,49,.24);
+}
+.student-onboarding-dialogue.hidden { display: none; }
+.student-onboarding-copy { min-width: 0; flex: 1; }
+.student-onboarding-speaker { display: inline-flex; margin-bottom: 9px; padding: 6px 18px; border-radius: 999px; color: #fff; background: #55a846; font-size: 1.02rem; font-weight: 1000; box-shadow: 0 7px 14px rgba(69,150,58,.2); }
+#student-onboarding-line { color: #294639; font-size: clamp(1.12rem, 2.35vw, 1.75rem); line-height: 1.5; font-weight: 1000; word-break: keep-all; }
+.student-onboarding-next { flex: 0 0 auto; min-width: 132px; min-height: 58px; padding: 13px 23px; border: 3px solid #3f9437; border-radius: 21px; color: #fff; background: linear-gradient(145deg, #68bd55, #459c3d); box-shadow: 0 12px 22px rgba(63,148,55,.26); font-size: 1.08rem; font-weight: 1000; }
+.student-onboarding-next:hover { transform: translateY(-2px); }
+.student-onboarding-next:focus-visible,
+.student-diagnostic-options button:focus-visible,
+.student-diagnostic-tts:focus-visible { outline: 5px solid rgba(56,139,208,.42); outline-offset: 4px; }
+.student-onboarding-next:disabled { opacity: .58; cursor: wait; transform: none; }
+.student-onboarding-error { margin-top: 9px; color: #b42318; font-weight: 900; }
+.student-diagnostic-panel {
+    position: absolute;
+    z-index: 4;
+    top: clamp(20px, 5vh, 54px);
+    left: clamp(16px, 5vw, 70px);
+    width: min(62vw, 740px);
+    max-height: calc(100dvh - 72px);
+    overflow-y: auto;
+    padding: clamp(22px, 3.4vw, 40px);
+    border: 5px solid rgba(117,187,102,.86);
+    border-radius: 38px;
+    background: rgba(255,255,255,.95);
+    box-shadow: 0 30px 80px rgba(41,77,49,.2);
+}
+.student-diagnostic-panel.hidden { display: none; }
+.student-diagnostic-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.student-diagnostic-heading span { padding: 7px 14px; border-radius: 999px; color: #347044; background: #e4f6dc; font-weight: 1000; }
+.student-diagnostic-heading strong { color: #66796e; font-size: .92rem; }
+.student-diagnostic-instruction { margin-bottom: 13px; color: #567064; font-size: 1rem; font-weight: 900; }
+.student-diagnostic-passage { margin-bottom: 17px; padding: 19px 21px; border: 2px solid #d9ead4; border-radius: 20px; color: #314c3f; background: #f8fff5; font-size: clamp(1rem, 1.7vw, 1.2rem); line-height: 1.75; font-weight: 800; word-break: keep-all; }
+.student-diagnostic-panel h2 { margin-bottom: 17px; color: #263f34; font-size: clamp(1.2rem, 2.2vw, 1.65rem); line-height: 1.45; font-weight: 1000; word-break: keep-all; }
+.student-diagnostic-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+.student-diagnostic-options button { min-height: 62px; display: flex; align-items: center; gap: 12px; padding: 11px 15px; border: 3px solid #d7e8d1; border-radius: 19px; color: #334c3f; background: #fff; text-align: left; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+.student-diagnostic-options button:hover { transform: translateY(-2px); border-color: #75bb66; background: #f4fff0; }
+.student-diagnostic-options button.selected,
+.student-diagnostic-options button[aria-checked="true"] { border-color: #459c3d; background: #e9f8e3; box-shadow: 0 0 0 3px rgba(69,156,61,.15); }
+.student-diagnostic-options button > span { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 12px; color: #fff; background: #70b660; font-weight: 1000; }
+.student-diagnostic-options button strong { font-size: clamp(1rem, 1.8vw, 1.25rem); font-weight: 1000; }
+.student-diagnostic-submit { min-width: 150px; min-height: 54px; display: block; margin: 17px 0 0 auto; padding: 11px 24px; border: 3px solid #3f9437; border-radius: 18px; color: #fff; background: linear-gradient(145deg, #68bd55, #459c3d); font-size: 1.06rem; font-weight: 1000; }
+.student-diagnostic-submit:disabled { opacity: .48; cursor: not-allowed; }
+.student-diagnostic-submit:focus-visible { outline: 5px solid rgba(56,139,208,.42); outline-offset: 4px; }
+.student-diagnostic-fruit-card { width: min(190px, 42vw); min-height: 126px; display: grid; place-items: center; margin: 2px auto 16px; border: 4px solid #f1ce77; border-radius: 28px; background: #fff9df; box-shadow: 0 10px 22px rgba(145,109,36,.12); }
+.student-diagnostic-fruit-card span { font-size: clamp(4rem, 10vw, 6.5rem); filter: drop-shadow(0 8px 7px rgba(0,0,0,.09)); }
+.student-diagnostic-tts { min-width: 180px; min-height: 70px; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 3px auto 19px; padding: 12px 20px; border: 4px solid #87bce6; border-radius: 24px; color: #24587e; background: #edf8ff; box-shadow: 0 10px 22px rgba(50,116,167,.14); }
+.student-diagnostic-tts span { font-size: 2rem; }
+.student-diagnostic-tts strong { font-size: 1.15rem; font-weight: 1000; }
+body.student-onboarding-open { overflow: hidden; }
+body.student-onboarding-open .aiedue-rpg-hud { visibility: hidden; }
+@media (max-width: 820px) {
+    .student-onboarding-character { width: min(46vw, 340px); right: 0; bottom: 185px; }
+    .student-onboarding-dialogue { gap: 13px; padding: 18px 18px 18px 21px; border-width: 4px; border-radius: 27px; }
+    .student-onboarding-next { min-width: 104px; min-height: 52px; padding-inline: 15px; }
+    .student-diagnostic-panel { top: 14px; left: 14px; width: calc(100vw - 165px); max-height: calc(100dvh - 30px); padding: 20px; border-width: 4px; border-radius: 27px; }
+    .student-diagnostic-options { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+    .student-onboarding-character { width: min(59vw, 270px); right: 0; bottom: 205px; max-height: 48dvh; }
+    .student-onboarding-dialogue { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); min-height: 184px; flex-direction: column; align-items: stretch; gap: 10px; padding: 16px; border-radius: 24px; }
+    .student-onboarding-speaker { margin-bottom: 6px; font-size: .88rem; }
+    #student-onboarding-line { min-height: 67px; font-size: 1rem; line-height: 1.48; }
+    .student-onboarding-next { align-self: flex-end; min-width: 120px; min-height: 48px; }
+    .student-diagnostic-panel { left: 8px; right: 8px; width: auto; max-height: calc(100dvh - 16px); padding: 16px; border-radius: 23px; }
+    .student-onboarding-modal[data-phase="question"] .student-onboarding-character { width: 116px; right: 0; bottom: 0; opacity: .68; }
+    .student-diagnostic-heading { align-items: flex-start; }
+    .student-diagnostic-heading span { font-size: .84rem; }
+    .student-diagnostic-passage { padding: 14px; line-height: 1.6; }
+    .student-diagnostic-options { gap: 8px; }
+    .student-diagnostic-options button { min-height: 52px; padding: 8px 11px; border-width: 2px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+    .student-onboarding-character { width: min(30vw, 230px); bottom: 104px; }
+    .student-onboarding-dialogue { min-height: 100px; padding-block: 12px; }
+    .student-diagnostic-panel { top: 8px; bottom: 8px; max-height: none; width: min(72vw, 760px); padding: 15px 20px; }
+    .student-diagnostic-passage { margin-bottom: 9px; padding-block: 9px; line-height: 1.45; }
+    .student-diagnostic-options button { min-height: 46px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .student-onboarding-character { animation: none; }
+    .student-onboarding-next,
+    .student-diagnostic-options button { transition: none; }
+}
 
 /* --- 2026 visual polish: calm depth, clearer hierarchy, purposeful motion --- */
 :root {

@@ -67,6 +67,16 @@ import {
     validateStoryCharacter
 } from "./story-library-utils.mjs?v=20260902-aiedue-library-v2";
 import {
+    ASSIGNMENT_DIALOGUE,
+    DIAGNOSTIC_BANK,
+    DIAGNOSTIC_CONTENT_VERSION,
+    ONBOARDING_DIALOGUE,
+    createInitialDiagnosticState,
+    getUnlockedLevelsForPlacement,
+    shouldRunStudentDiagnostic,
+    transitionDiagnostic
+} from "./student-onboarding-diagnostic-core.mjs?v=20260914-student-placement-v3";
+import {
     WORD_CARD_GENERATION_VERSION,
     buildWordCardId,
     buildWordCardImageEditPrompt,
@@ -89,12 +99,41 @@ let currentView = 'student';
 let inputPassword = "";
 let loginSuccess = false;
 let currentLearningStep = -1;
-let unlockedLevels = [1];
+let unlockedLevels = [];
 
 function normalizeUnlockedLevels(value, role = currentUserRole) {
     if (String(role || '').toLowerCase() === 'teacher') return [1, 2, 3, 4];
-    if (!Array.isArray(value)) return [1];
+    if (!Array.isArray(value)) return [];
     return Array.from(new Set(value.map(Number).filter((level) => Number.isInteger(level) && level >= 1 && level <= 4))).sort((a, b) => a - b);
+}
+
+function deriveStageAccessFromProfile(profile = {}) {
+    const role = String(profile?.role || currentUserRole || 'student').toLowerCase();
+    if (role === 'teacher') return [1, 2, 3, 4];
+    const assignedLevel = Number(profile?.assignedLevel);
+    if (shouldRunStudentDiagnostic({
+        role,
+        assignedLevel,
+        diagnosticStatus: profile?.diagnosticStatus,
+        diagnosticVersion: profile?.diagnosticVersion
+    })) return [];
+    // 진단 저장 직후에는 배정 단계 하나만 열고, 이후 교사가 저장한 명시적 단계 설정을 따른다.
+    if (Object.prototype.hasOwnProperty.call(profile, 'unlockedLevels')) {
+        return normalizeUnlockedLevels(profile.unlockedLevels, role);
+    }
+    return [...getUnlockedLevelsForPlacement(assignedLevel)];
+}
+
+function applyDashboardStageAccess(levels = []) {
+    const allowed = new Set(levels);
+    for (let level = 1; level <= 4; level += 1) {
+        const card = document.getElementById(`card-level-${level}`);
+        if (!card) continue;
+        const isUnlocked = allowed.has(level);
+        card.classList.toggle('locked', !isUnlocked);
+        card.disabled = !isUnlocked;
+        card.setAttribute('aria-disabled', String(!isUnlocked));
+    }
 }
 
 const activityRoutes = {
@@ -147,6 +186,47 @@ function getVisibleActivityRoute() {
     })?.[0] || null;
 }
 
+const protectedStageSections = Object.freeze({
+    'drawing-activities-section': [1],
+    'my-drawing-section': [1],
+    'drawing-workspace-section': [1],
+    'shape-zoo-game-section': [1],
+    'hangul-activities-section': [2],
+    'my-korean-section': [2],
+    'learning-start-section': [2],
+    'learning-detail-section': [2],
+    'letter-writing-section': [2],
+    'word-writing-quiz-section': [2],
+    'word-listening-quiz-section': [2],
+    'reading-practice-section': [2],
+    'hangul-game-section': [2],
+    'korean-records-section': [2],
+    'korean-mistakes-section': [2],
+    'korean-review-section': [2],
+    'dictation-activities-section': [3],
+    'my-dictation-section': [3],
+    'dictation-workspace-section': [3],
+    'spelling-quiz-section': [3],
+    'dictation-asteroid-game-section': [3],
+    'word-card-table-game-section': [3, 4],
+    'literacy-activities-section': [4],
+    'literacy-workspace-section': [4],
+    'literacy-adventure-game-section': [4]
+});
+
+function enforceCurrentStageAccess() {
+    if (!loginSuccess || currentUserRole !== 'student') return;
+    const visibleEntry = Object.entries(protectedStageSections).find(([sectionId]) => {
+        const section = document.getElementById(sectionId);
+        return section && !section.classList.contains('hidden');
+    });
+    const allowedLevels = visibleEntry?.[1] || [];
+    if (!allowedLevels.length || allowedLevels.some((level) => unlockedLevels.includes(level))) return;
+    pendingActivityRoute = null;
+    showDashboardOnly();
+    showModal('현재 활동의 단계 이용 권한이 변경되어 대시보드로 돌아왔어요.');
+}
+
 function hydrateActivityRouteSection(activityKey) {
     if (activityKey === 'drawing') {
         updateDrawingDashboardPreview();
@@ -162,15 +242,28 @@ function hydrateActivityRouteSection(activityKey) {
     updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
 }
 
+function requireStageAccess(level, label = `${level}단계`) {
+    if (!loginSuccess || !currentUserId) {
+        showModal('로그인 정보를 확인한 뒤 다시 시도해 주세요.');
+        return false;
+    }
+    if (currentUserRole === 'student' && !unlockedLevels.includes(Number(level))) {
+        showDashboardOnly();
+        showModal(`${label}은 지금 잠겨 있어요. 에이두와 튜토리얼 진단을 마치면 맞는 단계 하나를 열어 줄게요.`);
+        return false;
+    }
+    return true;
+}
+
 window.openActivityPage = function openActivityPage(activityKey) {
     const route = activityRoutes[activityKey];
-    if (!route) return;
+    if (!route || !requireStageAccess(route.level, route.label)) return;
     pendingActivityRoute = activityKey;
     // 버튼 클릭은 중간 HTML로 이동하지 않고 현재 앱 안에서 바로 전환한다.
     // 그래야 에이두 한글 시작화면이 짧게 깜빡이지 않는다.
     showActivityLoading();
     window.setTimeout(() => {
-        const opened = openActivityRoute(activityKey, { pushUrl: true, allowBeforeLogin: true });
+        const opened = openActivityRoute(activityKey, { pushUrl: true });
         if (opened) {
             window.setTimeout(hideActivityLoading, 160);
         } else {
@@ -236,6 +329,7 @@ let currentUserAeduLevel = 1;
 let currentUserProfileSnapshot = {};
 let currentUserProfileUnsubscribe = null;
 let lastSyncedProfileUid = null;
+let currentUserProfileSyncGeneration = 0;
 const aiedueKoreanShopItemsCache = new Map();
 let currentUnderstandingStep = 1;
 let currentLearningActivityStep = null;
@@ -354,7 +448,11 @@ function ensureDrawingTutorialListeners() {
         }
         if (event.key !== 'Tab') return;
         const controls = Array.from(modal.querySelectorAll('button:not([disabled])')).filter((button) => button.offsetParent !== null);
-        if (!controls.length) return;
+        if (!controls.length) {
+            event.preventDefault();
+            modal.focus();
+            return;
+        }
         const first = controls[0];
         const last = controls[controls.length - 1];
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -405,16 +503,400 @@ window.closeDrawingTutorial = function closeDrawingTutorial() {
 }
 
 function maybeOpenDrawingTutorial() {
-    window.clearTimeout(drawingTutorialAutoTimer);
-    drawingTutorialAutoTimer = null;
-    if (!loginSuccess || !currentUserId || hasCompletedDrawingTutorial()) return;
-    drawingTutorialAutoTimer = window.setTimeout(() => {
-        drawingTutorialAutoTimer = null;
-        const section = document.getElementById('drawing-activities-section');
-        if (loginSuccess && currentUserId && section && !section.classList.contains('hidden') && !hasCompletedDrawingTutorial()) {
-            window.openDrawingTutorial();
+    // 기존 그리기 전용 튜토리얼은 제품 전체 온보딩으로 대체되었습니다.
+}
+
+const STUDENT_ONBOARDING_POSES = Object.freeze({
+    wave: 'assets/onboarding/aiedue-wave.webp',
+    welcome: 'assets/onboarding/aiedue-welcome.webp',
+    grow: 'assets/onboarding/aiedue-grow.webp',
+    think: 'assets/onboarding/aiedue-think.webp',
+    quiz: 'assets/onboarding/aiedue-quiz.webp',
+    celebrate: 'assets/onboarding/aiedue-celebrate.webp'
+});
+const ROLE_ONBOARDING_VERSION = 'role-onboarding-v1';
+const TEACHER_ONBOARDING_DIALOGUE = Object.freeze([
+    Object.freeze({ speaker: '에이두', text: '안녕하세요, 선생님! 저는 에이두예요. 에이두 한글의 선생님 기능을 안내해 드릴게요.', pose: 'wave' }),
+    Object.freeze({ speaker: '에이두', text: '단계 선택 화면에서는 1단계 그리기부터 4단계 문해력까지 모든 활동을 직접 살펴볼 수 있어요.', pose: 'welcome' }),
+    Object.freeze({ speaker: '에이두', text: '학급 관리에서 학생을 학급에 추가하고, 학생별 학습 기록과 포인트를 확인할 수 있어요.', pose: 'grow' }),
+    Object.freeze({ speaker: '에이두', text: '학생의 준비도에 맞춰 단계 잠금을 조정하고 각 단계의 자세한 기록도 확인해 보세요.', pose: 'think' }),
+    Object.freeze({ speaker: '에이두', text: '에이두 연구실에는 수업에 활용할 여러 활동이 있어요. 이 안내는 튜토리얼 버튼에서 언제든 다시 볼 수 있어요!', pose: 'celebrate' })
+]);
+let studentOnboardingState = null;
+let studentOnboardingUid = null;
+let studentOnboardingPersisting = false;
+let studentOnboardingAutoTimer = null;
+let studentOnboardingAutoScheduledUid = null;
+let roleOnboardingMode = 'diagnostic';
+let roleOnboardingIndex = 0;
+let roleOnboardingReturnFocus = null;
+
+function studentOnboardingQuestion() {
+    return studentOnboardingState?.value === 'question'
+        ? DIAGNOSTIC_BANK[studentOnboardingState.tier]?.[studentOnboardingState.questionIndex]
+        : null;
+}
+
+function setStudentOnboardingPose(pose = 'welcome') {
+    const image = document.getElementById('student-onboarding-character');
+    if (!image) return;
+    image.dataset.fallbackApplied = 'false';
+    image.src = STUDENT_ONBOARDING_POSES[pose] || STUDENT_ONBOARDING_POSES.welcome;
+}
+
+function renderStudentOnboardingDialogue(line, { buttonLabel = '다음' } = {}) {
+    const speaker = document.getElementById('student-onboarding-speaker');
+    const text = document.getElementById('student-onboarding-line');
+    const next = document.getElementById('student-onboarding-next');
+    if (speaker) speaker.textContent = line?.speaker || '에이두';
+    if (text) text.textContent = line?.text || '';
+    if (next) {
+        next.textContent = buttonLabel;
+        next.disabled = studentOnboardingPersisting;
+    }
+    setStudentOnboardingPose(line?.pose);
+}
+
+function renderStudentDiagnosticQuestion(question) {
+    const panel = document.getElementById('student-diagnostic-panel');
+    if (!panel || !question) return;
+    const stageNames = { 4: '문해력 퀴즈', 3: '과일 낱말 퀴즈', 2: '자음·모음 소리 퀴즈' };
+    const visual = question.card
+        ? `<div class="student-diagnostic-fruit-card" role="img" aria-label="${escapeHtml(question.card.alt)}"><span aria-hidden="true">${escapeHtml(question.card.visual)}</span></div>`
+        : '';
+    const passage = question.passage ? `<p class="student-diagnostic-passage">${escapeHtml(question.passage)}</p>` : '';
+    const tts = question.kind === 'tts-jamo-identification'
+        ? `<button type="button" class="student-diagnostic-tts" data-testid="diagnostic-tts" onclick="playStudentDiagnosticSound()" aria-label="문제 소리 듣기"><span aria-hidden="true">🔊</span><strong>소리 듣기</strong></button>`
+        : '';
+    panel.innerHTML = `
+        <div class="student-diagnostic-heading">
+            <span>${escapeHtml(stageNames[studentOnboardingState.tier])}</span>
+            <strong data-testid="diagnostic-progress">3문제 중 ${studentOnboardingState.questionIndex + 1}번째</strong>
+        </div>
+        <p class="student-diagnostic-instruction">${escapeHtml(question.instruction)}</p>
+        ${visual}${passage}${tts}
+        <h2 id="student-diagnostic-title" tabindex="-1">${escapeHtml(question.prompt)}</h2>
+        <div class="student-diagnostic-options" role="radiogroup" aria-labelledby="student-diagnostic-title">
+            ${question.options.map((option, index) => `<button type="button" role="radio" aria-checked="false" data-testid="diagnostic-option-${escapeHtml(option.id)}" onclick="selectStudentDiagnosticOption('${escapeInlineJsString(option.id)}')"><span>${index + 1}</span><strong>${escapeHtml(option.text)}</strong></button>`).join('')}
+        </div>
+        <button type="button" id="student-diagnostic-submit" class="student-diagnostic-submit" data-testid="diagnostic-submit" onclick="submitStudentDiagnosticAnswer()" disabled>답 제출</button>`;
+    setStudentOnboardingPose(question.kind === 'tts-jamo-identification' ? 'quiz' : 'think');
+    requestAnimationFrame(() => panel.querySelector('#student-diagnostic-title')?.focus());
+}
+
+function renderStudentOnboarding() {
+    const modal = document.getElementById('student-onboarding-modal');
+    const dialogue = document.getElementById('student-onboarding-dialogue');
+    const diagnostic = document.getElementById('student-diagnostic-panel');
+    if (!modal || !studentOnboardingState) return;
+    modal.setAttribute('aria-labelledby', 'student-onboarding-line');
+    if (roleOnboardingMode !== 'diagnostic') {
+        const lines = roleOnboardingMode === 'teacher-guide' ? TEACHER_ONBOARDING_DIALOGUE : ONBOARDING_DIALOGUE;
+        modal.dataset.phase = 'guide';
+        diagnostic?.classList.add('hidden');
+        dialogue?.classList.remove('hidden');
+        renderStudentOnboardingDialogue(lines[roleOnboardingIndex], {
+            buttonLabel: roleOnboardingIndex === lines.length - 1 ? '마침' : '다음'
+        });
+        return;
+    }
+    modal.dataset.phase = studentOnboardingState.value;
+    const isQuestion = studentOnboardingState.value === 'question';
+    diagnostic?.classList.toggle('hidden', !isQuestion);
+    dialogue?.classList.toggle('hidden', isQuestion);
+    if (studentOnboardingState.value === 'intro') {
+        const line = ONBOARDING_DIALOGUE[studentOnboardingState.introIndex];
+        renderStudentOnboardingDialogue(line, { buttonLabel: studentOnboardingState.introIndex === ONBOARDING_DIALOGUE.length - 1 ? '퀴즈 시작' : '다음' });
+    } else if (isQuestion) {
+        renderStudentDiagnosticQuestion(studentOnboardingQuestion());
+        modal.setAttribute('aria-labelledby', 'student-diagnostic-title');
+    } else if (studentOnboardingState.value === 'assigned') {
+        const lines = ASSIGNMENT_DIALOGUE[studentOnboardingState.assignedLevel] || [];
+        renderStudentOnboardingDialogue(lines[studentOnboardingState.resultIndex], {
+            buttonLabel: studentOnboardingState.resultIndex === lines.length - 1 ? `${studentOnboardingState.assignedLevel}단계 열기` : '다음'
+        });
+    }
+}
+
+function ensureStudentOnboardingListeners() {
+    const modal = document.getElementById('student-onboarding-modal');
+    const image = document.getElementById('student-onboarding-character');
+    if (!modal || modal.dataset.listenersReady === 'true') return;
+    modal.dataset.listenersReady = 'true';
+    image?.addEventListener('error', () => {
+        if (image.dataset.fallbackApplied === 'true') return;
+        image.dataset.fallbackApplied = 'true';
+        image.src = 'assets/aiedue-literacy-detective.webp';
+    });
+    modal.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            if (roleOnboardingMode !== 'diagnostic') closeStudentOnboarding();
+            return;
         }
-    }, 520);
+        if (event.key !== 'Tab') return;
+        const controls = Array.from(modal.querySelectorAll('button:not([disabled])')).filter((button) => button.offsetParent !== null);
+        if (!controls.length) {
+            event.preventDefault();
+            modal.focus();
+            return;
+        }
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+}
+
+window.openRoleTutorial = function openRoleTutorial() {
+    if (!loginSuccess || !currentUserId) return;
+    roleOnboardingReturnFocus = document.activeElement;
+    if (currentUserRole === 'teacher') {
+        openRoleOnboardingGuide('teacher');
+        return;
+    }
+    if (currentUserRole !== 'student') return;
+    const needsDiagnostic = shouldRunStudentDiagnostic({
+        role: currentUserRole,
+        assignedLevel: Number(currentUserProfileSnapshot?.assignedLevel),
+        diagnosticStatus: currentUserProfileSnapshot?.diagnosticStatus,
+        diagnosticVersion: currentUserProfileSnapshot?.diagnosticVersion
+    });
+    if (needsDiagnostic) openStudentOnboarding();
+    else openRoleOnboardingGuide('student');
+};
+
+function openRoleOnboardingGuide(role) {
+    const modal = document.getElementById('student-onboarding-modal');
+    if (!modal || !loginSuccess || !currentUserId) return;
+    roleOnboardingMode = role === 'teacher' ? 'teacher-guide' : 'student-guide';
+    roleOnboardingIndex = 0;
+    studentOnboardingUid = currentUserId;
+    studentOnboardingState = createInitialDiagnosticState();
+    studentOnboardingPersisting = false;
+    ensureStudentOnboardingListeners();
+    renderStudentOnboarding();
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('student-onboarding-close')?.classList.remove('hidden');
+    document.body.classList.add('student-onboarding-open');
+    document.getElementById('main-container')?.setAttribute('inert', '');
+    document.getElementById('main-container')?.setAttribute('aria-hidden', 'true');
+    requestAnimationFrame(() => document.getElementById('student-onboarding-next')?.focus());
+}
+
+function openStudentOnboarding({ force = false, profile = currentUserProfileSnapshot } = {}) {
+    if (!loginSuccess || !currentUserId || currentUserRole !== 'student') return;
+    if (!force && !shouldRunStudentDiagnostic({
+        role: currentUserRole,
+        assignedLevel: Number(profile?.assignedLevel),
+        diagnosticStatus: profile?.diagnosticStatus,
+        diagnosticVersion: profile?.diagnosticVersion
+    })) return;
+    const modal = document.getElementById('student-onboarding-modal');
+    if (!modal) return;
+    studentOnboardingUid = currentUserId;
+    roleOnboardingMode = 'diagnostic';
+    roleOnboardingIndex = 0;
+    studentOnboardingState = createInitialDiagnosticState();
+    studentOnboardingPersisting = false;
+    ensureStudentOnboardingListeners();
+    renderStudentOnboarding();
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('student-onboarding-close')?.classList.add('hidden');
+    document.body.classList.add('student-onboarding-open');
+    document.getElementById('main-container')?.setAttribute('inert', '');
+    document.getElementById('main-container')?.setAttribute('aria-hidden', 'true');
+    requestAnimationFrame(() => document.getElementById('student-onboarding-next')?.focus());
+}
+
+function closeStudentOnboarding() {
+    const modal = document.getElementById('student-onboarding-modal');
+    modal?.classList.add('hidden');
+    modal?.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('student-onboarding-open');
+    document.getElementById('main-container')?.removeAttribute('inert');
+    document.getElementById('main-container')?.removeAttribute('aria-hidden');
+    studentOnboardingState = null;
+    studentOnboardingUid = null;
+    studentOnboardingPersisting = false;
+    const returnFocus = roleOnboardingReturnFocus;
+    roleOnboardingReturnFocus = null;
+    if (returnFocus?.isConnected) requestAnimationFrame(() => returnFocus.focus());
+}
+
+window.closeRoleOnboardingGuide = function closeRoleOnboardingGuide() {
+    if (roleOnboardingMode !== 'diagnostic') closeStudentOnboarding();
+};
+
+window.advanceStudentOnboarding = async function advanceStudentOnboarding() {
+    if (!studentOnboardingState || studentOnboardingPersisting) return;
+    if (roleOnboardingMode !== 'diagnostic') {
+        const lines = roleOnboardingMode === 'teacher-guide' ? TEACHER_ONBOARDING_DIALOGUE : ONBOARDING_DIALOGUE;
+        if (roleOnboardingIndex < lines.length - 1) {
+            roleOnboardingIndex += 1;
+            renderStudentOnboarding();
+            return;
+        }
+        if (roleOnboardingMode === 'teacher-guide') await persistTeacherOnboardingCompletion();
+        else closeStudentOnboarding();
+        return;
+    }
+    const eventType = studentOnboardingState.value === 'assigned' ? 'NEXT_RESULT' : 'NEXT';
+    studentOnboardingState = transitionDiagnostic(studentOnboardingState, { type: eventType });
+    if (studentOnboardingState.value === 'complete') {
+        await persistStudentPlacement();
+        return;
+    }
+    renderStudentOnboarding();
+};
+
+async function persistTeacherOnboardingCompletion() {
+    const uid = studentOnboardingUid;
+    if (!uid || currentUserRole !== 'teacher' || auth.currentUser?.uid !== uid) return;
+    studentOnboardingPersisting = true;
+    renderStudentOnboardingDialogue({ speaker: '에이두', text: '선생님 안내를 저장하고 있어요.' }, { buttonLabel: '저장 중…' });
+    try {
+        await setDoc(doc(db, 'users', uid), {
+            teacherOnboardingVersion: ROLE_ONBOARDING_VERSION,
+            teacherOnboardingCompletedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'teacher') return;
+        currentUserProfileSnapshot = { ...currentUserProfileSnapshot, teacherOnboardingVersion: ROLE_ONBOARDING_VERSION };
+        closeStudentOnboarding();
+        showAiedueAutoToast('선생님 안내 완료', '튜토리얼 버튼에서 언제든 다시 볼 수 있어요.');
+    } catch (error) {
+        console.error('Teacher onboarding save failed', error);
+        if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'teacher') return;
+        studentOnboardingPersisting = false;
+        const errorBox = document.getElementById('student-onboarding-error');
+        if (errorBox) {
+            errorBox.textContent = '안내 완료를 저장하지 못했어요. 다시 시도하거나 닫고 나중에 진행해 주세요.';
+            errorBox.classList.remove('hidden');
+        }
+        renderStudentOnboardingDialogue({ speaker: '에이두', text: '저장 중 문제가 생겼어요. 다시 눌러 주세요.' }, { buttonLabel: '저장 다시 시도' });
+    }
+}
+
+window.selectStudentDiagnosticOption = function selectStudentDiagnosticOption(optionId) {
+    if (!studentOnboardingState || studentOnboardingState.value !== 'question' || studentOnboardingPersisting) return;
+    const nextState = transitionDiagnostic(studentOnboardingState, { type: 'SELECT_OPTION', optionId });
+    if (nextState === studentOnboardingState) return;
+    studentOnboardingState = nextState;
+    const panel = document.getElementById('student-diagnostic-panel');
+    const options = Array.from(panel?.querySelectorAll('[role="radio"]') || []);
+    options.forEach((button) => {
+        const selected = button.dataset.testid === `diagnostic-option-${optionId}`;
+        button.setAttribute('aria-checked', String(selected));
+        button.classList.toggle('selected', selected);
+    });
+    const submit = document.getElementById('student-diagnostic-submit');
+    if (submit) submit.disabled = false;
+};
+
+window.submitStudentDiagnosticAnswer = function submitStudentDiagnosticAnswer() {
+    if (!studentOnboardingState || studentOnboardingState.value !== 'question' || !studentOnboardingState.selectedOptionId || studentOnboardingPersisting) return;
+    const beforeQuestionId = studentOnboardingQuestion()?.id;
+    studentOnboardingState = transitionDiagnostic(studentOnboardingState, { type: 'SUBMIT' });
+    if (studentOnboardingQuestion()?.id === beforeQuestionId) return;
+    renderStudentOnboarding();
+};
+
+window.playStudentDiagnosticSound = function playStudentDiagnosticSound() {
+    const question = studentOnboardingQuestion();
+    if (question?.kind !== 'tts-jamo-identification') return;
+    const status = document.getElementById('student-onboarding-audio-status');
+    if (status) status.textContent = '문제 소리를 재생하고 있어요.';
+    speakTextKo(question.speechText, () => {
+        if (status) status.textContent = '소리 재생이 끝났어요. 다시 들으려면 스피커 버튼을 누르세요.';
+    }, { rate: 0.72 });
+};
+
+async function persistStudentPlacement() {
+    const uid = studentOnboardingUid;
+    const state = studentOnboardingState;
+    if (!uid || !state?.assignedLevel || auth.currentUser?.uid !== uid || currentUserId !== uid) return;
+    studentOnboardingPersisting = true;
+    const errorBox = document.getElementById('student-onboarding-error');
+    errorBox?.classList.add('hidden');
+    renderStudentOnboardingDialogue({ speaker: '에이두', text: '잠깐만! 너에게 맞는 단계를 열고 있어.' }, { buttonLabel: '단계 여는 중…' });
+    const payload = {
+        studentOnboardingVersion: DIAGNOSTIC_CONTENT_VERSION,
+        diagnosticStatus: 'complete',
+        diagnosticVersion: DIAGNOSTIC_CONTENT_VERSION,
+        assignedLevel: state.assignedLevel,
+        unlockedLevels: [state.assignedLevel],
+        diagnosticScores: { ...state.scores },
+        diagnosticAnsweredQuestionIds: [...state.answeredQuestionIds],
+        diagnosticCompletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+    try {
+        const userRef = doc(db, 'users', uid);
+        await runTransaction(db, async (transaction) => {
+            const existingSnapshot = await transaction.get(userRef);
+            if (!existingSnapshot.exists()) throw new Error('사용자 프로필을 찾을 수 없습니다.');
+            const existingProfile = existingSnapshot.data() || {};
+            const existingAccess = deriveStageAccessFromProfile(existingProfile);
+            if (existingAccess.length === 1) return;
+            transaction.set(userRef, payload, { merge: true });
+        });
+        if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'student') return;
+        const savedSnapshot = await getDoc(userRef);
+        if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'student') return;
+        const savedProfile = savedSnapshot.data() || {};
+        const savedAssignedLevel = Number(savedProfile.assignedLevel);
+        const savedUnlockedLevels = deriveStageAccessFromProfile(savedProfile);
+        if (!savedSnapshot.exists() || savedProfile.diagnosticStatus !== 'complete' || savedProfile.diagnosticVersion !== DIAGNOSTIC_CONTENT_VERSION || savedUnlockedLevels.length !== 1 || savedUnlockedLevels[0] !== savedAssignedLevel) {
+            throw new Error('서버에서 단계 배정 결과를 확인하지 못했습니다.');
+        }
+        unlockedLevels = savedUnlockedLevels;
+        currentUserProfileSnapshot = { ...currentUserProfileSnapshot, ...savedProfile };
+        updateDashboardExperience(currentUserProfileSnapshot);
+        closeStudentOnboarding();
+        showDashboardOnly();
+        showAiedueAutoToast('단계가 열렸어요!', `${savedAssignedLevel}단계부터 에이두와 함께 공부해요.`);
+    } catch (error) {
+        console.error('Student placement save failed', error);
+        if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'student') return;
+        studentOnboardingPersisting = false;
+        if (errorBox) {
+            errorBox.textContent = '단계를 저장하지 못했어요. 인터넷 연결을 확인한 뒤 다시 눌러 주세요.';
+            errorBox.classList.remove('hidden');
+        }
+        renderStudentOnboardingDialogue({ speaker: '에이두', text: '단계를 저장하다가 잠깐 문제가 생겼어. 결과는 그대로 두었으니 다시 시도해 줘!' }, { buttonLabel: '저장 다시 시도' });
+    }
+}
+
+window.retryStudentPlacementSave = persistStudentPlacement;
+
+function maybeStartStudentOnboarding(profile = currentUserProfileSnapshot) {
+    window.clearTimeout(studentOnboardingAutoTimer);
+    studentOnboardingAutoTimer = null;
+    if (!loginSuccess || !currentUserId || studentOnboardingAutoScheduledUid === currentUserId) return;
+    if (currentUserRole === 'teacher') {
+        if (profile?.teacherOnboardingVersion === ROLE_ONBOARDING_VERSION) return;
+        studentOnboardingAutoScheduledUid = currentUserId;
+        studentOnboardingAutoTimer = window.setTimeout(() => {
+            studentOnboardingAutoTimer = null;
+            if (loginSuccess && currentUserId === studentOnboardingAutoScheduledUid && currentUserRole === 'teacher') openRoleOnboardingGuide('teacher');
+        }, 480);
+        return;
+    }
+    if (currentUserRole !== 'student') return;
+    if (!shouldRunStudentDiagnostic({
+        role: currentUserRole,
+        assignedLevel: Number(profile?.assignedLevel),
+        diagnosticStatus: profile?.diagnosticStatus,
+        diagnosticVersion: profile?.diagnosticVersion
+    })) return;
+    studentOnboardingAutoScheduledUid = currentUserId;
+    studentOnboardingAutoTimer = window.setTimeout(() => {
+        studentOnboardingAutoTimer = null;
+        if (loginSuccess && currentUserId === studentOnboardingAutoScheduledUid && currentUserRole === 'student') openStudentOnboarding({ profile });
+    }, 480);
 }
 
 const KOREAN_ERROR_TYPES = {
@@ -2369,7 +2851,11 @@ function buildAiedueSchoolProfileSnapshot(userData = {}) {
         currentLearningStep: asNumber(userData?.currentLearningStep ?? currentLearningStep, -1),
         currentDrawingStep: asNumber(userData?.currentDrawingStep ?? currentUserDrawingStep, -1),
         currentDictationStep: asNumber(userData?.currentDictationStep ?? currentUserDictationStep, -1),
-        unlockedLevels: normalizeUnlockedLevels(userData?.unlockedLevels, userData?.role || currentUserRole)
+        unlockedLevels: normalizeUnlockedLevels(userData?.unlockedLevels, userData?.role || currentUserRole),
+        assignedLevel: Number.isInteger(Number(userData?.assignedLevel)) ? Number(userData.assignedLevel) : null,
+        diagnosticStatus: userData?.diagnosticStatus || null,
+        diagnosticVersion: userData?.diagnosticVersion || null,
+        teacherOnboardingVersion: userData?.teacherOnboardingVersion || null
     };
 }
 
@@ -4830,7 +5316,15 @@ function updateTodayKoreanPreview() {
     todayLabel.innerText = nextItem ? nextItem.title : `배움 ${nextStep} 활동`;
 }
 
-function updateDashboardExperience(userData = {}) {
+function updateDashboardExperience(userData = {}, options = {}) {
+    // 활동 저장 콜백은 일부 필드만 넘기므로 병합하고, 서버 정본 스냅샷은 삭제된 권한 필드까지 반영하도록 교체한다.
+    const incomingUserData = userData && typeof userData === 'object' ? userData : {};
+    userData = options.authoritative === true
+        ? { ...incomingUserData }
+        : {
+            ...(currentUserProfileSnapshot && typeof currentUserProfileSnapshot === 'object' ? currentUserProfileSnapshot : {}),
+            ...incomingUserData
+        };
     currentUserRole = (userData?.role || 'student').toLowerCase();
     koreanMasteryCache = userData?.koreanQuestionMastery && typeof userData.koreanQuestionMastery === 'object'
         ? userData.koreanQuestionMastery
@@ -4838,24 +5332,32 @@ function updateDashboardExperience(userData = {}) {
     const rawLearningStep = Number(userData?.currentLearningStep);
     currentLearningStep = Number.isFinite(rawLearningStep) ? Math.min(33, Math.max(-1, Math.floor(rawLearningStep))) : -1;
 
-    // 교사가 학생 계정에 저장한 단계만 활성화한다. 교사는 전체 단계를 확인할 수 있다.
-    unlockedLevels = normalizeUnlockedLevels(userData?.unlockedLevels, currentUserRole);
+    // 학생은 현재 버전 진단이 완료된 배정 단계 하나만, 교사는 전체 단계를 활성화한다.
+    unlockedLevels = deriveStageAccessFromProfile(userData);
     const dashboardTeacherClassButton = document.getElementById('dashboard-teacher-class-button');
     const dashboardStudentShopButton = document.getElementById('dashboard-student-shop-button');
+    const dashboardTutorialButton = document.getElementById('dashboard-tutorial-button');
     if (currentUserRole === 'teacher') {
         document.getElementById('teacher-manage-btn').classList.remove('hidden');
         dashboardTeacherClassButton?.classList.remove('hidden');
         dashboardStudentShopButton?.classList.add('hidden');
+        dashboardTutorialButton?.classList.remove('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     } else {
         document.getElementById('teacher-manage-btn').classList.add('hidden');
         dashboardTeacherClassButton?.classList.add('hidden');
         dashboardStudentShopButton?.classList.remove('hidden');
+        dashboardTutorialButton?.classList.remove('hidden');
         document.getElementById('rpg-teacher-manage-btn')?.classList.remove('hidden');
         document.getElementById('rpg-student-shop-btn')?.classList.remove('hidden');
     }
     document.querySelectorAll('.rpg-student-learning-button').forEach((button) => button.classList.remove('hidden'));
+    if (dashboardTutorialButton) {
+        dashboardTutorialButton.setAttribute('aria-label', currentUserRole === 'teacher' ? '에이두 선생님 튜토리얼 시작' : '에이두 학생 튜토리얼 시작');
+        const subtitle = dashboardTutorialButton.querySelector('small');
+        if (subtitle) subtitle.textContent = currentUserRole === 'teacher' ? '선생님 기능을 안내해 드려요' : '에이두와 처음부터 시작해요';
+    }
 
     // Profile UI Upgrade
     const name = userData?.name || '홍길동';
@@ -4910,17 +5412,8 @@ function updateDashboardExperience(userData = {}) {
     updateSyncedActivityHeaders({ name, coins, icon });
 
     // Update Level Cards
-    for (let i = 1; i <= 4; i++) {
-        const card = document.getElementById(`card-level-${i}`);
-        const isUnlocked = unlockedLevels.includes(i);
-        if (isUnlocked) {
-            card.classList.remove('locked');
-        } else {
-            card.classList.add('locked');
-        }
-        card.disabled = !isUnlocked;
-        card.setAttribute('aria-disabled', String(!isUnlocked));
-    }
+    applyDashboardStageAccess(unlockedLevels);
+    enforceCurrentStageAccess();
 
     updateTodayKoreanPreview();
     updateDrawingDashboardPreview();
@@ -4934,6 +5427,7 @@ function stopAiedueSchoolProfileSync() {
     }
     currentUserProfileUnsubscribe = null;
     lastSyncedProfileUid = null;
+    currentUserProfileSyncGeneration += 1;
 }
 
 function startAiedueSchoolProfileSync(uid) {
@@ -4942,14 +5436,14 @@ function startAiedueSchoolProfileSync(uid) {
     lastSyncedProfileUid = uid;
     const userRef = doc(db, 'users', uid);
     currentUserProfileUnsubscribe = onSnapshot(userRef, async (snapshot) => {
-        if (!snapshot.exists()) return;
-        const userData = snapshot.data() || {};
+        const snapshotGeneration = ++currentUserProfileSyncGeneration;
+        const userData = snapshot.exists() ? (snapshot.data() || {}) : {};
         try {
             const teacherId = userData.teacherId || null;
             const classId = userData.classId || userData.classCode || null;
             await loadKoreanExperienceMultipliers(teacherId, classId);
-            if (auth.currentUser?.uid !== uid || currentUserId !== uid || lastSyncedProfileUid !== uid) return;
-            updateDashboardExperience(userData);
+            if (snapshotGeneration !== currentUserProfileSyncGeneration || auth.currentUser?.uid !== uid || currentUserId !== uid || lastSyncedProfileUid !== uid) return;
+            updateDashboardExperience(userData, { authoritative: true });
             updateSyncedActivityHeaders({ name: currentUserName, coins: currentUserCoins, icon: currentUserIcon });
             const visibleActivityRoute = getVisibleActivityRoute();
             if (visibleActivityRoute) hydrateActivityRouteSection(visibleActivityRoute);
@@ -5370,6 +5864,7 @@ window.goHomeDashboard = function goHomeDashboard() {
 }
 
 window.goHangulDashboard = function goHangulDashboard() {
+    if (!requireStageAccess(2, '2단계 한글')) return;
     updateTodayKoreanPreview();
     showTopLevelSection('hangul-activities-section');
 }
@@ -13245,6 +13740,7 @@ function renderKoreanRecordDashboard() {
 }
 
 window.openKoreanRecords = async function openKoreanRecords(options = {}) {
+    if (!requireStageAccess(2, '2단계 한글')) return;
     showTopLevelSection('korean-records-section');
     setKoreanLearningMenuActive('records');
     if (options.pushUrl !== false) updateKoreanStudentViewUrl('records');
@@ -13297,6 +13793,7 @@ window.setKoreanMistakeFilter = function setKoreanMistakeFilter(filter) {
 };
 
 window.openKoreanMistakes = async function openKoreanMistakes(options = {}) {
+    if (!requireStageAccess(2, '2단계 한글')) return;
     showTopLevelSection('korean-mistakes-section');
     setKoreanLearningMenuActive('mistakes');
     if (options.pushUrl !== false) updateKoreanStudentViewUrl('mistakes');
@@ -13409,6 +13906,7 @@ window.submitKoreanReviewReading = async function submitKoreanReviewReading() {
 };
 
 window.openKoreanTodayReview = async function openKoreanTodayReview(options = {}) {
+    if (!requireStageAccess(2, '2단계 한글')) return;
     let queue = getTodayReviewQuestions(koreanMasteryCache, 10);
     if (options.masteryKey) queue = queue.filter((item) => item.masteryKey === options.masteryKey);
     activeKoreanReview = { queue, index: 0, correctCount: 0, wrongCount: 0 };
@@ -20511,7 +21009,15 @@ function renderTeacherTestKoreanReportRow(tbody) {
     tbody.appendChild(tr);
 }
 
-function buildTestUserProfile(user, account) {
+function buildTestUserProfile(user, account, existingData = {}) {
+    const isStudent = account.role === 'student';
+    const assignedLevel = Number(existingData?.assignedLevel);
+    const hasPlacement = isStudent
+        && existingData?.diagnosticStatus === 'complete'
+        && existingData?.diagnosticVersion === DIAGNOSTIC_CONTENT_VERSION
+        && Number.isInteger(assignedLevel)
+        && assignedLevel >= 1
+        && assignedLevel <= 4;
     return {
         uid: user.uid,
         name: account.name,
@@ -20529,7 +21035,7 @@ function buildTestUserProfile(user, account) {
         currentLearningStep: 33,
         currentDrawingStep: 5,
         currentDictationStep: 5,
-        unlockedLevels: [1, 2, 3, 4],
+        unlockedLevels: account.role === 'teacher' ? [1, 2, 3, 4] : (hasPlacement ? [assignedLevel] : []),
         warningTokens: 0,
         ...(account.role === 'student' ? { koreanStageGameStats: {
             'shape-zoo': { successes: 8, attempts: 10, plays: 2, lastPlayedAt: new Date().toISOString() },
@@ -20561,8 +21067,10 @@ async function signInOrCreateTestAccount(account) {
         }
     }
 
-    const profile = buildTestUserProfile(credential.user, account);
-    await setDoc(doc(db, 'users', credential.user.uid), profile, { merge: true });
+    const userRef = doc(db, 'users', credential.user.uid);
+    const existingSnapshot = await getDoc(userRef);
+    const profile = buildTestUserProfile(credential.user, account, existingSnapshot.data() || {});
+    await setDoc(userRef, profile, { merge: true });
     return { credential, profile };
 }
 
@@ -21197,24 +21705,44 @@ document.getElementById('class-management-modal').addEventListener('click', (e) 
 });
 
 onAuthStateChanged(auth, async (user) => {
-    if ((currentUserId || null) !== (user?.uid || null)) {
+    const previousUserId = currentUserId;
+    const nextUserId = user?.uid || null;
+    const identityChanged = (previousUserId || null) !== nextUserId;
+    if (identityChanged) {
         if (typeof dismissDrawingTutorial === 'function') dismissDrawingTutorial({ remember: false, restoreFocus: false });
+        window.clearTimeout(studentOnboardingAutoTimer);
+        studentOnboardingAutoTimer = null;
+        studentOnboardingAutoScheduledUid = null;
+        closeStudentOnboarding();
         resetAiSketchbookForIdentityChange();
         setDrawingEvaluationState(false);
         window.stopWordCardTableGame?.();
         if (document.getElementById('word-card-table-game-section')?.classList.contains('hidden') === false) {
             showTopLevelSection('start-screen');
         }
-    }
-    if (currentUserId && currentUserId !== user?.uid
-        && document.getElementById('shape-zoo-game-section')?.classList.contains('hidden') === false) {
-        showTopLevelSection('start-screen');
-    }
-    if (!user) {
+        if (previousUserId && previousUserId !== nextUserId
+            && document.getElementById('shape-zoo-game-section')?.classList.contains('hidden') === false) {
+            showTopLevelSection('start-screen');
+        }
         stopAiedueSchoolProfileSync();
         loginSuccess = false;
         currentUserId = null;
+        currentUserRole = 'student';
+        currentUserProfileSnapshot = {};
+        unlockedLevels = [];
+        applyDashboardStageAccess([]);
         setRpgHudVisible(false);
+    }
+    if (!user) {
+        if (!identityChanged) {
+            loginSuccess = false;
+            currentUserId = null;
+            currentUserRole = 'student';
+            currentUserProfileSnapshot = {};
+            unlockedLevels = [];
+            applyDashboardStageAccess([]);
+            setRpgHudVisible(false);
+        }
         return;
     }
 
@@ -21223,13 +21751,16 @@ onAuthStateChanged(auth, async (user) => {
         startAiedueSchoolProfileSync(user.uid);
         let userRef = doc(db, 'users', user.uid);
         let userSnap = await getDoc(userRef);
+        if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
 
-        // 만약 구글 로그인 직후라 문서가 아직 없다면, 선생님으로 간주하고 생성 대기 또는 직접 생성
+        // 만약 구글 로그인 직후라 문서가 아직 없다면
         if (!userSnap.exists()) {
             // 구글 로그인의 경우 이메일이 존재함. 이를 통해 선생님 계정을 자동 생성하거나 확인
             if (user.providerData.some(p => p.providerId === 'google.com')) {
                 await ensureTeacherProfile(user);
+                if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
                 userSnap = await getDoc(userRef);
+                if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
             } else {
                 // 일반 로그인의 경우 문서가 없으면 오류
                 showModal('사용자 정보를 찾을 수 없습니다. 다시 시도해주세요.');
@@ -21243,6 +21774,7 @@ onAuthStateChanged(auth, async (user) => {
         // 선생님인 경우 마지막 한글 배움 단계까지 열어 둔다.
         if ((userData.role || '').toLowerCase() === 'teacher' && Number(userData.currentLearningStep) !== 33) {
             await setDoc(doc(db, 'users', user.uid), { currentLearningStep: 33 }, { merge: true });
+            if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
             userData.currentLearningStep = 33;
         }
 
@@ -21251,8 +21783,9 @@ onAuthStateChanged(auth, async (user) => {
         await loadKoreanExperienceMultipliers(teacherId, classId);
         if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
 
-        updateDashboardExperience(userData);
+        updateDashboardExperience(userData, { authoritative: true });
         await loadKoreanLearningRecords(user.uid);
+        if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
         const recoveredLiteracyPromotion = advanceLiteracyDanIfReady();
         if (recoveredLiteracyPromotion) {
             await setDoc(userRef, {
@@ -21260,6 +21793,7 @@ onAuthStateChanged(auth, async (user) => {
                 literacyDan: literacyPortfolio.dan,
                 updatedAt: serverTimestamp()
             }, { merge: true });
+            if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
             updateLiteracyDanBadges();
             showLiteracyPromotionNotice(recoveredLiteracyPromotion);
         }
@@ -21291,8 +21825,14 @@ onAuthStateChanged(auth, async (user) => {
         } else {
             openPendingActivityRoute();
         }
+        maybeStartStudentOnboarding(userData);
     } catch (error) {
         console.error('Auth state handling error:', error);
+        if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
+        loginSuccess = false;
+        unlockedLevels = [];
+        applyDashboardStageAccess([]);
+        setRpgHudVisible(false);
         if (error.message !== 'teacher-account-required') {
             showModal('로그인 정보를 불러오는 중 오류가 발생했어요.');
         }

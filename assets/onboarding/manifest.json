@@ -1,0 +1,38 @@
+[
+  {
+    "name": "aiedue-wave",
+    "file": "aiedue-wave.webp",
+    "width": 896,
+    "height": 1200
+  },
+  {
+    "name": "aiedue-welcome",
+    "file": "aiedue-welcome.webp",
+    "width": 896,
+    "height": 1200
+  },
+  {
+    "name": "aiedue-grow",
+    "file": "aiedue-grow.webp",
+    "width": 896,
+    "height": 1200
+  },
+  {
+    "name": "aiedue-think",
+    "file": "aiedue-think.webp",
+    "width": 896,
+    "height": 1200
+  },
+  {
+    "name": "aiedue-quiz",
+    "file": "aiedue-quiz.webp",
+    "width": 896,
+    "height": 1200
+  },
+  {
+    "name": "aiedue-celebrate",
+    "file": "aiedue-celebrate.webp",
+    "width": 896,
+    "height": 1200
+  }
+]

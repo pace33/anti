@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260914-drawing-tutorial-v148">
+    <link rel="stylesheet" href="app.css?v=20260914-student-onboarding-v161">
     <link rel="stylesheet" href="shape-zoo.css?v=20260914-stage-game-reports-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260914-time-quiz-tablet-v1">
@@ -168,7 +168,11 @@
                     </div>
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
                 </div>
-                <div class="dashboard-quick-actions pointer-events-auto" aria-label="대시보드 빠른 메뉴">
+                <div class="dashboard-quick-actions pointer-events-auto" role="group" aria-label="대시보드 빠른 메뉴">
+                    <button type="button" id="dashboard-tutorial-button" class="aiedue-library-button dashboard-tutorial-button hidden" onclick="openRoleTutorial()" aria-label="에이두 학생 튜토리얼 시작">
+                        <span class="aiedue-library-button-icon" aria-hidden="true">💬</span>
+                        <span><strong>튜토리얼</strong><small>에이두와 처음부터 시작해요</small></span>
+                    </button>
                     <button type="button" id="dashboard-teacher-class-button" class="aiedue-library-button dashboard-role-action dashboard-teacher-class-button hidden" onclick="openClassManagement()" aria-label="학급 관리 열기">
                         <span class="aiedue-library-button-icon" aria-hidden="true">🏫</span>
                         <span><strong>학급 관리</strong><small>학생의 학습과 포인트를 관리해요</small></span>
@@ -269,7 +273,7 @@
                 </div>
                 <button type="button" id="stage-1-game-shape" data-stage-game-entry="1" class="stage-header-game-button pointer-events-auto" onclick="openAiedueLabShapeZoo()" aria-label="1단계 게임 도형 동물원 열기"><span class="stage-header-game-icon" aria-hidden="true">🦁</span><span><strong>도형 동물원</strong><small>도형을 그려 동물 친구를 완성해요</small></span></button>
                 </div>
-                <button type="button" id="drawing-tutorial-open-btn" class="drawing-tutorial-open-button pointer-events-auto" onclick="openDrawingTutorial()" aria-label="에이두 그리기 튜토리얼 다시 보기"><span aria-hidden="true">💬</span><span><strong>튜토리얼</strong><small>에이두에게 사용법을 들어요</small></span></button>
+
             </div>
 
             <div class="drawing-dashboard-content w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
@@ -1763,30 +1767,21 @@
         </main>
     </section>
 
-    <!-- [에이두 그리기: 역할별 대화형 튜토리얼 · viewport 최상위] -->
-    <div id="drawing-tutorial-modal" class="drawing-tutorial-modal hidden" role="dialog" aria-modal="true" aria-labelledby="drawing-tutorial-title" aria-describedby="drawing-tutorial-dialogue">
-        <div class="drawing-tutorial-backdrop" data-drawing-tutorial-close aria-hidden="true"></div>
-        <div class="drawing-tutorial-card" tabindex="-1">
-            <button type="button" id="drawing-tutorial-close-btn" class="drawing-tutorial-close" onclick="closeDrawingTutorial()" aria-label="튜토리얼 닫기">×</button>
-            <div class="drawing-tutorial-scene">
-                <div class="drawing-tutorial-character" role="img" aria-label="새싹후드를 입은 에이두 캐릭터">
-                    <img src="assets/aiedue-literacy-detective.webp" width="896" height="1195" alt="">
-                </div>
-                <div class="drawing-tutorial-chat">
-                    <div class="drawing-tutorial-role" id="drawing-tutorial-role">학생 튜토리얼</div>
-                    <h2 id="drawing-tutorial-title">에이두 그리기 사용법</h2>
-                    <p id="drawing-tutorial-dialogue" aria-live="polite">에이두와 함께 그리기를 시작해 볼까요?</p>
-                </div>
+    <!-- [학생 전체 온보딩 + 단계 진단평가 · viewport 최상위] -->
+    <div id="student-onboarding-modal" class="student-onboarding-modal hidden" role="dialog" aria-modal="true" aria-labelledby="student-onboarding-line" aria-hidden="true" tabindex="-1" data-testid="student-onboarding">
+        <div class="student-onboarding-sky" aria-hidden="true"><span></span><span></span><span></span></div>
+        <button type="button" id="student-onboarding-close" class="student-onboarding-close hidden" onclick="closeRoleOnboardingGuide()" aria-label="튜토리얼 닫기">×</button>
+        <section id="student-diagnostic-panel" class="student-diagnostic-panel hidden" data-testid="diagnostic-question" aria-live="polite"></section>
+        <img id="student-onboarding-character" class="student-onboarding-character" src="assets/onboarding/aiedue-wave.webp" alt="에이두 한글 안내 캐릭터 에이두">
+        <section id="student-onboarding-dialogue" class="student-onboarding-dialogue">
+            <div class="student-onboarding-copy">
+                <strong id="student-onboarding-speaker" class="student-onboarding-speaker" data-testid="onboarding-speaker">에이두</strong>
+                <p id="student-onboarding-line" data-testid="onboarding-line" aria-live="polite">안녕! 난 에이두야!</p>
+                <p id="student-onboarding-error" class="student-onboarding-error hidden" role="alert"></p>
+                <span id="student-onboarding-audio-status" class="sr-only" aria-live="polite"></span>
             </div>
-            <div id="drawing-tutorial-dots" class="drawing-tutorial-dots" aria-label="튜토리얼 진행 단계"></div>
-            <div class="drawing-tutorial-actions">
-                <button type="button" id="drawing-tutorial-skip-btn" class="drawing-tutorial-skip" onclick="closeDrawingTutorial()">건너뛰기</button>
-                <div>
-                    <button type="button" id="drawing-tutorial-prev-btn" class="drawing-tutorial-secondary" onclick="moveDrawingTutorial(-1)">이전</button>
-                    <button type="button" id="drawing-tutorial-next-btn" class="drawing-tutorial-next" onclick="moveDrawingTutorial(1)">다음</button>
-                </div>
-            </div>
-        </div>
+            <button type="button" id="student-onboarding-next" class="student-onboarding-next" data-testid="onboarding-next" onclick="advanceStudentOnboarding()">다음</button>
+        </section>
     </div>
 
     <!-- [에이두 도서관: AI 동화책 · 등장인물 사전 · 두 쪽 펼침 뷰어] -->
@@ -1814,7 +1809,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260914-drawing-tutorial-v148"></script>
+    <script type="module" src="app.js?v=20260914-student-onboarding-v161"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>

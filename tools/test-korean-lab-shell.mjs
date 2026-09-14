@@ -104,8 +104,10 @@ test('대시보드는 좁은 화면에서도 1~4단계를 한 줄로 유지하�
     assert.ok(app.includes("document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section')"));
     assert.ok(app.includes("hud.classList.toggle('rpg-collapsed', !dashboardViewActive)"));
     assert.ok(appCss.includes('body.dashboard-view-active .aiedue-rpg-hud'));
+    assert.ok(appCss.includes('position: fixed !important'));
     assert.ok(appCss.includes('bottom: max(18px, env(safe-area-inset-bottom)) !important'));
-    assert.ok(appCss.includes('left: max(18px, calc((100vw - 1100px) / 2 + 18px)) !important'));
+    assert.ok(appCss.includes('left: max(18px, env(safe-area-inset-left)) !important'));
+    assert.ok(appCss.includes('body.dashboard-view-active #dashboard-section .dashboard-quick-actions'));
     const tablet = section(appCss, '@media (max-width: 992px)', '@media (max-width: 576px)');
     const mobile = section(appCss, '@media (max-width: 576px)', '/* Hermes drawing UX refinements */');
     assert.ok(tablet.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'));

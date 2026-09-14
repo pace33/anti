@@ -43,18 +43,31 @@ assert.match(drawingDashboard, /그림을 AI와 같이 만들어보아요/);
 assert.match(drawingDashboard, /drawing-dashboard-content/);
 assert.doesNotMatch(drawingDashboard, /aiedu_hangul_logo\.webp[^>]*style="[^"]*width:/, 'dashboard logo width must remain responsive');
 
-assert.match(drawingDashboard, /id="drawing-tutorial-open-btn"[\s\S]*?onclick="openDrawingTutorial\(\)"/, 'drawing dashboard must keep a replayable tutorial button');
-assert.match(html, /id="drawing-tutorial-modal"[\s\S]*?role="dialog"[\s\S]*?aria-modal="true"/, 'drawing tutorial must use an accessible dialog');
-assert.match(html, /drawing-tutorial-character[\s\S]*?assets\/aiedue-literacy-detective\.webp/, 'tutorial must reuse an existing official Aiedue character asset');
-assert.match(html, /id="drawing-tutorial-dialogue"[\s\S]*?aria-live="polite"/, 'tutorial dialogue must announce each step');
-assert.match(app, /const DRAWING_TUTORIAL_STEPS = Object\.freeze\(\{[\s\S]*?student:[\s\S]*?teacher:/, 'tutorial must define distinct student and teacher tracks');
-assert.match(app, /function getDrawingTutorialRole\(\)[\s\S]*?currentUserRole === 'teacher'/, 'tutorial must select steps from the authenticated role');
-assert.match(app, /function getDrawingTutorialStorageKey\(\)[\s\S]*?currentUserId[\s\S]*?getDrawingTutorialRole/, 'first-run state must be scoped by user and role');
-assert.match(app, /const completedDrawingTutorials = new Set\(\)[\s\S]*?completedDrawingTutorials\.has\(key\)[\s\S]*?completedDrawingTutorials\.add\(key\)/, 'tutorial first-run state must stay scoped to the authenticated session without browser storage');
+assert.doesNotMatch(drawingDashboard, /id="drawing-tutorial-open-btn"|openDrawingTutorial\(\)/, 'drawing dashboard must not keep the obsolete drawing-only tutorial');
+assert.match(html, /id="dashboard-tutorial-button"[\s\S]*?onclick="openRoleTutorial\(\)"/, 'dashboard must expose the replayable role tutorial at one fixed entry point');
+assert.match(html, /id="student-onboarding-modal"[\s\S]*?role="dialog"[\s\S]*?aria-modal="true"/, 'site-wide onboarding must use an accessible dialog');
+assert.match(html, /id="student-onboarding-character"[\s\S]*?assets\/onboarding\/aiedue-wave\.webp/, 'site-wide onboarding must use the optimized official Aiedue onboarding asset');
+assert.match(html, /id="student-onboarding-line"[\s\S]*?aria-live="polite"/, 'site-wide onboarding dialogue must announce each step');
+assert.match(app, /ONBOARDING_DIALOGUE[\s\S]*?const TEACHER_ONBOARDING_DIALOGUE = Object\.freeze\(/, 'onboarding must define distinct student and teacher tracks');
+assert.match(app, /function maybeStartStudentOnboarding\(profile[\s\S]*?currentUserRole === 'teacher'/, 'first-run onboarding must branch by authenticated role');
+assert.match(app, /diagnosticStatus[\s\S]*?assignedLevel[\s\S]*?unlockedLevels/, 'student diagnostic assignment must be persisted in the profile contract');
+assert.match(app, /function updateDashboardExperience\(userData = \{\}, options = \{\}\)[\s\S]*?options\.authoritative === true[\s\S]*?currentUserProfileSnapshot[\s\S]*?incomingUserData[\s\S]*?deriveStageAccessFromProfile\(userData\)/, 'partial dashboard refreshes must merge while authoritative snapshots replace cached diagnostic placement');
+assert.ok((app.match(/updateDashboardExperience\(userData, \{ authoritative: true \}\)/g) || []).length >= 2, 'initial and live server profiles must use authoritative replacement semantics');
+assert.match(app, /hasOwnProperty\.call\(profile, 'unlockedLevels'\)[\s\S]*?normalizeUnlockedLevels\(profile\.unlockedLevels, role\)/, 'teacher-managed student stage locks must remain effective after diagnostic placement');
+assert.match(app, /const protectedStageSections = Object\.freeze\(\{[\s\S]*?'drawing-workspace-section': \[1\][\s\S]*?'letter-writing-section': \[2\][\s\S]*?'dictation-workspace-section': \[3\][\s\S]*?'word-card-table-game-section': \[3, 4\][\s\S]*?'literacy-workspace-section': \[4\]/, 'all nested stage sections and shared games must be mapped for live authorization changes');
+assert.match(app, /function enforceCurrentStageAccess\(\)[\s\S]*?protectedStageSections[\s\S]*?allowedLevels\.some\(\(level\) => unlockedLevels\.includes\(level\)\)[\s\S]*?showDashboardOnly\(\)/, 'live authorization changes must eject students from every revoked stage-owned section');
+assert.match(app, /currentUserProfileSyncGeneration \+= 1;[\s\S]*?const snapshotGeneration = \+\+currentUserProfileSyncGeneration[\s\S]*?snapshot\.exists\(\) \? \(snapshot\.data\(\) \|\| \{\}\) : \{\}[\s\S]*?snapshotGeneration !== currentUserProfileSyncGeneration/, 'live profile sync must ignore out-of-order snapshots and treat deleted profiles as authoritative empty data');
+assert.match(app, /applyDashboardStageAccess\(unlockedLevels\);[\s\S]*?enforceCurrentStageAccess\(\);/, 'every dashboard profile refresh must enforce the current visible route');
+assert.match(app, /function requireStageAccess\(level[\s\S]*?!loginSuccess[\s\S]*?!unlockedLevels\.includes\(Number\(level\)\)/, 'all direct stage entry points must use a fail-closed access guard');
+for (const entryPoint of ['goHangulDashboard', 'openKoreanRecords', 'openKoreanMistakes', 'openKoreanTodayReview']) {
+  assert.match(app, new RegExp(`${entryPoint}[^\\{]*\\{[\\s\\S]{0,180}?requireStageAccess\\(2, '2단계 한글'\\)`), `${entryPoint} must block direct access when level 2 is locked`);
+}
 assert.doesNotMatch(app, /localStorage/, 'the Korean site must not persist tutorial state in browser storage');
-assert.match(app, /maybeOpenDrawingTutorial/, 'drawing entry must support first-run tutorial display');
-assert.match(app, /closeDrawingTutorial\(\)[\s\S]*?drawingTutorialReturnFocus/, 'tutorial close must restore focus');
+assert.match(app, /function closeStudentOnboarding\(\)[\s\S]*?roleOnboardingReturnFocus[\s\S]*?returnFocus\.focus\(\)/, 'onboarding close must restore focus');
 
+assert.match(css, /body\.dashboard-view-active #dashboard-section \.dashboard-quick-actions\s*\{[\s\S]*?position:\s*fixed\s*!important;[\s\S]*?top:[\s\S]*?right:/, 'dashboard tutorial controls must stay fixed to the viewport');
+assert.match(css, /body\.dashboard-view-active \.aiedue-rpg-hud\s*\{[\s\S]*?position:\s*fixed\s*!important;[\s\S]*?bottom:[\s\S]*?left:/, 'dashboard information bar must stay fixed at the lower-left viewport anchor');
+assert.match(css, /body\.dashboard-view-active #main-container,[\s\S]*?body\.dashboard-view-active #dashboard-section\s*\{[\s\S]*?animation:\s*none\s*!important;[\s\S]*?transform:\s*none\s*!important;/, 'dashboard entry transforms must not move fixed tutorial controls');
 assert.match(css, /\.drawing-branded-section\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{[\s\S]*?margin-top:\s*0;/);

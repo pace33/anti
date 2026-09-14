@@ -188,25 +188,45 @@ test('navigation and auth integration stop obsolete games and keep the RPG HUD v
     assert.doesNotMatch(between('function setRpgHudVisible', 'function removeDeprecatedRpgWordBankActions'), /!document\.body\.classList\.contains\('word-card-table-open'\)/);
     const authStart = app.indexOf('onAuthStateChanged(auth, async (user) => {');
     const guardStart = app.indexOf('\n', authStart) + 1;
-    const guardEnd = app.indexOf('    if (!user) {', guardStart);
+    const guardEnd = app.indexOf('\n    try {', guardStart);
     assert.ok(authStart >= 0 && guardEnd > guardStart);
     let stopped = 0; const routes = [];
     let resetSketchbooks = 0; let resetDrawingEvaluations = 0;
+    let stageLocks = 0; let hudHides = 0;
     const context = {
-        currentUserId: 'student-1',
-        window: { stopWordCardTableGame: () => { stopped += 1; } },
+        currentUserId: null,
+        currentUserRole: 'student',
+        currentUserProfileSnapshot: {},
+        unlockedLevels: [4],
+        loginSuccess: true,
+        studentOnboardingAutoTimer: null,
+        studentOnboardingAutoScheduledUid: null,
+        window: { stopWordCardTableGame: () => { stopped += 1; }, clearTimeout: () => {} },
+        closeStudentOnboarding: () => {},
+        stopAiedueSchoolProfileSync: () => {},
+        applyDashboardStageAccess: () => { stageLocks += 1; },
+        setRpgHudVisible: value => { if (value === false) hudHides += 1; },
         document: { getElementById: id => ({ classList: { contains: () => id !== 'word-card-table-game-section' } }) },
         showTopLevelSection: route => routes.push(route),
         resetAiSketchbookForIdentityChange: () => { resetSketchbooks += 1; },
         setDrawingEvaluationState: value => { if (value === false) resetDrawingEvaluations += 1; }
     };
     vm.runInNewContext(`function checkIdentity(user) {${app.slice(guardStart, guardEnd)}}`, context);
+    context.checkIdentity(null);
+    assert.equal(stopped, 0);
+    assert.equal(stageLocks, 1);
+    assert.equal(hudHides, 1);
+    context.currentUserId = 'student-1';
+    context.loginSuccess = true;
     context.checkIdentity({ uid: 'student-1' });
     assert.equal(stopped, 0);
     context.checkIdentity({ uid: 'student-2' });
+    context.currentUserId = 'student-2';
     context.checkIdentity(null);
     assert.equal(stopped, 2);
     assert.equal(resetSketchbooks, 2);
     assert.equal(resetDrawingEvaluations, 2);
+    assert.equal(stageLocks, 3);
+    assert.equal(hudHides, 3);
     assert.deepEqual(routes, ['start-screen', 'start-screen']);
 });
