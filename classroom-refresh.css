@@ -1,24 +1,39 @@
 /* Quiet backgrounds keep the learning cards and controls in the foreground. */
 #dashboard-section { background-image: url('assets/classroom/stage-select.png') !important; }
-body[data-learning-stage="1"] { --learning-bg: url('assets/classroom/stage-1.webp'); --learning-tint: #f5efff; }
-body[data-learning-stage="2"] { --learning-bg: url('assets/classroom/stage-2.webp'); --learning-tint: #edf7ff; }
-body[data-learning-stage="3"] { --learning-bg: url('assets/classroom/stage-3.webp'); --learning-tint: #fff3e9; }
-body[data-learning-stage="4"] { --learning-bg: url('assets/classroom/stage-4.webp'); --learning-tint: #eefaef; }
+/* Color alone distinguishes the four stages; the center stays quiet for reading. */
+body[data-learning-stage="1"] { --learning-tint: #f8f5ff; --learning-corner: #e9def8; --learning-edge: #f0e8fc; }
+body[data-learning-stage="2"] { --learning-tint: #f3f9ff; --learning-corner: #dceefa; --learning-edge: #e5f2fc; }
+body[data-learning-stage="3"] { --learning-tint: #fff8f2; --learning-corner: #fae4d2; --learning-edge: #fceee1; }
+body[data-learning-stage="4"] { --learning-tint: #f3faf6; --learning-corner: #dceee3; --learning-edge: #e5f4eb; }
 body[data-learning-stage] .view-section:not(.hidden) {
     background-color: var(--learning-tint) !important;
-    background-image: var(--learning-bg) !important;
+    background-image:
+        radial-gradient(ellipse at 100% 0%, var(--learning-corner) 0%, transparent 45%),
+        radial-gradient(ellipse at 0% 100%, var(--learning-edge) 0%, transparent 50%),
+        linear-gradient(135deg, #ffffff, var(--learning-tint)) !important;
     background-position: center !important;
     background-size: cover !important;
 }
 body[data-learning-stage] .view-section:not(.hidden) > .custom-scrollbar { padding-bottom: 120px !important; }
 body[data-learning-stage] .stitched,
 body[data-learning-stage] .activity-card { background-color: #fff !important; color: #203448; }
+#drawing-activities-section .drawing-logo-button .login-mini-logo { width: 180px; }
 body.rpg-hud-active #main-container { transform: none !important; animation: none !important; }
-body.rpg-hud-active .aiedue-rpg-hud {
-    position: fixed !important; left: max(18px, env(safe-area-inset-left)) !important;
-    bottom: max(18px, env(safe-area-inset-bottom)) !important;
+body.rpg-hud-active #main-container > .aiedue-rpg-hud {
+    position: absolute !important; left: 18px !important;
+    bottom: 18px !important;
     top: auto !important; right: auto !important; transform: none !important;
-    max-width: calc(100vw - 36px);
+    width: min(600px, calc(100% - 36px)); max-width: calc(100% - 36px);
+    flex-direction: row; align-items: center;
+}
+body.rpg-hud-active #main-container > .aiedue-rpg-hud.rpg-collapsed { width: 86px; }
+body.rpg-hud-active #main-container .rpg-profile-banner { width: 100%; min-width: 0; }
+body.dashboard-view-active #dashboard-section .dashboard-quick-actions {
+    position: absolute !important; top: 24px !important; right: 24px !important;
+    left: auto !important; bottom: auto !important;
+    width: auto !important; max-width: calc(100% - 250px) !important;
+    flex-direction: row !important; flex-wrap: wrap; justify-content: flex-end !important;
+    align-items: flex-start !important;
 }
 body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; transform-origin: bottom left; }
 #login-section .login-tabs-container .nav-tab { color: #23462b; background: #f6fff1; }
@@ -72,8 +87,21 @@ body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray { top: auto; bottom: calc(1
 @media(max-width: 600px) {
     .classroom-dialog-content { padding: 16px; }
     .classroom-currency-grid { grid-template-columns: 1fr; }
-    body.rpg-hud-active .aiedue-rpg-hud { left: 8px !important; bottom: 8px !important; max-width: calc(100vw - 16px); }
-    body.rpg-hud-active .rpg-profile-banner { min-width: 0; width: min(600px, calc(100vw - 16px)); }
+    body.rpg-hud-active #main-container > .aiedue-rpg-hud { left: 8px !important; bottom: 8px !important; width: calc(100% - 16px); max-width: calc(100% - 16px); }
+    #dashboard-section > .absolute.top-0 { padding: 14px !important; }
+    #dashboard-section .login-mini-logo { width: 110px !important; }
+    body.dashboard-view-active #dashboard-section .dashboard-quick-actions {
+        top: 14px !important; right: 14px !important;
+        width: calc(100% - 148px) !important; max-width: 230px !important;
+        flex-wrap: nowrap; gap: 5px;
+    }
+    #dashboard-section .dashboard-quick-actions .aiedue-library-button {
+        flex: 1 1 0; min-width: 0; max-width: none; padding: 7px 4px;
+        flex-direction: column; gap: 3px; min-height: 64px; border-radius: 16px;
+    }
+    #dashboard-section .dashboard-quick-actions .aiedue-library-button strong { font-size: 11px; white-space: nowrap; }
+    #dashboard-section .dashboard-quick-actions .aiedue-library-button small { display: none; }
+    #dashboard-section .dashboard-quick-actions .aiedue-library-button-icon { font-size: 1.3rem; }
 }
 @media(prefers-reduced-motion: reduce) {
     .aiedu-loading-scene img, .aiedu-loading-spark { animation: none !important; }

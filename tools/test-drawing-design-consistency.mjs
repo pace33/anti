@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(resolve(here, '..', 'index.html'), 'utf8');
 const css = readFileSync(resolve(here, '..', 'app.css'), 'utf8');
+const refreshCss = readFileSync(resolve(here, '..', 'classroom-refresh.css'), 'utf8');
 const app = readFileSync(resolve(here, '..', 'app.js'), 'utf8');
 
 function between(start, end) {
@@ -65,9 +66,8 @@ for (const entryPoint of ['goHangulDashboard', 'openKoreanRecords', 'openKoreanM
 assert.doesNotMatch(app, /localStorage/, 'the Korean site must not persist tutorial state in browser storage');
 assert.match(app, /function closeStudentOnboarding\(\)[\s\S]*?roleOnboardingReturnFocus[\s\S]*?returnFocus\.focus\(\)/, 'onboarding close must restore focus');
 
-assert.match(css, /body\.dashboard-view-active #dashboard-section \.dashboard-quick-actions\s*\{[\s\S]*?position:\s*fixed\s*!important;[\s\S]*?top:[\s\S]*?right:/, 'dashboard tutorial controls must stay fixed to the viewport');
-assert.match(css, /body\.dashboard-view-active \.aiedue-rpg-hud\s*\{[\s\S]*?position:\s*fixed\s*!important;[\s\S]*?bottom:[\s\S]*?left:/, 'dashboard information bar must stay fixed at the lower-left viewport anchor');
-assert.match(css, /body\.dashboard-view-active #main-container,[\s\S]*?body\.dashboard-view-active #dashboard-section\s*\{[\s\S]*?animation:\s*none\s*!important;[\s\S]*?transform:\s*none\s*!important;/, 'dashboard entry transforms must not move fixed tutorial controls');
+assert.match(refreshCss, /body\.dashboard-view-active #dashboard-section \.dashboard-quick-actions\s*\{[\s\S]*?position:\s*absolute\s*!important;/, 'dashboard actions must be anchored inside the screen frame');
+assert.match(refreshCss, /#main-container > \.aiedue-rpg-hud\s*\{[\s\S]*?position:\s*absolute\s*!important;/, 'information bar must be anchored inside the screen frame');
 assert.match(css, /\.drawing-branded-section\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{[\s\S]*?margin-top:\s*0;/);
