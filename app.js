@@ -267,6 +267,7 @@ const sharedWordCardsById = new Map();
 let activeSpellingQuestion = null;
 let literacyPortfolio = { history: [], stats: { "easy-multipleChoice": { attempts: 0, corrects: 0, wrongs: 0 } } };
 let activeLiteracyQuestion = null;
+let activeLiteracyDetectiveQuestion = null;
 let isLiteracyLimitBreakMode = false;
 let userLiteracyAnswerChecked = false;
 
@@ -10013,13 +10014,6 @@ function buildSharedLiteracyPublicQuestion(primary = {}, fallback = {}) {
     });
     const options = Array.isArray(primary.options) ? primary.options : fallback.options;
     if (Array.isArray(options)) publicQuestion.options = options.map((option) => String(option));
-    const acceptableAnswers = Array.isArray(primary.acceptableAnswers) ? primary.acceptableAnswers : fallback.acceptableAnswers;
-    if (Array.isArray(acceptableAnswers)) {
-        publicQuestion.acceptableAnswers = Array.from(new Set(acceptableAnswers
-            .map((answer) => String(answer).trim())
-            .filter((answer) => answer.length > 0 && answer.length <= 80)))
-            .slice(0, 10);
-    }
     const answerIndex = primary.answerIndex ?? fallback.answerIndex;
     if (answerIndex !== undefined && answerIndex !== null && Number.isInteger(Number(answerIndex))) {
         publicQuestion.answerIndex = Number(answerIndex);
@@ -10203,16 +10197,17 @@ window.openTodayLiteracyMission = function() {
     window.startTodayLiteracyMission(plan.difficulty, plan.type);
 };
 
-async function createLiteracyMissionQuestion(diff, type) {
-    const generationContext = buildLiteracyGenerationContext(diff, type);
-    let responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, generationContext), { printTimeout: '3m' });
+async function createLiteracyMissionQuestion(diff, type, { detective = false } = {}) {
+    const generationContext = buildLiteracyGenerationContext(diff, type, { detective });
+    const promptBuilder = detective ? generateLiteracyDetectivePrompt : generateLiteracyPrompt;
+    let responseText = await callKoreanAiGenerate(promptBuilder(diff, type, generationContext), { printTimeout: '3m' });
     let questionData = parseAiQuestionResponse(responseText);
     if (!questionData || !questionData.passage || !questionData.question) throw new Error('AI가 문해력 문제를 올바르게 생성하지 못했습니다.');
 
     const coverage = countLiteracyBankWordCoverage(questionData, generationContext.primaryWords);
     if (generationContext.primaryWords.length >= 3 && coverage < 2) {
         const retryContext = { ...generationContext, forceDiversityRetry: true };
-        responseText = await callKoreanAiGenerate(generateLiteracyPrompt(diff, type, retryContext), { printTimeout: '3m' });
+        responseText = await callKoreanAiGenerate(promptBuilder(diff, type, retryContext), { printTimeout: '3m' });
         const retryQuestionData = parseAiQuestionResponse(responseText);
         if (retryQuestionData?.passage && retryQuestionData?.question) questionData = retryQuestionData;
     }
@@ -10240,9 +10235,15 @@ window.startTodayLiteracyMission = async function(diff, type) {
     }
 };
 
-async function gradeLiteracyEssayQuestion(question, studentAnswer) {
+async function gradeLiteracyEssayQuestion(question, studentAnswer, { detective = false } = {}) {
     const difficulty = String(question.difficulty || 'easy').toLowerCase();
     const keywords = normalizeLiteracyKeywords(question);
+    const evaluationGuide = detective
+        ? '지문 내용과 부합하는지, 추리한 결론이 타당한지, 지문 속 근거와 결론을 논리적으로 연결했는지 평가하세요.'
+        : '지문 내용과 부합하는지, 그리고 핵심 의도를 파악하고 작성했는지 평가하세요.';
+    const lengthGuide = detective
+        ? (difficulty === 'easy' ? '한 문장 안에 추리 결론과 핵심 근거 하나가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : difficulty === 'normal' ? '한두 문장 안에 추리 결론과 지문 근거가 연결되어 있으면 충분합니다.' : '추리 결론과 두 가지 이상의 근거 사이의 논리적 연결을 충분히 갖추었는지 평가하세요.')
+        : (['easy', 'normal'].includes(difficulty) ? '이 문제는 한 문장 답변용입니다. 한 문장 안에 핵심 의미가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : '근거와 논리적 연결을 충분히 갖추었는지 평가하세요.');
     const prompt = `지문: ${question.passage}
 난이도: ${difficulty}
 질문: ${question.question}
@@ -10251,9 +10252,9 @@ async function gradeLiteracyEssayQuestion(question, studentAnswer) {
 학생답안: ${studentAnswer}
 
 위 학생답안을 예시답안을 기준으로 100점 만점으로 정밀하게 채점해 주세요.
-지문 내용과 부합하는지, 추리한 결론이 타당한지, 지문 속 근거와 결론을 논리적으로 연결했는지 평가하세요.
+${evaluationGuide}
 핵심어는 문자 그대로 같지 않아도 동의어나 같은 뜻의 표현이면 인정하세요.
-${difficulty === 'easy' ? '한 문장 안에 추리 결론과 핵심 근거 하나가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : difficulty === 'normal' ? '한두 문장 안에 추리 결론과 지문 근거가 연결되어 있으면 충분합니다.' : '추리 결론과 두 가지 이상의 근거 사이의 논리적 연결을 충분히 갖추었는지 평가하세요.'}
+${lengthGuide}
 반드시 백틱이나 다른 군더더기 없이 다음 JSON 형식만 반환하세요: {"score": 85, "feedback": "여기에 채점 총평 및 친절한 피드백을 적으세요."}`;
     const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
     const cleaned = String(responseText || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
@@ -10270,10 +10271,8 @@ ${difficulty === 'easy' ? '한 문장 안에 추리 결론과 핵심 근거 하�
 window.aiedueLiteracyAdventureData = Object.freeze({
     async createRound() {
         const plan = getLiteracyDanPlan();
-        const question = await createLiteracyMissionQuestion(plan.difficulty, plan.type);
-        activeLiteracyQuestion = question;
-        isLiteracyLimitBreakMode = false;
-        userLiteracyAnswerChecked = false;
+        const question = await createLiteracyMissionQuestion(plan.difficulty, plan.type, { detective: true });
+        activeLiteracyDetectiveQuestion = question;
         return {
             ...question,
             dan: plan.dan,
@@ -10281,8 +10280,8 @@ window.aiedueLiteracyAdventureData = Object.freeze({
         };
     },
     async submitAnswer(answer) {
-        if (!activeLiteracyQuestion) throw new Error('먼저 사건 기록을 불러와 주세요.');
-        const question = activeLiteracyQuestion;
+        if (!activeLiteracyDetectiveQuestion) throw new Error('먼저 사건 기록을 불러와 주세요.');
+        const question = activeLiteracyDetectiveQuestion;
         const value = String(answer ?? '').trim();
         let isCorrect = false;
         let detail = '';
@@ -10306,20 +10305,13 @@ window.aiedueLiteracyAdventureData = Object.freeze({
             detail = isCorrect ? '핵심 답을 정확히 썼어요.' : `모범 답: ${question.answer}`;
         } else if (question.type === 'essay') {
             if (!value) throw new Error('답을 먼저 적어 주세요.');
-            const evaluation = await gradeLiteracyEssayQuestion(question, value);
+            const evaluation = await gradeLiteracyEssayQuestion(question, value, { detective: true });
             isCorrect = evaluation.isCorrect;
             score = evaluation.score;
             detail = evaluation.feedback;
         } else {
             throw new Error('지원하지 않는 문해력 문제 유형이에요.');
         }
-        const saved = await showLiteracyResult(isCorrect, {
-            score,
-            feedback: detail,
-            correctAnswerText,
-            userAnswerText
-        });
-        if (!saved) throw new Error('결과를 저장하지 못했어요. 같은 답으로 다시 시도해 주세요.');
         return { isCorrect, detail, score, correctAnswer: correctAnswerText, explanation: question.explanation || '' };
     }
 });
@@ -10330,17 +10322,28 @@ window.nextLiteracyQuestion = function() {
 };
 
 const AIEDUE_LITERACY_FALLBACK_TOPICS = [
+    '학교 방송', '비 오는 등굣길', '도서관 약속', '운동회 준비', '잃어버린 물건 찾기',
+    '친구에게 사과하기', '동아리 발표', '가족 여행 일기', '시장 심부름', '새 전학생 맞이',
+    '과학 관찰 기록', '마을 쓰레기 줄이기', '급식실 예절', '반려동물 돌보기', '텃밭 식물 기르기',
+    '안전한 횡단보도', '박물관 체험학습', '학급 회의', '환경 보호 약속', '운동장 놀이 규칙'
+];
+const AIEDUE_LITERACY_TEXT_FRAMES = [
+    '생활문', '관찰 기록', '안내문', '일기', '설명문', '짧은 기사', '토론 전 글', '편지', '체험학습 기록', '학급 회의록'
+];
+const AIEDUE_LITERACY_DETECTIVE_TOPICS = [
     '사라진 도서관 책갈피', '바뀐 우산의 주인', '교실 화분이 옮겨진 까닭', '급식실에 남은 쪽지', '운동장 발자국의 주인',
     '멈춘 교실 시계', '뒤바뀐 준비물 상자', '비어 있는 새 모이통', '체육관에 남은 공', '방송실 마이크가 켜진 시간',
     '과학실 창문이 열린 이유', '사라진 학급 달력 스티커', '복도에 놓인 젖은 수건', '도서관 의자가 움직인 까닭', '텃밭 물뿌리개의 마지막 사용자',
     '미술실에 남은 색연필', '교실 불이 다시 켜진 이유', '현관에 놓인 낯선 장갑', '학급 우편함의 익명 칭찬', '운동회 깃발의 순서가 바뀐 까닭'
 ];
-const AIEDUE_LITERACY_TEXT_FRAMES = [
+const AIEDUE_LITERACY_DETECTIVE_FRAMES = [
     '사건 현장 기록', '시간대별 행동 기록', '목격자 진술 모음', '탐정 수첩', '분실물 조사 기록',
     '서로 다른 두 사람의 진술', '장소 이동 기록', '물건에 남은 흔적 기록', '규칙과 예외 기록', '사건 전후 비교 기록'
 ];
 let literacyFallbackTopicIndex = Math.floor(Math.random() * AIEDUE_LITERACY_FALLBACK_TOPICS.length);
 let literacyTextFrameIndex = Math.floor(Math.random() * AIEDUE_LITERACY_TEXT_FRAMES.length);
+let literacyDetectiveTopicIndex = Math.floor(Math.random() * AIEDUE_LITERACY_DETECTIVE_TOPICS.length);
+let literacyDetectiveFrameIndex = Math.floor(Math.random() * AIEDUE_LITERACY_DETECTIVE_FRAMES.length);
 
 function pickLiteracyFallbackTopic() {
     const topic = AIEDUE_LITERACY_FALLBACK_TOPICS[literacyFallbackTopicIndex % AIEDUE_LITERACY_FALLBACK_TOPICS.length];
@@ -10351,6 +10354,18 @@ function pickLiteracyFallbackTopic() {
 function pickLiteracyTextFrame() {
     const frame = AIEDUE_LITERACY_TEXT_FRAMES[literacyTextFrameIndex % AIEDUE_LITERACY_TEXT_FRAMES.length];
     literacyTextFrameIndex += 1;
+    return frame;
+}
+
+function pickLiteracyDetectiveTopic() {
+    const topic = AIEDUE_LITERACY_DETECTIVE_TOPICS[literacyDetectiveTopicIndex % AIEDUE_LITERACY_DETECTIVE_TOPICS.length];
+    literacyDetectiveTopicIndex += 1;
+    return topic;
+}
+
+function pickLiteracyDetectiveFrame() {
+    const frame = AIEDUE_LITERACY_DETECTIVE_FRAMES[literacyDetectiveFrameIndex % AIEDUE_LITERACY_DETECTIVE_FRAMES.length];
+    literacyDetectiveFrameIndex += 1;
     return frame;
 }
 
@@ -10379,7 +10394,7 @@ function pickDiverseLiteracyWords(words, count, recentTexts = []) {
     return [...freshWords, ...recentWords].slice(0, Math.min(count, cleanWords.length));
 }
 
-function buildLiteracyGenerationContext(difficulty, type) {
+function buildLiteracyGenerationContext(difficulty, type, { detective = false } = {}) {
     const allBankWords = Array.from(new Set((dictationPortfolio.koreanBank?.words || []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, 300);
     const recentTexts = getRecentLiteracyTexts(8);
     const primaryCounts = { easy: 3, normal: 4, hard: 5, expert: 6 };
@@ -10387,8 +10402,8 @@ function buildLiteracyGenerationContext(difficulty, type) {
     const primaryWords = pickDiverseLiteracyWords(allBankWords, primaryCount, recentTexts);
     const primarySet = new Set(primaryWords);
     const supportWords = pickDiverseLiteracyWords(allBankWords.filter((word) => !primarySet.has(word)), 12, recentTexts);
-    const frame = pickLiteracyTextFrame();
-    const fallbackTopic = pickLiteracyFallbackTopic();
+    const frame = detective ? pickLiteracyDetectiveFrame() : pickLiteracyTextFrame();
+    const fallbackTopic = detective ? pickLiteracyDetectiveTopic() : pickLiteracyFallbackTopic();
     const recentAvoidList = recentTexts.slice(0, 5).map((text) => text.slice(0, 140));
     const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     return { difficulty, type, allBankWords, primaryWords, supportWords, frame, fallbackTopic, recentAvoidList, seed, forceDiversityRetry: false };
@@ -10400,6 +10415,65 @@ function countLiteracyBankWordCoverage(questionData = {}, words = []) {
 }
 
 function generateLiteracyPrompt(difficulty, type, generationContext = {}) {
+    const primaryWords = Array.isArray(generationContext.primaryWords) ? generationContext.primaryWords : [];
+    const supportWords = Array.isArray(generationContext.supportWords) ? generationContext.supportWords : [];
+    const recentAvoidList = Array.isArray(generationContext.recentAvoidList) ? generationContext.recentAvoidList : [];
+    const hasBankWords = primaryWords.length > 0 || supportWords.length > 0;
+    const mustUseCount = Math.min(primaryWords.length, difficulty === 'easy' ? 2 : 3);
+    const recentGuide = recentAvoidList.length
+        ? `\n4. 최근 나온 지문/문제와 반복 금지: 아래 최근 소재·문장 흐름과 비슷한 상황, 제목, 결말, 질문을 피하세요.\n   최근 기록: ${recentAvoidList.map((text, idx) => `${idx + 1}) ${text}`).join(' / ')}`
+        : '';
+    const retryGuide = generationContext.forceDiversityRetry
+        ? `\n5. 재생성 사유: 직전 결과가 단어 은행을 거의 반영하지 못했습니다. 이번에는 핵심 단어를 지문 본문에 직접 넣고, 이전과 완전히 다른 장소·상황·질문으로 만드세요.`
+        : '';
+    const sourceGuide = hasBankWords
+        ? `3. 단어 은행 다채로운 반영\n   - 이번 문제의 핵심 단어: ${primaryWords.join(', ') || '없음'}\n   - 보조로 섞을 수 있는 단어: ${supportWords.join(', ') || '없음'}\n   - 지문 본문에 핵심 단어를 최소 ${mustUseCount || 1}개 이상 자연스럽게 포함하세요.\n   - 보조 단어도 1~3개 섞어 단어 은행의 다양한 낱말이 보이게 하세요.\n   - 단어를 단순 나열하지 말고 서로 다른 사건/정보/인물 행동 속에 녹이세요.\n   - 매번 같은 학교생활 이야기로 가지 말고, 아래 글 형식에 맞춰 소재와 배경을 바꾸세요.\n   - 이번 글 형식: ${generationContext.frame || pickLiteracyTextFrame()}${recentGuide}${retryGuide}`
+        : `3. 생성 주제: ${generationContext.fallbackTopic || pickLiteracyFallbackTopic()}\n   - 단어 은행이 비어 있으므로 위 주제를 중심 소재로 사용하되, 문제 양식은 현재 에이두 한글 문해력 양식을 그대로 따르세요.\n   - 이번 글 형식: ${generationContext.frame || pickLiteracyTextFrame()}${recentGuide}${retryGuide}`;
+    let difficultyGuide = '';
+    if (difficulty === 'easy') {
+        difficultyGuide = '쉬움: 짧은 한 문단 지문으로, 초등학교 1~2학년이 읽기 쉬운 3문장 내외와 아주 친숙한 단어로 구성해 주세요.';
+    } else if (difficulty === 'normal') {
+        difficultyGuide = '보통: 한 문단 지문으로, 초등학교 3~4학년 수준의 4~6문장과 일상 및 학업 관련 단어로 구성해 주세요.';
+    } else if (difficulty === 'hard') {
+        difficultyGuide = '어려움: 2~3문단 지문으로, 초등학교 5~6학년 수준의 설명문/논설문 요소와 추론할 거리를 포함해 주세요.';
+    } else if (difficulty === 'expert') {
+        difficultyGuide = '매우 어려움: 5문단 이상 긴 지문으로, 중학교 1학년 기초 수준의 논리적 추론·비판적 독해를 요구하도록 구성해 주세요.';
+    }
+
+    let typeGuide = '';
+    if (type === 'multipleChoice') {
+        typeGuide = `지문을 바탕으로 풀 수 있는 객관식(4지선다형) 1문제를 출제해 주세요.
+포맷: {"passage": "지문 내용", "question": "문제 내용", "options": ["보기1", "보기2", "보기3", "보기4"], "answerIndex": 0, "explanation": "친절한 해설"}`;
+    } else if (type === 'shortAnswer') {
+        typeGuide = `지문을 바탕으로 풀 수 있는 단답형(정답이 한 단어 또는 5글자 이내의 짧은 어구인 문제) 1문제를 출제해 주세요.
+포맷: {"passage": "지문 내용", "question": "문제 내용", "answer": "단답형 정답", "explanation": "친절한 해설"}`;
+    } else if (type === 'essay') {
+        const easyEssayGuide = difficulty === 'easy'
+            ? '지문에서 바로 찾을 수 있거나 친숙하게 생각할 수 있는 아주 쉬운 질문으로 만들고, 학생이 쉬운 낱말을 사용한 한 문장으로 충분히 답할 수 있게 하세요. 모범 답안도 반드시 짧고 쉬운 한 문장으로 작성하세요.'
+            : difficulty === 'normal'
+                ? '지문의 핵심 내용이나 이유 한 가지만 묻는 쉬운 질문으로 만들고, 학생이 근거 하나를 담은 한 문장으로 충분히 답할 수 있게 하세요. 모범 답안도 반드시 한 문장으로 작성하세요.'
+                : '지문을 바탕으로 자신의 생각이나 논리적 근거를 서술하는 생각해볼 만한 질문으로 만드세요.';
+        typeGuide = `서술형 1문제를 출제해 주세요. ${easyEssayGuide}
+모든 난이도에서 학생에게 미리 보여 줄 핵심어를 3~5개 제공하세요. keywords의 모든 항목은 sampleAnswer에 실제로 들어 있거나 그 의미에 직접 대응하는 핵심 낱말/짧은 어구여야 합니다.
+포맷: {"passage": "지문 내용", "question": "문제 내용", "sampleAnswer": "난이도 지시에 맞는 모범 답안", "keywords": ["핵심어1", "핵심어2", "핵심어3"], "explanation": "채점 기준 및 해설"}`;
+    }
+
+    return `당신은 초등/중등 국어 문해력 전문 교사입니다.
+다음 조건에 따라 흥미롭고 유익한 읽기 지문 1개와 관련 문제 1개를 JSON으로 출제해 주세요.
+
+[조건]
+1. 난이도: ${difficulty.toUpperCase()}
+   - 난이도 기준: ${difficultyGuide}
+2. 문제 유형: ${type === 'multipleChoice' ? '객관식' : type === 'shortAnswer' ? '단답형' : '서술형'}
+   - 문제 유형 기준: ${typeGuide}
+${sourceGuide}
+6. 다양성 시드: ${generationContext.seed || Math.random().toString(36).slice(2)}
+   - 이 시드는 매번 다른 지문을 만들기 위한 값입니다. 같은 시드처럼 같은 줄거리/질문을 반복하지 마세요.
+
+반드시 백틱(\`\`\`)이나 JSON 이외의 잡다한 설명은 포함하지 말고, 순수한 JSON 텍스트만 출력하세요.`;
+}
+
+function generateLiteracyDetectivePrompt(difficulty, type, generationContext = {}) {
     const primaryWords = Array.isArray(generationContext.primaryWords) ? generationContext.primaryWords : [];
     const supportWords = Array.isArray(generationContext.supportWords) ? generationContext.supportWords : [];
     const recentAvoidList = Array.isArray(generationContext.recentAvoidList) ? generationContext.recentAvoidList : [];

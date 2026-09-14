@@ -167,7 +167,7 @@ test('각 단계 게임은 오른쪽 위 헤더에 있고 3·4단계 카메라�
     assert.ok(appCss.includes('.stage-header-actions > [onclick="toggleInfoDrawer()"] { display: none !important; }'));
 });
 
-test('4단계 게임은 기존 문해력 생성·채점·원자 저장 facade를 사용한다', () => {
+test('4단계 탐정단은 일반 문해력 상태·공용 은행 저장과 분리된 facade를 사용한다', () => {
     assert.ok(html.includes('id="literacy-adventure-game-section"'));
     assert.ok(html.includes('id="literacy-adventure-answer"'));
     assert.ok(html.includes('literacy-adventure-game.js'));
@@ -175,13 +175,17 @@ test('4단계 게임은 기존 문해력 생성·채점·원자 저장 facade를
     assert.ok(app.includes("'literacy-adventure-game-section'"));
     assert.ok(app.includes('window.aiedueLiteracyAdventureData'));
     assert.ok(app.includes('const plan = getLiteracyDanPlan()'));
-    assert.ok(app.includes('await createLiteracyMissionQuestion(plan.difficulty, plan.type)'));
+    const facade = section(app, 'window.aiedueLiteracyAdventureData = Object.freeze({', 'const AIEDUE_LITERACY_FALLBACK_TOPICS');
+    assert.ok(facade.includes('await createLiteracyMissionQuestion(plan.difficulty, plan.type, { detective: true })'));
+    assert.ok(facade.includes('activeLiteracyDetectiveQuestion'));
+    assert.equal(facade.includes('activeLiteracyQuestion ='), false);
+    assert.equal(facade.includes('showLiteracyResult('), false);
+    assert.equal(facade.includes('persistLiteracyAttemptAtomic'), false);
     assert.ok(app.includes("question.type === 'multipleChoice'"));
     assert.ok(app.includes("question.type === 'shortAnswer'"));
     assert.ok(app.includes("question.type === 'essay'"));
-    assert.ok(app.includes('const saved = await showLiteracyResult(isCorrect, {'));
-    assert.ok(app.includes("if (!saved) throw new Error('결과를 저장하지 못했어요."));
     assert.ok(app.includes('persistLiteracyAttemptAtomic'));
+    assert.ok(literacyGame.includes("gameId: 'literacy-detective'"));
     assert.ok(labCss.includes('#literacy-adventure-game-section.aiedue-lab-game-shell'));
     assert.match(literacyCss, /z-index:\s*30/);
     assert.ok(literacyGame.includes("round.type === 'multipleChoice'"));
@@ -229,13 +233,18 @@ test('4단계 문해력 탐정단은 왼쪽 추리 지문과 오른쪽 유형별
     assert.match(literacyCss, /#literacy-adventure-feedback\.published/);
     assert.match(literacyCss, /\.literacy-adventure-answer\s*\{[^}]*scroll-margin-top:\s*184px/);
 
-    const prompt = section(app, 'function generateLiteracyPrompt', 'function parseAiQuestionResponse');
-    assert.ok(prompt.includes('추리형 독해 사건'));
-    assert.ok(prompt.includes('두 가지 이상의 단서'));
-    assert.ok(prompt.includes('지문에 직접 적힌 문장을 그대로 찾기만'));
-    assert.ok(prompt.includes('객관식(4지선다형)'));
-    assert.ok(prompt.includes('단답형'));
-    assert.ok(prompt.includes('서술형'));
+    const ordinaryPrompt = section(app, 'function generateLiteracyPrompt', 'function generateLiteracyDetectivePrompt');
+    const detectivePrompt = section(app, 'function generateLiteracyDetectivePrompt', 'function parseAiQuestionResponse');
+    assert.ok(ordinaryPrompt.includes('흥미롭고 유익한 읽기 지문'));
+    assert.ok(ordinaryPrompt.includes('설명문/논설문 요소'));
+    assert.equal(ordinaryPrompt.includes('추리형 독해 사건'), false);
+    assert.equal(ordinaryPrompt.includes('두 가지 이상의 단서'), false);
+    assert.ok(detectivePrompt.includes('추리형 독해 사건'));
+    assert.ok(detectivePrompt.includes('두 가지 이상의 단서'));
+    assert.ok(detectivePrompt.includes('지문에 직접 적힌 문장을 그대로 찾기만'));
+    assert.ok(detectivePrompt.includes('객관식(4지선다형)'));
+    assert.ok(detectivePrompt.includes('단답형'));
+    assert.ok(detectivePrompt.includes('서술형'));
 });
 
 test('게임을 닫으면 홈이 아니라 해당 단계 내부 카드로 복원한다', () => {
