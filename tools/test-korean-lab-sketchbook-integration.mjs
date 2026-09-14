@@ -84,6 +84,42 @@ test('상점 고정 앱으로 크래프트와 포랜디가 모두 노출된다',
     assert.ok(css.includes('.aiedu-porandy-shop-card'));
 });
 
+test('교사 학급 관리에는 상점 물품 관리 탭과 CRUD·배부 도구가 내장된다', () => {
+    const classModal = section(html, 'id="class-management-modal"', '<!-- [에이두 한글 내장 클라우드 섹션] -->');
+    assert.ok(classModal.includes('data-class-tab="shop"'));
+    assert.ok(classModal.includes('onclick="selectClassManagementTab(\'shop\')"'));
+    assert.ok(classModal.includes('id="class-management-shop-panel"'));
+    assert.ok(classModal.includes('id="class-management-shop-content"'));
+    assert.ok(classModal.includes('max-h-[94vh] overflow-hidden flex flex-col'));
+    assert.ok(classModal.includes('min-h-0 flex-1 max-h-[68vh] overflow-y-auto'));
+
+    const manager = section(app, 'function renderAiedueKoreanTeacherShopManager', 'function renderAiedueKoreanTeacherShop(items');
+    assert.ok(manager.includes('물품 추가'));
+    assert.ok(manager.includes('학생별 배부'));
+    assert.ok(manager.includes('전체 학생에게 모두 배부'));
+    assert.ok(manager.includes('editAiedueKoreanShopItem'));
+    assert.ok(manager.includes('deleteAiedueKoreanShopItem'));
+    assert.ok(manager.includes('safeImageSource(item.imageUrl)'));
+});
+
+test('학급 상점 탭은 교사 물품을 로드하고 저장·삭제 후 같은 탭으로 복귀한다', () => {
+    const panel = section(app, 'async function renderAiedueKoreanClassShopPanel', 'window.openAiedueKoreanShop =');
+    assert.ok(panel.includes("currentUserRole !== 'teacher'"));
+    assert.ok(panel.includes("loadAiedueKoreanTeacherShopItems(teacherId, { updateCache: false })"));
+    assert.ok(panel.includes('if (!requestIsCurrent()) return;'));
+    assert.ok(panel.indexOf('if (!requestIsCurrent()) return;') < panel.indexOf('aiedueKoreanShopItemsCache.clear()'));
+    assert.ok(panel.includes('renderAiedueKoreanTeacherShopManager(items, { embedded: true })'));
+
+    const selectTab = section(app, 'window.selectClassManagementTab =', 'window.openClassManagement =');
+    assert.ok(selectTab.includes("'shop'"));
+    assert.ok(selectTab.includes("activeClassManagementTab === 'shop'"));
+    assert.ok(selectTab.includes('renderAiedueKoreanClassShopPanel()'));
+
+    const mutations = section(app, 'function isAiedueKoreanClassShopOpen', 'async function assignAiedueKoreanShopItemToStudent');
+    assert.ok(mutations.includes("activeClassManagementTab === 'shop'"));
+    assert.equal((mutations.match(/refreshAiedueKoreanTeacherShopSurface\(\)/g) || []).length >= 3, true);
+});
+
 test('연구실은 선택형 허브로 한글 내부 시간 퀴즈를 연다', () => {
     const lab = section(app, 'window.openAiedueLab =', 'function renderAiedueKoreanShopItems');
     assert.ok(lab.includes('활동은 계속 추가됩니다'));

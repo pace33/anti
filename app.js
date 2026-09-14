@@ -13,6 +13,7 @@ import {
     signInWithPopup
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { canManageTeacherShopItem, isCurrentClassShopRequest } from "./korean-class-shop-core.mjs?v=20260914-class-shop-management-v1";
 import { DRAWING_SHAPE_LIBRARY as drawingShapeLibrary } from "./drawing-shape-catalog.mjs";
 import {
     applyKoreanMasteryAttempt,
@@ -3723,36 +3724,55 @@ async function getAiedueKoreanClassStudents() {
     return Array.from(students.values()).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
 }
 
-async function loadAiedueKoreanTeacherShopItems() {
+async function loadAiedueKoreanTeacherShopItems(teacherId = currentUserId, { updateCache = true } = {}) {
     let snap;
     try {
-        snap = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', currentUserId), orderBy('createdAt', 'desc')));
+        snap = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', teacherId), orderBy('createdAt', 'desc')));
     } catch (error) {
-        snap = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', currentUserId)));
+        snap = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', teacherId)));
     }
     const items = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
-    aiedueKoreanShopItemsCache.clear();
-    items.forEach((item) => aiedueKoreanShopItemsCache.set(item.id, item));
+    if (updateCache) {
+        aiedueKoreanShopItemsCache.clear();
+        items.forEach((item) => aiedueKoreanShopItemsCache.set(item.id, item));
+    }
     return items;
 }
 
-function renderAiedueKoreanTeacherShop(items = []) {
-    const rows = items.length ? items.map((item) => `
-        <div class="korean-embed-card p-4 bg-white rounded-3xl border flex flex-col md:flex-row md:items-center gap-3">
-            <div class="flex-1"><div class="text-lg font-black text-[#2c3e50]">${escapeKoreanShopHtml(item.name || '상점 물품')}</div><div class="text-sm text-gray-500">${escapeKoreanShopHtml(item.description || '')}</div><div class="text-amber-600 font-black mt-1">${formatAiedueShopCurrency(item.price)}</div></div>
-            <div class="flex gap-2 flex-wrap justify-end">
-                <button type="button" class="btn-primary px-3 py-2 text-sm" onclick="openAiedueKoreanDistributeShopItem('${escapeInlineJsString(item.id)}')">항목별 배부</button>
+function renderAiedueKoreanTeacherShopManager(items = [], { embedded = false } = {}) {
+    const rows = items.length ? items.map((item) => {
+        const imageSource = safeImageSource(item.imageUrl);
+        const thumbnail = imageSource
+            ? `<img src="${escapeHtml(imageSource)}" alt="" class="w-16 h-16 rounded-2xl object-cover bg-gray-100 shrink-0" onerror="this.style.display='none'">`
+            : '<div class="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-3xl shrink-0" aria-hidden="true">🎁</div>';
+        return `<article class="korean-embed-card p-4 bg-white rounded-3xl border flex flex-col md:flex-row md:items-center gap-3">
+            ${thumbnail}
+            <div class="flex-1 min-w-0"><div class="text-lg font-black text-[#2c3e50] break-words">${escapeKoreanShopHtml(item.name || '상점 물품')}</div><div class="text-sm text-gray-500 break-words">${escapeKoreanShopHtml(item.description || '설명 없음')}</div><div class="text-amber-600 font-black mt-1">${formatAiedueShopCurrency(item.price)}</div></div>
+            <div class="flex gap-2 flex-wrap md:justify-end">
+                <button type="button" class="btn-primary px-3 py-2 text-sm" onclick="openAiedueKoreanDistributeShopItem('${escapeInlineJsString(item.id)}')">학생별 배부</button>
                 <button type="button" class="btn-outline px-3 py-2 text-sm" onclick="editAiedueKoreanShopItem('${escapeInlineJsString(item.id)}')">수정</button>
                 <button type="button" class="btn-outline px-3 py-2 text-sm text-red-500" onclick="deleteAiedueKoreanShopItem('${escapeInlineJsString(item.id)}')">삭제</button>
             </div>
-        </div>`).join('') : '<div class="text-center py-10 text-gray-500 font-bold">등록한 상점 물품이 없어요. 추가 버튼으로 만들어보세요.</div>';
+        </article>`;
+    }).join('') : '<div class="text-center py-10 text-gray-500 font-bold bg-white rounded-3xl border border-dashed border-amber-200">등록한 상점 물품이 없어요. 추가 버튼으로 만들어보세요.</div>';
+    return `<section class="${embedded ? 'bg-amber-50/40 border border-amber-100 rounded-3xl p-4 md:p-5' : ''}">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+            <div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 상점 물품 관리</h3><p class="text-sm text-gray-500 font-bold mt-1">물품을 만든 뒤 학생별로 배부하면 학생 상점에 표시됩니다. · 등록 ${items.length}개</p></div>
+            <div class="flex gap-2 flex-wrap"><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">물품 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">전체 학생에게 모두 배부</button></div>
+        </div>
+        <div class="space-y-3 ${embedded ? '' : 'max-h-[55vh] overflow-y-auto custom-scrollbar pr-1'}">${rows}</div>
+    </section>`;
+}
+
+function renderAiedueKoreanTeacherShop(items = []) {
     return `<div class="aiedu-craft-shop-card korean-embed-card p-5 rounded-3xl shadow-sm mb-5">
         <div class="aiedu-craft-card-hero"><div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div><div><div class="text-xs font-black text-amber-200 tracking-widest">TEACHER CRAFT</div><div class="text-2xl font-black">에이두 크래프트</div><div class="text-sm text-white/80 mt-1">교사 계정으로 크래프트에 접속하고 상점을 이용할 수 있어요.</div></div></div>
         <div class="flex flex-wrap justify-end gap-2 mt-4"><button type="button" class="btn-outline px-4 py-2" onclick="enterAiedueCraftAsTeacher()">크래프트 접속</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueCraftShop()">크래프트 상점 이용</button></div>
-    </div><div class="mb-5">${renderAieduePorandyShopCard()}</div><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 pr-10"><div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 교사 상점 관리</h3><p class="text-sm text-gray-500 font-bold">에이두 스쿨과 같은 shopItems / assignedShopItems를 관리해요.</p></div><div class="flex gap-2 flex-wrap"><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">내 학급 전체 배부</button></div></div><div class="space-y-3 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">${rows}</div>`;
+    </div><div class="mb-5">${renderAieduePorandyShopCard()}</div>${renderAiedueKoreanTeacherShopManager(items)}`;
 }
 
 async function openAiedueKoreanTeacherShop() {
+    if (currentUserRole !== 'teacher' || !currentUserId) return showModal('교사 계정으로 로그인해 주세요.');
     showKoreanShopModal('<div class="text-center py-8 font-black text-[#2c3e50]">교사 상점을 불러오는 중이에요...</div>');
     try {
         const items = await loadAiedueKoreanTeacherShopItems();
@@ -3761,6 +3781,38 @@ async function openAiedueKoreanTeacherShop() {
         console.error('teacher shop load failed', error);
         showModal('교사 상점 정보를 불러오지 못했어요.');
     }
+}
+
+async function renderAiedueKoreanClassShopPanel() {
+    const root = document.getElementById('class-management-shop-content');
+    const teacherId = currentUserId;
+    const requestId = ++classShopRenderRequestId;
+    const requestIsCurrent = () => isCurrentClassShopRequest({
+        requestId,
+        latestRequestId: classShopRenderRequestId,
+        teacherId,
+        currentUserId,
+        currentUserRole,
+        activeTab: activeClassManagementTab,
+        classModalOpen: !document.getElementById('class-management-modal')?.classList.contains('hidden')
+    });
+    if (!root || currentUserRole !== 'teacher' || !teacherId) return;
+    root.innerHTML = '<div class="text-center py-10 font-black text-[#2c3e50]">상점 물품을 불러오는 중이에요...</div>';
+    try {
+        const items = await loadAiedueKoreanTeacherShopItems(teacherId, { updateCache: false });
+        if (!requestIsCurrent()) return;
+        aiedueKoreanShopItemsCache.clear();
+        items.forEach((item) => aiedueKoreanShopItemsCache.set(item.id, item));
+        root.innerHTML = renderAiedueKoreanTeacherShopManager(items, { embedded: true });
+    } catch (error) {
+        if (!requestIsCurrent()) return;
+        console.error('class shop management load failed', error);
+        root.innerHTML = '<div class="text-center py-10 text-red-500 font-bold">상점 물품을 불러오지 못했어요. 잠시 후 다시 눌러주세요.<div class="mt-4"><button type="button" class="btn-outline px-4 py-2" onclick="refreshAiedueKoreanClassShop()">다시 불러오기</button></div></div>';
+    }
+}
+
+window.refreshAiedueKoreanClassShop = function refreshAiedueKoreanClassShop() {
+    return renderAiedueKoreanClassShopPanel();
 }
 
 window.openAiedueKoreanShop = async function() {
@@ -4377,8 +4429,30 @@ window.saveAiedueKoreanPdfEditor = async function saveAiedueKoreanPdfEditor() {
 }
 window.closeAiedueKoreanPdfEditor = function closeAiedueKoreanPdfEditor() { document.getElementById('korean-cloud-pdf-editor-modal')?.classList.add('hidden'); koreanCloudState.editor = null; }
 
+function isAiedueKoreanClassShopOpen() {
+    const classModal = document.getElementById('class-management-modal');
+    return Boolean(classModal && !classModal.classList.contains('hidden') && activeClassManagementTab === 'shop');
+}
+
+function getManageableAiedueKoreanShopItem(itemId = '') {
+    const item = itemId ? aiedueKoreanShopItemsCache.get(itemId) : null;
+    if (canManageTeacherShopItem({ role: currentUserRole, currentUserId, itemId, item })) return item || {};
+    showModal('본인이 등록한 상점 물품만 관리할 수 있어요.');
+    return null;
+}
+
+async function refreshAiedueKoreanTeacherShopSurface() {
+    if (isAiedueKoreanClassShopOpen()) {
+        closeAiedueKoreanModal();
+        await renderAiedueKoreanClassShopPanel();
+        return;
+    }
+    await openAiedueKoreanTeacherShop();
+}
+
 window.openAiedueKoreanShopItemEditor = function(itemId = '') {
-    const item = itemId ? aiedueKoreanShopItemsCache.get(itemId) : {};
+    const item = getManageableAiedueKoreanShopItem(itemId);
+    if (!item) return;
     showKoreanShopModal(`
         <div class="pr-10"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">${itemId ? '상점 물품 수정' : '상점 물품 추가'}</h3>
         <div class="space-y-3">
@@ -4393,6 +4467,7 @@ window.openAiedueKoreanShopItemEditor = function(itemId = '') {
 window.editAiedueKoreanShopItem = function(itemId) { openAiedueKoreanShopItemEditor(itemId); }
 
 window.saveAiedueKoreanShopItem = async function(itemId = '') {
+    if (!getManageableAiedueKoreanShopItem(itemId)) return;
     const payload = {
         name: document.getElementById('korean-shop-edit-name')?.value.trim() || '상점 물품',
         price: Math.max(0, Math.floor(Number(document.getElementById('korean-shop-edit-price')?.value || 0))),
@@ -4405,11 +4480,12 @@ window.saveAiedueKoreanShopItem = async function(itemId = '') {
     try {
         if (itemId) await setDoc(doc(db, 'shopItems', itemId), payload, { merge: true });
         else await addDoc(collection(db, 'shopItems'), { ...payload, createdAt: serverTimestamp() });
-        await openAiedueKoreanTeacherShop();
+        await refreshAiedueKoreanTeacherShopSurface();
     } catch (error) { console.error('shop item save failed', error); showModal('상점 물품 저장에 실패했어요.'); }
 }
 
 window.deleteAiedueKoreanShopItem = async function(itemId) {
+    if (!getManageableAiedueKoreanShopItem(itemId)) return;
     if (!confirm('이 상점 물품을 삭제할까요?')) return;
     try {
         await deleteDoc(doc(db, 'shopItems', itemId));
@@ -4419,12 +4495,15 @@ window.deleteAiedueKoreanShopItem = async function(itemId) {
         } catch (cleanupError) {
             console.warn('assigned shop item cleanup failed', cleanupError);
         }
-        await openAiedueKoreanTeacherShop();
+        await refreshAiedueKoreanTeacherShopSurface();
     }
     catch (error) { console.error('shop item delete failed', error); showModal('상점 물품 삭제에 실패했어요.'); }
 }
 
 async function assignAiedueKoreanShopItemToStudent(item, student) {
+    if (!canManageTeacherShopItem({ role: currentUserRole, currentUserId, itemId: item?.id || '', item })) {
+        throw new Error('본인이 등록한 상점 물품만 배부할 수 있어요.');
+    }
     await setDoc(doc(db, `users/${student.id}/assignedShopItems`, item.id), {
         itemId: item.id,
         itemName: item.name || '상점 물품',
@@ -4439,7 +4518,7 @@ async function assignAiedueKoreanShopItemToStudent(item, student) {
 }
 
 window.openAiedueKoreanDistributeShopItem = async function(itemId) {
-    const item = aiedueKoreanShopItemsCache.get(itemId);
+    const item = getManageableAiedueKoreanShopItem(itemId);
     if (!item) return;
     const students = await getAiedueKoreanClassStudents();
     const list = students.length ? students.map((st) => `<label class="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50"><span class="font-bold">${escapeKoreanShopHtml(st.name || '학생')} <span class="text-xs text-gray-400">${escapeKoreanShopHtml(st.userCode || '')}</span></span><input type="checkbox" class="korean-shop-student-check" value="${escapeHtml(st.id)}"></label>`).join('') : '<p class="text-center text-gray-500 py-6">학급 학생이 없어요.</p>';
@@ -4447,7 +4526,8 @@ window.openAiedueKoreanDistributeShopItem = async function(itemId) {
 }
 
 window.confirmAiedueKoreanDistributeShopItem = async function(itemId) {
-    const item = aiedueKoreanShopItemsCache.get(itemId);
+    const item = getManageableAiedueKoreanShopItem(itemId);
+    if (!item) return;
     const ids = Array.from(document.querySelectorAll('.korean-shop-student-check:checked')).map((el) => el.value);
     if (!item || !ids.length) { showModal('배부할 학생을 선택해주세요.'); return; }
     const students = (await getAiedueKoreanClassStudents()).filter((st) => ids.includes(st.id));
@@ -4456,7 +4536,8 @@ window.confirmAiedueKoreanDistributeShopItem = async function(itemId) {
 }
 
 window.distributeAllAiedueKoreanShopItems = async function() {
-    const items = Array.from(aiedueKoreanShopItemsCache.values());
+    if (currentUserRole !== 'teacher' || !currentUserId) return showModal('교사 계정으로 로그인해 주세요.');
+    const items = Array.from(aiedueKoreanShopItemsCache.values()).filter((item) => canManageTeacherShopItem({ role: currentUserRole, currentUserId, itemId: item.id, item }));
     const students = await getAiedueKoreanClassStudents();
     if (!items.length || !students.length) { showModal('배부할 물품이나 학생이 없어요.'); return; }
     if (!confirm(`내 학급 ${students.length}명에게 상점 물품 ${items.length}개를 모두 배부할까요?`)) return;
@@ -20347,6 +20428,7 @@ document.getElementById('teacher-signup-modal').addEventListener('click', (e) =>
 let teacherClassStudents = new Map();
 let teacherClassStudentUnsubscribers = [];
 let activeClassManagementTab = 'points';
+let classShopRenderRequestId = 0;
 
 function stopTeacherClassStudentSubscriptions() {
     teacherClassStudentUnsubscribers.forEach((unsubscribe) => { try { unsubscribe(); } catch {} });
@@ -20365,8 +20447,9 @@ function setKoreanMultiplierInputs() {
 }
 
 window.selectClassManagementTab = function selectClassManagementTab(tab = 'points') {
-    const allowed = new Set(['points', 'multipliers', 'progress', 'activity']);
+    const allowed = new Set(['points', 'multipliers', 'progress', 'activity', 'shop']);
     activeClassManagementTab = allowed.has(tab) ? tab : 'points';
+    if (activeClassManagementTab !== 'shop') classShopRenderRequestId += 1;
     document.querySelectorAll('.class-management-panel').forEach((panel) => panel.classList.toggle('hidden', panel.id !== `class-management-${activeClassManagementTab}-panel`));
     document.querySelectorAll('.class-management-tab-btn').forEach((button) => {
         const active = button.dataset.classTab === activeClassManagementTab;
@@ -20375,6 +20458,7 @@ window.selectClassManagementTab = function selectClassManagementTab(tab = 'point
         button.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     renderTeacherClassManagement();
+    if (activeClassManagementTab === 'shop') void renderAiedueKoreanClassShopPanel();
 }
 
 window.openClassManagement = async function() {
@@ -20388,6 +20472,7 @@ window.openClassManagement = async function() {
 }
 
 window.closeClassManagement = function() {
+    classShopRenderRequestId += 1;
     stopTeacherClassStudentSubscriptions();
     closeTeacherStudentAddPanel();
     document.getElementById('class-management-modal').classList.add('hidden');
