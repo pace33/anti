@@ -23,6 +23,7 @@ function initialize() {
     for (const id of ['clock','hour-hand','minute-hand','reward-label','question-count','options','inputs','hour-input','minute-input','check','feedback']) {
         ui[id] = document.getElementById(`kltq-${id}`);
     }
+    renderClockScale();
     section.querySelectorAll('[data-difficulty]').forEach((button) => {
         button.addEventListener('click', () => setDifficulty(button.dataset.difficulty));
     });
@@ -34,6 +35,29 @@ function initialize() {
         if (event.key === 'Escape') window.closeKoreanLabTimeQuiz();
     });
     initialized = true;
+}
+
+function renderClockScale() {
+    const hourScale = ui.clock?.querySelector('.kltq-hour-scale');
+    const minuteScale = ui.clock?.querySelector('.kltq-minute-scale');
+    if (!hourScale || !minuteScale || hourScale.childElementCount || minuteScale.childElementCount) return;
+
+    const addLabel = (layer, position, text, radius, className) => {
+        const angle = Number(position) * Math.PI / 30;
+        const label = document.createElement('span');
+        label.className = className;
+        label.textContent = String(text);
+        label.style.left = `${50 + Math.sin(angle) * radius}%`;
+        label.style.top = `${50 - Math.cos(angle) * radius}%`;
+        layer.append(label);
+    };
+
+    for (let hour = 1; hour <= 12; hour += 1) {
+        addLabel(hourScale, hour === 12 ? 0 : hour * 5, hour, 34, 'kltq-hour-number');
+    }
+    for (let minute = 0; minute < 60; minute += 5) {
+        addLabel(minuteScale, minute, minute, 47, 'kltq-minute-number');
+    }
 }
 
 function setFeedback(message, tone = '') {

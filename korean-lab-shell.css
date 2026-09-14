@@ -137,8 +137,10 @@ body.aiedue-lab-game-open .aiedue-rpg-hud {
 .kltq-clock-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
 .kltq-eyebrow { margin: 0 0 14px; color: #55994b; font-weight: 900; }
 .kltq-clock { position: relative; width: min(31vh, 270px); aspect-ratio: 1; border: 12px solid #55b346; border-radius: 50%; background: #fffdf7; box-shadow: inset 0 0 0 5px #eaf5e6, 0 12px 24px rgba(54,113,61,.16); }
-.kltq-number { position: absolute; font-size: 1.2rem; font-weight: 900; color: #42604a; transform: translate(-50%,-50%); }
-.kltq-number.n12 { left: 50%; top: 10%; }.kltq-number.n3 { left: 90%; top: 50%; }.kltq-number.n6 { left: 50%; top: 90%; }.kltq-number.n9 { left: 10%; top: 50%; }
+.kltq-hour-scale, .kltq-minute-scale { position: absolute; inset: 0; pointer-events: none; }
+.kltq-hour-number, .kltq-minute-number { position: absolute; z-index: 1; transform: translate(-50%,-50%); line-height: 1; white-space: nowrap; }
+.kltq-hour-number { color: #314c39; font-size: clamp(.82rem, 2.1vh, 1.12rem); font-weight: 900; }
+.kltq-minute-number { color: #7b8d80; font-size: clamp(.58rem, 1.35vh, .72rem); font-weight: 800; }
 .kltq-hand { position: absolute; left: 50%; bottom: 50%; width: 6px; border-radius: 999px; transform-origin: 50% 100%; transform: translateX(-50%) rotate(0deg); }
 .kltq-hour-hand { height: 27%; background: #405a49; }.kltq-minute-hand { height: 38%; width: 4px; background: #f08a62; }
 .kltq-clock-pin { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; border: 4px solid #fff; border-radius: 50%; background: #55b346; transform: translate(-50%,-50%); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
@@ -164,6 +166,29 @@ body.aiedue-lab-game-open .aiedue-rpg-hud {
 .kltq-check:disabled { cursor: wait; opacity: .55; }
 .kltq-feedback { min-height: 27px; margin: 12px 0 0; font-weight: 900; text-align: center; color: #75847a; }
 .kltq-feedback.ok { color: #25824a; }.kltq-feedback.error { color: #c05252; }.kltq-feedback.warn { color: #b16f1d; }
+
+@media (min-width: 761px) and (max-width: 1280px) {
+    #korean-lab-time-quiz-section.aiedue-lab-game-shell.view-section {
+        height: min(900px, calc(100dvh - 48px)) !important;
+        max-height: calc(100dvh - 48px) !important;
+    }
+    #korean-lab-time-quiz-section .kltq-header {
+        min-height: 92px;
+        padding: 12px 24px;
+    }
+    #korean-lab-time-quiz-section .aiedue-lab-logo-home img {
+        width: 126px;
+    }
+    #korean-lab-time-quiz-section .kltq-layout {
+        grid-template-columns: minmax(280px, .95fr) minmax(320px, 1.05fr);
+        padding-top: 28px;
+        padding-bottom: 80px;
+    }
+    #korean-lab-time-quiz-section .kltq-clock-card,
+    #korean-lab-time-quiz-section .kltq-answer-card {
+        padding-block: 28px;
+    }
+}
 
 @media (max-width: 760px) {
     .aiedue-lab-game-shell.view-section { width: 95vw !important; height: calc(100dvh - 124px) !important; max-height: calc(100dvh - 124px) !important; border-width: 12px !important; border-radius: 50px !important; }

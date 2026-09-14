@@ -61,6 +61,17 @@ test('시간 퀴즈는 에이두 한글 내부의 독립 연구실 기능이다'
     assert.equal(html.includes('korean-lab-time-quiz.js') && html.includes('math/math'), false);
 });
 
+test('시간 퀴즈 시계판은 1~12시와 5분 단위 눈금을 모두 표시하고 태블릿 높이를 넉넉히 쓴다', () => {
+    assert.ok(html.includes('class="kltq-hour-scale"'));
+    assert.ok(html.includes('class="kltq-minute-scale"'));
+    assert.equal(html.includes('class="kltq-number n12"'), false);
+    assert.match(timeQuizEntry, /for \(let hour = 1; hour <= 12; hour \+= 1\)/);
+    assert.match(timeQuizEntry, /for \(let minute = 0; minute < 60; minute \+= 5\)/);
+    assert.ok(timeQuizEntry.includes("'kltq-hour-number'"));
+    assert.ok(timeQuizEntry.includes("'kltq-minute-number'"));
+    assert.match(labCss, /@media \(min-width: 761px\) and \(max-width: 1280px\)[\s\S]*?#korean-lab-time-quiz-section\.aiedue-lab-game-shell\.view-section[\s\S]*?height: min\(900px, calc\(100dvh - 48px\)\) !important/);
+});
+
 test('연구실 게임은 에이두 한글 공통 둥근 카드 셸을 쓴다', () => {
     for (const id of [
         'korean-lab-time-quiz-section',

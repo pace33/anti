@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="app.css?v=20260913-role-quick-actions-v1">
     <link rel="stylesheet" href="shape-zoo.css?v=20260914-stage-game-reports-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
-    <link rel="stylesheet" href="korean-lab-shell.css?v=20260913-game-layout-fix-v7">
+    <link rel="stylesheet" href="korean-lab-shell.css?v=20260914-time-clock-scale-v1">
     <link rel="stylesheet" href="literacy-adventure.css?v=20260913-detective-inference-v1">
 </head>
 <body>
@@ -1672,7 +1672,8 @@
             <section class="kltq-clock-card" aria-label="문제 시계">
                 <p class="kltq-eyebrow">시계를 읽어 보세요</p>
                 <div id="kltq-clock" class="kltq-clock" role="img" aria-label="문제 시계">
-                    <span class="kltq-number n12">12</span><span class="kltq-number n3">3</span><span class="kltq-number n6">6</span><span class="kltq-number n9">9</span>
+                    <span class="kltq-hour-scale" aria-hidden="true"></span>
+                    <span class="kltq-minute-scale" aria-hidden="true"></span>
                     <i id="kltq-hour-hand" class="kltq-hand kltq-hour-hand"></i>
                     <i id="kltq-minute-hand" class="kltq-hand kltq-minute-hand"></i>
                     <i class="kltq-clock-pin"></i>
@@ -1821,7 +1822,7 @@
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="word-card-table-game.js?v=20260914-stage-game-reports-v1"></script>
-    <script type="module" src="korean-lab-time-quiz.js?v=20260912-game-row-logo-v6"></script>
+    <script type="module" src="korean-lab-time-quiz.js?v=20260914-time-clock-scale-v1"></script>
     <script type="module" src="literacy-adventure-game.js?v=20260914-stage-game-reports-v1"></script>
 
     <!-- [설정 팝업] -->
