@@ -247,8 +247,12 @@ let drawingWorkspaceMissionStep = null;
 let drawingCanvasInitialized = false;
 let drawingAiSketchbookActive = false;
 let drawingAiSketchbookGenerated = false;
+let drawingAiSketchbookSaved = false;
 let drawingAiSketchbookBusy = false;
+let drawingAiSketchbookSaving = false;
 let drawingAiSketchbookController = null;
+let drawingAiSketchbookPendingRecord = null;
+let drawingAiSketchbookRevision = 0;
 let currentUserDictationStep = -1;
 let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [], wordStats: {} }, wrongBank: [], completedBank: [], captures: [], dictationLocked: true, hasCompletedOnce: false, curricularWriting: { activeWords: [], photoWords: [], reviewWords: [], totalRounds: 0, stepStats: {}, wordStats: {}, history: [], rewardedSessions: [] } };
 let activeDictationItem = null;
@@ -5230,10 +5234,15 @@ window.goHangulDashboard = function goHangulDashboard() {
 }
 
 window.goDrawingDashboard = function goDrawingDashboard() {
+    drawingAiSketchbookRevision += 1;
     drawingAiSketchbookController?.abort();
     drawingAiSketchbookController = null;
     drawingAiSketchbookBusy = false;
+    drawingAiSketchbookSaving = false;
     drawingAiSketchbookActive = false;
+    drawingAiSketchbookGenerated = false;
+    drawingAiSketchbookSaved = false;
+    drawingAiSketchbookPendingRecord = null;
     updateDrawingDashboardPreview();
     showTopLevelSection('drawing-activities-section');
 }
@@ -5655,13 +5664,17 @@ function renderMyDrawingSection() {
     }).join('');
 }
 
-function configureDrawingWorkspace({ mode, title, desc, template = 'blank', missionStep = null, aiQuiz = false }) {
+function configureDrawingWorkspace({ mode, title, template = 'blank', missionStep = null, aiQuiz = false }) {
     isDrawingEvaluating = false;
+    drawingAiSketchbookRevision += 1;
     drawingAiSketchbookController?.abort();
     drawingAiSketchbookController = null;
     drawingAiSketchbookActive = mode === 'sketchbook';
     drawingAiSketchbookGenerated = false;
+    drawingAiSketchbookSaved = false;
     drawingAiSketchbookBusy = false;
+    drawingAiSketchbookSaving = false;
+    drawingAiSketchbookPendingRecord = null;
     ensureDrawingPortfolioShapeFields();
     drawingWorkspaceMode = mode;
     drawingWorkspaceMissionStep = missionStep;
@@ -5671,36 +5684,20 @@ function configureDrawingWorkspace({ mode, title, desc, template = 'blank', miss
     drawingUserTracePoints = [];
     const isShapeMission = mode === 'shape-mission';
     const isInfiniteDrawing = mode === 'infinite-drawing';
-    const isCompactMission = isShapeMission || aiQuiz;
     const recordsButton = document.getElementById('drawing-my-records-btn');
     if (recordsButton) recordsButton.textContent = isShapeMission ? '📈 나의 도형' : '📈 나의 그림';
-    const badge = document.getElementById('drawing-workspace-badge');
-    const backButton = document.getElementById('drawing-workspace-back-btn');
-    const newTemplateButton = document.getElementById('drawing-new-template-btn');
-    const workspaceTitle = document.getElementById('drawing-workspace-title');
-    const workspaceDesc = document.getElementById('drawing-workspace-desc');
-    badge.innerText = aiQuiz ? '🤖 AI 그림' : (missionStep ? '그림 미션' : (isShapeMission ? '🔷 도형 미션' : title));
-    badge.onclick = isCompactMission ? goDrawingDashboard : null;
-    badge.setAttribute('aria-label', isCompactMission ? `${aiQuiz ? 'AI 그림' : '도형 미션'} 닫고 그리기 대시보드로 돌아가기` : '그리기 활동');
-    badge.classList.toggle('cursor-pointer', isCompactMission);
-    badge.classList.toggle('cursor-default', !isCompactMission);
-    if (backButton) backButton.classList.remove('hidden');
-    if (newTemplateButton) newTemplateButton.classList.toggle('hidden', !isInfiniteDrawing);
-    workspaceTitle.innerText = title;
-    workspaceDesc.innerText = desc;
-    workspaceTitle.classList.toggle('hidden', isCompactMission);
-    workspaceDesc.classList.toggle('hidden', isCompactMission || !desc);
-    const progress = document.getElementById('drawing-workspace-progress');
-    if (progress) {
-        const text = isShapeMission ? `도형 ${shapeMissionIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (aiQuiz ? `AI 그림 ${aiDrawingQuizIndex}번째 · ${drawingActiveTargetTemplate?.label || ''}` : (missionStep ? `그림 미션 ${missionStep} / ${drawingMissions.length}` : (isInfiniteDrawing ? `그림 미션 · ${drawingActiveTargetTemplate?.label || ''}` : '')));
-        progress.innerText = text;
-        progress.classList.toggle('hidden', !text);
-    }
-    const completionModeActive = Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing || mode === 'sketchbook';
-    document.getElementById('drawing-template-panel').classList.toggle('hidden', completionModeActive);
-    document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !completionModeActive);
-    document.getElementById('drawing-friends-btn').classList.toggle('hidden', Boolean(missionStep) || aiQuiz || mode === 'shape-mission' || isInfiniteDrawing);
-    document.getElementById('drawing-save-btn').classList.toggle('hidden', completionModeActive);
+    const brandTitle = isShapeMission
+        ? '도형 미션'
+        : ((Boolean(missionStep) || isInfiniteDrawing) ? '그림 미션' : (aiQuiz ? 'AI 그림' : (drawingAiSketchbookActive ? 'AI 스케치북' : title)));
+    const brandTitleElement = document.getElementById('drawing-workspace-brand-title');
+    const brandContext = document.getElementById('drawing-workspace-brand-context');
+    if (brandTitleElement) brandTitleElement.textContent = brandTitle;
+    if (brandContext) brandContext.setAttribute('aria-label', `현재 위치: 에이두 그리기, ${brandTitle}`);
+    const missionCompletionMode = Boolean(missionStep) || aiQuiz || isShapeMission || isInfiniteDrawing;
+    const templateLocked = missionCompletionMode || drawingAiSketchbookActive;
+    document.getElementById('drawing-template-panel').classList.toggle('hidden', templateLocked);
+    document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !missionCompletionMode);
+    document.getElementById('drawing-save-btn').classList.toggle('hidden', missionCompletionMode || drawingAiSketchbookActive);
     updateAiSketchbookControls();
     updateDrawingCompleteButtonCooldown();
     showTopLevelSection('drawing-workspace-section');
@@ -5730,7 +5727,6 @@ window.openDrawingInfiniteMode = function() {
     configureDrawingWorkspace({
         mode: 'infinite-drawing',
         title: '그림 미션',
-        desc: '선을 따라 그려보아요.',
         template: randomTemplate.key,
         missionStep: null
     });
@@ -5751,7 +5747,6 @@ window.openTodayDrawingActivity = function() {
     configureDrawingWorkspace({
         mode: 'shape-mission',
         title: '도형 미션',
-        desc: '',
         template: template.key
     });
 }
@@ -5767,7 +5762,6 @@ window.openDrawingMission = function(step) {
     configureDrawingWorkspace({
         mode: mission.type,
         title: mission.title,
-        desc: '다양한 그림을 그려보고 그림을 해제해요',
         template: mission.template,
         missionStep: mission.step
     });
@@ -5778,7 +5772,6 @@ window.openSketchbookActivity = function() {
     configureDrawingWorkspace({
         mode: 'sketchbook',
         title: 'AI 스케치북',
-        desc: '그림을 그린 뒤 AI 생성으로 AntiAI가 완성하게 해 보세요.',
         template: firstUnlocked
     });
 }
@@ -5793,7 +5786,6 @@ window.openAiDrawingQuizActivity = function() {
     configureDrawingWorkspace({
         mode: 'ai-drawing',
         title: 'AI 그림',
-        desc: '',
         template: template.key,
         aiQuiz: true
     });
@@ -5844,6 +5836,35 @@ window.selectDrawingTemplate = function(template) {
     resetDrawingCanvas();
 }
 
+function eraseDrawingTracePointsAlongSegment(x1, y1, x2, y2, radius) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lengthSquared = (dx * dx) + (dy * dy);
+    const radiusSquared = radius * radius;
+    drawingUserTracePoints = drawingUserTracePoints.filter((point) => {
+        const progress = lengthSquared
+            ? Math.max(0, Math.min(1, (((point.x - x1) * dx) + ((point.y - y1) * dy)) / lengthSquared))
+            : 0;
+        const nearestX = x1 + (progress * dx);
+        const nearestY = y1 + (progress * dy);
+        const distanceSquared = ((point.x - nearestX) ** 2) + ((point.y - nearestY) ** 2);
+        return distanceSquared > radiusSquared;
+    });
+}
+
+function invalidateAiSketchbookResultAfterCanvasChange() {
+    if (!drawingAiSketchbookActive) return;
+    drawingAiSketchbookRevision += 1;
+    drawingAiSketchbookController?.abort();
+    drawingAiSketchbookController = null;
+    drawingAiSketchbookBusy = false;
+    drawingAiSketchbookSaving = false;
+    drawingAiSketchbookGenerated = false;
+    drawingAiSketchbookSaved = false;
+    drawingAiSketchbookPendingRecord = null;
+    updateAiSketchbookControls();
+}
+
 function initializeDrawingCanvas() {
     const canvas = document.getElementById('drawing-canvas');
     if (!canvas || drawingCanvasInitialized) return;
@@ -5862,26 +5883,23 @@ function initializeDrawingCanvas() {
         if (drawingUserTracePoints.length > 12000) drawingUserTracePoints.shift();
     };
     const start = (ev) => {
-        if (drawingAiSketchbookActive && drawingAiSketchbookGenerated) {
-            drawingAiSketchbookGenerated = false;
-            updateAiSketchbookControls();
-            updateDrawingCompleteButtonCooldown();
-        }
+        invalidateAiSketchbookResultAfterCanvasChange();
         isDrawing = true;
         const p = point(ev);
         lastX = p.x;
         lastY = p.y;
-        rememberPoint(p);
+        if (!drawingEraserMode) rememberPoint(p);
     };
     const move = (ev) => {
         if (!isDrawing) return;
         ev.preventDefault();
         const p = point(ev);
+        const eraserWidth = Math.max(14, drawingBrushSize * 1.15);
         ctx.beginPath();
         ctx.save();
         ctx.globalCompositeOperation = drawingEraserMode ? 'destination-out' : 'source-over';
         ctx.strokeStyle = drawingEraserMode ? 'rgba(0,0,0,1)' : drawingBrushColor;
-        ctx.lineWidth = drawingEraserMode ? Math.max(14, drawingBrushSize * 1.15) : drawingBrushSize;
+        ctx.lineWidth = drawingEraserMode ? eraserWidth : drawingBrushSize;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.moveTo(lastX, lastY);
@@ -5889,6 +5907,7 @@ function initializeDrawingCanvas() {
         ctx.stroke();
         ctx.restore();
         if (drawingEraserMode) {
+            eraseDrawingTracePointsAlongSegment(lastX, lastY, p.x, p.y, eraserWidth / 2);
             const rect = canvas.getBoundingClientRect();
             drawDrawingTemplate(ctx, rect.width, rect.height);
         } else rememberPoint(p);
@@ -6073,10 +6092,14 @@ function resetDrawingCanvas() {
     drawingUserTracePoints = [];
     drawDrawingTemplate(ctx, width, height);
     if (drawingAiSketchbookActive) {
+        drawingAiSketchbookRevision += 1;
         drawingAiSketchbookController?.abort();
         drawingAiSketchbookController = null;
         drawingAiSketchbookBusy = false;
+        drawingAiSketchbookSaving = false;
         drawingAiSketchbookGenerated = false;
+        drawingAiSketchbookSaved = false;
+        drawingAiSketchbookPendingRecord = null;
         updateAiSketchbookControls();
     }
     updateDrawingCompleteButtonCooldown();
@@ -6197,16 +6220,26 @@ function updateAiSketchbookControls(message = '') {
     const status = document.getElementById('drawing-ai-status');
     if (button) {
         button.classList.toggle('hidden', !drawingAiSketchbookActive);
-        button.disabled = drawingAiSketchbookBusy;
-        button.classList.toggle('opacity-50', drawingAiSketchbookBusy);
-        button.innerHTML = drawingAiSketchbookBusy
-            ? '<span class="button-loading-spinner"></span>AntiAI 생성 중...'
-            : (drawingAiSketchbookGenerated ? '✨ 다시 AI 생성' : '✨ AI 생성');
+        button.disabled = drawingAiSketchbookBusy || drawingAiSketchbookSaved;
+        button.classList.toggle('opacity-50', drawingAiSketchbookBusy || drawingAiSketchbookSaved);
+        if (drawingAiSketchbookBusy) {
+            button.innerHTML = drawingAiSketchbookSaving
+                ? '<span class="button-loading-spinner"></span>저장 중...'
+                : '<span class="button-loading-spinner"></span>AntiAI 생성 중...';
+        } else if (drawingAiSketchbookSaved) {
+            button.textContent = '✓ AI 생성·저장 완료';
+        } else if (drawingAiSketchbookGenerated && drawingAiSketchbookPendingRecord) {
+            button.textContent = '↻ 저장 다시 시도';
+        } else {
+            button.textContent = '✨ AI 생성';
+        }
     }
     if (status) {
-        const text = message || (drawingAiSketchbookGenerated
-            ? 'AI 그림이 완성됐어요. 완료하기를 누르면 친구들 그림 보기에 게시됩니다.'
-            : '그림을 그린 뒤 AI 생성을 눌러 주세요.');
+        const text = message || (drawingAiSketchbookSaved
+            ? 'AI 그림을 저장하고 친구들 그림에 추가했어요. 새로 그리면 AI 생성을 다시 할 수 있어요.'
+            : (drawingAiSketchbookGenerated
+                ? 'AI 그림은 완성됐지만 아직 저장되지 않았어요. 저장 다시 시도를 눌러 주세요.'
+                : '그림을 그린 뒤 AI 생성을 눌러 주세요.'));
         status.textContent = text;
         status.classList.toggle('hidden', !drawingAiSketchbookActive);
     }
@@ -6235,12 +6268,6 @@ function updateDrawingCompleteButtonCooldown() {
         btn.disabled = true;
         btn.classList.add('opacity-50');
         btn.innerHTML = `<span class="button-loading-spinner"></span>채점중입니다...`;
-        return;
-    }
-    if (drawingAiSketchbookActive && !drawingAiSketchbookGenerated) {
-        btn.disabled = true;
-        btn.classList.add('opacity-50');
-        btn.innerText = drawingAiSketchbookBusy ? 'AI 생성 중...' : 'AI 생성 후 완료하기';
         return;
     }
     const waitMs = Math.max(0, Number(drawingPortfolio.unpaidCooldownUntil || 0) - Date.now());
@@ -6310,38 +6337,121 @@ function drawAiSketchbookBlob(blob, isCurrent = () => true) {
     });
 }
 
+function isCurrentAiSketchbookRevision(revision) {
+    return drawingAiSketchbookActive && revision === drawingAiSketchbookRevision;
+}
+
+function isCurrentDrawingUser(expectedUserId) {
+    const normalizedUserId = String(expectedUserId || '');
+    return Boolean(normalizedUserId)
+        && String(currentUserId || '') === normalizedUserId
+        && String(auth.currentUser?.uid || '') === normalizedUserId;
+}
+
+function isCurrentAiSketchbookOperation(revision, controller, expectedUserId) {
+    return isCurrentAiSketchbookRevision(revision)
+        && drawingAiSketchbookController === controller
+        && !controller.signal.aborted
+        && isCurrentDrawingUser(expectedUserId);
+}
+
+function resetAiSketchbookForIdentityChange() {
+    drawingAiSketchbookRevision += 1;
+    drawingAiSketchbookController?.abort();
+    drawingAiSketchbookController = null;
+    drawingAiSketchbookActive = false;
+    drawingAiSketchbookGenerated = false;
+    drawingAiSketchbookSaved = false;
+    drawingAiSketchbookBusy = false;
+    drawingAiSketchbookSaving = false;
+    drawingAiSketchbookPendingRecord = null;
+}
+
+async function persistGeneratedAiSketchbookRecord(record, revision = drawingAiSketchbookRevision, expectedUserId = record?.userId || currentUserId) {
+    if (!record || !isCurrentAiSketchbookRevision(revision) || !isCurrentDrawingUser(expectedUserId)) return false;
+    drawingAiSketchbookBusy = true;
+    drawingAiSketchbookSaving = true;
+    drawingAiSketchbookPendingRecord = record;
+    updateAiSketchbookControls('AI 그림을 내 그림과 친구들 그림에 저장하고 있어요…');
+    try {
+        await persistDrawingRecord(record, {
+            expectedUserId,
+            localStateGuard: () => isCurrentAiSketchbookRevision(revision)
+        });
+        if (!isCurrentAiSketchbookRevision(revision) || !isCurrentDrawingUser(expectedUserId)) return true;
+        drawingAiSketchbookSaved = true;
+        drawingAiSketchbookPendingRecord = null;
+        updateDrawingDashboardPreview();
+        return true;
+    } catch (error) {
+        console.error('AI sketchbook save failed:', error);
+        if (!isCurrentAiSketchbookRevision(revision) || !isCurrentDrawingUser(expectedUserId)) return false;
+        drawingAiSketchbookSaved = false;
+        showModal(`AI 그림은 완성됐지만 저장하지 못했어요.<br><span class="text-sm text-gray-500">${escapeHtml(error?.message || '저장 다시 시도를 눌러 주세요.')}</span>`);
+        return false;
+    } finally {
+        if (isCurrentAiSketchbookRevision(revision) && isCurrentDrawingUser(expectedUserId)) {
+            drawingAiSketchbookBusy = false;
+            drawingAiSketchbookSaving = false;
+            updateAiSketchbookControls();
+        }
+    }
+}
+
 window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
-    if (!drawingAiSketchbookActive || drawingAiSketchbookBusy) return;
+    if (!drawingAiSketchbookActive || drawingAiSketchbookBusy || drawingAiSketchbookSaved) return;
+    const startedUserId = String(currentUserId || '');
+    if (!isCurrentDrawingUser(startedUserId)) {
+        showModal('로그인 정보를 확인한 뒤 다시 시도해 주세요.');
+        return;
+    }
+    if (drawingAiSketchbookGenerated && drawingAiSketchbookPendingRecord) {
+        await persistGeneratedAiSketchbookRecord(drawingAiSketchbookPendingRecord, drawingAiSketchbookRevision, startedUserId);
+        return;
+    }
     if (drawingUserTracePoints.length < 2) {
         showModal('먼저 그림판에 그림을 그려 주세요. 그 그림을 바탕으로 AntiAI가 새로 그려 줍니다.');
         return;
     }
 
+    const revision = drawingAiSketchbookRevision + 1;
+    drawingAiSketchbookRevision = revision;
     const controller = new AbortController();
     drawingAiSketchbookController?.abort();
     drawingAiSketchbookController = controller;
     drawingAiSketchbookBusy = true;
+    drawingAiSketchbookSaving = false;
     drawingAiSketchbookGenerated = false;
+    drawingAiSketchbookSaved = false;
+    drawingAiSketchbookPendingRecord = null;
     updateAiSketchbookControls('내 그림을 AntiAI 대화형 세션으로 보내고 있어요…');
-    updateDrawingCompleteButtonCooldown();
     let session = null;
     let failureMessage = '';
     try {
         const sourceBlob = await captureDrawingBlob();
+        if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         session = await createSettingsImageEditSession(sourceBlob, controller.signal);
-        if (drawingAiSketchbookController !== controller) return;
+        if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         updateAiSketchbookControls('내 그림의 구도와 색을 살려 새 그림을 만들고 있어요. 보통 몇 분 정도 걸립니다.');
         const prompt = '이 그림은 사용자가 직접 그린 원본입니다. 원본의 주요 대상, 배치, 포즈, 선과 색의 의도를 그대로 알아볼 수 있게 유지하면서 완성도 높은 따뜻한 디지털 일러스트로 다시 그려 주세요. 원본에 없는 글자, 로고, 워터마크는 추가하지 마세요. 흰 여백은 자연스러운 배경으로 정리하되 원본의 이야기를 바꾸지 마세요.';
         const job = await createSettingsImageEditTurn(session, prompt, '4:3', controller.signal);
+        if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         const imageInfo = await waitForStoryImageJob(job, controller.signal);
+        if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         const resultBlob = await downloadStoryImage(job, imageInfo, controller.signal);
-        if (drawingAiSketchbookController !== controller || !drawingAiSketchbookActive) return;
-        const rendered = await drawAiSketchbookBlob(resultBlob, () => drawingAiSketchbookController === controller && drawingAiSketchbookActive && !controller.signal.aborted);
-        if (!rendered || drawingAiSketchbookController !== controller || !drawingAiSketchbookActive || controller.signal.aborted) return;
+        if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
+        const rendered = await drawAiSketchbookBlob(resultBlob, () => isCurrentAiSketchbookOperation(revision, controller, startedUserId));
+        if (!rendered || !isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         drawingAiSketchbookGenerated = true;
-        updateAiSketchbookControls();
+        const record = buildDrawingRecord({
+            image: captureDrawingImage(),
+            kind: 'sketchbook',
+            savedAt: new Date().toISOString()
+        });
+        drawingAiSketchbookPendingRecord = record;
+        await persistGeneratedAiSketchbookRecord(record, revision, startedUserId);
     } catch (error) {
-        if (error?.name !== 'AbortError' && !controller.signal.aborted) {
+        if (error?.name !== 'AbortError' && isCurrentAiSketchbookOperation(revision, controller, startedUserId)) {
             console.error('AI sketchbook generation failed:', error);
             failureMessage = `AI 생성 실패: ${error?.message || '잠시 뒤 다시 시도해 주세요.'}`;
             updateAiSketchbookControls(failureMessage);
@@ -6351,8 +6461,8 @@ window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
         if (drawingAiSketchbookController === controller) {
             drawingAiSketchbookController = null;
             drawingAiSketchbookBusy = false;
+            drawingAiSketchbookSaving = false;
             updateAiSketchbookControls(failureMessage);
-            updateDrawingCompleteButtonCooldown();
         }
         if (session) {
             try { await closeSettingsImageEditSession(session); }
@@ -6556,7 +6666,7 @@ function applyCommittedDrawingState(committed) {
     };
 }
 
-function buildSharedDrawingGalleryRecord(portfolioRecord, compressedImage, drawingId, existingCreatedAt = null, serverClassId = '') {
+function buildSharedDrawingGalleryRecord(portfolioRecord, compressedImage, drawingId, existingCreatedAt = null, serverClassId = '', ownerUserId = currentUserId) {
     const sharedRecord = {
         drawingId,
         image: compressedImage,
@@ -6565,10 +6675,10 @@ function buildSharedDrawingGalleryRecord(portfolioRecord, compressedImage, drawi
         template: String(portfolioRecord.template || 'blank'),
         templateLabel: String(portfolioRecord.templateLabel || '스케치북'),
         savedAt: String(portfolioRecord.savedAt || new Date().toISOString()),
-        userId: String(currentUserId),
+        userId: String(ownerUserId),
         userName: String(portfolioRecord.userName || currentUserName || '이름 없음'),
         userIcon: String(portfolioRecord.userIcon || currentUserIcon || '🐻'),
-        ownerRef: `users/${currentUserId}`,
+        ownerRef: `users/${ownerUserId}`,
         createdAt: existingCreatedAt || serverTimestamp(),
         updatedAt: serverTimestamp()
     };
@@ -6582,13 +6692,45 @@ function buildSharedDrawingGalleryRecord(portfolioRecord, compressedImage, drawi
     return sharedRecord;
 }
 
+function rollbackOptimisticDrawingRecord(record, previousPortfolio) {
+    const drawingId = record?.drawingId;
+    if (!drawingId) return;
+    ensureDrawingPortfolioShapeFields();
+    const previousFreeRecord = (previousPortfolio?.free || []).find((item) => item?.drawingId === drawingId);
+    drawingPortfolio.free = (drawingPortfolio.free || []).filter((item) => item?.drawingId !== drawingId);
+    if (previousFreeRecord) drawingPortfolio.free.unshift(previousFreeRecord);
+    if (record.kind === 'mission' && record.missionStep != null) {
+        const stepKey = String(record.missionStep);
+        if (drawingPortfolio.missions?.[stepKey]?.drawingId === drawingId) {
+            const previousMission = previousPortfolio?.missions?.[stepKey];
+            if (previousMission) drawingPortfolio.missions[stepKey] = previousMission;
+            else delete drawingPortfolio.missions[stepKey];
+        }
+    }
+}
+
 async function persistDrawingRecord(record, operation = {}) {
     if (!currentUserId) throw new Error('로그인 정보를 확인할 수 없습니다.');
     if (!record?.image) throw new Error('저장할 그림이 없습니다.');
 
+    const expectedUserId = String(operation.expectedUserId || currentUserId || '');
+    if (!isCurrentDrawingUser(expectedUserId)) throw new Error('로그인 계정이 변경되어 저장을 취소했습니다.');
+    const startedUserId = expectedUserId;
+    const startedState = Object.freeze({
+        coins: currentUserCoins,
+        balance: currentUserBalance,
+        aeduTokens: currentUserAeduTokens,
+        warningTokens: currentUserWarningTokens,
+        aeduExperience: currentUserAeduExperience,
+        aeduLevel: currentUserAeduLevel,
+        userName: currentUserName,
+        userIcon: currentUserIcon
+    });
+    const isLocalStateCurrent = () => String(currentUserId || '') === startedUserId
+        && (typeof operation.localStateGuard !== 'function' || operation.localStateGuard());
     const collectionRef = collection(db, FIREBASE_DRAWING_COLLECTION);
     const recordRef = record.drawingId ? doc(collectionRef, record.drawingId) : doc(collectionRef);
-    const userRef = doc(db, 'users', currentUserId);
+    const userRef = doc(db, 'users', startedUserId);
     const previousPortfolio = JSON.parse(JSON.stringify(drawingPortfolio));
     record.drawingId = recordRef.id;
     addDrawingRecordToPortfolioGallery(record);
@@ -6633,7 +6775,14 @@ async function persistDrawingRecord(record, operation = {}) {
             const awardedDrawingPoints = isNewRecord
                 ? newDrawingReward
                 : Math.max(0, Number(existingRecord?.rewardedPoints ?? recordSnap.data()?.rewardedPoints ?? 0));
-            const portfolioRecord = { ...record, image: portfolioThumbnail, rewardedPoints: awardedDrawingPoints };
+            const portfolioRecord = {
+                ...record,
+                image: portfolioThumbnail,
+                rewardedPoints: awardedDrawingPoints,
+                userId: startedUserId,
+                userName: String(record.userName || startedState.userName || '이름 없음'),
+                userIcon: String(record.userIcon || startedState.userIcon || '🐻')
+            };
             if (missionStepKey) nextMissions[missionStepKey] = portfolioRecord;
 
             const nextPortfolio = fitDrawingPortfolioToFirestore({
@@ -6653,10 +6802,10 @@ async function persistDrawingRecord(record, operation = {}) {
                     : serverPortfolio.unpaidCooldownUntil
             });
 
-            let nextExperience = asNumber(userData.aeduExperience, currentUserAeduExperience);
-            const beforeLevel = Math.max(1, asNumber(userData.aeduLevel, currentUserAeduLevel || 1));
+            let nextExperience = asNumber(userData.aeduExperience, startedState.aeduExperience);
+            const beforeLevel = Math.max(1, asNumber(userData.aeduLevel, startedState.aeduLevel || 1));
             let nextLevel = beforeLevel;
-            let nextWarningTokens = Math.max(0, Math.floor(asNumber(userData.warningTokens, currentUserWarningTokens)));
+            let nextWarningTokens = Math.max(0, Math.floor(asNumber(userData.warningTokens, startedState.warningTokens)));
             let levelUpCount = 0;
             const shouldGrantExperience = isNewRecord && (!missionStepKey || !existingMission);
             if (shouldGrantExperience) {
@@ -6672,13 +6821,13 @@ async function persistDrawingRecord(record, operation = {}) {
             nextWarningTokens -= removedWarningTokens;
             const levelUpPoints = levelUpCount * AIEDUE_LEVEL_UP_POINT_REWARD;
             const totalPointReward = newDrawingReward + levelUpPoints;
-            const serverCoins = asNumber(userData.coins, currentUserCoins);
-            const serverBalance = asNumber(userData.balance, serverCoins);
-            const serverAeduTokens = asNumber(userData.aeduTokens, serverBalance);
+            const serverCoins = asNumber(userData.coins, startedState.coins);
+            const serverBalance = asNumber(userData.balance, startedState.balance);
+            const serverAeduTokens = asNumber(userData.aeduTokens, startedState.aeduTokens);
             const grantedExperience = shouldGrantExperience ? Math.max(0, Number(operation.experienceReward || 0)) : 0;
             const baseExperience = Math.max(0, Number(operation.baseExperience ?? grantedExperience));
             const experienceMultiplier = Math.max(0, Number(operation.experienceMultiplier ?? 1));
-            const activityMessage = `${String(userData.name || currentUserName || '학생').slice(0, 40)}이 ${String(operation.experienceSource || '그리기 활동').slice(0, 80)}을 통해 기본 경험치 ${baseExperience.toFixed(1)}%의 ${Math.round(experienceMultiplier * 100)}%인 ${grantedExperience.toFixed(1)}%를 받았다.${levelUpCount > 0 ? ` 레벨 ${beforeLevel}에서 ${nextLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${removedWarningTokens}개가 감소되었다.` : ''}`;
+            const activityMessage = `${String(userData.name || startedState.userName || '학생').slice(0, 40)}이 ${String(operation.experienceSource || '그리기 활동').slice(0, 80)}을 통해 기본 경험치 ${baseExperience.toFixed(1)}%의 ${Math.round(experienceMultiplier * 100)}%인 ${grantedExperience.toFixed(1)}%를 받았다.${levelUpCount > 0 ? ` 레벨 ${beforeLevel}에서 ${nextLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${removedWarningTokens}개가 감소되었다.` : ''}`;
             const koreanActivityLog = grantedExperience > 0
                 ? [{ id: `drawing_${recordRef.id}`, type: 'experience', source: operation.experienceSource || '그리기 활동', baseExperience, multiplier: experienceMultiplier, grantedExperience, levelBefore: beforeLevel, levelAfter: nextLevel, levelUpPoints, warningTokensReduced: removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...(Array.isArray(userData.koreanActivityLog) ? userData.koreanActivityLog : [])].slice(0, 200)
                 : (Array.isArray(userData.koreanActivityLog) ? userData.koreanActivityLog : []);
@@ -6705,7 +6854,8 @@ async function persistDrawingRecord(record, operation = {}) {
                 compressedImage,
                 recordRef.id,
                 recordSnap.exists() ? recordSnap.data()?.createdAt : null,
-                serverClassId
+                serverClassId,
+                startedUserId
             );
             const userRecord = {
                 currentDrawingStep: committedState.currentDrawingStep,
@@ -6724,10 +6874,10 @@ async function persistDrawingRecord(record, operation = {}) {
             return committedState;
         });
         record.rewardedPoints = committed.awardedDrawingPoints;
-        applyCommittedDrawingState(committed);
+        if (isLocalStateCurrent()) applyCommittedDrawingState(committed);
         return committed;
     } catch (error) {
-        drawingPortfolio = previousPortfolio;
+        if (String(currentUserId || '') === startedUserId) rollbackOptimisticDrawingRecord(record, previousPortfolio);
         console.warn('Atomic drawing save failed', error);
         throw new Error('내 그림과 친구들 그림을 함께 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
@@ -6805,6 +6955,11 @@ async function loadFriendsDrawingsFromFirebase() {
 }
 
 window.saveCurrentDrawing = async function() {
+    const startedUserId = String(currentUserId || '');
+    if (!isCurrentDrawingUser(startedUserId)) {
+        showModal('로그인 정보를 확인한 뒤 다시 시도해 주세요.');
+        return;
+    }
     const image = captureDrawingImage();
     const now = new Date().toISOString();
     const kind = drawingWorkspaceMissionStep ? 'mission-draft' : 'sketchbook';
@@ -6812,11 +6967,16 @@ window.saveCurrentDrawing = async function() {
     // 저장은 현재 활동 화면에 그대로 머물며 작품만 보관한다.
     // 그림 미션 단계 완료/해금/이어하기 변경은 완료하기 버튼에서만 처리한다.
     try {
-        await persistDrawingRecord(record);
+        await persistDrawingRecord(record, {
+            expectedUserId: startedUserId,
+            localStateGuard: () => isCurrentDrawingUser(startedUserId)
+        });
+        if (!isCurrentDrawingUser(startedUserId)) return;
         updateDrawingDashboardPreview();
         showModal(drawingWorkspaceMissionStep ? '현재 그림 미션 작품을 저장했어요. 계속 그릴 수 있어요!' : '그림을 저장했어요!');
     } catch (error) {
         console.error('Failed to save drawing', error);
+        if (!isCurrentDrawingUser(startedUserId)) return;
         updateDrawingDashboardPreview();
         showModal(escapeHtml(error.message || '그림 저장 중 오류가 발생했습니다.'));
     }
@@ -6853,13 +7013,13 @@ function animateAieduePointStar(points = 1) {
 }
 
 window.completeTodayDrawingMission = async function() {
-    if (isDrawingEvaluating) return;
-    ensureDrawingPortfolioShapeFields();
-    if (drawingAiSketchbookActive && !drawingAiSketchbookGenerated) {
-        showModal(drawingAiSketchbookBusy ? 'AntiAI가 그림을 만드는 중이에요. 완성될 때까지 기다려 주세요.' : '먼저 AI 생성을 눌러 그림을 완성해 주세요. 완료하기를 누르면 완성된 그림이 친구들 그림 보기에 게시됩니다.');
-        updateDrawingCompleteButtonCooldown();
+    if (isDrawingEvaluating || drawingAiSketchbookActive) return;
+    const startedUserId = String(currentUserId || '');
+    if (!isCurrentDrawingUser(startedUserId)) {
+        showModal('로그인 정보를 확인한 뒤 다시 시도해 주세요.');
         return;
     }
+    ensureDrawingPortfolioShapeFields();
     if (Date.now() < Number(drawingPortfolio.unpaidCooldownUntil || 0)) {
         updateDrawingCompleteButtonCooldown();
         showModal('조금만 기다렸다가 완료할 수 있어요.');
@@ -6973,6 +7133,8 @@ window.completeTodayDrawingMission = async function() {
 
         if (!completedRecord) throw new Error('완료한 그림 기록을 만들지 못했습니다.');
         const drawingOperation = {
+            expectedUserId: startedUserId,
+            localStateGuard: () => isCurrentDrawingUser(startedUserId),
             pointReward: rewardPoints,
             missionBaseReward: completedRecord.kind === 'mission' ? rewardPoints : 0,
             experienceReward: finalDrawingExp,
@@ -6987,12 +7149,9 @@ window.completeTodayDrawingMission = async function() {
                 : {})
         };
         const committed = await persistDrawingRecord(completedRecord, drawingOperation);
+        if (!isCurrentDrawingUser(startedUserId)) return;
         rewardPoints = committed.awardedDrawingPoints;
         drawingPersisted = true;
-        if (drawingAiSketchbookActive) {
-            drawingAiSketchbookGenerated = false;
-            updateAiSketchbookControls('친구들 그림 보기에 게시했어요. 새 그림을 그린 뒤 다시 AI 생성할 수 있어요.');
-        }
         if (committed.levelUpCount > 0) {
             showModal(`🎉 축하합니다! 레벨업했습니다!\nLv. ${committed.aeduLevel} (보상 ${committed.levelUpPoints}포인트${committed.removedWarningTokens ? ` · 주의토큰 ${committed.removedWarningTokens}개 차감` : ''})`);
         }
@@ -7002,16 +7161,20 @@ window.completeTodayDrawingMission = async function() {
         animateAieduePointStar(rewardPoints);
         showAiedueAutoToast('잘했어요!!', `정확도 ${result.accuracy}%${rewardPoints ? ` · +${rewardPoints}점` : ''}`);
 
-        if (drawingWorkspaceMode === 'shape-mission') setTimeout(openTodayDrawingActivity, 950);
-        else if (drawingWorkspaceAiQuiz) setTimeout(openAiDrawingQuizActivity, 950);
+        const openIfCompletionUserIsCurrent = (openActivity) => setTimeout(() => {
+            if (isCurrentDrawingUser(startedUserId)) openActivity();
+        }, 950);
+        if (drawingWorkspaceMode === 'shape-mission') openIfCompletionUserIsCurrent(openTodayDrawingActivity);
+        else if (drawingWorkspaceAiQuiz) openIfCompletionUserIsCurrent(openAiDrawingQuizActivity);
         else if (drawingWorkspaceMode === 'infinite-drawing') {
-            setTimeout(openDrawingInfiniteMode, 950);
+            openIfCompletionUserIsCurrent(openDrawingInfiniteMode);
         } else if (drawingWorkspaceMissionStep) {
             const nextMission = getNextDrawingMission();
-            if (nextMission) setTimeout(() => openDrawingMission(nextMission.step), 950);
+            if (nextMission) openIfCompletionUserIsCurrent(() => openDrawingMission(nextMission.step));
         }
     } catch (error) {
         console.error('Failed to complete drawing mission', error);
+        if (!isCurrentDrawingUser(startedUserId)) return;
         if (!drawingPersisted) {
             currentUserCoins = completionSnapshot.currentUserCoins;
             currentUserBalance = completionSnapshot.currentUserBalance;
@@ -7027,7 +7190,7 @@ window.completeTodayDrawingMission = async function() {
         }
         showModal(escapeHtml(error.message || '저장 중 오류가 발생했습니다.'));
     } finally {
-        setDrawingEvaluationState(false);
+        if (isCurrentDrawingUser(startedUserId)) setDrawingEvaluationState(false);
     }
 }
 
@@ -20894,6 +21057,8 @@ document.getElementById('class-management-modal').addEventListener('click', (e) 
 
 onAuthStateChanged(auth, async (user) => {
     if ((currentUserId || null) !== (user?.uid || null)) {
+        resetAiSketchbookForIdentityChange();
+        setDrawingEvaluationState(false);
         window.stopWordCardTableGame?.();
         if (document.getElementById('word-card-table-game-section')?.classList.contains('hidden') === false) {
             showTopLevelSection('start-screen');

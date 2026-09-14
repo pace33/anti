@@ -782,6 +782,16 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
 }
 #drawing-clear-btn { top: 14px; right: 14px; }
 #drawing-complete-mission-btn { right: 14px; bottom: 14px; }
+#drawing-canvas {
+    background-color: #ffffff;
+    background-image:
+        linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    background-size: 16px 16px;
+}
 .drawing-tool-sidebar {
     display: flex;
     flex-direction: column;
@@ -902,18 +912,8 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     .korean-weekly-bars { gap: 5px; height: 170px; }
     .korean-weekly-track { height: 112px; }
 }
-#drawing-workspace-back-btn {
-    position: static;
-    width: 100%;
-    margin-top: auto !important;
-    min-width: 132px;
-    min-height: 52px;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.96);
-}
 @media (max-width: 1023px) {
     .drawing-tool-sidebar { min-height: 0; }
-    #drawing-workspace-back-btn { margin-top: 0 !important; }
 }
 
 /* Component-specific overrides or small tweaks */

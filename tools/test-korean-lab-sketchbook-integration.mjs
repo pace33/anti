@@ -146,8 +146,10 @@ test('한글 연구실 시간 퀴즈는 난이도별 경험치와 한글 100 EXP
     assert.equal(app.includes('window.aiedueKoreanLabTimeQuizData = window.aiedueMathData'), false);
 });
 
-test('AI 스케치북은 캔버스 원본으로 편집 세션을 만들고 결과만 완료 게시한다', () => {
+test('AI 스케치북은 캔버스 원본을 편집하고 생성 직후 내 그림과 친구들 그림에 함께 저장한다', () => {
+    const autoSave = section(app, 'function isCurrentAiSketchbookRevision', 'window.generateAiSketchbookImage =');
     const generate = section(app, 'window.generateAiSketchbookImage =', 'function buildDrawingRecord');
+    const configure = section(app, 'function configureDrawingWorkspace', 'window.openMyDrawingFromDashboard');
     const complete = section(app, 'window.completeTodayDrawingMission =', 'window.openFriendsDrawingGallery');
     assert.ok(generate.includes('captureDrawingBlob()'));
     assert.ok(generate.includes('createSettingsImageEditSession(sourceBlob'));
@@ -155,16 +157,144 @@ test('AI 스케치북은 캔버스 원본으로 편집 세션을 만들고 결�
     assert.ok(generate.includes('waitForStoryImageJob'));
     assert.ok(generate.includes('downloadStoryImage'));
     assert.ok(generate.includes('drawAiSketchbookBlob'));
-    assert.ok(generate.includes('drawingAiSketchbookController === controller && drawingAiSketchbookActive && !controller.signal.aborted'));
-    assert.ok(generate.includes('if (!rendered || drawingAiSketchbookController !== controller'));
+    assert.ok(generate.includes('const startedUserId = String(currentUserId'));
+    assert.ok(generate.includes('isCurrentAiSketchbookOperation(revision, controller, startedUserId)'));
+    assert.ok(generate.includes('if (!rendered || !isCurrentAiSketchbookOperation'));
+    assert.ok(generate.includes("kind: 'sketchbook'"));
+    assert.ok(generate.includes('await persistGeneratedAiSketchbookRecord(record, revision, startedUserId)'));
+    assert.ok(generate.includes('if (drawingAiSketchbookGenerated && drawingAiSketchbookPendingRecord)'));
     assert.ok(generate.includes('closeSettingsImageEditSession(session)'));
+    assert.ok(autoSave.includes('await persistDrawingRecord(record, {'));
+    assert.ok(autoSave.includes('localStateGuard: () => isCurrentAiSketchbookRevision(revision)'));
+    assert.ok(autoSave.includes('drawingAiSketchbookSaved = true'));
+    assert.ok(autoSave.includes('drawingAiSketchbookPendingRecord = null'));
+    assert.ok(autoSave.includes('저장 다시 시도'));
     assert.ok(app.includes('function drawAiSketchbookBlob(blob, isCurrent = () => true)'));
     assert.ok(app.includes('if (!isCurrent())'));
-    assert.ok(complete.indexOf('if (isDrawingEvaluating) return') < complete.indexOf('!drawingAiSketchbookGenerated'));
-    assert.ok(complete.indexOf('!drawingAiSketchbookGenerated') < complete.indexOf('persistDrawingRecord'));
-    assert.ok(complete.includes('persistDrawingRecord(completedRecord'));
-    assert.ok(complete.indexOf('drawingPersisted = true') < complete.indexOf('drawingAiSketchbookGenerated = false'));
+    assert.ok(configure.includes("document.getElementById('drawing-complete-mission-btn').classList.toggle('hidden', !missionCompletionMode)"));
+    assert.ok(configure.includes('const missionCompletionMode = Boolean(missionStep) || aiQuiz || isShapeMission || isInfiniteDrawing'));
+    assert.ok(complete.includes('if (isDrawingEvaluating || drawingAiSketchbookActive) return'));
+    assert.equal(complete.includes('drawingAiSketchbookGenerated'), false);
     assert.ok(app.includes("collection(db, FIREBASE_DRAWING_COLLECTION)"));
+});
+
+test('이전 AI 저장 완료는 새 스케치북 세션의 상태나 모달을 덮지 않는다', async () => {
+    const persistence = section(app, 'function isCurrentAiSketchbookRevision', 'window.generateAiSketchbookImage =');
+    const createHarness = (persistDrawingRecord) => new Function('persistDrawingRecord', `
+        let currentUserId = 'user-a';
+        const auth = { currentUser: { uid: 'user-a' } };
+        let drawingAiSketchbookActive = true;
+        let drawingAiSketchbookRevision = 7;
+        let drawingAiSketchbookBusy = false;
+        let drawingAiSketchbookSaving = false;
+        let drawingAiSketchbookPendingRecord = null;
+        let drawingAiSketchbookSaved = false;
+        let controlUpdates = 0;
+        let dashboardUpdates = 0;
+        let modalCount = 0;
+        const console = { error() {} };
+        const updateAiSketchbookControls = () => { controlUpdates += 1; };
+        const updateDrawingDashboardPreview = () => { dashboardUpdates += 1; };
+        const showModal = () => { modalCount += 1; };
+        const escapeHtml = (value) => String(value);
+        ${persistence}
+        return {
+            save: (record) => persistGeneratedAiSketchbookRecord(record, 7, 'user-a'),
+            replaceSession() {
+                drawingAiSketchbookRevision = 8;
+                drawingAiSketchbookBusy = false;
+                drawingAiSketchbookSaving = false;
+                drawingAiSketchbookPendingRecord = null;
+                drawingAiSketchbookSaved = false;
+            },
+            switchAccount() {
+                currentUserId = 'user-b';
+                auth.currentUser.uid = 'user-b';
+            },
+            state: () => ({ drawingAiSketchbookBusy, drawingAiSketchbookSaving, drawingAiSketchbookPendingRecord, drawingAiSketchbookSaved, controlUpdates, dashboardUpdates, modalCount })
+        };
+    `)(persistDrawingRecord);
+
+    let resolveSave;
+    const successHarness = createHarness(() => new Promise((resolve) => { resolveSave = resolve; }));
+    const staleSuccess = successHarness.save({ image: 'data:image/png;base64,test' });
+    successHarness.replaceSession();
+    resolveSave();
+    assert.equal(await staleSuccess, true);
+    assert.deepEqual(successHarness.state(), {
+        drawingAiSketchbookBusy: false,
+        drawingAiSketchbookSaving: false,
+        drawingAiSketchbookPendingRecord: null,
+        drawingAiSketchbookSaved: false,
+        controlUpdates: 1,
+        dashboardUpdates: 0,
+        modalCount: 0
+    });
+
+    let rejectSave;
+    const failureHarness = createHarness(() => new Promise((resolve, reject) => { rejectSave = reject; }));
+    const staleFailure = failureHarness.save({ image: 'data:image/png;base64,test' });
+    failureHarness.replaceSession();
+    rejectSave(new Error('late failure'));
+    assert.equal(await staleFailure, false);
+    assert.equal(failureHarness.state().modalCount, 0);
+    assert.equal(failureHarness.state().drawingAiSketchbookSaved, false);
+
+    let resolveAccountSave;
+    const accountHarness = createHarness(() => new Promise((resolve) => { resolveAccountSave = resolve; }));
+    const staleAccountSuccess = accountHarness.save({ image: 'data:image/png;base64,test', userId: 'user-a' });
+    accountHarness.switchAccount();
+    resolveAccountSave();
+    assert.equal(await staleAccountSuccess, true);
+    assert.equal(accountHarness.state().drawingAiSketchbookSaved, false);
+    assert.equal(accountHarness.state().dashboardUpdates, 0);
+    assert.equal(accountHarness.state().modalCount, 0);
+});
+
+test('그림 저장은 생성·트랜잭션·완료 롤백 전 과정에서 시작 계정 UID를 고정한다', () => {
+    const persistence = section(app, 'async function persistDrawingRecord', 'function normalizeFirebaseDrawingDoc');
+    const save = section(app, 'window.saveCurrentDrawing', 'function showAiedueAutoToast');
+    const complete = section(app, 'window.completeTodayDrawingMission', 'window.openFriendsDrawingGallery');
+    const authFlow = app.slice(app.indexOf('onAuthStateChanged(auth'));
+    const generate = section(app, 'window.generateAiSketchbookImage =', 'function buildDrawingRecord');
+
+    assert.ok(persistence.includes("const expectedUserId = String(operation.expectedUserId || currentUserId || '')"));
+    assert.ok(persistence.includes('if (!isCurrentDrawingUser(expectedUserId)) throw new Error'));
+    assert.ok(persistence.includes('const startedUserId = expectedUserId'));
+    assert.ok(persistence.includes('const startedState = Object.freeze({'));
+    assert.ok(persistence.includes('asNumber(userData.aeduExperience, startedState.aeduExperience)'));
+    assert.ok(persistence.includes('asNumber(userData.balance, startedState.balance)'));
+    assert.ok(persistence.includes('asNumber(userData.aeduTokens, startedState.aeduTokens)'));
+    assert.equal(persistence.includes('asNumber(userData.aeduExperience, currentUserAeduExperience)'), false);
+    assert.equal(persistence.includes('userData.name || currentUserName'), false);
+    assert.ok(generate.includes('persistGeneratedAiSketchbookRecord(record, revision, startedUserId)'));
+    assert.ok(generate.includes("error?.name !== 'AbortError' && isCurrentAiSketchbookOperation"));
+    assert.ok(save.includes('expectedUserId: startedUserId'));
+    assert.ok(save.includes('if (!isCurrentDrawingUser(startedUserId)) return'));
+    assert.ok(complete.includes('expectedUserId: startedUserId'));
+    assert.ok(complete.indexOf('if (!isCurrentDrawingUser(startedUserId)) return;') < complete.indexOf('currentUserCoins = completionSnapshot.currentUserCoins'));
+    assert.ok(complete.includes('if (isCurrentDrawingUser(startedUserId)) setDrawingEvaluationState(false)'));
+    assert.ok(complete.includes('const openIfCompletionUserIsCurrent'));
+    assert.ok(complete.includes('if (isCurrentDrawingUser(startedUserId)) openActivity()'));
+    assert.ok(authFlow.includes('resetAiSketchbookForIdentityChange()'));
+    assert.ok(authFlow.includes('setDrawingEvaluationState(false)'));
+});
+
+test('그리기 지우개는 투명 합성과 함께 판정용 획 좌표도 같은 범위에서 제거한다', () => {
+    const eraseHelper = section(app, 'function eraseDrawingTracePointsAlongSegment', 'function invalidateAiSketchbookResultAfterCanvasChange');
+    const canvasInput = section(app, 'function initializeDrawingCanvas', 'function renderDrawingBrushSizeButtons');
+    const erase = new Function('points', `
+        let drawingUserTracePoints = points;
+        ${eraseHelper}
+        eraseDrawingTracePointsAlongSegment(0, 0, 10, 0, 2);
+        return drawingUserTracePoints;
+    `);
+    assert.deepEqual(erase([{ x: 5, y: 1 }, { x: 5, y: 3 }, { x: 13, y: 0 }]), [{ x: 5, y: 3 }, { x: 13, y: 0 }]);
+    assert.ok(canvasInput.includes("ctx.globalCompositeOperation = drawingEraserMode ? 'destination-out' : 'source-over'"));
+    assert.ok(canvasInput.includes('eraseDrawingTracePointsAlongSegment(lastX, lastY, p.x, p.y, eraserWidth / 2)'));
+    assert.ok(canvasInput.includes('if (!drawingEraserMode) rememberPoint(p)'));
+    assert.ok(css.includes('#drawing-canvas'));
+    assert.ok(css.includes('background-image:'));
 });
 
 test('AntiAI 상태 조회의 일시적 시간 초과와 게이트웨이 오류는 생성 작업을 즉시 폐기하지 않는다', async () => {

@@ -211,8 +211,8 @@ assert(index.includes('id="word-bank-camera-modal"'), '오늘의 노트 사진 �
 assert(index.includes('id="word-bank-camera-capture-btn"') && index.includes('onclick="captureWordBankCameraPhoto()"'), '팝업 카메라 촬영 버튼이 올바르지 않습니다.');
 assert(index.includes('md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4'), '교과 맞춤쓰기/문해력 하단 카드 반응형 4칸 레이아웃이 없습니다.');
 assert(!index.includes('[연장]') && !app.includes('[연장]'), '그림 미션에 제거된 연장 표기가 남아 있습니다.');
-assert(index.indexOf('id="drawing-new-template-btn"') < index.indexOf('id="drawing-eraser-btn"'), '새로운 그림 버튼이 지우개 버튼 위에 있지 않습니다.');
-assert(app.includes("drawingMissionPool.filter((template) => template.key !== previousTemplate)"), '새로운 그림이 현재 도안을 제외하지 않습니다.');
+assert(!index.includes('id="drawing-new-template-btn"'), '제거하기로 한 새로운 그림 버튼이 남아 있습니다.');
+assert(app.includes("drawingMissionPool.filter((template) => template.key !== previousTemplate)"), '그림 미션 자동 다음 도안이 현재 도안을 제외하지 않습니다.');
 const oldBankLabel = `국어 ${'은'}행`;
 assert(!index.includes(oldBankLabel) && !app.includes(oldBankLabel), '이전 은행 용어가 남아 있습니다.');
 assert(app.includes('openDictationBankCamera = function openDictationBankCamera(options = {})') && app.includes('word-bank-camera-modal'), '오늘의 노트 사진이 팝업 카메라를 열지 않습니다.');
@@ -222,10 +222,8 @@ assert(index.includes('class="rpg-profile-portrait" onclick="toggleRpgHudPanel(t
 assert(index.includes('onclick="openDashboard()" aria-label="홈으로 이동"') && index.includes('<span>홈</span>'), '상태창 홈 버튼이 올바르지 않습니다.');
 assert(app.includes('window.toggleRpgHudPanel = function toggleRpgHudPanel(button)') && app.includes("hud.classList.toggle('rpg-collapsed')"), '상태창 접기·펼치기 로직이 없습니다.');
 assert(index.includes('class="rpg-profile-copy" onclick="toggleInfoDrawer()"'), '하단 프로필 정보 영역이 회원 정보창을 열지 않습니다.');
-assert(index.includes('id="drawing-workspace-back-btn"') && index.includes('aria-label="그리기 활동을 닫고 이전 화면으로 이동"'), '그리기 활동의 뒤로 가기 버튼이 없습니다.');
-assert(index.indexOf('id="drawing-workspace-back-btn"') < index.indexOf('id="drawing-canvas"'), '그리기 뒤로 가기 버튼이 왼쪽 도구 영역에 배치되지 않았습니다.');
-assert(app.includes("backButton.classList.remove('hidden')"), '도형 미션에서 뒤로 가기 버튼이 표시되지 않습니다.');
-assert(appCss.includes('.drawing-tool-sidebar') && appCss.includes('margin-top: auto !important;') && appCss.includes('min-height: 52px;'), '그리기 뒤로 가기 버튼이 연두색 도구 영역 하단에 배치되지 않았습니다.');
+assert(!index.includes('id="drawing-workspace-back-btn"') && !index.includes('id="drawing-friends-btn"'), '제거하기로 한 그리기 뒤로 가기 또는 작업실 친구들 그림 버튼이 남아 있습니다.');
+assert(!app.includes("backButton.classList.remove('hidden')") && !appCss.includes('#drawing-workspace-back-btn'), '제거된 그리기 뒤로 가기 로직이나 스타일이 남아 있습니다.');
 assert(app.includes("if (!control.classList.contains('learning-activity-reviewed'))"), '활동 완료 표시가 같은 class를 반복 기록해 화면을 멈출 수 있습니다.');
 assert(app.includes('new MutationObserver(scheduleCheck)') && !app.includes('new MutationObserver(check)'), '활동 완료 감시가 프레임당 한 번으로 제한되지 않았습니다.');
 assert(app.includes('function learningDetailBodyActivitiesComplete(root)') && app.includes('structuredActivitiesComplete && allBodyButtonsReviewed'), '본문 활동과 버튼 전체 확인 전 다음 안내를 막는 완료 조건이 없습니다.');
@@ -387,7 +385,11 @@ assert(!drawingGalleryOpen.includes('.slice(0, 60)'), '친구들 그림 화면�
 assert(!drawingGalleryLoad.includes("where('userId', '==', currentUserId)") && !drawingGalleryLoad.includes('loadFriendsDrawingsFromUserPortfolios'), '친구들 그림 전체 조회 실패를 본인 전용 결과로 숨기는 fallback이 남아 있습니다.');
 assert(drawingGalleryOpen.includes('const mergedMap = new Map();') && drawingGalleryOpen.includes("addDrawingGalleryItem(mergedMap, item, 'shared')") && drawingGalleryOpen.includes("addDrawingGalleryItem(mergedMap, item, 'portfolio')"), '공유 그림과 로컬 그림을 drawingId 기준으로 중복 제거하지 않습니다.');
 assert(drawingGalleryOpen.includes("showModal('친구들 그림을 불러오지 못했어요."), '친구들 그림 전체 조회 실패가 사용자에게 명확히 안내되지 않습니다.');
-assert(drawingPersist.includes('const serverClassId = String(userData.teacherId') && /buildSharedDrawingGalleryRecord\([\s\S]*?serverClassId\s*\)/.test(drawingPersist), '친구들 그림 학급 키가 트랜잭션에서 읽은 최신 사용자 문서를 사용하지 않습니다.');
+assert(
+    drawingPersist.includes('const serverClassId = String(userData.teacherId')
+        && /buildSharedDrawingGalleryRecord\([\s\S]*?serverClassId\s*,\s*startedUserId\s*\)/.test(drawingPersist),
+    '친구들 그림 학급 키와 소유자 UID가 저장 시작 시점의 최신 사용자 문서·계정을 사용하지 않습니다.'
+);
 ['email', 'shapeAccuracy', 'coins', 'balance', 'aeduTokens', 'warningTokens', 'userCode', 'role', 'teacherId', 'classCode', 'className'].forEach((field) => {
     assert(!drawingSharedRecord.includes(`${field}:`), `친구들 그림 공유 payload에 개인/불필요 필드가 포함됐습니다: ${field}`);
 });

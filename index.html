@@ -302,7 +302,7 @@
                     <div class="grid-item p-6 text-center flex flex-col" onclick="openSketchbookActivity()">
                         <div class="text-5xl mb-3">📒</div>
                         <div class="text-xl font-bold">AI 스케치북</div>
-                        <p class="text-sm text-gray-500 mt-2">내 그림을 AntiAI가 완성해 줘요</p>
+                        <p class="text-sm text-gray-500 mt-2">그림을 AI와 같이 만들어보아요</p>
                     </div>
                 </div>
             </div>
@@ -592,31 +592,6 @@
                     <span><small>에이두 그리기</small><strong>나의 그림</strong></span>
                 </div>
             </div>
-            <div class="drawing-page-heading flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
-                <button type="button" class="drawing-page-title flex flex-col gap-1 items-start text-left" onclick="goDrawingDashboard()">
-                    <span class="aiedu-badge bg-purple-500">← 그리기 홈</span>
-                    <span class="text-4xl font-bold text-[#5f3dc4] tracking-tight">나의 그림</span>
-                    <span class="drawing-page-subtitle">완료한 미션과 내가 만든 작품을 한눈에 살펴봐요.</span>
-                </button>
-                <div class="drawing-header-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
-                    <div class="text-right">
-                        <div class="flex items-center justify-end gap-2">
-                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
-                            <span class="text-sm text-yellow-500">⭐ <span class="sync-coins font-black">0</span></span>
-                        </div>
-                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
-                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
-                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
-                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
-                            </div>
-                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
-                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
-                        </div>
-                    </div>
-                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
-                </div>
-            </div>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                 <div class="korean-embed-card p-6 bg-purple-50 border-purple-100">
                     <div class="text-sm font-black text-purple-500 mb-2">그림 미션</div>
@@ -634,9 +609,8 @@
             </div>
 
             <div class="stitched p-6 bg-white">
-                <div class="flex items-center justify-between mb-5">
+                <div class="mb-5">
                     <h3 class="text-2xl font-black text-[#2c3e50]">단계별 그림 미션 기록</h3>
-                    <button type="button" class="btn-outline px-5 py-2 text-sm" onclick="goDrawingDashboard()">뒤로 가기</button>
                 </div>
                 <div id="my-drawing-mission-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[430px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
@@ -648,38 +622,9 @@
                 <button type="button" class="drawing-logo-button pointer-events-auto" onclick="goDrawingDashboard()" aria-label="에이두 그리기로 돌아가기">
                     <img src="aiedu_hangul_logo.webp" width="1024" height="768" alt="에이두 한글" class="login-mini-logo">
                 </button>
-                <div class="drawing-brand-context" aria-label="현재 위치: 에이두 그리기, 그림 작업실">
+                <div id="drawing-workspace-brand-context" class="drawing-brand-context" aria-label="현재 위치: 에이두 그리기, 그림 미션">
                     <span class="drawing-brand-context-icon" aria-hidden="true">🖍️</span>
-                    <span><small>에이두 그리기</small><strong>그림 작업실</strong></span>
-                </div>
-            </div>
-            <div class="drawing-workspace-top">
-                <div class="flex items-center gap-4">
-                    <div>
-                        <div class="drawing-title-row">
-                            <button id="drawing-workspace-badge" type="button" class="aiedu-badge bg-purple-500 drawing-mission-logo cursor-default" aria-label="그리기 활동">자유 그리기</button>
-                            <div id="drawing-workspace-progress" class="drawing-progress-chip hidden"></div>
-                        </div>
-                        <div id="drawing-workspace-title" class="text-3xl font-black text-[#2c3e50] mt-2">그림판</div>
-                        <p id="drawing-workspace-desc" class="text-lg text-gray-500 mt-1">마음껏 그리고 저장해요.</p>
-                    </div>
-                </div>
-                <div class="drawing-header-banner pointer-events-auto flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-[25px] border-4 border-[#b7e4a1] shadow-lg cursor-pointer hover:bg-white transition-all" onclick="toggleInfoDrawer()">
-                    <div class="text-right">
-                        <div class="flex items-center justify-end gap-2">
-                            <span class="text-lg font-black text-[#2c3e50] sync-account-name">학생 이름</span>
-                            <span class="text-sm text-yellow-500">⭐ <span id="drawing-workspace-coins" class="sync-coins font-black">0</span></span>
-                        </div>
-                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-black text-red-500">주의토큰 <span class="sync-warning-tokens">0</span>개</div>
-                        <div class="flex items-center justify-end gap-1 mt-1 text-[11px] font-bold text-teal-600">
-                            <div class="w-16 h-2 bg-teal-100 rounded-full overflow-hidden border border-teal-300">
-                                <div class="h-full bg-teal-500 transition-all duration-300 sync-aedu-exp-bar" style="width: 0%;"></div>
-                            </div>
-                            <span class="sync-aedu-exp-percent font-black font-sans">0%</span>
-                            <span class="ml-1 font-black">Lv. <span class="sync-aedu-level">1</span></span>
-                        </div>
-                    </div>
-                    <div class="sync-user-icon w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">👤</div>
+                    <span><small>에이두 그리기</small><strong id="drawing-workspace-brand-title">그림 미션</strong></span>
                 </div>
             </div>
 
@@ -699,7 +644,6 @@
                                 <button type="button" class="btn-outline px-3 py-2 text-sm" onclick="selectDrawingBrushSize(4)">4</button>
                             </div>
                             <div id="drawing-brush-size-label" class="text-sm text-gray-500 font-bold mt-2">2단계</div>
-                            <button type="button" id="drawing-new-template-btn" class="btn-primary bg-purple-500 shadow-purple-200 w-full mt-3 py-2 text-sm hidden" onclick="openDrawingInfiniteMode()">＋ 새로운 그림</button>
                             <button type="button" id="drawing-eraser-btn" class="btn-outline w-full mt-3 py-2 text-sm" onclick="toggleDrawingEraser()">🧽 지우개</button>
                             <button type="button" id="drawing-my-records-btn" class="btn-outline w-full mt-3 py-2 text-sm" onclick="openDrawingWorkspaceRecords()">📈 나의 그림</button>
                         </div>
@@ -713,9 +657,7 @@
                             <button type="button" id="drawing-ai-generate-btn" class="btn-primary bg-gradient-to-r from-violet-500 to-sky-500 hidden" onclick="generateAiSketchbookImage()">✨ AI 생성</button>
                             <p id="drawing-ai-status" class="hidden rounded-2xl bg-violet-50 px-3 py-2 text-center text-xs font-black text-violet-700" role="status" aria-live="polite"></p>
                             <button type="button" id="drawing-save-btn" class="btn-primary bg-purple-500 shadow-purple-200" onclick="saveCurrentDrawing()">저장하기</button>
-                            <button type="button" id="drawing-friends-btn" class="btn-outline" onclick="openFriendsDrawingGallery()">친구들 그림 보기</button>
                         </div>
-                        <button type="button" id="drawing-workspace-back-btn" class="drawing-sidebar-back-btn btn-outline" onclick="goDrawingDashboard()" aria-label="그리기 활동을 닫고 이전 화면으로 이동">← 뒤로 가기</button>
                     </div>
 
                     <div class="korean-embed-card p-3 h-[520px] relative overflow-hidden shadow-inner bg-white">
