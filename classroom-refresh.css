@@ -1,0 +1,81 @@
+/* Quiet backgrounds keep the learning cards and controls in the foreground. */
+#dashboard-section { background-image: url('assets/classroom/stage-select.png') !important; }
+body[data-learning-stage="1"] { --learning-bg: url('assets/classroom/stage-1.webp'); --learning-tint: #f5efff; }
+body[data-learning-stage="2"] { --learning-bg: url('assets/classroom/stage-2.webp'); --learning-tint: #edf7ff; }
+body[data-learning-stage="3"] { --learning-bg: url('assets/classroom/stage-3.webp'); --learning-tint: #fff3e9; }
+body[data-learning-stage="4"] { --learning-bg: url('assets/classroom/stage-4.webp'); --learning-tint: #eefaef; }
+body[data-learning-stage] .view-section:not(.hidden) {
+    background-color: var(--learning-tint) !important;
+    background-image: var(--learning-bg) !important;
+    background-position: center !important;
+    background-size: cover !important;
+}
+body[data-learning-stage] .view-section:not(.hidden) > .custom-scrollbar { padding-bottom: 120px !important; }
+body[data-learning-stage] .stitched,
+body[data-learning-stage] .activity-card { background-color: #fff !important; color: #203448; }
+body.rpg-hud-active #main-container { transform: none !important; animation: none !important; }
+body.rpg-hud-active .aiedue-rpg-hud {
+    position: fixed !important; left: max(18px, env(safe-area-inset-left)) !important;
+    bottom: max(18px, env(safe-area-inset-bottom)) !important;
+    top: auto !important; right: auto !important; transform: none !important;
+    max-width: calc(100vw - 36px);
+}
+body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; transform-origin: bottom left; }
+#login-section .login-tabs-container .nav-tab { color: #23462b; background: #f6fff1; }
+#login-section .login-tabs-container .nav-tab.active {
+    color: #fff !important; -webkit-text-fill-color: #fff;
+    background: #286529 !important; border-color: #184e20 !important;
+    text-shadow: none; opacity: 1;
+}
+#login-section .nav-tab:focus-visible, .classroom-dialog :focus-visible { outline: 3px solid #174e8c; outline-offset: 3px; }
+.activity-loading-overlay { z-index: 15000; }
+.activity-loading-card { width: min(430px, calc(100vw - 32px)); max-height: 90dvh; overflow: auto; padding: 24px; background: #fff; border: 2px solid #c7dfbd; border-radius: 32px; }
+.aiedu-loading-scene { position: relative; width: min(250px, 55vw); margin: 0 auto 8px; }
+.aiedu-loading-scene img { width: 100%; display: block; animation: aiedu-think 2.8s ease-in-out infinite; }
+.aiedu-loading-scene[data-actor="painter"] img { animation: aiedu-paint 1.6s ease-in-out infinite; transform-origin: 50% 85%; }
+.aiedu-loading-scene[data-actor="writer"] img { animation: aiedu-write 1.2s ease-in-out infinite; transform-origin: 50% 80%; }
+.aiedu-loading-spark { position: absolute; right: 12%; top: 15%; width: 16px; height: 16px; border-radius: 50%; background: #f8d575; animation: aiedu-spark 2s ease-in-out infinite; }
+[data-actor="writer"] .aiedu-loading-spark { left: 45%; top: 57%; width: 30px; height: 30px; background: #fff9c7; box-shadow: 0 0 18px #ffe07a; animation: aiedu-flash 4s ease-in-out infinite; }
+[data-actor="reader"] .aiedu-loading-spark { top: 8%; right: 20%; background: #c5e8bd; box-shadow: 18px -15px 0 3px #e1f1da; }
+.activity-loading-text { color: #203448; font-size: 20px; font-weight: 800; line-height: 1.5; }
+.aiedu-loading-value { display: block; margin: 14px 0 7px; font-size: 28px; font-weight: 900; color: #286529; font-variant-numeric: tabular-nums; }
+.aiedu-loading-progress { height: 18px; background: #e9eee6; border: 1px solid #9fb795; border-radius: 20px; overflow: hidden; }
+.aiedu-loading-progress::before { content: ''; display: block; width: var(--progress, 0%); height: 100%; background: #397c35; border-radius: inherit; transition: width .65s; }
+.aiedu-loading-hint { font-size: 13px; line-height: 1.5; color: #50614b; margin-top: 10px; }
+@keyframes aiedu-paint { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(-4px); } }
+@keyframes aiedu-write { 0%,100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg) translateY(-2px); } }
+@keyframes aiedu-think { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-6px) rotate(1deg); } }
+@keyframes aiedu-spark { 0%,100% { opacity: .3; transform: scale(.7); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes aiedu-flash { 0%,70%,100% { opacity: 0; } 80% { opacity: .9; } }
+.classroom-dialog { width: min(760px, calc(100vw - 24px)); max-height: 90dvh; padding: 0; border: 2px solid #b5d2ac; border-radius: 24px; background: #fff; color: #203448; box-shadow: 0 24px 80px #14281744; }
+.classroom-dialog::backdrop { background: #172e3c99; backdrop-filter: blur(3px); }
+.classroom-dialog-content { padding: 24px; }
+.classroom-dialog h2 { font-size: 26px; font-weight: 900; margin: 0; }
+.classroom-dialog p { line-height: 1.65; margin: 14px 0; }
+.classroom-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.classroom-dialog button, .classroom-dialog a { display: inline-block; padding: 10px 14px; border: 2px solid #c2d8ba; border-radius: 12px; background: #f4faef; font-weight: 800; min-height: 44px; color: #234e28; cursor: pointer; }
+.classroom-dialog button:disabled { opacity: .55; cursor: default; }
+.classroom-dialog .classroom-primary { background: #286529; color: white; border-color: #286529; }
+.classroom-name-list { max-height: 49dvh; overflow: auto; padding: 4px; }
+.classroom-name-row { display: grid; grid-template-columns: 65px 1fr auto; align-items: center; gap: 8px; margin-bottom: 14px; }
+.classroom-name-row label { font-weight: 800; }
+.classroom-name-row input { width: 100%; min-width: 0; border: 2px solid #99b68d; border-radius: 12px; padding: 12px; font-size: 20px; background: #fff; color: #203448; }
+.classroom-name-row input:disabled { background: #f3f6f0; opacity: 1; }
+.classroom-row-status { grid-column: 2 / -1; font-size: 14px; color: #286529; }
+.classroom-row-status.failed { color: #a52525; }
+.classroom-dialog-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 20px; }
+.classroom-currency-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+.classroom-currency-grid article { border: 1px solid #ccd8c6; border-radius: 16px; padding: 12px; text-align: center; }
+.classroom-currency-grid img { width: 100%; height: 120px; object-fit: contain; }
+.classroom-currency-grid h3 { font-size: 22px; font-weight: 900; margin: 10px 0; }
+.classroom-currency-grid button { margin-top: 8px; }
+@media(max-width: 600px) {
+    .classroom-dialog-content { padding: 16px; }
+    .classroom-currency-grid { grid-template-columns: 1fr; }
+    body.rpg-hud-active .aiedue-rpg-hud { left: 8px !important; bottom: 8px !important; max-width: calc(100vw - 16px); }
+    body.rpg-hud-active .rpg-profile-banner { min-width: 0; width: min(600px, calc(100vw - 16px)); }
+}
+@media(prefers-reduced-motion: reduce) {
+    .aiedu-loading-scene img, .aiedu-loading-spark { animation: none !important; }
+    .aiedu-loading-progress::before { transition: none; }
+}
