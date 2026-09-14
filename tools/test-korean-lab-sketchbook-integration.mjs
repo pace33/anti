@@ -99,7 +99,7 @@ test('교사 학급 관리에는 상점 물품 관리 탭과 CRUD·배부 도구
     assert.ok(manager.includes('전체 학생에게 모두 배부'));
     assert.ok(manager.includes('editAiedueKoreanShopItem'));
     assert.ok(manager.includes('deleteAiedueKoreanShopItem'));
-    assert.ok(manager.includes('safeImageSource(item.imageUrl)'));
+    assert.ok(manager.includes('safeImageSource(item.displayImageUrl || item.imageUrl)'));
 });
 
 test('학급 상점 탭은 교사 물품을 로드하고 저장·삭제 후 같은 탭으로 복귀한다', () => {

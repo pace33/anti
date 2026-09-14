@@ -6,10 +6,13 @@ import {
     collection,
     collectionGroup,
     deleteDoc,
+    deleteObject,
     doc,
     getDoc,
     getDocs,
+    getDownloadURL,
     getFirestore,
+    getStorage,
     limit as queryLimit,
     onSnapshot,
     orderBy,
@@ -17,8 +20,9 @@ import {
     runTransaction,
     serverTimestamp,
     setDoc,
+    ref as storageRef,
     where
-} from "./aiedu-data-adapter.js?v=20260901-math-data-v1";
+} from "./aiedu-data-adapter.js?v=20260915-shop-image-path-v2";
 import {
     applyMathAttempt,
     buildMathAreaProgress,
@@ -32,9 +36,12 @@ import {
     experienceForAttempt
 } from "./math-quality-core.mjs?v=20260901-math-quality-v1";
 
+import { isManagedTeacherShopImagePath } from "../korean-class-shop-core.mjs?v=20260915-shop-image-upload-v2";
+
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
 
 const MATH_PROGRESS_COLLECTION = 'mathStudentProgress';
 const MATH_ATTEMPT_COLLECTION = 'mathAttempts';
@@ -92,6 +99,7 @@ function escapeHtml(value) {
 
 function safeImageSource(value) {
     const source = String(value || '').trim();
+    if (/^blob:https?:\/\//i.test(source)) return source;
     if (/^https:\/\//i.test(source)) return source;
     if (/^(?:\.\/|\/)?[a-z0-9_./-]+\.(?:png|jpe?g|webp|gif)(?:\?[a-z0-9=&._-]+)?$/i.test(source)) return source;
     if (/^data:image\/(?:png|jpe?g|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(source)) return source;
@@ -362,6 +370,7 @@ async function bootstrapSession(user, generation) {
 
 onAuthStateChanged(auth, (user) => {
     const generation = ++state.generation;
+    shopItems.clear();
     state.sessionPromise = bootstrapSession(user, generation);
     if (!initialAuthResolved) {
         initialAuthResolved = true;
@@ -816,43 +825,72 @@ function money(value) {
     return `${asNonNegativeInteger(value).toLocaleString('ko-KR')}점`;
 }
 
-async function loadAssignedShopItems(uid) {
+async function resolveShopItemImage(item = {}) {
+    item.displayImageUrl = safeImageSource(item.imageUrl || '');
+    if (!item.imagePath || !isManagedTeacherShopImagePath(item.imagePath, { teacherId: item.teacherId, itemId: item.id })) return item;
+    try { item.displayImageUrl = await getDownloadURL(storageRef(storage, item.imagePath)); }
+    catch (error) { console.warn('Math shop image download failed', item.imagePath, error); }
+    return item;
+}
+
+async function deleteManagedShopImage(item = {}) {
+    if (!isManagedTeacherShopImagePath(item.imagePath, { teacherId: item.teacherId, itemId: item.id })) return false;
+    await deleteObject(storageRef(storage, item.imagePath));
+    return true;
+}
+
+function isCurrentShopSession(uid, generation) {
+    return Boolean(uid) && state.uid === uid && state.generation === generation && auth.currentUser?.uid === uid;
+}
+
+async function loadAssignedShopItems(uid, generation = state.generation) {
+    if (!isCurrentShopSession(uid, generation)) return [];
     const assignmentCollection = collection(db, 'users', uid, 'assignedShopItems');
     let snapshot;
     try { snapshot = await getDocs(query(assignmentCollection, orderBy('assignedAt', 'desc'))); }
     catch { snapshot = await getDocs(assignmentCollection); }
+    if (!isCurrentShopSession(uid, generation)) return [];
     const assignments = normalizeQuery(snapshot);
     const output = [];
     for (const assignment of assignments) {
+        if (!isCurrentShopSession(uid, generation)) return [];
         let item = null;
         if (assignment.itemId) {
             const itemSnapshot = await getDoc(doc(db, 'shopItems', assignment.itemId)).catch(() => null);
+            if (!isCurrentShopSession(uid, generation)) return [];
             if (itemSnapshot?.exists()) item = normalizeDocument(itemSnapshot);
         }
         if (!item && (assignment.name || assignment.itemName)) item = { id: assignment.itemId || assignment.id, ...assignment };
         if (!item) continue;
-        shopItems.set(item.id, item);
+        item.teacherId = item.teacherId || assignment.teacherId || null;
+        await resolveShopItemImage(item);
+        if (!isCurrentShopSession(uid, generation)) return [];
         output.push({ assignment, item });
     }
+    if (!isCurrentShopSession(uid, generation)) return [];
+    shopItems.clear();
+    output.forEach(({ item }) => shopItems.set(item.id, item));
     return output;
 }
 
-async function loadTeacherShopItems() {
-    const teacherId = requireTeacher();
+async function loadTeacherShopItems(uid = requireTeacher(), generation = state.generation) {
+    if (!isCurrentShopSession(uid, generation) || roleOf() !== 'teacher') return [];
     let snapshot;
     try {
-        snapshot = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', teacherId), orderBy('createdAt', 'desc')));
+        snapshot = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', uid), orderBy('createdAt', 'desc')));
     } catch {
-        snapshot = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', teacherId)));
+        snapshot = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', uid)));
     }
-    const items = normalizeQuery(snapshot);
+    if (!isCurrentShopSession(uid, generation) || roleOf() !== 'teacher') return [];
+    const items = await Promise.all(normalizeQuery(snapshot).map(async (item) => resolveShopItemImage(item)));
+    if (!isCurrentShopSession(uid, generation) || roleOf() !== 'teacher') return [];
     shopItems.clear();
     items.forEach((item) => shopItems.set(item.id, item));
     return items;
 }
 
 function itemImage(item) {
-    const source = safeImageSource(item.imageUrl);
+    const source = safeImageSource(item.displayImageUrl || item.imageUrl);
     return source
         ? `<img src="${escapeHtml(source)}" alt="${escapeHtml(item.name || '상점 물품')}" class="w-full h-32 object-cover rounded-2xl bg-slate-100">`
         : '<div class="w-full h-32 rounded-2xl bg-amber-50 flex items-center justify-center text-5xl">🎁</div>';
@@ -860,7 +898,9 @@ function itemImage(item) {
 
 async function openStudentShop() {
     const uid = requireUid();
-    const displayItems = await loadAssignedShopItems(uid);
+    const generation = state.generation;
+    const displayItems = await loadAssignedShopItems(uid, generation);
+    if (!isCurrentShopSession(uid, generation) || roleOf() === 'teacher') return;
     const wallet = normalizeWallet(state.profile || {});
     const modal = openServiceModal('🛒 에이두 수학 상점', `<div class="flex justify-end mb-4"><strong class="rounded-2xl bg-amber-50 px-4 py-2 text-amber-700">내 포인트 ${money(wallet.balance)}</strong></div><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${displayItems.map(({ item }) => {
         const price = shopPrice(item);
@@ -870,7 +910,10 @@ async function openStudentShop() {
 }
 
 async function openTeacherShop() {
-    const items = await loadTeacherShopItems();
+    const uid = requireTeacher();
+    const generation = state.generation;
+    const items = await loadTeacherShopItems(uid, generation);
+    if (!isCurrentShopSession(uid, generation) || roleOf() !== 'teacher') return;
     const modal = openServiceModal('🛒 교사 상점 관리', `<div class="flex justify-end mb-4"><button type="button" id="math-shop-add" class="btn-primary px-4 py-2">물품 추가</button></div><div class="space-y-3">${items.map((item) => `<article class="rounded-3xl border p-4 flex flex-col md:flex-row md:items-center gap-3"><div class="flex-1"><h3 class="text-xl font-black">${escapeHtml(item.name || '상점 물품')}</h3><p class="text-sm text-slate-500">${escapeHtml(item.description || '')}</p><strong class="text-amber-600">${money(item.price)}</strong></div><div class="flex flex-wrap gap-2"><button type="button" class="btn-primary px-3 py-2" data-distribute-item="${escapeHtml(item.id)}">배부</button><button type="button" class="btn-outline px-3 py-2" data-edit-item="${escapeHtml(item.id)}">수정</button><button type="button" class="btn-outline px-3 py-2 text-red-500" data-delete-item="${escapeHtml(item.id)}">삭제</button></div></article>`).join('') || '<p class="text-slate-400 text-center py-8">등록한 물품이 없습니다.</p>'}</div>`);
     modal.querySelector('#math-shop-add')?.addEventListener('click', () => openShopItemEditor());
     modal.querySelectorAll('[data-edit-item]').forEach((button) => button.addEventListener('click', () => openShopItemEditor(button.dataset.editItem)));
@@ -890,7 +933,19 @@ async function openAiedueMathShop() {
 
 function openShopItemEditor(itemId = '') {
     const item = itemId ? shopItems.get(itemId) : null;
-    const modal = openServiceModal(itemId ? '상점 물품 수정' : '상점 물품 추가', `<form id="math-shop-editor" class="space-y-3"><input id="math-shop-name" class="premium-input w-full" placeholder="물품 이름" value="${escapeHtml(item?.name || '')}" required><input id="math-shop-price" type="number" min="0" class="premium-input w-full" placeholder="가격" value="${asNonNegativeInteger(item?.price)}" required><input id="math-shop-image" class="premium-input w-full" placeholder="https 이미지 URL" value="${escapeHtml(item?.imageUrl || '')}"><textarea id="math-shop-description" class="premium-input w-full min-h-28" placeholder="설명">${escapeHtml(item?.description || '')}</textarea><button type="submit" class="btn-primary w-full py-3">저장</button></form>`);
+    const uploadedImageNotice = item?.imagePath
+        ? '<p class="text-xs font-bold text-amber-700">업로드 이미지는 에이두 한글 상점에서 변경할 수 있습니다.</p>'
+        : '';
+    const imageInputState = item?.imagePath ? 'disabled aria-disabled="true"' : '';
+    const modal = openServiceModal(itemId ? '상점 물품 수정' : '상점 물품 추가', `
+        <form id="math-shop-editor" class="space-y-3">
+            <input id="math-shop-name" class="premium-input w-full" placeholder="물품 이름" value="${escapeHtml(item?.name || '')}" required>
+            <input id="math-shop-price" type="number" min="0" class="premium-input w-full" placeholder="가격" value="${asNonNegativeInteger(item?.price)}" required>
+            <input id="math-shop-image" class="premium-input w-full" placeholder="https 이미지 URL" value="${escapeHtml(item?.imageUrl || '')}" ${imageInputState}>
+            ${uploadedImageNotice}
+            <textarea id="math-shop-description" class="premium-input w-full min-h-28" placeholder="설명">${escapeHtml(item?.description || '')}</textarea>
+            <button type="submit" class="btn-primary w-full py-3">저장</button>
+        </form>`);
     modal.querySelector('#math-shop-editor').addEventListener('submit', async (event) => {
         event.preventDefault();
         try {
@@ -927,7 +982,9 @@ async function saveShopItem(itemId = '', input = {}) {
 
 async function deleteShopItem(itemId) {
     await ready();
-    requireTeacher();
+    const teacherId = requireTeacher();
+    const item = shopItems.get(itemId);
+    if (!item || item.teacherId !== teacherId) throw new Error('본인이 등록한 상점 물품만 삭제할 수 있습니다.');
     if (typeof window.confirm === 'function' && !window.confirm('이 상점 물품을 삭제할까요?')) return false;
     await deleteDoc(doc(db, 'shopItems', itemId));
     try {
@@ -936,6 +993,7 @@ async function deleteShopItem(itemId) {
     } catch (error) {
         console.warn('Math assigned shop cleanup failed', error);
     }
+    if (item.imagePath) await deleteManagedShopImage(item).catch((error) => console.warn('Math shop image cleanup failed', error));
     await openTeacherShop();
     return true;
 }
@@ -958,6 +1016,7 @@ async function distributeShopItem(itemId, studentIds = []) {
     const teacherId = requireTeacher();
     const item = shopItems.get(itemId) || normalizeDocument(await getDoc(doc(db, 'shopItems', itemId)));
     if (!item) throw new Error('상점 물품을 찾을 수 없습니다.');
+    if (item.teacherId !== teacherId) throw new Error('본인이 등록한 상점 물품만 배부할 수 있습니다.');
     const allowedStudents = new Set((await loadClassStudents()).map((student) => student.id));
     const targets = [...new Set(studentIds)].filter((id) => allowedStudents.has(id));
     if (!targets.length) throw new Error('배부할 학급 학생이 없습니다.');
@@ -968,6 +1027,7 @@ async function distributeShopItem(itemId, studentIds = []) {
         description: item.description || '',
         price: asNonNegativeInteger(item.price),
         imageUrl: item.imageUrl || '',
+        imagePath: item.imagePath || '',
         teacherId,
         teacherName: state.profile?.name || '선생님',
         assignedAt: serverTimestamp()

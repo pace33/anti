@@ -18,7 +18,13 @@ import { installClassroomTools } from './classroom-tools.js';
 import { createClassroomService } from './classroom-service.js';
 import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
-import { canManageTeacherShopItem, isCurrentClassShopRequest } from "./korean-class-shop-core.mjs?v=20260914-class-shop-management-v1";
+import {
+    buildTeacherShopImagePath,
+    canManageTeacherShopItem,
+    isCurrentClassShopRequest,
+    isManagedTeacherShopImagePath,
+    validateTeacherShopImageFile
+} from "./korean-class-shop-core.mjs?v=20260915-shop-image-upload-v2";
 import { DRAWING_SHAPE_LIBRARY as drawingShapeLibrary } from "./drawing-shape-catalog.mjs";
 import {
     applyKoreanMasteryAttempt,
@@ -330,6 +336,11 @@ let currentUserProfileUnsubscribe = null;
 let lastSyncedProfileUid = null;
 let currentUserProfileSyncGeneration = 0;
 const aiedueKoreanShopItemsCache = new Map();
+let aiedueKoreanStudentShopRequestId = 0;
+let aiedueKoreanTeacherShopRequestId = 0;
+let aiedueKoreanShopEditorGeneration = 0;
+const aiedueKoreanShopSaveLocks = new Set();
+let aiedueKoreanShopPreviewObjectUrl = '';
 let currentUnderstandingStep = 1;
 let currentLearningActivityStep = null;
 let currentLearningDetailSectionIndex = 0;
@@ -4045,7 +4056,8 @@ const SAFE_MODAL_ACTIONS = new Set([
     'saveAiedueKoreanShopItem',
     'selectDrawingTemplate',
     'startLimitBreakChallenge',
-    'startTodayLiteracyMission'
+    'startTodayLiteracyMission',
+    'triggerAiedueKoreanShopImageUpload'
 ]);
 
 function isSafeModalAction(handler = '') {
@@ -4090,6 +4102,28 @@ function formatAiedueShopCurrency(value = 0) {
     return `${Math.max(0, Math.floor(asNumber(value, 0))).toLocaleString('ko-KR')}점`;
 }
 
+async function resolveAiedueKoreanShopItemImage(item = {}) {
+    const persistentUrl = safeImageSource(item.imageUrl || '');
+    item.displayImageUrl = persistentUrl;
+    if (!item.imagePath) return item;
+    if (!isManagedTeacherShopImagePath(item.imagePath, { teacherId: item.teacherId, itemId: item.id })) {
+        console.warn('invalid shop item image path ignored', item.imagePath);
+        return item;
+    }
+    try {
+        item.displayImageUrl = await getDownloadURL(storageRef(storage, item.imagePath));
+    } catch (error) {
+        console.warn('shop item image download failed', item.imagePath, error);
+    }
+    return item;
+}
+
+async function deleteManagedAiedueKoreanShopImage(imagePath, { teacherId, itemId } = {}) {
+    if (!isManagedTeacherShopImagePath(imagePath, { teacherId, itemId })) return false;
+    await deleteObject(storageRef(storage, imagePath));
+    return true;
+}
+
 function calculateKoreanShopPrice(item = {}, profile = currentUserProfileSnapshot) {
     const basePrice = Math.max(0, Math.floor(asNumber(item.price, 0)));
     const warningTokenCount = Math.max(0, Math.floor(asNumber(profile?.warningTokens, 0)));
@@ -4097,25 +4131,34 @@ function calculateKoreanShopPrice(item = {}, profile = currentUserProfileSnapsho
     return { basePrice, warningTokenCount, multiplier, adjustedPrice: basePrice * multiplier };
 }
 
-async function loadAiedueKoreanAssignedShopItems() {
-    if (!currentUserId) return [];
-    const assignmentsRef = collection(db, `users/${currentUserId}/assignedShopItems`);
+async function loadAiedueKoreanAssignedShopItems({ studentId = currentUserId, requestId = aiedueKoreanStudentShopRequestId } = {}) {
+    const requestIsCurrent = () => loginSuccess
+        && currentUserRole === 'student'
+        && currentUserId === studentId
+        && requestId === aiedueKoreanStudentShopRequestId;
+    if (!studentId || !requestIsCurrent()) return [];
+    const assignmentsRef = collection(db, `users/${studentId}/assignedShopItems`);
     let assignmentSnapshot;
     try {
         assignmentSnapshot = await getDocs(query(assignmentsRef, orderBy('assignedAt', 'desc')));
     } catch (error) {
+        if (!requestIsCurrent()) return [];
         console.warn('assignedShopItems orderBy query failed, retrying without order', error);
         assignmentSnapshot = await getDocs(assignmentsRef);
     }
+    if (!requestIsCurrent()) return [];
     const assignments = assignmentSnapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
     const displayItems = [];
     for (const assignment of assignments) {
+        if (!requestIsCurrent()) return [];
         let item = null;
         if (assignment.itemId) {
             try {
                 const itemSnap = await getDoc(doc(db, 'shopItems', assignment.itemId));
+                if (!requestIsCurrent()) return [];
                 if (itemSnap.exists()) item = { id: itemSnap.id, ...itemSnap.data() };
             } catch (error) {
+                if (!requestIsCurrent()) return [];
                 console.warn('assigned shop item fetch failed', assignment.itemId, error);
             }
         }
@@ -4126,6 +4169,7 @@ async function loadAiedueKoreanAssignedShopItems() {
                 description: assignment.description || '',
                 price: assignment.price || assignment.basePrice || 0,
                 imageUrl: assignment.imageUrl || '',
+                imagePath: assignment.imagePath || '',
                 teacherId: assignment.teacherId,
                 teacherName: assignment.teacherName
             };
@@ -4133,19 +4177,25 @@ async function loadAiedueKoreanAssignedShopItems() {
         if (!item) continue;
         item.teacherId = item.teacherId || assignment.teacherId || currentUserProfileSnapshot.teacherId || null;
         item.teacherName = item.teacherName || assignment.teacherName || '';
+        await resolveAiedueKoreanShopItemImage(item);
+        if (!requestIsCurrent()) return [];
         displayItems.push({ assignment, item });
         aiedueKoreanShopItemsCache.set(item.id, item);
     }
-    return displayItems;
+    return requestIsCurrent() ? displayItems : [];
 }
 
 function showKoreanShopModal(body) {
+    aiedueKoreanShopEditorGeneration += 1;
     const modal = document.getElementById('result-modal');
     modal.dataset.plainClose = 'true';
     showModal(`<div class="text-left relative"><button type="button" class="absolute -top-2 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()">×</button>${body}</div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
 }
 
 window.closeAiedueKoreanModal = function() {
+    aiedueKoreanStudentShopRequestId += 1;
+    aiedueKoreanShopEditorGeneration += 1;
+    clearAiedueKoreanShopImagePreviewUrl();
     const modal = document.getElementById('result-modal');
     if (modal) {
         modal.classList.add('hidden');
@@ -4312,7 +4362,7 @@ function renderAiedueKoreanShopItems(displayItems = []) {
             const assignedAt = assignment.assignedAt && typeof assignment.assignedAt.toDate === 'function'
                 ? assignment.assignedAt.toDate().toLocaleString('ko-KR')
                 : '';
-            const imageSource = safeImageSource(item.imageUrl);
+            const imageSource = safeImageSource(item.displayImageUrl || item.imageUrl);
             const imageHtml = imageSource
                 ? `<img src="${escapeHtml(imageSource)}" alt="${escapeKoreanShopHtml(item.name || '상점 물품')}" class="w-full h-28 object-cover rounded-2xl mb-3 bg-gray-100" onerror="this.style.display='none'">`
                 : `<div class="w-full h-28 rounded-2xl mb-3 bg-amber-50 flex items-center justify-center text-5xl">🎁</div>`;
@@ -4361,7 +4411,11 @@ async function loadAiedueKoreanTeacherShopItems(teacherId = currentUserId, { upd
     } catch (error) {
         snap = await getDocs(query(collection(db, 'shopItems'), where('teacherId', '==', teacherId)));
     }
-    const items = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+    const items = await Promise.all(snap.docs.map(async (docSnap) => {
+        const item = { id: docSnap.id, ...docSnap.data() };
+        await resolveAiedueKoreanShopItemImage(item);
+        return item;
+    }));
     if (updateCache) {
         aiedueKoreanShopItemsCache.clear();
         items.forEach((item) => aiedueKoreanShopItemsCache.set(item.id, item));
@@ -4371,7 +4425,7 @@ async function loadAiedueKoreanTeacherShopItems(teacherId = currentUserId, { upd
 
 function renderAiedueKoreanTeacherShopManager(items = [], { embedded = false } = {}) {
     const rows = items.length ? items.map((item) => {
-        const imageSource = safeImageSource(item.imageUrl);
+        const imageSource = safeImageSource(item.displayImageUrl || item.imageUrl);
         const thumbnail = imageSource
             ? `<img src="${escapeHtml(imageSource)}" alt="" class="w-16 h-16 rounded-2xl object-cover bg-gray-100 shrink-0" onerror="this.style.display='none'">`
             : '<div class="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-3xl shrink-0" aria-hidden="true">🎁</div>';
@@ -4403,11 +4457,23 @@ function renderAiedueKoreanTeacherShop(items = []) {
 
 async function openAiedueKoreanTeacherShop() {
     if (currentUserRole !== 'teacher' || !currentUserId) return showModal('교사 계정으로 로그인해 주세요.');
+    const teacherId = currentUserId;
+    const requestId = ++aiedueKoreanTeacherShopRequestId;
     showKoreanShopModal('<div class="text-center py-8 font-black text-[#2c3e50]">교사 상점을 불러오는 중이에요...</div>');
+    const modalGeneration = aiedueKoreanShopEditorGeneration;
+    const requestIsCurrent = () => requestId === aiedueKoreanTeacherShopRequestId
+        && currentUserRole === 'teacher'
+        && currentUserId === teacherId
+        && auth.currentUser?.uid === teacherId
+        && aiedueKoreanShopEditorGeneration === modalGeneration;
     try {
-        const items = await loadAiedueKoreanTeacherShopItems();
+        const items = await loadAiedueKoreanTeacherShopItems(teacherId, { updateCache: false });
+        if (!requestIsCurrent()) return;
+        aiedueKoreanShopItemsCache.clear();
+        items.forEach((item) => aiedueKoreanShopItemsCache.set(item.id, item));
         showKoreanShopModal(renderAiedueKoreanTeacherShop(items));
     } catch (error) {
+        if (!requestIsCurrent()) return;
         console.error('teacher shop load failed', error);
         showModal('교사 상점 정보를 불러오지 못했어요.');
     }
@@ -4451,13 +4517,21 @@ window.openAiedueKoreanShop = async function() {
         return;
     }
     if (currentUserRole === 'teacher') {
+        aiedueKoreanStudentShopRequestId += 1;
         await openAiedueKoreanTeacherShop();
         return;
     }
+    const studentId = currentUserId;
+    const requestId = ++aiedueKoreanStudentShopRequestId;
+    const requestIsCurrent = () => loginSuccess
+        && currentUserRole === 'student'
+        && currentUserId === studentId
+        && requestId === aiedueKoreanStudentShopRequestId;
     showKoreanShopModal('<div class="text-center py-8 font-black text-[#2c3e50]">상점 물품을 불러오는 중이에요...</div>');
     try {
         aiedueKoreanShopItemsCache.clear();
-        const displayItems = await loadAiedueKoreanAssignedShopItems();
+        const displayItems = await loadAiedueKoreanAssignedShopItems({ studentId, requestId });
+        if (!requestIsCurrent()) return;
         const balance = currentUserBalance || currentUserCoins || 0;
         showKoreanShopModal(`
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 pr-10">
@@ -4467,6 +4541,7 @@ window.openAiedueKoreanShop = async function() {
             ${renderAiedueKoreanShopItems(displayItems)}
         `);
     } catch (error) {
+        if (!requestIsCurrent()) return;
         console.error('Aiedue Korean shop load failed', error);
         showModal('상점 물품을 불러오지 못했어요. 잠시 후 다시 눌러주세요.');
     }
@@ -5080,42 +5155,189 @@ async function refreshAiedueKoreanTeacherShopSurface() {
     await openAiedueKoreanTeacherShop();
 }
 
+function clearAiedueKoreanShopImagePreviewUrl() {
+    if (aiedueKoreanShopPreviewObjectUrl) URL.revokeObjectURL(aiedueKoreanShopPreviewObjectUrl);
+    aiedueKoreanShopPreviewObjectUrl = '';
+    const preview = document.getElementById('korean-shop-edit-image-preview');
+    if (preview) preview.dataset.objectUrl = '';
+}
+
+function updateAiedueKoreanShopImagePreview(file) {
+    const validation = validateTeacherShopImageFile(file);
+    const status = document.getElementById('korean-shop-edit-image-status');
+    const preview = document.getElementById('korean-shop-edit-image-preview');
+    const image = document.getElementById('korean-shop-edit-image-preview-img');
+    if (!validation.ok) {
+        clearAiedueKoreanShopImagePreviewUrl();
+        if (preview) preview.classList.add('hidden');
+        if (image) image.removeAttribute('src');
+        if (status) status.textContent = validation.error;
+        const input = document.getElementById('korean-shop-edit-image-file');
+        if (input) input.value = '';
+        return false;
+    }
+    clearAiedueKoreanShopImagePreviewUrl();
+    const objectUrl = URL.createObjectURL(file);
+    aiedueKoreanShopPreviewObjectUrl = objectUrl;
+    if (preview) {
+        preview.dataset.objectUrl = objectUrl;
+        preview.classList.remove('hidden');
+    }
+    if (image) image.src = objectUrl;
+    if (status) status.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)}MB · 저장하면 데이터 서버에 업로드됩니다.`;
+    const remove = document.getElementById('korean-shop-edit-image-remove');
+    if (remove) remove.checked = false;
+    return true;
+}
+
+window.triggerAiedueKoreanShopImageUpload = function triggerAiedueKoreanShopImageUpload() {
+    document.getElementById('korean-shop-edit-image-file')?.click();
+};
+
 window.openAiedueKoreanShopItemEditor = function(itemId = '') {
+    clearAiedueKoreanShopImagePreviewUrl();
     const item = getManageableAiedueKoreanShopItem(itemId);
     if (!item) return;
+    const previewSource = safeImageSource(item.displayImageUrl || item.imageUrl || '');
     showKoreanShopModal(`
         <div class="pr-10"><h3 class="text-2xl font-black text-[#2c3e50] mb-4">${itemId ? '상점 물품 수정' : '상점 물품 추가'}</h3>
         <div class="space-y-3">
+            <label class="block text-sm font-black text-gray-600" for="korean-shop-edit-name">물품 이름</label>
             <input id="korean-shop-edit-name" class="premium-input bg-white" placeholder="물품 이름" value="${escapeKoreanShopHtml(item?.name || '')}">
+            <label class="block text-sm font-black text-gray-600" for="korean-shop-edit-price">가격</label>
             <input id="korean-shop-edit-price" type="number" min="0" class="premium-input bg-white" placeholder="가격" value="${Number(item?.price || 0)}">
-            <input id="korean-shop-edit-image" class="premium-input bg-white" placeholder="이미지 URL" value="${escapeKoreanShopHtml(item?.imageUrl || '')}">
+            <div class="rounded-2xl border border-amber-100 bg-amber-50/50 p-3 space-y-2">
+                <div class="font-black text-[#2c3e50]">상품 이미지</div>
+                <label class="block text-xs font-bold text-gray-500" for="korean-shop-edit-image">이미지 URL을 사용하거나</label>
+                <input id="korean-shop-edit-image" type="url" class="premium-input bg-white" placeholder="https://... 이미지 URL" value="${escapeKoreanShopHtml(item?.imageUrl || '')}">
+                <input id="korean-shop-edit-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden">
+                <button type="button" class="btn-outline w-full py-2" onclick="triggerAiedueKoreanShopImageUpload()">내 기기에서 이미지 업로드</button>
+                <p class="text-xs text-gray-500">PNG, JPG, WebP, GIF · 최대 5MB · 파일을 선택하면 URL보다 우선합니다.</p>
+                <div id="korean-shop-edit-image-status" class="text-xs font-bold text-amber-700" role="status"></div>
+                <div id="korean-shop-edit-image-preview" class="${previewSource ? '' : 'hidden'} rounded-2xl overflow-hidden border border-amber-100 bg-white p-2">
+                    <img id="korean-shop-edit-image-preview-img" src="${escapeHtml(previewSource)}" alt="상품 이미지 미리보기" class="w-full h-40 object-contain rounded-xl bg-gray-50">
+                </div>
+                ${item?.imagePath ? '<label class="flex items-center gap-2 text-sm font-bold text-red-500"><input id="korean-shop-edit-image-remove" type="checkbox"> 기존 업로드 이미지 제거</label>' : ''}
+            </div>
+            <label class="block text-sm font-black text-gray-600" for="korean-shop-edit-desc">설명</label>
             <textarea id="korean-shop-edit-desc" class="premium-input bg-white min-h-[110px]" placeholder="설명">${escapeKoreanShopHtml(item?.description || '')}</textarea>
-            <button type="button" class="btn-primary w-full py-3" onclick="saveAiedueKoreanShopItem('${escapeInlineJsString(itemId)}')">저장</button>
+            <button id="korean-shop-edit-save" type="button" class="btn-primary w-full py-3" onclick="saveAiedueKoreanShopItem('${escapeInlineJsString(itemId)}')">저장</button>
         </div></div>`);
-}
+    document.getElementById('korean-shop-edit-image-file')?.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (file) updateAiedueKoreanShopImagePreview(file);
+    });
+};
 
 window.editAiedueKoreanShopItem = function(itemId) { openAiedueKoreanShopItemEditor(itemId); }
 
 window.saveAiedueKoreanShopItem = async function(itemId = '') {
-    if (!getManageableAiedueKoreanShopItem(itemId)) return;
-    const payload = {
-        name: document.getElementById('korean-shop-edit-name')?.value.trim() || '상점 물품',
-        price: Math.max(0, Math.floor(Number(document.getElementById('korean-shop-edit-price')?.value || 0))),
-        imageUrl: document.getElementById('korean-shop-edit-image')?.value.trim() || '',
-        description: document.getElementById('korean-shop-edit-desc')?.value.trim() || '',
-        teacherId: currentUserId,
-        teacherName: currentUserName || currentUserProfileSnapshot.userName || '선생님',
-        updatedAt: serverTimestamp()
-    };
+    const existingItem = getManageableAiedueKoreanShopItem(itemId);
+    if (!existingItem) return;
+    const operationKey = itemId || '__new-shop-item__';
+    if (aiedueKoreanShopSaveLocks.has(operationKey)) return;
+    aiedueKoreanShopSaveLocks.add(operationKey);
+    const operationTeacherId = currentUserId;
+    const operationTeacherName = currentUserName || currentUserProfileSnapshot.userName || '선생님';
+    const operationEditorGeneration = aiedueKoreanShopEditorGeneration;
+    const submittedName = document.getElementById('korean-shop-edit-name')?.value.trim() || '상점 물품';
+    const submittedPrice = Math.max(0, Math.floor(Number(document.getElementById('korean-shop-edit-price')?.value || 0)));
+    const submittedDescription = document.getElementById('korean-shop-edit-desc')?.value.trim() || '';
+    const operationIsCurrent = () => loginSuccess
+        && currentUserRole === 'teacher'
+        && currentUserId === operationTeacherId
+        && auth.currentUser?.uid === operationTeacherId
+        && aiedueKoreanShopEditorGeneration === operationEditorGeneration;
+    const itemReference = itemId ? doc(db, 'shopItems', itemId) : doc(collection(db, 'shopItems'));
+    const resolvedItemId = itemReference.id;
+    const file = document.getElementById('korean-shop-edit-image-file')?.files?.[0] || null;
+    const typedImageUrl = document.getElementById('korean-shop-edit-image')?.value.trim() || '';
+    const removeExistingImage = Boolean(document.getElementById('korean-shop-edit-image-remove')?.checked);
+    const status = document.getElementById('korean-shop-edit-image-status');
+    const saveButton = document.getElementById('korean-shop-edit-save');
+    if (!file && typedImageUrl && !safeImageSource(typedImageUrl)) {
+        aiedueKoreanShopSaveLocks.delete(operationKey);
+        if (status) status.textContent = '이미지 URL은 https:// 주소를 입력해 주세요.';
+        return;
+    }
+    let uploadedImagePath = '';
+    let nextImagePath = existingItem.imagePath || '';
+    let nextImageUrl = typedImageUrl;
+    if (!file && (typedImageUrl || removeExistingImage)) nextImagePath = '';
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = file ? '이미지 업로드 중...' : '저장 중...';
+    }
     try {
-        if (itemId) await setDoc(doc(db, 'shopItems', itemId), payload, { merge: true });
-        else await addDoc(collection(db, 'shopItems'), { ...payload, createdAt: serverTimestamp() });
-        await refreshAiedueKoreanTeacherShopSurface();
-    } catch (error) { console.error('shop item save failed', error); showModal('상점 물품 저장에 실패했어요.'); }
-}
+        if (file) {
+            const validation = validateTeacherShopImageFile(file);
+            if (!validation.ok) throw new Error(validation.error);
+            const token = `${Date.now().toString(36)}-${typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
+            uploadedImagePath = buildTeacherShopImagePath({ teacherId: operationTeacherId, itemId: resolvedItemId, token, extension: validation.extension });
+            await uploadBytes(storageRef(storage, uploadedImagePath), file, { contentType: file.type });
+            if (!operationIsCurrent()) throw new Error('로그인 계정이 바뀌어 저장을 중단했어요. 다시 로그인한 뒤 시도해 주세요.');
+            nextImagePath = uploadedImagePath;
+            nextImageUrl = '';
+            if (saveButton) saveButton.textContent = '상품 저장 중...';
+        }
+        if (!operationIsCurrent()) throw new Error('로그인 계정이 바뀌어 저장을 중단했어요. 다시 로그인한 뒤 시도해 주세요.');
+        const payload = {
+            name: submittedName,
+            price: submittedPrice,
+            imageUrl: nextImageUrl,
+            imagePath: nextImagePath,
+            description: submittedDescription,
+            teacherId: operationTeacherId,
+            teacherName: operationTeacherName,
+            updatedAt: serverTimestamp(),
+            ...(!itemId ? { createdAt: serverTimestamp() } : {})
+        };
+        await runTransaction(db, async (transaction) => {
+            const latestSnapshot = await transaction.get(itemReference);
+            if (itemId) {
+                if (!latestSnapshot.exists()) throw new Error('상점 물품이 이미 삭제되었어요. 목록을 다시 열어 주세요.');
+                const latestItem = latestSnapshot.data() || {};
+                if (latestItem.teacherId !== operationTeacherId) throw new Error('본인이 등록한 상점 물품만 수정할 수 있어요.');
+                if ((latestItem.imagePath || '') !== (existingItem.imagePath || '')) {
+                    throw new Error('다른 화면에서 이미지가 변경되었어요. 목록을 다시 열어 주세요.');
+                }
+            } else if (latestSnapshot.exists()) {
+                throw new Error('새 상품 ID가 이미 사용 중이에요. 다시 시도해 주세요.');
+            }
+            transaction.set(itemReference, payload, { merge: Boolean(itemId) });
+        });
+    } catch (error) {
+        if (uploadedImagePath) await deleteObject(storageRef(storage, uploadedImagePath)).catch(() => {});
+        console.error('shop item save failed', error);
+        if (status) status.textContent = error?.message || '상점 물품 저장에 실패했어요.';
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent = '저장';
+        }
+        aiedueKoreanShopSaveLocks.delete(operationKey);
+        return;
+    }
+    const previousImagePath = existingItem.imagePath || '';
+    if (previousImagePath && previousImagePath !== nextImagePath) {
+        await deleteManagedAiedueKoreanShopImage(previousImagePath, { teacherId: operationTeacherId, itemId: resolvedItemId }).catch((error) => {
+            console.warn('old shop item image cleanup failed', previousImagePath, error);
+        });
+    }
+    if (operationIsCurrent()) {
+        clearAiedueKoreanShopImagePreviewUrl();
+        try {
+            await refreshAiedueKoreanTeacherShopSurface();
+        } catch (error) {
+            console.error('shop surface refresh after save failed', error);
+            showModal('물품은 저장되었지만 목록을 새로 불러오지 못했어요. 상점을 다시 열어 주세요.');
+        }
+    }
+    aiedueKoreanShopSaveLocks.delete(operationKey);
+};
 
 window.deleteAiedueKoreanShopItem = async function(itemId) {
-    if (!getManageableAiedueKoreanShopItem(itemId)) return;
+    const item = getManageableAiedueKoreanShopItem(itemId);
+    if (!item) return;
     if (!confirm('이 상점 물품을 삭제할까요?')) return;
     try {
         await deleteDoc(doc(db, 'shopItems', itemId));
@@ -5124,6 +5346,11 @@ window.deleteAiedueKoreanShopItem = async function(itemId) {
             await Promise.allSettled(assignmentsSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
         } catch (cleanupError) {
             console.warn('assigned shop item cleanup failed', cleanupError);
+        }
+        if (item.imagePath) {
+            await deleteManagedAiedueKoreanShopImage(item.imagePath, { teacherId: currentUserId, itemId }).catch((cleanupError) => {
+                console.warn('shop item image cleanup failed', item.imagePath, cleanupError);
+            });
         }
         await refreshAiedueKoreanTeacherShopSurface();
     }
@@ -5141,6 +5368,7 @@ async function assignAiedueKoreanShopItemToStudent(item, student) {
         description: item.description || '',
         price: Number(item.price || 0),
         imageUrl: item.imageUrl || '',
+        imagePath: item.imagePath || '',
         teacherId: currentUserId,
         teacherName: currentUserName || '선생님',
         assignedAt: serverTimestamp()
@@ -21111,6 +21339,8 @@ window.testLoginTeacher = async function testLoginTeacher() {
 }
 
 window.showModal = function showModal(msg, options = {}) {
+    aiedueKoreanShopEditorGeneration += 1;
+    clearAiedueKoreanShopImagePreviewUrl();
     const message = document.getElementById('modal-message');
     const confirmBtn = document.getElementById('modal-confirm-btn');
     const icon = document.getElementById('modal-icon');
@@ -21131,6 +21361,8 @@ window.showModal = function showModal(msg, options = {}) {
 }
 
 window.handleModalConfirm = function handleModalConfirm() {
+    aiedueKoreanShopEditorGeneration += 1;
+    clearAiedueKoreanShopImagePreviewUrl();
     const modal = document.getElementById('result-modal');
     const plainClose = modal?.dataset?.plainClose === 'true';
     if (modal) {
