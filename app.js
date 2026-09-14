@@ -150,6 +150,7 @@ function getVisibleActivityRoute() {
 function hydrateActivityRouteSection(activityKey) {
     if (activityKey === 'drawing') {
         updateDrawingDashboardPreview();
+        maybeOpenDrawingTutorial();
     } else if (activityKey === 'hangul') {
         updateTodayKoreanPreview();
     } else if (activityKey === 'dictation') {
@@ -275,6 +276,146 @@ let activeLiteracyQuestion = null;
 let activeLiteracyDetectiveQuestion = null;
 let isLiteracyLimitBreakMode = false;
 let userLiteracyAnswerChecked = false;
+
+const DRAWING_TUTORIAL_STEPS = Object.freeze({
+    student: Object.freeze([
+        Object.freeze({ title: '반가워요! 에이두 그리기예요', message: '그림 미션에서는 주어진 주제를 자유롭게 그리고, 도형 미션에서는 선을 따라 정확하게 그려요. 하고 싶은 카드부터 눌러 시작해요!' }),
+        Object.freeze({ title: '색과 붓을 골라요', message: '작업실 왼쪽에서 색과 붓 크기를 고른 뒤 손가락, 펜, 마우스로 도화지에 그려요. 잘못 그렸다면 지우개나 지우기 버튼을 쓰면 돼요.' }),
+        Object.freeze({ title: '완성한 그림을 저장해요', message: '그림 미션은 저장하기, 도형 미션은 완료하기를 눌러 기록해요. 저장한 작품과 도형 정확도는 나의 그림에서 다시 볼 수 있어요.' }),
+        Object.freeze({ title: 'AI와 그림을 완성해요', message: 'AI 스케치북에서 도안을 고르고 그림을 더한 뒤 AI 생성을 눌러요. 완성된 작품은 자동으로 내 그림과 친구들 그림에 함께 저장돼요.' }),
+        Object.freeze({ title: '서로의 작품을 감상해요', message: '나의 그림에서는 내 성장 기록을 보고, 친구들 그림에서는 함께 저장된 작품을 감상할 수 있어요. 이제 멋진 그림을 시작해 볼까요?' })
+    ]),
+    teacher: Object.freeze([
+        Object.freeze({ title: '선생님용 그리기 안내예요', message: '그림 미션은 자유 표현, 도형 미션은 소근육 조절과 형태 정확도를 살피는 활동이에요. 학생의 목표에 맞는 활동을 먼저 시범 보여 주세요.' }),
+        Object.freeze({ title: '도구 사용을 짧게 시범 보여요', message: '색, 붓 크기, 지우개를 차례로 직접 보여 주고 학생이 입력 도구를 선택하게 해 주세요. 도형 미션에서는 결과보다 선을 따라가는 과정도 함께 관찰할 수 있어요.' }),
+        Object.freeze({ title: '저장 기록으로 성장을 확인해요', message: '학생이 저장하기 또는 완료하기를 누르면 작품과 도형 정확도가 기록돼요. 나의 그림과 교사 학생관리의 그리기 기록에서 누적 변화를 확인하세요.' }),
+        Object.freeze({ title: 'AI 스케치북을 수업에 활용해요', message: '학생의 원본 선을 먼저 충분히 표현하게 한 뒤 AI 생성을 사용해 보세요. 결과물은 자동 저장되므로 학생과 원본 생각과 완성 결과를 비교해 이야기할 수 있어요.' }),
+        Object.freeze({ title: '감상 대화를 이어 가요', message: '친구들 그림에서 서로의 작품을 보며 무엇을 그렸는지, 어떤 도구를 썼는지 말하게 해 보세요. 이제 수업 흐름에 맞춰 활동을 선택하면 됩니다.' })
+    ])
+});
+
+let drawingTutorialIndex = 0;
+let drawingTutorialActiveRole = 'student';
+let drawingTutorialReturnFocus = null;
+let drawingTutorialAutoTimer = null;
+const completedDrawingTutorials = new Set();
+
+function getDrawingTutorialRole() {
+    return currentUserRole === 'teacher' ? 'teacher' : 'student';
+}
+
+function getDrawingTutorialStorageKey() {
+    if (!currentUserId) return '';
+    return `aiedue-korean-drawing-tutorial-v1:${currentUserId}:${getDrawingTutorialRole()}`;
+}
+
+function hasCompletedDrawingTutorial() {
+    const key = getDrawingTutorialStorageKey();
+    return !key || completedDrawingTutorials.has(key);
+}
+
+function rememberDrawingTutorialCompletion() {
+    const key = getDrawingTutorialStorageKey();
+    if (key) completedDrawingTutorials.add(key);
+}
+
+function renderDrawingTutorial() {
+    const modal = document.getElementById('drawing-tutorial-modal');
+    const steps = DRAWING_TUTORIAL_STEPS[drawingTutorialActiveRole];
+    const step = steps[drawingTutorialIndex] || steps[0];
+    if (!modal || !step) return;
+    modal.dataset.role = drawingTutorialActiveRole;
+    const roleLabel = document.getElementById('drawing-tutorial-role');
+    const title = document.getElementById('drawing-tutorial-title');
+    const dialogue = document.getElementById('drawing-tutorial-dialogue');
+    const dots = document.getElementById('drawing-tutorial-dots');
+    const previous = document.getElementById('drawing-tutorial-prev-btn');
+    const next = document.getElementById('drawing-tutorial-next-btn');
+    if (roleLabel) roleLabel.textContent = drawingTutorialActiveRole === 'teacher' ? '선생님 튜토리얼' : '학생 튜토리얼';
+    if (title) title.textContent = step.title;
+    if (dialogue) dialogue.textContent = step.message;
+    if (dots) {
+        dots.innerHTML = steps.map((_, index) => `<span class="drawing-tutorial-dot${index === drawingTutorialIndex ? ' active' : ''}" aria-label="${index + 1}단계${index === drawingTutorialIndex ? ', 현재 단계' : ''}"></span>`).join('');
+    }
+    if (previous) previous.disabled = drawingTutorialIndex === 0;
+    if (next) next.textContent = drawingTutorialIndex === steps.length - 1 ? '시작하기' : '다음';
+}
+
+function ensureDrawingTutorialListeners() {
+    const modal = document.getElementById('drawing-tutorial-modal');
+    if (!modal || modal.dataset.listenersReady === 'true') return;
+    modal.dataset.listenersReady = 'true';
+    modal.querySelector('[data-drawing-tutorial-close]')?.addEventListener('click', () => window.closeDrawingTutorial());
+    modal.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            window.closeDrawingTutorial();
+            return;
+        }
+        if (event.key !== 'Tab') return;
+        const controls = Array.from(modal.querySelectorAll('button:not([disabled])')).filter((button) => button.offsetParent !== null);
+        if (!controls.length) return;
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+}
+
+window.openDrawingTutorial = function openDrawingTutorial() {
+    if (!loginSuccess || !currentUserId) return;
+    window.clearTimeout(drawingTutorialAutoTimer);
+    drawingTutorialAutoTimer = null;
+    const modal = document.getElementById('drawing-tutorial-modal');
+    if (!modal) return;
+    drawingTutorialReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    drawingTutorialActiveRole = getDrawingTutorialRole();
+    drawingTutorialIndex = 0;
+    ensureDrawingTutorialListeners();
+    renderDrawingTutorial();
+    modal.classList.remove('hidden');
+    document.body.classList.add('drawing-tutorial-open');
+    window.requestAnimationFrame(() => document.getElementById('drawing-tutorial-close-btn')?.focus());
+}
+
+window.moveDrawingTutorial = function moveDrawingTutorial(direction) {
+    const steps = DRAWING_TUTORIAL_STEPS[drawingTutorialActiveRole];
+    if (direction > 0 && drawingTutorialIndex >= steps.length - 1) {
+        window.closeDrawingTutorial();
+        return;
+    }
+    drawingTutorialIndex = Math.max(0, Math.min(steps.length - 1, drawingTutorialIndex + Math.sign(Number(direction) || 0)));
+    renderDrawingTutorial();
+}
+
+function dismissDrawingTutorial({ remember = true, restoreFocus = true } = {}) {
+    window.clearTimeout(drawingTutorialAutoTimer);
+    drawingTutorialAutoTimer = null;
+    const modal = document.getElementById('drawing-tutorial-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
+    document.body.classList.remove('drawing-tutorial-open');
+    if (remember) rememberDrawingTutorialCompletion();
+    if (restoreFocus && drawingTutorialReturnFocus?.isConnected) drawingTutorialReturnFocus.focus();
+    drawingTutorialReturnFocus = null;
+}
+
+window.closeDrawingTutorial = function closeDrawingTutorial() {
+    dismissDrawingTutorial();
+}
+
+function maybeOpenDrawingTutorial() {
+    window.clearTimeout(drawingTutorialAutoTimer);
+    drawingTutorialAutoTimer = null;
+    if (!loginSuccess || !currentUserId || hasCompletedDrawingTutorial()) return;
+    drawingTutorialAutoTimer = window.setTimeout(() => {
+        drawingTutorialAutoTimer = null;
+        const section = document.getElementById('drawing-activities-section');
+        if (loginSuccess && currentUserId && section && !section.classList.contains('hidden') && !hasCompletedDrawingTutorial()) {
+            window.openDrawingTutorial();
+        }
+    }, 520);
+}
 
 const KOREAN_ERROR_TYPES = {
     VOWEL: "vowel",
@@ -21057,6 +21198,7 @@ document.getElementById('class-management-modal').addEventListener('click', (e) 
 
 onAuthStateChanged(auth, async (user) => {
     if ((currentUserId || null) !== (user?.uid || null)) {
+        if (typeof dismissDrawingTutorial === 'function') dismissDrawingTutorial({ remember: false, restoreFocus: false });
         resetAiSketchbookForIdentityChange();
         setDrawingEvaluationState(false);
         window.stopWordCardTableGame?.();

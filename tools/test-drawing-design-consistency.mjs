@@ -43,6 +43,18 @@ assert.match(drawingDashboard, /그림을 AI와 같이 만들어보아요/);
 assert.match(drawingDashboard, /drawing-dashboard-content/);
 assert.doesNotMatch(drawingDashboard, /aiedu_hangul_logo\.webp[^>]*style="[^"]*width:/, 'dashboard logo width must remain responsive');
 
+assert.match(drawingDashboard, /id="drawing-tutorial-open-btn"[\s\S]*?onclick="openDrawingTutorial\(\)"/, 'drawing dashboard must keep a replayable tutorial button');
+assert.match(html, /id="drawing-tutorial-modal"[\s\S]*?role="dialog"[\s\S]*?aria-modal="true"/, 'drawing tutorial must use an accessible dialog');
+assert.match(html, /drawing-tutorial-character[\s\S]*?assets\/aiedue-literacy-detective\.webp/, 'tutorial must reuse an existing official Aiedue character asset');
+assert.match(html, /id="drawing-tutorial-dialogue"[\s\S]*?aria-live="polite"/, 'tutorial dialogue must announce each step');
+assert.match(app, /const DRAWING_TUTORIAL_STEPS = Object\.freeze\(\{[\s\S]*?student:[\s\S]*?teacher:/, 'tutorial must define distinct student and teacher tracks');
+assert.match(app, /function getDrawingTutorialRole\(\)[\s\S]*?currentUserRole === 'teacher'/, 'tutorial must select steps from the authenticated role');
+assert.match(app, /function getDrawingTutorialStorageKey\(\)[\s\S]*?currentUserId[\s\S]*?getDrawingTutorialRole/, 'first-run state must be scoped by user and role');
+assert.match(app, /const completedDrawingTutorials = new Set\(\)[\s\S]*?completedDrawingTutorials\.has\(key\)[\s\S]*?completedDrawingTutorials\.add\(key\)/, 'tutorial first-run state must stay scoped to the authenticated session without browser storage');
+assert.doesNotMatch(app, /localStorage/, 'the Korean site must not persist tutorial state in browser storage');
+assert.match(app, /maybeOpenDrawingTutorial/, 'drawing entry must support first-run tutorial display');
+assert.match(app, /closeDrawingTutorial\(\)[\s\S]*?drawingTutorialReturnFocus/, 'tutorial close must restore focus');
+
 assert.match(css, /\.drawing-branded-section\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{[\s\S]*?margin-top:\s*0;/);

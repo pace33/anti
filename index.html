@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260912-drawing-brand-v147">
+    <meta name="aiedue-korean-build" content="20260914-drawing-tutorial-v148">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260914-syllable-reader-tab-v2">
+    <link rel="stylesheet" href="app.css?v=20260914-drawing-tutorial-v148">
     <link rel="stylesheet" href="shape-zoo.css?v=20260914-stage-game-reports-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260914-time-quiz-tablet-v1">
@@ -269,6 +269,7 @@
                 </div>
                 <button type="button" id="stage-1-game-shape" data-stage-game-entry="1" class="stage-header-game-button pointer-events-auto" onclick="openAiedueLabShapeZoo()" aria-label="1단계 게임 도형 동물원 열기"><span class="stage-header-game-icon" aria-hidden="true">🦁</span><span><strong>도형 동물원</strong><small>도형을 그려 동물 친구를 완성해요</small></span></button>
                 </div>
+                <button type="button" id="drawing-tutorial-open-btn" class="drawing-tutorial-open-button pointer-events-auto" onclick="openDrawingTutorial()" aria-label="에이두 그리기 튜토리얼 다시 보기"><span aria-hidden="true">💬</span><span><strong>튜토리얼</strong><small>에이두에게 사용법을 들어요</small></span></button>
             </div>
 
             <div class="drawing-dashboard-content w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
@@ -1762,6 +1763,32 @@
         </main>
     </section>
 
+    <!-- [에이두 그리기: 역할별 대화형 튜토리얼 · viewport 최상위] -->
+    <div id="drawing-tutorial-modal" class="drawing-tutorial-modal hidden" role="dialog" aria-modal="true" aria-labelledby="drawing-tutorial-title" aria-describedby="drawing-tutorial-dialogue">
+        <div class="drawing-tutorial-backdrop" data-drawing-tutorial-close aria-hidden="true"></div>
+        <div class="drawing-tutorial-card" tabindex="-1">
+            <button type="button" id="drawing-tutorial-close-btn" class="drawing-tutorial-close" onclick="closeDrawingTutorial()" aria-label="튜토리얼 닫기">×</button>
+            <div class="drawing-tutorial-scene">
+                <div class="drawing-tutorial-character" role="img" aria-label="새싹후드를 입은 에이두 캐릭터">
+                    <img src="assets/aiedue-literacy-detective.webp" width="896" height="1195" alt="">
+                </div>
+                <div class="drawing-tutorial-chat">
+                    <div class="drawing-tutorial-role" id="drawing-tutorial-role">학생 튜토리얼</div>
+                    <h2 id="drawing-tutorial-title">에이두 그리기 사용법</h2>
+                    <p id="drawing-tutorial-dialogue" aria-live="polite">에이두와 함께 그리기를 시작해 볼까요?</p>
+                </div>
+            </div>
+            <div id="drawing-tutorial-dots" class="drawing-tutorial-dots" aria-label="튜토리얼 진행 단계"></div>
+            <div class="drawing-tutorial-actions">
+                <button type="button" id="drawing-tutorial-skip-btn" class="drawing-tutorial-skip" onclick="closeDrawingTutorial()">건너뛰기</button>
+                <div>
+                    <button type="button" id="drawing-tutorial-prev-btn" class="drawing-tutorial-secondary" onclick="moveDrawingTutorial(-1)">이전</button>
+                    <button type="button" id="drawing-tutorial-next-btn" class="drawing-tutorial-next" onclick="moveDrawingTutorial(1)">다음</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- [에이두 도서관: AI 동화책 · 등장인물 사전 · 두 쪽 펼침 뷰어] -->
     <div id="aiedue-library-modal" class="aiedue-library-modal hidden" role="dialog" aria-modal="true" aria-labelledby="aiedue-library-title" aria-hidden="true">
         <section class="aiedue-library-shell" aria-live="polite">
@@ -1787,7 +1814,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260914-syllable-reader-tab-v2"></script>
+    <script type="module" src="app.js?v=20260914-drawing-tutorial-v148"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>
