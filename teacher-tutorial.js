@@ -39,14 +39,17 @@ export function installTeacherTutorial(actions) {
     }
     function measureTargets() {
         const width = window.innerWidth, height = window.innerHeight;
-        const guideTop = $('.teacher-tour-guide').getBoundingClientRect().top;
+        const bubble = $('.teacher-tour-bubble').getBoundingClientRect();
+        const upperDialogue = dialog.dataset.dialoguePosition === 'top';
         return (view?.step.targets || []).map(selector => {
             const node = document.querySelector(selector);
             if (!node || !node.getClientRects().length || getComputedStyle(node).visibility === 'hidden') return null;
             const r = node.getBoundingClientRect();
             // Clip highlights to their scroll containers and keep dialogue readable.
             let left = Math.max(4, r.left - 5), top = Math.max(4, r.top - 5);
-            let right = Math.min(width - 4, r.right + 5), bottom = Math.min(guideTop - 8, r.bottom + 5);
+            let right = Math.min(width - 4, r.right + 5), bottom = Math.min(height - 4, r.bottom + 5);
+            if (upperDialogue) top = Math.max(top, bubble.bottom + 8);
+            else bottom = Math.min(bottom, bubble.top - 8);
             for (let parent = node.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
                 const css = getComputedStyle(parent), box = parent.getBoundingClientRect();
                 if (/(auto|scroll|hidden|clip)/.test(css.overflowY)) { top = Math.max(top, box.top); bottom = Math.min(bottom, box.bottom); }
@@ -58,7 +61,16 @@ export function installTeacherTutorial(actions) {
     function layout() {
         frame = 0;
         if (!view?.active) return;
-        const space = Math.ceil($('.teacher-tour-guide').getBoundingClientRect().height + 48);
+        // Use the same inner frame as the HUD, even when the app is centered
+        // within a larger browser window. The guide keeps one fixed layout.
+        const appFrame = document.getElementById('main-container');
+        const bounds = appFrame.getBoundingClientRect(), css = getComputedStyle(appFrame);
+        const left = Math.max(0, bounds.left + parseFloat(css.borderLeftWidth));
+        const top = Math.max(0, bounds.top + parseFloat(css.borderTopWidth));
+        const right = Math.min(window.innerWidth, bounds.right - parseFloat(css.borderRightWidth));
+        const bottom = Math.min(window.innerHeight, bounds.bottom - parseFloat(css.borderBottomWidth));
+        Object.assign($('.teacher-tour-guide').style, { left: `${left}px`, top: `${top}px`, width: `${right-left}px`, height: `${bottom-top}px` });
+        const space = Math.ceil(Math.max($('.teacher-tour-bubble').getBoundingClientRect().height, 194) + 48);
         const value = `${space}px`;
         if (document.body.style.getPropertyValue('--teacher-tour-space') !== value) document.body.style.setProperty('--teacher-tour-space', value);
         const rects = view.busy ? [] : measureTargets();
@@ -100,6 +112,7 @@ export function installTeacherTutorial(actions) {
         view = state;
         if (!state.active) return;
         dialog.dataset.step = state.step.id;
+        dialog.dataset.dialoguePosition = ['experience', 'level-up', 'rewards'].includes(state.step.id) ? 'top' : 'bottom';
         document.body.dataset.teacherTourStep = state.step.id;
         $('.teacher-tour-line').textContent = state.step.text;
         $('.teacher-tour-character').src = `assets/onboarding/aiedue-${state.step.pose}.webp`;
@@ -127,7 +140,7 @@ export function installTeacherTutorial(actions) {
             document.body.style.setProperty('--teacher-tour-space', '230px');
             dialog.showModal();
             resizeObserver = new ResizeObserver(scheduleLayout);
-            resizeObserver.observe($('.teacher-tour-guide')); resizeObserver.observe(document.body);
+            resizeObserver.observe($('.teacher-tour-bubble')); resizeObserver.observe(document.getElementById('main-container'));
             mutationObserver = new MutationObserver(records => {
                 if (records.some(record => !dialog.contains(record.target))) scheduleLayout();
             });

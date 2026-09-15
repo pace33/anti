@@ -16,7 +16,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
-import { installTeacherTutorial } from './teacher-tutorial.js?v=20260915-v1';
+import { installTeacherTutorial } from './teacher-tutorial.js?v=20260915-frame-v2';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs';
 import { createClassroomService } from './classroom-service.js';
 import { createAieduLoading } from './aiedu-loading.js';
