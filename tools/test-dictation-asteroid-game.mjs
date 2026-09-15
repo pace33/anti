@@ -27,10 +27,10 @@ function section(source, start, end) {
     return source.slice(from, to);
 }
 
-test('연구실 허브에서 낱말 우주 방어 게임을 연다', () => {
-    const lab = section(app, 'window.openAiedueLab =', 'window.openAiedueLabTimeQuiz');
-    assert.ok(lab.includes('낱말 우주 방어대'));
-    assert.ok(lab.includes('openAiedueLabDictationGame()'));
+test('2단계에서 낱말 우주 방어 게임을 연다', () => {
+    const stage = section(html, 'id="hangul-activities-section"', 'id="learning-start-section"');
+    assert.ok(stage.includes('낱말 우주 방어대'));
+    assert.ok(stage.includes('openAiedueLabDictationGame()'));
     assert.ok(app.includes('window.setupAsteroidTraceCanvas'));
     assert.ok(app.includes("'dictation-asteroid-game-section'"));
 });

@@ -165,9 +165,9 @@ test('catalog and storage failures propagate without alternate data or image sou
 test('the stage-3 lab action is allowlisted, launches the controller, and registers its section and assets', () => {
     const allowlist = between('const SAFE_MODAL_ACTIONS', 'function isSafeModalAction');
     assert.match(allowlist, /'openAiedueLabWordCardGame'/);
-    const lab = between('window.openAiedueLab =', 'window.openAiedueLabDictationGame =');
-    assert.match(lab, /onclick="openAiedueLabWordCardGame\(\)"/);
-    assert.match(lab, /단어 카드 한 판/); assert.match(lab, /한글 3단계/);
+    const stage = html.slice(html.indexOf('id="dictation-activities-section"'), html.indexOf('id="literacy-activities-section"'));
+    assert.match(stage, /onclick="openAiedueLabWordCardGame\(\)"/);
+    assert.match(stage, /단어 카드 한 판/);
     let launched = 0;
     const launcher = { window: { openWordCardTableGame: () => { launched += 1; } } };
     vm.runInNewContext(between('window.openAiedueLabWordCardGame =', 'window.openAiedueLabTimeQuiz ='), launcher);
