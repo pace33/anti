@@ -11,7 +11,6 @@ export function createExperienceGauge(hud, {
     const status = hud.querySelector('.rpg-experience-status');
     let account, target = null, frame = null, active = null;
     const queue = [];
-    const format = value => String(Number(value.toFixed(3)));
 
     function render(total, full = false) {
         const level = Math.floor(total / 100) + (full ? 0 : 1);
@@ -19,7 +18,7 @@ export function createExperienceGauge(hud, {
         meter.style.setProperty('--experience', `${progress}%`);
         percent.textContent = `${Math.floor(progress)}%`;
         levelLabel.textContent = level;
-        meter.setAttribute('aria-valuenow', format(progress));
+        meter.setAttribute('aria-valuenow', String(Math.floor(progress)));
         meter.setAttribute('aria-valuetext', `레벨 ${level}, 경험치 ${Math.floor(progress)}%`);
     }
 
@@ -51,10 +50,12 @@ export function createExperienceGauge(hud, {
         }
         const elapsed = now - active.start;
         if (active.phase === 'gain') {
-            const p = Math.min(1, elapsed / 650);
-            gain.style.opacity = String(p < .2 ? p / .2 : p < .55 ? 1 : (1 - p) / .45);
-            gain.style.transform = `translate(-50%, ${-55 + 94 * Math.max(0, (p - .4) / .6)}px) scale(${1 - .45 * p})`;
-            if (p === 1) {
+            // Leave time to read the reward before it travels into the circle.
+            const travel = Math.min(1, Math.max(0, (elapsed - 900) / 700));
+            const easedTravel = travel * travel * (3 - 2 * travel);
+            gain.style.opacity = String(Math.min(1, elapsed / 200) * (1 - Math.max(0, (travel - .6) / .4)));
+            gain.style.transform = `translate(-50%, ${-55 + 94 * easedTravel}px) scale(${1 - .45 * easedTravel})`;
+            if (travel === 1) {
                 gain.hidden = true;
                 hud.classList.add('experience-received');
                 active.phase = 'fill';

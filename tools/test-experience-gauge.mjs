@@ -34,7 +34,7 @@ test('initial/account snapshots render immediately without a reward', () => {
 test('fractional rewards keep precise fill while all visible numbers are integers', () => {
     const f = fixture(); f.gauge.update('a', 1, 10); f.gauge.update('a', 1, 10.25); f.step(0);
     assert.equal(f.nodes.get('.rpg-experience-gain').textContent, '+1% 미만'); assert.equal(f.percent, '10%');
-    f.step(650); f.step(400);
+    f.step(1600); f.step(400);
     const meter = f.nodes.get('.rpg-experience-circle');
     assert.ok(parseFloat(meter.style['--experience']) > 10 && parseFloat(meter.style['--experience']) < 10.25);
     assert.equal(f.percent, '10%');
@@ -43,7 +43,7 @@ test('fractional rewards keep precise fill while all visible numbers are integer
 });
 test('level-up visibly reaches 100 before resetting and filling the remainder', () => {
     const f = fixture(); f.gauge.update('a', 7, 95); f.gauge.update('a', 8, 7);
-    f.step(0); f.step(650); f.step(800);
+    f.step(0); f.step(1600); f.step(800);
     assert.equal(f.percent, '100%'); assert.equal(f.level, 7);
     f.step(220); assert.equal(f.percent, '0%'); assert.equal(f.level, 8);
     f.drain(); assert.equal(f.percent, '7%');
@@ -76,4 +76,32 @@ test('99.999 percent never displays a premature level-up', () => {
     assert.equal(f.percent, '99%'); assert.equal(f.level, 7);
     f.gauge.update('a', 8, 0); f.drain();
     assert.equal(f.percent, '0%'); assert.equal(f.level, 8);
+});
+
+test('the reward remains readable before a slower flight into the circle', () => {
+    const f = fixture(); f.gauge.update('a', 1, 20); f.gauge.update('a', 1, 25); f.step(0);
+    const gain = f.nodes.get('.rpg-experience-gain');
+    f.step(650);
+    assert.equal(gain.hidden, false); assert.equal(gain.style.opacity, '1');
+    assert.equal(gain.textContent, '+5%'); assert.equal(f.percent, '20%');
+    const restingTransform = gain.style.transform;
+    f.step(250); assert.equal(gain.style.transform, restingTransform);
+    f.step(350); assert.notEqual(gain.style.transform, restingTransform);
+    assert.equal(gain.style.opacity, '1'); assert.equal(gain.hidden, false);
+    f.step(350); assert.equal(gain.hidden, true);
+    f.drain(); assert.equal(f.percent, '25%');
+});
+
+test('every animation frame exposes integer progress and reward text', () => {
+    const f = fixture(); f.gauge.update('a', 1, 95.123); f.gauge.update('a', 2, 8.456);
+    const meter = f.nodes.get('.rpg-experience-circle');
+    for (let i = 0; f.frames.size && i < 300; i++) {
+        f.step(20);
+        assert.match(f.percent, /^\d+%$/);
+        assert.match(meter.attributes['aria-valuenow'], /^\d+$/);
+        assert.doesNotMatch(meter.attributes['aria-valuetext'], /\d\.\d/);
+        assert.equal(f.nodes.get('.rpg-experience-gain').textContent, '+13%');
+    }
+    assert.equal(f.frames.size, 0); assert.equal(f.percent, '8%');
+    assert.ok(Math.abs(parseFloat(meter.style['--experience']) - 8.456) < .00001);
 });
