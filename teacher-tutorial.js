@@ -6,7 +6,8 @@ export function installTeacherTutorial(actions, options = {}) {
     dialog.id = options.id || 'teacher-tutorial';
     dialog.className = 'teacher-tutorial';
     dialog.setAttribute('aria-labelledby', `${dialog.id}-title`);
-    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-modal', String(!options.interactive));
+    if (options.interactive) dialog.classList.add('stage-tour-interactive');
     dialog.innerHTML = `
         <div class="teacher-tour-shade" aria-hidden="true"></div>
         <div class="teacher-tour-highlights"></div>
@@ -34,7 +35,7 @@ export function installTeacherTutorial(actions, options = {}) {
         // Native student/currency dialogs also occupy the top layer. Reinsert the
         // guide last so its dialogue remains above them and they stay inert.
         if (dialog.open) dialog.close();
-        dialog.showModal();
+        if (options.interactive) dialog.show(); else dialog.showModal();
         next.focus({ preventScroll: true });
     }
     function roundedHole({ x, y, width, height }, radius = 12) {
@@ -81,7 +82,7 @@ export function installTeacherTutorial(actions, options = {}) {
         const targetHadFocus = highlights.contains(document.activeElement);
         highlights.replaceChildren();
         for (const rect of rects) {
-            const clickable = Boolean(view.step.click && !view.error);
+            const clickable = Boolean(view.step.click && !view.step.interact && !view.error);
             const mark = document.createElement(clickable ? 'button' : 'div');
             mark.className = `teacher-tour-highlight${clickable ? ' teacher-tour-target' : ''}`;
             Object.assign(mark.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px` });
@@ -94,6 +95,7 @@ export function installTeacherTutorial(actions, options = {}) {
         if (targetHadFocus || (!view.busy && view.step.click && previousIndex !== view.index)) {
             highlights.querySelector('button')?.focus({ preventScroll: true });
         }
+        options.layout?.(view, dialog);
         if (!view.busy) previousIndex = view.index;
         const missing = !view.busy && !view.error && rects.length < view.step.targets.length;
         next.disabled = view.busy || Boolean(view.step.click && !view.error) || missing;
@@ -140,7 +142,7 @@ export function installTeacherTutorial(actions, options = {}) {
             savedFocus = document.activeElement; snapshot = actions.capture(); previousIndex = -1;
             document.body.classList.add('teacher-tour-open');
             document.body.style.setProperty('--teacher-tour-space', '230px');
-            dialog.showModal();
+            if (options.interactive) dialog.show(); else dialog.showModal();
             resizeObserver = new ResizeObserver(scheduleLayout);
             resizeObserver.observe($('.teacher-tour-bubble')); resizeObserver.observe(document.getElementById('main-container'));
             mutationObserver = new MutationObserver(records => {

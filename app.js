@@ -17,8 +17,8 @@ import {
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260915-stage-guides-v4';
-import { installStageTutorial } from './stage-tutorial.js?v=20260915-v1';
-import { STAGE_TUTORIALS } from './stage-tutorial-core.mjs';
+import { installStageTutorial } from './stage-tutorial.js?v=20260915-real-tour-v2';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260915-real-tour-v2';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260915-stage-guides-v3';
 import { createClassroomService } from './classroom-service.js';
 import { createAieduLoading } from './aiedu-loading.js';
@@ -7989,15 +7989,17 @@ window.completeTodayDrawingMission = async function() {
     }
 }
 
-window.openFriendsDrawingGallery = async function() {
+window.openFriendsDrawingGallery = async function(options = {}) {
     let firebaseDrawings = [];
     try {
         firebaseDrawings = await loadFriendsDrawingsFromFirebase();
     } catch (error) {
         console.error('Failed to load friends drawing gallery', error);
+        if (options.isCurrent && !options.isCurrent()) return;
         showModal('친구들 그림을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
         return;
     }
+    if (options.isCurrent && !options.isCurrent()) return;
     const localWorks = (drawingPortfolio.free || []).map((item) => ({ ...item, userName: currentUserName, userIcon: currentUserIcon, kind: item.kind || 'sketchbook' }));
     const mergedMap = new Map();
     firebaseDrawings.forEach((item) => addDrawingGalleryItem(mergedMap, item, 'shared'));
@@ -9378,6 +9380,11 @@ async function gradeCurricularCanvasItemWithAi(index) {
     }
 }
 window.confirmCurricularCanvasItem = function(index) {
+    if (activeDictationSession?.tutorial && activeDictationSession.kind === 'mission') {
+        const status = document.getElementById(`curricular-trace-status-${index}`);
+        if (status) status.textContent = '체험 중에는 AI 채점과 기록 저장을 하지 않아요.';
+        return;
+    }
     if (activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular') {
         gradeCurricularCanvasItemWithAi(index);
         return;
@@ -11213,7 +11220,7 @@ async function getSharedBankProblems(difficulty) {
     }
 }
 
-window.openLiteracyLimitBreak = async function() {
+window.openLiteracyLimitBreak = async function(options = {}) {
     showActivityLoading();
     let currentDifficulty = 'easy';
 
@@ -11275,7 +11282,7 @@ window.openLiteracyLimitBreak = async function() {
         showActivityLoading();
         const content = await renderLimitBreakModalContent(diff);
         hideActivityLoading();
-        showModal(content);
+        if (!options.isCurrent || options.isCurrent()) showModal(content);
     };
 
     window.startLimitBreakChallenge = async function(diff) {
@@ -11294,7 +11301,7 @@ window.openLiteracyLimitBreak = async function() {
 
     const initialContent = await renderLimitBreakModalContent('easy');
     hideActivityLoading();
-    showModal(initialContent);
+    if (!options.isCurrent || options.isCurrent()) showModal(initialContent);
 };
 
 window.openTodayLiteracyMission = function() {
@@ -12066,6 +12073,17 @@ function applyCommittedLiteracyAttempt(committed) {
 }
 
 async function showLiteracyResult(isCorrect, details) {
+    if (activeLiteracyQuestion?.tutorial) {
+        setLiteracyCompanionState(isCorrect ? 'correct' : 'incorrect');
+        document.getElementById('literacy-feedback-container').classList.remove('hidden');
+        const title = document.getElementById('literacy-feedback-title');
+        title.textContent = isCorrect ? '⭕ 정답입니다! · 체험' : '다시 지문을 살펴봐요 · 체험';
+        title.className = `text-2xl font-black ${isCorrect ? 'text-green-600' : 'text-orange-600'}`;
+        document.getElementById('literacy-feedback-detail').textContent = `선택한 답: ${details.userAnswerText} / 정답: ${details.correctAnswerText}`;
+        document.getElementById('literacy-feedback-explanation').textContent = activeLiteracyQuestion.explanation;
+        userLiteracyAnswerChecked = false;
+        return true;
+    }
     const answeredQuestion = activeLiteracyQuestion;
     const displayDetails = Object.freeze({
         score: normalizeLiteracyScore(details.score),
@@ -12359,6 +12377,10 @@ function initializeLetterWritingActivity() {
     }
 
     async function gradeCompletedWriting({ targetCanvas, button, feedback, reward, attempt }) {
+        if (stageTutorial?.state().active) {
+            feedback.textContent = isTraceWritingComplete(targetCanvas) ? '획을 모두 따라 썼어요! 안내 중에는 경험치와 기록을 저장하지 않아요.' : '주황색 획을 차례대로 따라 써 보세요.';
+            return false;
+        }
         if (!isTraceWritingComplete(targetCanvas)) {
             feedback.className = 'text-center text-xl font-black mt-3 min-h-[2rem] text-orange-500';
             feedback.textContent = '주황색 획을 순서대로 모두 따라 쓴 뒤 채점해 주세요.';
@@ -23360,35 +23382,118 @@ window.openStageTutorial = function(level) {
     teacherTutorial?.stop(); window.stopStageTutorial();
     window.clearTimeout(studentOnboardingAutoTimer); studentOnboardingAutoTimer = null;
     const session = stageTutorialSession();
+    let running = true;
     const assertCurrent = () => {
-        if (stageTutorialSession() !== session || (currentUserRole === 'student' && !unlockedLevels.includes(level))) throw new Error('로그인 또는 단계 이용 권한이 바뀌었어요. 안내를 닫고 다시 시작해 주세요.');
+        if (!running || stageTutorialSession() !== session || (currentUserRole === 'student' && !unlockedLevels.includes(level))) throw new Error('로그인 또는 단계 이용 권한이 바뀌었어요. 안내를 닫고 다시 시작해 주세요.');
     };
-    let ownsModal = false;
-    function closePreviewModal() { if (ownsModal) { window.closeAiedueKoreanModal(); ownsModal = false; } }
-    const permittedViews = new Set(['drawing-workspace-section', 'my-drawing-section', 'reading-practice-section', 'letter-writing-section', 'my-korean-section', 'dictation-workspace-section', 'my-dictation-section', 'literacy-workspace-section']);
+    let view = '', ownsModal = false, ownsCamera = false, ownsLibrary = false, ownsRepository = false;
+    const originals = { dictation: activeDictationSession, dictationItem: activeDictationItem, literacy: activeLiteracyQuestion,
+        checked: userLiteracyAnswerChecked, limit: isLiteracyLimitBreakMode, reading: activeReadingCategory, slow: readingSlowMode };
+    const closeScreens = () => {
+        if (ownsModal) { window.closeAiedueKoreanModal(); ownsModal = false; }
+        if (ownsCamera) {
+            const modal = document.getElementById('word-bank-camera-modal');
+            modal.classList.add('hidden'); modal.setAttribute('aria-hidden', 'true'); ownsCamera = false;
+            document.body.classList.remove('modal-open');
+        }
+        if (ownsLibrary) { window.closeAiedueLibrary(); ownsLibrary = false; }
+        if (ownsRepository) { window.closeSharedWordCardModal(); ownsRepository = false; }
+    };
+    async function openView(next) {
+        assertCurrent();
+        if (view === next) return;
+        closeScreens(); clearReadingSpeechState(); cancelSpeech();
+        view = '';
+        if (next === 'dashboard') showDashboardOnly();
+        else if (next === 'hub') { showTopLevelSection(info.section); hydrateActivityRouteSection(info.route); }
+        else if (['drawing', 'shape', 'sketch'].includes(next)) {
+            if (drawingEraserMode) window.toggleDrawingEraser();
+            ({ drawing: window.openCurrentDrawingMission, shape: window.openTodayDrawingActivity, sketch: window.openSketchbookActivity })[next]();
+        } else if (next === 'drawings') window.openMyDrawingFromDashboard();
+        else if (next === 'friends') { ownsModal = true; await window.openFriendsDrawingGallery({ isCurrent: () => running && stageTutorialSession() === session }); }
+        else if (next === 'zoo') window.openAiedueLabShapeZoo();
+        else if (next === 'today') {
+            if (currentLearningStep >= 33) window.openLearningDetailActivity(1); else window.openTodayKoreanActivity();
+        } else if (next === 'korean') window.openMyKoreanFromDashboard();
+        else if (next === 'reading') {
+            activeReadingCategory = 'basic';
+            if (readingSlowMode) window.toggleReadingSlowMode();
+            window.openReadingPracticeActivity();
+        } else if (next === 'writing') window.openLetterWritingActivity();
+        else if (next === 'sound-game') window.openHangulGameActivity();
+        else if (next === 'space') window.openAiedueLabDictationGame();
+        else if (next === 'photo' || next === 'mission-photo') {
+            // Show the actual photo dialog without requesting a camera or uploading data.
+            resetWordBankCameraModal();
+            const modal = document.getElementById('word-bank-camera-modal');
+            modal.querySelector('h3').textContent = next === 'mission-photo' ? '교과 맞춤쓰기 노트 사진' : '단어 은행 사진 찍기';
+            document.getElementById('word-bank-camera-status').textContent = '안내 중 · 실제 촬영은 튜토리얼을 마친 뒤 이용해요.';
+            modal.classList.remove('hidden'); modal.setAttribute('aria-hidden', 'false'); ownsCamera = true;
+        } else if (next === 'bank') { ownsModal = true; window.openDictationBankModal(); }
+        else if (next === 'trace' || next === 'dictate') {
+            const trace = next === 'trace';
+            configureDictationWorkspace({ tutorial: true, kind: trace ? 'trace' : 'mission', mode: 'curricular',
+                marker: trace ? CURRICULAR_TRACE_CANVAS_MARKER : CURRICULAR_AI_CANVAS_GRADING_MARKER, difficulty: 1,
+                items: [{ word: '나무', sentence: '나무', answer: '나무', audioText: '나무', canvasGuide: trace ? '나무' : '', displayText: trace ? '나무' : 'OO', difficulty: 1, coverage: 0, traceComplete: false }],
+                currentIndex: 0, graded: null, saved: false, startedAt: new Date().toISOString()
+            }, { badge: '사용법 체험 · 기록 저장 안 함', title: trace ? '단어 따라쓰기 체험' : '1단 단어 받아쓰기 체험', desc: '실제 쓰기 도구를 나무 한 단어로 사용해 봐요.' });
+        } else if (next === 'review') { ownsModal = true; window.openDictationPracticeActivity(); }
+        else if (next === 'dictation-record') window.openMyDictationFromDashboard();
+        else if (next === 'literacy') setupLiteracyWorkspace({ ...STAGE_TUTORIAL_QUESTION, options: [...STAGE_TUTORIAL_QUESTION.options] });
+        else if (next === 'limit') { ownsModal = true; await window.openLiteracyLimitBreak({ isCurrent: () => running && stageTutorialSession() === session }); }
+        else if (next === 'literacy-record') { ownsModal = true; window.openMyLiteracyRecord(); }
+        else if (next === 'repository') { ownsRepository = true; await window.openSharedWordCardRepository(info.route); }
+        else if (next === 'library') { ownsLibrary = true; await window.openAiedueLibrary(); }
+        else if (next === 'word-game') window.openAiedueLabWordCardGame();
+        else if (next === 'detective') window.openLiteracyAdventureGame();
+        else throw new Error('안내 화면을 찾지 못했어요.');
+        assertCurrent();
+        view = next;
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
     stageTutorial = installStageTutorial({
         session: () => stageTutorialSession() === session && (currentUserRole === 'teacher' || unlockedLevels.includes(level)) ? session : null,
         capture: () => ({ collapsed: document.getElementById('aiedue-rpg-hud').classList.contains('rpg-collapsed') }),
         async prepare(step) {
-            assertCurrent(); closePreviewModal(); cancelSpeech();
-            if (step.view === 'dashboard') showDashboardOnly();
-            else if (step.view === 'hub') { showTopLevelSection(info.section); hydrateActivityRouteSection(info.route); }
-            else if (step.view === 'reading') window.openReadingPracticeActivity();
-            else if (step.view === 'my-dictation-section') window.openMyDictationFromDashboard();
-            else if (step.view === 'bank') { window.openDictationBankModal(); ownsModal = true; }
-            else if (step.view === 'literacy-record') { window.openMyLiteracyRecord(); ownsModal = true; }
-            else if (permittedViews.has(step.view)) showTopLevelSection(step.view);
-            else throw new Error('안내 화면을 찾지 못했어요.');
-            await new Promise(resolve => requestAnimationFrame(resolve));
             assertCurrent();
-            if (step.targets.length) document.querySelector(step.targets[0])?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+            await openView(step.view);
+            if (step.id.endsWith('-practice-view')) step.targets = [document.getElementById('result-modal').classList.contains('hidden') ? '#dictation-session-list' : '#modal-message'];
+            // Tabs stay where the preceding actual button moved them. Restore a
+            // tab when going backwards so targets never point at hidden panels.
+            if (/(read-card|slow|slow-card)$/.test(step.id) && activeReadingCategory !== 'basic') document.getElementById('reading-tab-basic').click();
+            if (step.id.endsWith('-slow') && readingSlowMode) window.toggleReadingSlowMode();
+            if (/custom-(view|sample|play)$/.test(step.id) && activeReadingCategory !== 'custom') document.getElementById('reading-tab-custom').click();
+            if (step.view === 'writing') {
+                const category = /sentence-view$/.test(step.id) ? 'sentence' : /word-view$|sentence-tab$/.test(step.id) ? 'word' : 'letter';
+                document.querySelector(`.letter-top-btn[data-category="${category}"]`)?.click();
+                await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+            assertCurrent();
+            document.querySelector(step.targets[0] || '#main-container')?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
         },
-        activate() { assertCurrent(); },
+        async activate(action) {
+            assertCurrent();
+            const step = stageTutorial.state().step;
+            if (step.destination) await openView(step.destination);
+            else if (step.press) {
+                const node = document.querySelector(step.press);
+                if (!node || node.disabled) throw new Error('버튼을 아직 사용할 수 없어요. 화면을 다시 확인해 주세요.');
+                if (step.id.endsWith('-difficulty')) await window.changeLimitBreakDifficulty('normal');
+                else node.click();
+            }
+        },
         complete() { assertCurrent(); },
         speak: text => speakTextKo(text), stopSpeech: () => cancelSpeech(),
         restore(snapshot, { completed }) {
-            closePreviewModal();
+            running = false;
+            closeScreens(); clearReadingSpeechState();
             if (stageTutorialSession() === session) {
+                activeDictationSession = originals.dictation; activeDictationItem = originals.dictationItem;
+                activeLiteracyQuestion = originals.literacy; userLiteracyAnswerChecked = originals.checked; isLiteracyLimitBreakMode = originals.limit;
+                activeReadingCategory = originals.reading;
+                if (level === 2) document.getElementById(`reading-tab-${originals.reading}`)?.click();
+                window.stopSyllableSlowReader?.();
+                if (readingSlowMode !== originals.slow) window.toggleReadingSlowMode();
                 if (completed && (currentUserRole === 'teacher' || unlockedLevels.includes(level))) { showTopLevelSection(info.section); hydrateActivityRouteSection(info.route); }
                 else showDashboardOnly();
                 const hud = document.getElementById('aiedue-rpg-hud');
