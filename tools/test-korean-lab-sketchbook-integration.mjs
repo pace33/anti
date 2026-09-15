@@ -53,14 +53,15 @@ test('로그인 역할에 따라 홈의 학급 관리와 상점 버튼을 서로
     assert.ok(css.includes('padding-top: 180px'));
 });
 
-test('노트 촬영은 3·4단계에만 유지되고 도서관은 4단계 두 번째 줄에 있다', () => {
+test('노트 촬영은 3·4단계에만 유지되고 두 단계 도서관은 게임 왼쪽에 있다', () => {
     const dictation = section(html, 'id="dictation-activities-section"', 'id="literacy-activities-section"');
     const literacy = section(html, 'id="literacy-activities-section"', 'id="literacy-workspace-section"');
     assert.ok(dictation.includes('triggerLessonPhotoCapture()'));
     assert.ok(literacy.includes('triggerLessonPhotoCapture()'));
     assert.equal((html.match(/triggerLessonPhotoCapture\(\)/g) || []).length, 2);
     assert.ok(literacy.includes('openAiedueLibrary()'));
-    assert.ok(literacy.indexOf('openDictationBankModal()') < literacy.indexOf('openAiedueLibrary()'));
+    assert.ok(dictation.indexOf('openAiedueLibrary()') < dictation.indexOf('openAiedueLabWordCardGame()'));
+    assert.ok(literacy.indexOf('openAiedueLibrary()') < literacy.indexOf('openLiteracyAdventureGame()'));
     assert.ok(html.includes('id="lesson-photo-input"'));
 });
 

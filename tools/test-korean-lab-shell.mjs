@@ -161,7 +161,7 @@ test('홈에는 네 단계 카드만 있고 단계별 게임 카드를 노출하
     assert.doesNotMatch(dashboard, /\bdashboard-lab-card\b/);
 });
 
-test('각 단계 게임은 오른쪽 위 헤더에 있고 3·4단계 카메라는 게임 왼쪽에 있다', () => {
+test('각 단계 게임은 오른쪽 위 헤더에 있고 3·4단계는 카메라·도서관·게임 순서로 통일한다', () => {
     const contracts = [
         ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원', false],
         ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '낱말 우주 방어대', false],
@@ -174,10 +174,13 @@ test('각 단계 게임은 오른쪽 위 헤더에 있고 3·4단계 카메라�
         assert.ok(actionsStart >= 0, `${start} 오른쪽 위 액션 묶음 없음`);
         const directChildren = directChildrenOfDivAt(stage, actionsStart);
         const gameIndex = directChildren.findIndex((child) => child.includes(`id="${id}"`));
-        assert.equal(gameIndex, hasCamera ? 2 : 1, `${id}가 헤더 오른쪽 끝에 있지 않음`);
+        assert.equal(gameIndex, hasCamera ? 3 : 1, `${id}가 헤더 오른쪽 끝에 있지 않음`);
         assert.ok(directChildren[gameIndex]?.includes('stage-header-game-button'), `${id}가 상단 게임 버튼 스타일을 쓰지 않음`);
         if (hasCamera) {
-            assert.ok(directChildren[1]?.includes('lesson-photo-button'), `${start} 카메라가 게임 바로 왼쪽에 있지 않음`);
+            assert.ok(directChildren[1]?.includes('lesson-photo-button'), `${start} 카메라가 첫 번째 동작 버튼이 아님`);
+            assert.ok(directChildren[2]?.includes('stage-header-library-button'), `${start} 도서관이 게임 바로 왼쪽에 없음`);
+            assert.ok(directChildren[2]?.includes('openAiedueLibrary()'));
+            assert.equal((stage.match(/onclick="openAiedueLibrary\(\)"/g) || []).length, 1, '도서관 진입 버튼은 한 번만 배치');
         } else {
             assert.equal(stage.includes('lesson-photo-button'), false, `${start}에는 카메라 버튼이 없어야 함`);
         }
