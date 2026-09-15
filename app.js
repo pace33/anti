@@ -21,6 +21,7 @@ import { installStageTutorial } from './stage-tutorial.js?v=20260915-real-tour-v
 import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260915-real-tour-v2';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260915-stage-guides-v3';
 import { createClassroomService } from './classroom-service.js';
+import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v1';
 import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
 import {
@@ -3963,6 +3964,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'openAiedueLabWordCardGame',
     'openAiedueCraftShop',
     'openAiedueLabTimeQuiz',
+    'openAiedueWorkshop',
     'openAieduePorandy',
     'openKoreanStudentReport',
     'printClassShop',
@@ -4145,10 +4147,20 @@ window.openAieduePorandy = function openAieduePorandy() {
     window.location.href = AIEDUE_PORANDY_URL;
 };
 
+const workshopLauncher = installWorkshopLauncher({
+    db, doc, collection, query, where, getDoc, getDocs, setDoc,
+    current: () => ({id:loginSuccess ? currentUserId : null,role:currentUserRole}),
+    notify: message => showModal(message),
+    closeModal: () => window.closeAiedueKoreanModal(),
+    openLab: () => window.openAiedueLab(),
+    manageClass: () => window.openClassManagement()
+});
+window.openAiedueWorkshop = () => workshopLauncher.open();
+
 window.openAiedueLab = function openAiedueLab() {
     showModal(`<div class="text-left relative">
         <button type="button" class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()" aria-label="에이두 연구실 닫기">×</button>
-        <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">시계를 읽고 시간을 알아보는 시간 퀴즈에 도전해 보세요.</p></div>
+        <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">${currentUserRole === 'teacher' ? '시간 퀴즈와 수업을 준비하는 공방을 만나 보세요.' : '시계를 읽고 시간을 알아보는 시간 퀴즈에 도전해 보세요.'}</p></div>
         <div class="aiedue-lab-activity-grid">
             <button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabTimeQuiz()">
                 <span class="block text-5xl mb-3" aria-hidden="true">🕒</span>
@@ -4156,6 +4168,12 @@ window.openAiedueLab = function openAiedueLab() {
                 <span class="block mt-2 font-bold text-gray-600">시계를 읽고 난이도별 경험치를 모아 레벨업해요.</span>
                 <span class="block mt-3 text-sm font-black text-violet-600">정답 경험치 +1 · +3 · +5 · +10 EXP</span>
             </button>
+            ${currentUserRole === 'teacher' ? `<button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-lime-50 to-emerald-50 border-2 border-lime-200 hover:scale-[1.01] transition-transform" onclick="openAiedueWorkshop()">
+                <span class="block text-5xl mb-3" aria-hidden="true">🌱</span>
+                <strong class="block text-2xl font-black text-green-700">에이두 수업 공방</strong>
+                <span class="block mt-2 font-bold text-gray-600">우리 반 학습지와 미션을 만들고, 배움과 교실 생활을 기록해요.</span>
+                <span class="block mt-3 text-sm font-black text-green-700">교사용 · 학습지 인쇄 · 학습·행동 기록 · 학급 운영</span>
+            </button>` : ''}
         </div>
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
 };
@@ -21889,6 +21907,7 @@ onAuthStateChanged(auth, async (user) => {
     const nextUserId = user?.uid || null;
     const identityChanged = (previousUserId || null) !== nextUserId;
     if (identityChanged) {
+        workshopLauncher.close({restoreFocus:false});
         teacherTutorial?.stop();
         window.stopStageTutorial?.();
         if (typeof dismissDrawingTutorial === 'function') dismissDrawingTutorial({ remember: false, restoreFocus: false });

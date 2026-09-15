@@ -24,6 +24,8 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check workshop-launcher.mjs
+          node --check workshop-service.mjs
           node --check experience-gauge.mjs
           node --check teacher-tutorial.js
           node --check teacher-tutorial-core.mjs
@@ -49,6 +51,7 @@ jobs:
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
+          node --test tools/test-workshop-service.mjs
           node --test tools/test-experience-gauge.mjs
           node --test tools/test-literacy-companion.mjs
           node --test tools/test-teacher-tutorial.mjs

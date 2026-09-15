@@ -201,6 +201,7 @@ test('navigation and auth integration stop obsolete games and keep the RPG HUD v
         loginSuccess: true,
         studentOnboardingAutoTimer: null,
         teacherTutorial: null,
+        workshopLauncher: { close: () => {} },
         studentOnboardingAutoScheduledUid: null,
         window: { stopWordCardTableGame: () => { stopped += 1; }, clearTimeout: () => {} },
         closeStudentOnboarding: () => {},

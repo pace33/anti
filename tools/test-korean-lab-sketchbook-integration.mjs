@@ -121,10 +121,11 @@ test('학급 상점 탭은 교사 물품을 로드하고 저장·삭제 후 같�
     assert.equal((mutations.match(/refreshAiedueKoreanTeacherShopSurface\(\)/g) || []).length >= 3, true);
 });
 
-test('연구실에는 시간 퀴즈만 남기고 다른 놀이는 단계별 진입점을 유지한다', () => {
+test('연구실에는 시간 퀴즈와 교사용 수업 공방이 있고 다른 놀이는 단계별 진입점을 유지한다', () => {
     const lab = section(app, 'window.openAiedueLab =', 'function renderAiedueKoreanShopItems');
     const hub = section(app, 'window.openAiedueLab =', 'const AIEDUE_LAB_STAGE_SECTIONS');
-    assert.equal((hub.match(/class="korean-embed-card/g) || []).length, 1);
+    assert.equal((hub.match(/class="korean-embed-card/g) || []).length, 2);
+    assert.match(hub, /currentUserRole === 'teacher' \? `<button[^>]*onclick="openAiedueWorkshop\(\)"/);
     assert.ok(hub.includes('onclick="openAiedueLabTimeQuiz()"'));
     for (const entry of ['DictationGame', 'ShapeZoo', 'WordCardGame']) {
         assert.equal(hub.includes(`openAiedueLab${entry}()`), false);

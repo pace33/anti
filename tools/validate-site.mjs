@@ -13,6 +13,9 @@ const assert = (condition, message) => {
 
 const requiredFiles = [
     'index.html',
+    'workshop/index.html',
+    'workshop-launcher.mjs',
+    'workshop-service.mjs',
     'app.js',
     'experience-gauge.mjs',
     'teacher-tutorial.js',
