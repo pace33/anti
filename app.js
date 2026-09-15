@@ -4148,31 +4148,13 @@ window.openAieduePorandy = function openAieduePorandy() {
 window.openAiedueLab = function openAiedueLab() {
     showModal(`<div class="text-left relative">
         <button type="button" class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()" aria-label="에이두 연구실 닫기">×</button>
-        <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">하고 싶은 활동을 골라 도전해 보세요. 활동은 계속 추가됩니다.</p></div>
+        <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">시계를 읽고 시간을 알아보는 시간 퀴즈에 도전해 보세요.</p></div>
         <div class="aiedue-lab-activity-grid">
             <button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabTimeQuiz()">
                 <span class="block text-5xl mb-3" aria-hidden="true">🕒</span>
                 <strong class="block text-2xl font-black text-sky-700">시간 퀴즈</strong>
                 <span class="block mt-2 font-bold text-gray-600">시계를 읽고 난이도별 경험치를 모아 레벨업해요.</span>
                 <span class="block mt-3 text-sm font-black text-violet-600">정답 경험치 +1 · +3 · +5 · +10 EXP</span>
-            </button>
-            <button type="button" class="korean-embed-card aiedue-lab-space-card p-5 text-left hover:scale-[1.01] transition-transform" onclick="openAiedueLabDictationGame()">
-                <span class="block text-5xl mb-3" aria-hidden="true">🚀</span>
-                <strong class="block text-2xl font-black text-indigo-100">낱말 우주 방어대</strong>
-                <span class="block mt-2 font-bold text-indigo-50">떨어지는 낱말을 획순대로 따라 쓰고 미사일로 소행성을 격추해요.</span>
-                <span class="block mt-3 text-sm font-black text-cyan-200">한글 2단계 방식 · 시간 제한 도전</span>
-            </button>
-            <button type="button" class="korean-embed-card aiedue-lab-zoo-card p-5 text-left hover:scale-[1.01] transition-transform" onclick="openAiedueLabShapeZoo()">
-                <span class="block text-5xl mb-3" aria-hidden="true">🦁</span>
-                <strong class="block text-2xl font-black">도형 동물원</strong>
-                <span class="block mt-2 font-bold text-gray-600">점선을 따라 도형 과자를 만들고 사자 레오에게 간식을 줘요.</span>
-                <span class="block mt-3 text-sm font-black">나의 도형 ${drawingShapeLibrary.length}종 · 생명 3개 · 점점 빨라지는 간식 시간</span>
-            </button>
-            <button type="button" class="korean-embed-card aiedue-lab-word-card p-5 text-left bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabWordCardGame()">
-                <span class="block text-5xl mb-3" aria-hidden="true">🃏</span>
-                <strong class="block text-2xl font-black text-amber-800">단어 카드 한 판</strong>
-                <span class="block mt-2 font-bold text-gray-600">친구가 낸 그림과 설명을 보고, 내 카드 네 장 중 같은 단어를 골라요.</span>
-                <span class="block mt-3 text-sm font-black text-amber-700">한글 3단계 · 저장소 카드로 매번 새 문제 · 정답 +1점</span>
             </button>
         </div>
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });

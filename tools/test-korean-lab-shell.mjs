@@ -69,19 +69,13 @@ test('시간 퀴즈 시계판은 전체 눈금을 표시하고 태블릿에서 �
     assert.match(timeQuizEntry, /for \(let minute = 0; minute < 60; minute \+= 5\)/);
     assert.ok(timeQuizEntry.includes("'kltq-hour-number'"));
     assert.ok(timeQuizEntry.includes("'kltq-minute-number'"));
-    const tabletTimeQuiz = section(labCss, '@media (min-width: 761px) and (max-width: 1280px)', '@media (max-width: 760px)');
-    assert.ok(tabletTimeQuiz.includes('height: min(900px, calc(100dvh - 16px)) !important'));
-    assert.ok(tabletTimeQuiz.includes('padding: 14px 18px 16px'));
-    assert.ok(tabletTimeQuiz.includes('margin-bottom: 64px'));
-    assert.ok(tabletTimeQuiz.includes('.kltq-answer-card'));
-    assert.ok(tabletTimeQuiz.includes('overflow-y: auto'));
-    assert.ok(tabletTimeQuiz.includes('.kltq-options button'));
-    assert.ok(tabletTimeQuiz.includes('min-height: 48px'));
-    const shortTabletTimeQuiz = section(labCss, '@media (min-width: 761px) and (max-width: 1280px) and (max-height: 600px)', '@media (max-width: 760px)');
-    assert.ok(shortTabletTimeQuiz.includes('padding: 8px 14px'));
-    assert.ok(shortTabletTimeQuiz.includes('margin-bottom: 72px'));
-    assert.ok(shortTabletTimeQuiz.includes('min-height: 44px'));
-    assert.equal(shortTabletTimeQuiz.includes('min-height: 38px'), false);
+    const timeQuizCss = labCss.slice(labCss.indexOf('/* 시간 퀴즈는'));
+    assert.ok(timeQuizCss.includes('height: min(920px, calc(100dvh - 16px)) !important'));
+    assert.match(timeQuizCss, /\.kltq-layout\s*\{[^}]*grid-template-rows: minmax\(480px, 1fr\)[^}]*overflow: auto/s);
+    assert.match(timeQuizCss, /\.kltq-difficulties button\s*\{[^}]*min-height: 76px/s);
+    assert.match(timeQuizCss, /\.kltq-options button\s*\{[^}]*min-height: 80px/s);
+    assert.match(timeQuizCss, /\.kltq-check\s*\{[^}]*min-height: 58px[^}]*flex-shrink: 0/s);
+    assert.ok(timeQuizCss.includes('scroll-padding-block: 18px 108px'));
 });
 
 test('연구실 게임은 에이두 한글 공통 둥근 카드 셸을 쓴다', () => {

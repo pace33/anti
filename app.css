@@ -8819,7 +8819,7 @@ body.rpg-hud-active .view-section > .w-full:not(.absolute) {
 /* ==========================================================================
    에이두 연구실 · 낱말 우주 방어대
    ========================================================================== */
-.aiedue-lab-activity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.aiedue-lab-activity-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
 .aiedue-lab-space-card { border: 2px solid #6366f1; background: radial-gradient(circle at 82% 18%, rgba(34, 211, 238, .24), transparent 28%), linear-gradient(145deg, #312e81, #111827 72%); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 12px 28px rgba(49,46,129,.22); }
 body.dictation-asteroid-open { overflow: hidden; background: #050816; }
 .dictation-asteroid-game { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; color: #fff; background: linear-gradient(180deg, #111a3d, #070b1b); font-family: 'Noto Sans KR', sans-serif; }

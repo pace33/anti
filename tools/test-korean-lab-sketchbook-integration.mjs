@@ -121,9 +121,15 @@ test('학급 상점 탭은 교사 물품을 로드하고 저장·삭제 후 같�
     assert.equal((mutations.match(/refreshAiedueKoreanTeacherShopSurface\(\)/g) || []).length >= 3, true);
 });
 
-test('연구실은 선택형 허브로 한글 내부 시간 퀴즈를 연다', () => {
+test('연구실에는 시간 퀴즈만 남기고 다른 놀이는 단계별 진입점을 유지한다', () => {
     const lab = section(app, 'window.openAiedueLab =', 'function renderAiedueKoreanShopItems');
-    assert.ok(lab.includes('활동은 계속 추가됩니다'));
+    const hub = section(app, 'window.openAiedueLab =', 'const AIEDUE_LAB_STAGE_SECTIONS');
+    assert.equal((hub.match(/class="korean-embed-card/g) || []).length, 1);
+    assert.ok(hub.includes('onclick="openAiedueLabTimeQuiz()"'));
+    for (const entry of ['DictationGame', 'ShapeZoo', 'WordCardGame']) {
+        assert.equal(hub.includes(`openAiedueLab${entry}()`), false);
+        assert.ok(html.includes(`openAiedueLab${entry}()`));
+    }
     assert.ok(lab.includes('시간 퀴즈'));
     assert.equal(lab.includes('음절 슬로우 리더'), false);
     assert.equal(lab.includes('window.openSyllableSlowReader?.()'), false);
