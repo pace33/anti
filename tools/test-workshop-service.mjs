@@ -25,17 +25,25 @@ test('only the current teacher roster is exposed and entries persist under that 
 test('another class, malformed IDs and record type changes cannot be saved',async()=>{
     const {service}=setup();
     await assert.rejects(service.save('student',{name:'새 학생'},'','2026-09-15'));
-    await assert.rejects(service.save('mission',{},'student-b','2026-09-15'));
-    await assert.rejects(service.save('mission',{},'','2026-09-15','../other'));
-    await assert.rejects(service.save('mission',{},'','invalid'));
-    const saved=await service.save('mission',{},'student-a','2026-09-15');
-    await assert.rejects(service.save('behavior',{},'student-a','2026-09-15',saved.id));
+    await assert.rejects(service.save('schedule',{},'student-b','2026-09-15'));
+    await assert.rejects(service.save('schedule',{},'','2026-09-15','../other'));
+    await assert.rejects(service.save('schedule',{},'','invalid'));
+    const saved=await service.save('schedule',{},'student-a','2026-09-15');
+    await assert.rejects(service.save('worksheet',{},'student-a','2026-09-15',saved.id));
+});
+test('removed tools cannot load or save records',async()=>{
+    const {service,values}=setup();
+    for(const kind of ['mission','learning','behavior','ledger','inventory','booking','role','note','preference']) {
+        values.set(`users/teacher-a/workshopEntries/old-${kind}`,{kind,payload:{},date:'2026-09-14'});
+        await assert.rejects(service.save(kind,{},'student-a','2026-09-15'));
+    }
+    assert.deepEqual((await service.load()).entries,[]);
 });
 test('student sessions and closed sessions cannot read or save',async()=>{
     const state=setup();
     state.identity({id:'student-a',role:'student'});
     await assert.rejects(state.service.load());
-    await assert.rejects(state.service.save('note',{},'','2026-09-15'));
+    await assert.rejects(state.service.save('worksheet',{},'','2026-09-15'));
     state.identity({id:'teacher-a',role:'teacher'});
     state.service.close();
     await assert.rejects(state.service.load());
@@ -43,6 +51,6 @@ test('student sessions and closed sessions cannot read or save',async()=>{
 test('switching accounts during a request cannot complete a write or return the previous roster',async()=>{
     const state=setup(),original=state.api.getDocs;
     state.api.getDocs=async ref=>{const result=await original(ref);state.identity({id:'teacher-b',role:'teacher'});return result;};
-    await assert.rejects(state.service.save('note',{},'','2026-09-15'));
+    await assert.rejects(state.service.save('worksheet',{},'','2026-09-15'));
     assert.equal([...state.values.keys()].some(path=>path.includes('/workshopEntries/')),false);
 });

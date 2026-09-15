@@ -1,4 +1,4 @@
-import {createWorkshopService} from './workshop-service.mjs?v=20260915-v1';
+import {createWorkshopService} from './workshop-service.mjs?v=20260915-v2';
 
 export function installWorkshopLauncher(api) {
     let dialog, service, previousFocus;
@@ -24,8 +24,7 @@ export function installWorkshopLauncher(api) {
         const session = service;
         window.aiedueWorkshopSession = Object.freeze({
             load: session.load, save: session.save, remove: session.remove,
-            exit() { if (session !== service) return; close(); api.openLab(); },
-            manageClass() { if (session !== service) return; close(); api.manageClass(); }
+            exit() { if (session !== service) return; close(); api.openLab(); }
         });
         dialog = document.createElement('dialog');
         dialog.className = 'aiedue-workshop-dialog';
@@ -36,7 +35,7 @@ export function installWorkshopLauncher(api) {
         exit.addEventListener('click', () => { close(); api.openLab(); });
         const frame = document.createElement('iframe');
         frame.title = '에이두 수업 공방';
-        frame.src = new URL('./workshop/index.html?v=20260915-v1', import.meta.url).href;
+        frame.src = new URL('./workshop/index.html?v=20260915-v2', import.meta.url).href;
         dialog.append(exit, frame);
         dialog.addEventListener('cancel', event => {event.preventDefault(); close(); api.openLab();});
         document.body.append(dialog);

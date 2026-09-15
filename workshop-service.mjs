@@ -1,5 +1,5 @@
 // Records live under the signed-in teacher, using the Korean app's data adapter.
-export const WORKSHOP_KINDS = new Set(['worksheet', 'mission', 'learning', 'behavior', 'ledger', 'inventory', 'schedule', 'booking', 'role', 'note', 'preference']);
+export const WORKSHOP_KINDS = new Set(['worksheet', 'schedule']);
 
 export function createWorkshopService(api, teacherId) {
     let closed = false;

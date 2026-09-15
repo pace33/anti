@@ -21,7 +21,7 @@ import { installStageTutorial } from './stage-tutorial.js?v=20260915-real-tour-v
 import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260915-real-tour-v2';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260915-stage-guides-v3';
 import { createClassroomService } from './classroom-service.js';
-import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v1';
+import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v2';
 import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
 import {
@@ -4152,8 +4152,7 @@ const workshopLauncher = installWorkshopLauncher({
     current: () => ({id:loginSuccess ? currentUserId : null,role:currentUserRole}),
     notify: message => showModal(message),
     closeModal: () => window.closeAiedueKoreanModal(),
-    openLab: () => window.openAiedueLab(),
-    manageClass: () => window.openClassManagement()
+    openLab: () => window.openAiedueLab()
 });
 window.openAiedueWorkshop = () => workshopLauncher.open();
 
@@ -4171,8 +4170,8 @@ window.openAiedueLab = function openAiedueLab() {
             ${currentUserRole === 'teacher' ? `<button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-lime-50 to-emerald-50 border-2 border-lime-200 hover:scale-[1.01] transition-transform" onclick="openAiedueWorkshop()">
                 <span class="block text-5xl mb-3" aria-hidden="true">🌱</span>
                 <strong class="block text-2xl font-black text-green-700">에이두 수업 공방</strong>
-                <span class="block mt-2 font-bold text-gray-600">우리 반 학습지와 미션을 만들고, 배움과 교실 생활을 기록해요.</span>
-                <span class="block mt-3 text-sm font-black text-green-700">교사용 · 학습지 인쇄 · 학습·행동 기록 · 학급 운영</span>
+                <span class="block mt-2 font-bold text-gray-600">우리 반 학습지를 만들고, 학생별 시간표를 준비해요.</span>
+                <span class="block mt-3 text-sm font-black text-green-700">교사용 · 학습지 만들기 · 시간표</span>
             </button>` : ''}
         </div>
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
