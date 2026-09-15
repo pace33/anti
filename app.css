@@ -797,6 +797,16 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
 }
 @media (max-width: 900px) { .korean-shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .korean-shop-grid { grid-template-columns: 1fr; } }
+/* The two game entries share one compact row in student and teacher shops. */
+.aiedue-shop-game-pair { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.aiedue-shop-game-pair > .korean-embed-card { grid-column: auto; min-width: 0; padding: 12px; border-radius: 20px; display: flex; flex-direction: column; }
+.aiedue-shop-game-pair .aiedu-craft-card-hero { min-height: 84px; padding: 10px; gap: 10px; border-radius: 14px; flex: 1; }
+.aiedue-shop-game-pair .aiedu-craft-card-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 26px; }
+.aiedue-shop-game-pair .aiedu-craft-card-hero .text-2xl { font-size: 20px; line-height: 1.3; }
+.aiedue-shop-game-pair .aiedu-craft-card-hero .text-sm { font-size: 12px; line-height: 1.4; }
+.aiedue-shop-game-pair > .korean-embed-card > .mt-4 { margin-top: 8px; gap: 8px; }
+.aiedue-shop-game-pair .aiedu-craft-card-actions { margin-top: 0; grid-template-columns: 1fr 1fr; gap: 6px; }
+.aiedue-shop-game-pair button { padding: 7px 10px; font-size: 13px; }
 .aiedue-toast {
     position: fixed;
     left: 50%;

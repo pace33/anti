@@ -4245,6 +4245,7 @@ window.aiedueKoreanLabTimeQuizData = Object.freeze({
 
 function renderAiedueKoreanShopItems(displayItems = []) {
     return `<div class="korean-shop-grid custom-scrollbar">
+        <div class="aiedue-shop-game-pair">
         <div class="aiedu-craft-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col">
             <div class="aiedu-craft-card-hero">
                 <div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div>
@@ -4263,6 +4264,7 @@ function renderAiedueKoreanShopItems(displayItems = []) {
             </div>
         </div>
         ${renderAieduePorandyShopCard()}
+        </div>
         ${displayItems.map(({ assignment, item }) => {
             const pricing = calculateKoreanShopPrice(item);
             const assignedAt = assignment.assignedAt && typeof assignment.assignedAt.toDate === 'function'
@@ -4355,10 +4357,10 @@ function renderAiedueKoreanTeacherShopManager(items = [], { embedded = false } =
 }
 
 function renderAiedueKoreanTeacherShop(items = []) {
-    return `<div class="aiedu-craft-shop-card korean-embed-card p-5 rounded-3xl shadow-sm mb-5">
+    return `<div class="aiedue-shop-game-pair mb-5"><div class="aiedu-craft-shop-card korean-embed-card p-5 rounded-3xl shadow-sm">
         <div class="aiedu-craft-card-hero"><div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div><div><div class="text-xs font-black text-amber-200 tracking-widest">TEACHER CRAFT</div><div class="text-2xl font-black">에이두 크래프트</div><div class="text-sm text-white/80 mt-1">교사 계정으로 크래프트에 접속하고 상점을 이용할 수 있어요.</div></div></div>
         <div class="flex flex-wrap justify-end gap-2 mt-4"><button type="button" class="btn-outline px-4 py-2" onclick="enterAiedueCraftAsTeacher()">크래프트 접속</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueCraftShop()">크래프트 상점 이용</button></div>
-    </div><div class="mb-5">${renderAieduePorandyShopCard()}</div>${renderAiedueKoreanTeacherShopManager(items)}`;
+    </div>${renderAieduePorandyShopCard()}</div>${renderAiedueKoreanTeacherShopManager(items)}`;
 }
 
 async function openAiedueKoreanTeacherShop() {
