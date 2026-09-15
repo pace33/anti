@@ -27,9 +27,9 @@ export const TEACHER_TUTORIAL_STEPS = Object.freeze([
 ].map(step => Object.freeze({ view: 'dashboard', pose: 'welcome', targets: [], ...step })));
 
 // Navigation is separate from rendering so async saves and click gates are testable.
-export function createTeacherTutorialController(host) {
+export function createTeacherTutorialController(host, steps = TEACHER_TUTORIAL_STEPS) {
     let active = false, busy = false, index = 0, uid = null, revision = 0, error = '';
-    const state = () => ({ active, busy, index, uid, error, step: TEACHER_TUTORIAL_STEPS[index] });
+    const state = () => ({ active, busy, index, uid, error, step: steps[index] });
     const emit = () => host.render(state());
     const current = token => active && revision === token && host.session() === uid;
     function stop(completed = false) {
@@ -51,7 +51,7 @@ export function createTeacherTutorialController(host) {
             else if (active && revision === token) stop();
         }
     }
-    async function prepare() { await host.prepare(TEACHER_TUTORIAL_STEPS[index], uid); }
+    async function prepare() { await host.prepare(steps[index], uid); }
     return {
         state,
         async start() {
@@ -63,7 +63,7 @@ export function createTeacherTutorialController(host) {
         async next() {
             if (!active || busy || error || state().step.click) return;
             await run(async token => {
-                if (index === TEACHER_TUTORIAL_STEPS.length - 1) {
+                if (index === steps.length - 1) {
                     await host.complete(uid);
                     if (current(token)) stop(true);
                 } else { index += 1; await prepare(); }

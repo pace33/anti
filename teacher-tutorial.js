@@ -1,10 +1,11 @@
-import { createTeacherTutorialController, TEACHER_TUTORIAL_STEPS } from './teacher-tutorial-core.mjs';
+import { createTeacherTutorialController, TEACHER_TUTORIAL_STEPS } from './teacher-tutorial-core.mjs?v=20260915-stage-guides-v3';
 
-export function installTeacherTutorial(actions) {
+export function installTeacherTutorial(actions, options = {}) {
+    const steps = options.steps || TEACHER_TUTORIAL_STEPS;
     const dialog = document.createElement('dialog');
-    dialog.id = 'teacher-tutorial';
+    dialog.id = options.id || 'teacher-tutorial';
     dialog.className = 'teacher-tutorial';
-    dialog.setAttribute('aria-labelledby', 'teacher-tutorial-title');
+    dialog.setAttribute('aria-labelledby', `${dialog.id}-title`);
     dialog.setAttribute('aria-modal', 'true');
     dialog.innerHTML = `
         <div class="teacher-tour-shade" aria-hidden="true"></div>
@@ -20,6 +21,9 @@ export function installTeacherTutorial(actions) {
         </section>`;
     document.body.appendChild(dialog);
     const $ = selector => dialog.querySelector(selector);
+    $('#teacher-tutorial-title').id = `${dialog.id}-title`;
+    if (options.title) $('.teacher-tour-bubble header strong').textContent = options.title;
+    if (options.id) $('.teacher-tour-close').setAttribute('aria-label', '단계 안내 닫기');
     const shade = $('.teacher-tour-shade'), highlights = $('.teacher-tour-highlights');
     const next = $('.teacher-tour-next'), back = $('.teacher-tour-back');
     let view, frame = 0, previousIndex = -1, savedFocus, snapshot, resizeObserver, mutationObserver;
@@ -113,14 +117,15 @@ export function installTeacherTutorial(actions) {
         document.body.dataset.teacherTourStep = state.step.id;
         $('.teacher-tour-line').textContent = state.step.text;
         $('.teacher-tour-character').src = `assets/onboarding/aiedue-${state.step.pose}.webp`;
-        $('.teacher-tour-progress').textContent = `${state.index + 1} / ${TEACHER_TUTORIAL_STEPS.length}`;
+        $('.teacher-tour-progress').textContent = `${state.index + 1} / ${steps.length}`;
         $('.teacher-tour-error').hidden = !state.error;
         $('.teacher-tour-error').textContent = state.error;
         next.dataset.retry = state.error ? 'true' : 'false';
-        next.textContent = state.busy ? '준비 중…' : state.error ? '다시 시도' : state.index === TEACHER_TUTORIAL_STEPS.length - 1 ? '종료' : '다음';
+        next.textContent = state.busy ? '준비 중…' : state.error ? '다시 시도' : state.index === steps.length - 1 ? '종료' : '다음';
         next.disabled = state.busy || Boolean(state.step.click && !state.error);
         back.disabled = state.busy || state.index === 0;
-        $('.teacher-tour-hint').textContent = state.step.click ? `밝게 표시된 ‘${state.step.clickLabel}’ 버튼을 눌러주세요.` : '';
+        $('.teacher-tour-hint').textContent = state.step.practice ? '위에서 함께 연습해 봐요.' : state.step.click ? `밝게 표시된 ‘${state.step.clickLabel}’ 버튼을 눌러주세요.` : '';
+        options.render?.(state, dialog, action => controller.activate(action));
         if (!state.busy && previousIndex !== state.index) {
             // Only the tutorial controls can receive keyboard focus; highlighted
             // content is read-only unless this step explicitly offers a proxy.
@@ -167,10 +172,10 @@ export function installTeacherTutorial(actions) {
             actions.restore(snapshot, { completed });
             if (savedFocus?.isConnected) savedFocus.focus({ preventScroll: true });
         }
-    });
+    }, steps);
     next.onclick = () => void (next.dataset.retry === 'true' ? controller.retry() : controller.next());
     back.onclick = () => void controller.previous();
     $('.teacher-tour-close').onclick = () => controller.stop();
     dialog.addEventListener('cancel', event => { event.preventDefault(); controller.stop(); });
-    return controller;
+    return { ...controller, destroy() { controller.stop(); dialog.remove(); } };
 }

@@ -16,8 +16,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
-import { installTeacherTutorial } from './teacher-tutorial.js?v=20260915-frame-v3';
-import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs';
+import { installTeacherTutorial } from './teacher-tutorial.js?v=20260915-stage-guides-v4';
+import { installStageTutorial } from './stage-tutorial.js?v=20260915-v1';
+import { STAGE_TUTORIALS } from './stage-tutorial-core.mjs';
+import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260915-stage-guides-v3';
 import { createClassroomService } from './classroom-service.js';
 import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
@@ -147,6 +149,12 @@ function applyDashboardStageAccess(levels = []) {
         card.classList.toggle('locked', !isUnlocked);
         card.disabled = !isUnlocked;
         card.setAttribute('aria-disabled', String(!isUnlocked));
+        const tutorialButton = document.getElementById(`stage-tutorial-${level}`);
+        if (tutorialButton) {
+            tutorialButton.disabled = !isUnlocked;
+            tutorialButton.setAttribute('aria-disabled', String(!isUnlocked));
+            tutorialButton.title = isUnlocked ? `${level}단계를 함께 연습해요` : '선생님이 단계를 열어주면 함께 연습할 수 있어요';
+        }
     }
 }
 
@@ -529,6 +537,7 @@ const STUDENT_ONBOARDING_POSES = Object.freeze({
 });
 const ROLE_ONBOARDING_VERSION = TEACHER_TUTORIAL_VERSION;
 let teacherTutorial = null;
+let stageTutorial = null;
 let studentOnboardingState = null;
 let studentOnboardingUid = null;
 let studentOnboardingPersisting = false;
@@ -657,6 +666,7 @@ function ensureStudentOnboardingListeners() {
 }
 
 window.openRoleTutorial = function openRoleTutorial() {
+    window.stopStageTutorial?.();
     if (!loginSuccess || !currentUserId) return;
     roleOnboardingReturnFocus = document.activeElement;
     if (currentUserRole === 'teacher') {
@@ -5468,6 +5478,7 @@ function updateDashboardExperience(userData = {}, options = {}) {
         };
     currentUserRole = (userData?.role || 'student').toLowerCase();
     if (currentUserRole !== 'teacher') teacherTutorial?.stop();
+    if (stageTutorial?.state().active && stageTutorial.state().uid !== stageTutorialSession()) window.stopStageTutorial?.();
     koreanMasteryCache = userData?.koreanQuestionMastery && typeof userData.koreanQuestionMastery === 'object'
         ? userData.koreanQuestionMastery
         : {};
@@ -21875,6 +21886,7 @@ onAuthStateChanged(auth, async (user) => {
     const identityChanged = (previousUserId || null) !== nextUserId;
     if (identityChanged) {
         teacherTutorial?.stop();
+        window.stopStageTutorial?.();
         if (typeof dismissDrawingTutorial === 'function') dismissDrawingTutorial({ remember: false, restoreFocus: false });
         window.clearTimeout(studentOnboardingAutoTimer);
         studentOnboardingAutoTimer = null;
@@ -23335,3 +23347,56 @@ function createTeacherTutorialActions() {
     };
 }
 teacherTutorial = installTeacherTutorial(createTeacherTutorialActions());
+
+function stageTutorialSession() {
+    return loginSuccess && currentUserId && auth.currentUser?.uid === currentUserId && ['teacher', 'student'].includes(currentUserRole)
+        ? `${currentUserId}:${currentUserRole}` : null;
+}
+window.stopStageTutorial = () => { stageTutorial?.destroy(); stageTutorial = null; };
+window.openStageTutorial = function(level) {
+    level = Number(level);
+    const info = STAGE_TUTORIALS[level];
+    if (!info || !stageTutorialSession() || !requireStageAccess(level, info.name)) return;
+    teacherTutorial?.stop(); window.stopStageTutorial();
+    window.clearTimeout(studentOnboardingAutoTimer); studentOnboardingAutoTimer = null;
+    const session = stageTutorialSession();
+    const assertCurrent = () => {
+        if (stageTutorialSession() !== session || (currentUserRole === 'student' && !unlockedLevels.includes(level))) throw new Error('로그인 또는 단계 이용 권한이 바뀌었어요. 안내를 닫고 다시 시작해 주세요.');
+    };
+    let ownsModal = false;
+    function closePreviewModal() { if (ownsModal) { window.closeAiedueKoreanModal(); ownsModal = false; } }
+    const permittedViews = new Set(['drawing-workspace-section', 'my-drawing-section', 'reading-practice-section', 'letter-writing-section', 'my-korean-section', 'dictation-workspace-section', 'my-dictation-section', 'literacy-workspace-section']);
+    stageTutorial = installStageTutorial({
+        session: () => stageTutorialSession() === session && (currentUserRole === 'teacher' || unlockedLevels.includes(level)) ? session : null,
+        capture: () => ({ collapsed: document.getElementById('aiedue-rpg-hud').classList.contains('rpg-collapsed') }),
+        async prepare(step) {
+            assertCurrent(); closePreviewModal(); cancelSpeech();
+            if (step.view === 'dashboard') showDashboardOnly();
+            else if (step.view === 'hub') { showTopLevelSection(info.section); hydrateActivityRouteSection(info.route); }
+            else if (step.view === 'reading') window.openReadingPracticeActivity();
+            else if (step.view === 'my-dictation-section') window.openMyDictationFromDashboard();
+            else if (step.view === 'bank') { window.openDictationBankModal(); ownsModal = true; }
+            else if (step.view === 'literacy-record') { window.openMyLiteracyRecord(); ownsModal = true; }
+            else if (permittedViews.has(step.view)) showTopLevelSection(step.view);
+            else throw new Error('안내 화면을 찾지 못했어요.');
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            assertCurrent();
+            if (step.targets.length) document.querySelector(step.targets[0])?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+        },
+        activate() { assertCurrent(); },
+        complete() { assertCurrent(); },
+        speak: text => speakTextKo(text), stopSpeech: () => cancelSpeech(),
+        restore(snapshot, { completed }) {
+            closePreviewModal();
+            if (stageTutorialSession() === session) {
+                if (completed && (currentUserRole === 'teacher' || unlockedLevels.includes(level))) { showTopLevelSection(info.section); hydrateActivityRouteSection(info.route); }
+                else showDashboardOnly();
+                const hud = document.getElementById('aiedue-rpg-hud');
+                hud.classList.toggle('rpg-collapsed', Boolean(snapshot.collapsed));
+                hud.querySelector('.rpg-profile-portrait')?.setAttribute('aria-expanded', String(!snapshot.collapsed));
+                hud.querySelector('.rpg-profile-portrait')?.setAttribute('aria-label', snapshot.collapsed ? '메뉴 펼치기' : '메뉴 접기');
+            }
+        }
+    }, level, currentUserRole);
+    void stageTutorial.start();
+};
