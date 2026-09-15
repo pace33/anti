@@ -28,6 +28,7 @@
 .teacher-tour-error { color: #a92d25; font-size: 14px; margin-top: 8px; }
 body.teacher-tour-open { overflow: hidden; }
 /* Keep real UI above the dialogue while the native tutorial dialog blocks edits. */
+body.teacher-tour-open:is([data-teacher-tour-step="experience"], [data-teacher-tour-step="level-up"], [data-teacher-tour-step="rewards"]) #main-container > #aiedue-rpg-hud { bottom: var(--teacher-tour-space, 230px) !important; }
 body.teacher-tour-open #dashboard-section .dashboard-stage-board { padding-bottom: var(--teacher-tour-space, 230px); }
 body.teacher-tour-open #class-management-modal { align-items: flex-start; padding: 12px; background: transparent; backdrop-filter: none; }
 body.teacher-tour-open #class-management-modal > .modal-content { max-height: calc(100dvh - var(--teacher-tour-space, 230px) - 24px); }
@@ -35,5 +36,3 @@ body.teacher-tour-open .classroom-dialog { margin: 12px auto auto; max-height: c
 body.teacher-tour-open .classroom-dialog::backdrop { background: transparent; backdrop-filter: none; }
 body.teacher-tour-open #class-management-modal .class-management-panel { scroll-margin: 12px; }
 @media (prefers-reduced-motion: reduce) { body.teacher-tour-open *, body.teacher-tour-open *::before { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
-
-.teacher-tutorial[data-dialogue-position="top"] .teacher-tour-bubble { top: 18px; bottom: auto; }

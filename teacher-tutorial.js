@@ -40,7 +40,6 @@ export function installTeacherTutorial(actions) {
     function measureTargets() {
         const width = window.innerWidth, height = window.innerHeight;
         const bubble = $('.teacher-tour-bubble').getBoundingClientRect();
-        const upperDialogue = dialog.dataset.dialoguePosition === 'top';
         return (view?.step.targets || []).map(selector => {
             const node = document.querySelector(selector);
             if (!node || !node.getClientRects().length || getComputedStyle(node).visibility === 'hidden') return null;
@@ -48,8 +47,7 @@ export function installTeacherTutorial(actions) {
             // Clip highlights to their scroll containers and keep dialogue readable.
             let left = Math.max(4, r.left - 5), top = Math.max(4, r.top - 5);
             let right = Math.min(width - 4, r.right + 5), bottom = Math.min(height - 4, r.bottom + 5);
-            if (upperDialogue) top = Math.max(top, bubble.bottom + 8);
-            else bottom = Math.min(bottom, bubble.top - 8);
+            bottom = Math.min(bottom, bubble.top - 8);
             for (let parent = node.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
                 const css = getComputedStyle(parent), box = parent.getBoundingClientRect();
                 if (/(auto|scroll|hidden|clip)/.test(css.overflowY)) { top = Math.max(top, box.top); bottom = Math.min(bottom, box.bottom); }
@@ -112,7 +110,6 @@ export function installTeacherTutorial(actions) {
         view = state;
         if (!state.active) return;
         dialog.dataset.step = state.step.id;
-        dialog.dataset.dialoguePosition = ['experience', 'level-up', 'rewards'].includes(state.step.id) ? 'top' : 'bottom';
         document.body.dataset.teacherTourStep = state.step.id;
         $('.teacher-tour-line').textContent = state.step.text;
         $('.teacher-tour-character').src = `assets/onboarding/aiedue-${state.step.pose}.webp`;
