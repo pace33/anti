@@ -5704,6 +5704,7 @@ function stopAiedueBackgroundMusic() {
 }
 
 function showTopLevelSection(sectionId) {
+    if (sectionId !== 'literacy-workspace-section') setLiteracyCompanionState();
     if (sectionId !== 'reading-practice-section' && (readingSlowTimer || readingActiveCard)) clearReadingSpeechState();
     clearCombineTtsQueue();
     const labGameSectionIds = [
@@ -11671,7 +11672,13 @@ function parseAiQuestionResponse(rawText) {
     }
 }
 
+function setLiteracyCompanionState(state = 'reading') {
+    const companion = document.getElementById('literacy-reading-companion');
+    if (companion) companion.dataset.state = ['correct', 'incorrect'].includes(state) ? state : 'reading';
+}
+
 function setupLiteracyWorkspace(questionData, isLimitBreak = false) {
+    setLiteracyCompanionState();
     activeLiteracyQuestion = questionData;
     isLiteracyLimitBreakMode = isLimitBreak;
     userLiteracyAnswerChecked = false;
@@ -12102,6 +12109,7 @@ async function showLiteracyResult(isCorrect, details) {
         if (activeLiteracyQuestion !== answeredQuestion) return true;
 
         const renderedAttempt = committed.canonicalAttempt || attempt;
+        setLiteracyCompanionState(renderedAttempt.isCorrect ? 'correct' : 'incorrect');
         const renderedDetails = Object.freeze({
             score: renderedAttempt.score,
             feedback: String(renderedAttempt.feedback || ''),

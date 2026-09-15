@@ -108,6 +108,37 @@ body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray { top: auto; bottom: calc(1
     .aiedu-loading-progress::before { transition: none; }
 }
 
+/* A seated reading companion stays outside the passage's scrollable text. */
+#literacy-workspace-section .literacy-workspace-grid { margin-top: 94px; }
+#literacy-workspace-section .literacy-passage-card { position: relative; overflow: visible; }
+.literacy-passage-card > h3 { min-height: 42px; padding-right: 72px; flex-wrap: wrap; }
+.literacy-reading-companion {
+    position: absolute; width: 164px; height: 164px; right: 3px; top: -124px;
+    z-index: 2; pointer-events: none; user-select: none; mix-blend-mode: multiply;
+}
+.literacy-companion-pose { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; visibility: hidden; transform-origin: 62% 76%; }
+.literacy-reading-companion[data-state="reading"] .literacy-companion-reading,
+.literacy-reading-companion[data-state="correct"] .literacy-companion-correct,
+.literacy-reading-companion[data-state="correct"] .literacy-companion-correct-closed,
+.literacy-reading-companion[data-state="incorrect"] .literacy-companion-incorrect { visibility: visible; }
+.literacy-reading-companion[data-state="reading"] .literacy-companion-reading { animation: literacy-companion-inspect 3.8s ease-in-out infinite; }
+.literacy-reading-companion[data-state="correct"] .literacy-companion-correct { animation: literacy-companion-clap .45s ease-in-out 6; }
+.literacy-companion-correct-closed { opacity: 0; }
+.literacy-reading-companion[data-state="correct"] .literacy-companion-correct-closed { animation: literacy-companion-clap .45s ease-in-out 6, literacy-companion-clap-frame .45s steps(1, end) 6; }
+.literacy-reading-companion[data-state="incorrect"] .literacy-companion-incorrect { animation: literacy-companion-sigh 1.1s ease-out both; }
+@keyframes literacy-companion-inspect { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-3deg) translate(-2px, 1px); } }
+@keyframes literacy-companion-clap { 0%, 100% { transform: translateY(0) scaleX(1); } 45% { transform: translateY(-5px) scaleX(.96) rotate(-2deg); } 75% { transform: translateY(-2px) scaleX(1.02) rotate(1deg); } }
+@keyframes literacy-companion-clap-frame { 0%, 100% { opacity: 0; } 45% { opacity: 1; } }
+@keyframes literacy-companion-sigh { from { transform: translateY(-3px) rotate(-2deg); } to { transform: translateY(2px) rotate(2deg); } }
+@media (max-width: 600px) {
+    #literacy-workspace-section > .custom-scrollbar { padding-left: 18px; padding-right: 18px; }
+    #literacy-workspace-section .literacy-workspace-grid { margin-top: 54px; }
+    #literacy-workspace-section .literacy-passage-card { padding: 20px; }
+    .literacy-passage-card > h3 { min-height: 36px; padding-right: 45px; font-size: 20px; }
+    .literacy-reading-companion { width: 124px; height: 124px; top: -94px; right: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .literacy-companion-pose { animation: none !important; } }
+
 /* Reference stage cards: original transparent artwork, live text and responsive frames. */
 #dashboard-section .dashboard-stage-board {
     display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -181,8 +212,8 @@ body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray { top: auto; bottom: calc(1
 
 /* The circle owns experience; the freed row is used for readable wallet/menu controls. */
 body.rpg-hud-active #main-container > .aiedue-rpg-hud { width: min(800px, calc(100% - 36px)); }
-#aiedue-rpg-hud .rpg-profile-banner { height: 88px; padding: 6px 14px 6px 102px; gap: 16px; }
-#aiedue-rpg-hud .rpg-profile-portrait { left: 12px; width: 76px; height: 76px; background: #ffffff45; border: 2px solid #ffffffd9; overflow: visible; box-shadow: 0 4px 12px #789d412e, 0 0 0 1px #bfd995b3; }
+#aiedue-rpg-hud .rpg-profile-banner { height: 88px; padding: 6px 14px 6px 108px; gap: 16px; }
+#aiedue-rpg-hud .rpg-profile-portrait { left: 10px; width: 84px; height: 84px; background: #ffffff45; border: 2px solid #ffffffd9; overflow: visible; box-shadow: 0 4px 12px #789d412e, 0 0 0 1px #bfd995b3; }
 .rpg-experience-circle { --experience: 0%; position: absolute; inset: 0; overflow: hidden; border-radius: 50%; background: linear-gradient(145deg, #ffffffb3, #f1f9d580 45%, #e2f3ba99); box-shadow: inset 0 1px 4px #fff, inset 0 -3px 8px #aacb754d; backdrop-filter: blur(6px); isolation: isolate; }
 .rpg-circle-water { position: absolute; inset: auto 0 0; height: var(--experience); background: linear-gradient(135deg, #d1efabcc, #a7d96ec9 52%, #b5e885d9); box-shadow: inset 0 2px 0 #edfac6cc; }
 .rpg-circle-water::before { content: ''; position: absolute; top: -5px; left: -30%; width: 160%; height: 12px; border-radius: 50%; background: linear-gradient(90deg, #d9efabd9, #b9dd84d9, #e1f4bccc); }
@@ -213,8 +244,8 @@ body.rpg-hud-active #main-container > #aiedue-rpg-hud.rpg-collapsed { width: 90p
 #aiedue-rpg-hud.rpg-collapsed .rpg-profile-banner { width: 90px; min-width: 90px; height: 90px; padding: 0; }
 #aiedue-rpg-hud.rpg-collapsed .rpg-profile-portrait { left: 50%; }
 @media (max-width: 760px) {
-    #aiedue-rpg-hud .rpg-profile-banner { height: 124px; padding: 6px 12px 54px 90px; gap: 8px; }
-    #aiedue-rpg-hud .rpg-profile-portrait { width: 68px; height: 68px; top: 40px; left: 10px; }
+    #aiedue-rpg-hud .rpg-profile-banner { height: 124px; padding: 6px 12px 54px 96px; gap: 8px; }
+    #aiedue-rpg-hud .rpg-profile-portrait { width: 74px; height: 74px; top: 40px; left: 10px; }
     #aiedue-rpg-hud .rpg-profile-copy { min-width: 0; }
     #aiedue-rpg-hud .rpg-circle-percent { font-size: 18px; }
     #aiedue-rpg-hud .rpg-profile-copy > strong { font-size: 14px; }

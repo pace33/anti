@@ -16,6 +16,7 @@ const requiredFiles = [
     'app.js',
     'experience-gauge.mjs',
     'assets/classroom/stage-icons.png',
+    ...['reading', 'correct', 'correct-closed', 'incorrect'].map(name => `assets/literacy-companion/${name}.webp`),
     'app.css',
     'style.css',
     'firebase-config.js',
