@@ -137,7 +137,7 @@ test('lab navigation uses an allowlisted action and registers the section and as
     const standaloneHtml = readFileSync(new URL('../shape-zoo.html', import.meta.url), 'utf8');
     const zooCss = readFileSync(new URL('../shape-zoo.css', import.meta.url), 'utf8');
     assert.match(app, /SAFE_MODAL_ACTIONS = new Set\(\[[\s\S]*?'openAiedueLabShapeZoo'/);
-    assert.match(app, /onclick="openAiedueLabShapeZoo\(\)"/);
+    assert.match(html, /id="stage-1-game-shape"[^>]*onclick="openAiedueLabShapeZoo\(\)"/);
     assert.match(app, /if \(!isShapeZoo\) window\.stopShapeZooGame\?\.\(\)/);
     assert.match(html, /id="shape-zoo-game-section"/);
     assert.match(html, /src="shape-zoo-game\.js/);
