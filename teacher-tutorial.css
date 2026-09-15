@@ -10,8 +10,8 @@
 .teacher-tour-target { pointer-events: auto; cursor: pointer; }
 .teacher-tour-target:hover { border-color: #fffbd5; box-shadow: 0 0 0 4px #fff, 0 0 28px #b4e878; }
 .teacher-tour-guide { position: absolute; pointer-events: none; }
-.teacher-tour-character { position: absolute; right: 18px; bottom: 18px; width: 145px; height: 194px; flex: 0 0 145px; object-fit: contain; object-position: bottom; filter: drop-shadow(0 8px 10px #172b3833); }
-.teacher-tour-bubble { position: absolute; right: 175px; bottom: 18px; width: 900px; max-width: calc(100% - 193px); padding: 16px 20px; border: 3px solid #b8dba0; border-radius: 26px 26px 6px 26px; background: #fffffff7; box-shadow: 0 12px 38px #172b3833; pointer-events: auto; }
+.teacher-tour-character { position: absolute; left: 18px; bottom: 18px; width: 145px; height: 194px; flex: 0 0 145px; object-fit: contain; object-position: bottom; filter: drop-shadow(0 8px 10px #172b3833); }
+.teacher-tour-bubble { position: absolute; left: 175px; bottom: 18px; width: 900px; max-width: calc(100% - 193px); padding: 16px 20px; border: 3px solid #b8dba0; border-radius: 26px 26px 26px 6px; background: #fffffff7; box-shadow: 0 12px 38px #172b3833; pointer-events: auto; }
 .teacher-tour-bubble header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .teacher-tour-bubble header strong { color: #398249; font-size: 15px; }
 .teacher-tour-progress { margin-left: auto; color: #758674; font: 700 13px/1.4 sans-serif; white-space: nowrap; }
