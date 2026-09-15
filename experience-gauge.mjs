@@ -17,10 +17,10 @@ export function createExperienceGauge(hud, {
         const level = Math.floor(total / 100) + (full ? 0 : 1);
         const progress = full ? 100 : total % 100;
         meter.style.setProperty('--experience', `${progress}%`);
-        percent.textContent = `${format(progress)}%`;
+        percent.textContent = `${Math.floor(progress)}%`;
         levelLabel.textContent = level;
         meter.setAttribute('aria-valuenow', format(progress));
-        meter.setAttribute('aria-valuetext', `레벨 ${level}, 경험치 ${format(progress)}%`);
+        meter.setAttribute('aria-valuetext', `레벨 ${level}, 경험치 ${Math.floor(progress)}%`);
     }
 
     function clear() {
@@ -43,10 +43,11 @@ export function createExperienceGauge(hud, {
             const next = queue.shift();
             if (!next) return;
             active = { ...next, start: now, phase: 'gain', value: next.from };
-            gain.textContent = `+${format(next.to - next.from)}%`;
+            const reward = next.to - next.from;
+            gain.textContent = reward < 1 ? '+1% 미만' : `+${Math.floor(reward)}%`;
             gain.hidden = false;
             gain.style.opacity = '0';
-            status.textContent = `경험치 ${format(next.to - next.from)}% 획득`;
+            status.textContent = `경험치 ${gain.textContent} 획득`;
         }
         const elapsed = now - active.start;
         if (active.phase === 'gain') {

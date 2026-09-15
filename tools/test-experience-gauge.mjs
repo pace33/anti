@@ -31,12 +31,15 @@ test('initial/account snapshots render immediately without a reward', () => {
     assert.equal(f.percent, '72%'); assert.equal(f.level, 7); assert.equal(f.frames.size, 0);
     f.gauge.update('b', 20, 10); assert.equal(f.percent, '10%'); assert.equal(f.frames.size, 0);
 });
-test('fractional reward flies first and fills smoothly to the exact result', () => {
+test('fractional rewards keep precise fill while all visible numbers are integers', () => {
     const f = fixture(); f.gauge.update('a', 1, 10); f.gauge.update('a', 1, 10.25); f.step(0);
-    assert.equal(f.nodes.get('.rpg-experience-gain').textContent, '+0.25%'); assert.equal(f.percent, '10%');
+    assert.equal(f.nodes.get('.rpg-experience-gain').textContent, '+1% 미만'); assert.equal(f.percent, '10%');
     f.step(650); f.step(400);
-    assert.ok(parseFloat(f.percent) > 10 && parseFloat(f.percent) < 10.25);
-    f.drain(); assert.equal(f.percent, '10.25%');
+    const meter = f.nodes.get('.rpg-experience-circle');
+    assert.ok(parseFloat(meter.style['--experience']) > 10 && parseFloat(meter.style['--experience']) < 10.25);
+    assert.equal(f.percent, '10%');
+    f.drain(); assert.equal(f.percent, '10%');
+    assert.equal(meter.style['--experience'], '10.25%');
 });
 test('level-up visibly reaches 100 before resetting and filling the remainder', () => {
     const f = fixture(); f.gauge.update('a', 7, 95); f.gauge.update('a', 8, 7);
@@ -48,7 +51,7 @@ test('level-up visibly reaches 100 before resetting and filling the remainder', 
 test('rapid rewards and duplicate snapshots finish without losing or replaying XP', () => {
     const f = fixture(); f.gauge.update('a', 1, 90); f.gauge.update('a', 1, 95); f.step(0);
     f.gauge.update('a', 1, 95); f.gauge.update('a', 2, 10); f.gauge.update('a', 4, 12.5);
-    f.drain(); assert.equal(f.percent, '12.5%'); assert.equal(f.level, 4);
+    f.drain(); assert.equal(f.percent, '12%'); assert.equal(f.level, 4);
     f.gauge.update('a', 4, 12.5); assert.equal(f.frames.size, 0);
 });
 test('server corrections cancel queued rewards and use the authoritative value', () => {
@@ -66,4 +69,11 @@ test('reduced motion and a hidden HUD settle immediately', () => {
     f.motion(true); f.step(20); assert.equal(f.percent, '60%'); assert.equal(f.frames.size, 0);
     f.motion(false); f.gauge.update('a', 3, 10); f.hud.classList.add('hidden'); f.step(20);
     assert.equal(f.percent, '10%'); assert.equal(f.frames.size, 0);
+});
+
+test('99.999 percent never displays a premature level-up', () => {
+    const f = fixture(); f.gauge.update('a', 7, 99.999);
+    assert.equal(f.percent, '99%'); assert.equal(f.level, 7);
+    f.gauge.update('a', 8, 0); f.drain();
+    assert.equal(f.percent, '0%'); assert.equal(f.level, 8);
 });

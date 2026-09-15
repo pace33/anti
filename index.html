@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260914-time-quiz-tablet-v1">
     <link rel="stylesheet" href="syllable-slow-reader.css?v=20260914-syllable-reader-tab-v2">
     <link rel="stylesheet" href="literacy-adventure.css?v=20260913-detective-inference-v1">
-    <link rel="stylesheet" href="classroom-refresh.css?v=20260915-stage-gauge-v3">
+    <link rel="stylesheet" href="classroom-refresh.css?v=20260915-glass-gauge-v4">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -342,6 +342,7 @@
                     <span class="lesson-photo-icon" aria-hidden="true">📷</span>
                     <span><strong>오늘의 노트 사진 찍기</strong><small>3단계 교과 맞춤쓰기 단어를 모아요</small></span>
                 </button>
+                <button type="button" id="stage-3-library" class="stage-header-game-button stage-header-library-button pointer-events-auto" onclick="openAiedueLibrary()" aria-label="에이두 도서관 열기"><span class="stage-header-game-icon" aria-hidden="true">📚</span><span><strong>에이두 도서관</strong><small>동화책을 읽고 만들어요</small></span></button>
                 <button type="button" id="stage-3-game-word-card" data-stage-game-entry="3" class="stage-header-game-button pointer-events-auto" onclick="openAiedueLabWordCardGame()" aria-label="3단계 게임 단어 카드 한 판 열기"><span class="stage-header-game-icon" aria-hidden="true">🃏</span><span><strong>단어 카드 한 판</strong><small>내 단어 카드로 친구와 겨뤄요</small></span></button>
                 </div>
             </div>
@@ -409,6 +410,7 @@
                     <span class="lesson-photo-icon" aria-hidden="true">📷</span>
                     <span><strong>오늘의 노트 사진 찍기</strong><small>4단계 지문 소재 단어를 모아요</small></span>
                 </button>
+                <button type="button" id="stage-4-library" class="stage-header-game-button stage-header-library-button pointer-events-auto" onclick="openAiedueLibrary()" aria-label="에이두 도서관 열기"><span class="stage-header-game-icon" aria-hidden="true">📚</span><span><strong>에이두 도서관</strong><small>동화책을 읽고 만들어요</small></span></button>
                 <button type="button" id="stage-4-game-literacy" data-stage-game-entry="4" class="stage-header-game-button pointer-events-auto" onclick="openLiteracyAdventureGame()" aria-label="4단계 게임 문해력 탐정단 열기"><span class="stage-header-game-icon" aria-hidden="true">🔎</span><span><strong>문해력 탐정단</strong><small>사건 기록에서 결정적 단서를 찾아요</small></span></button>
                 </div>
             </div>
@@ -445,11 +447,6 @@
                         <div class="text-5xl mb-3">🏦</div>
                         <div class="text-xl font-bold">단어 은행</div>
                         <p class="text-sm text-emerald-600 font-black mt-2">문해력 지문에 반영할 단어를 확인해요</p>
-                    </div>
-                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openAiedueLibrary()">
-                        <div class="text-5xl mb-3">📚</div>
-                        <div class="text-xl font-bold">에이두 도서관</div>
-                        <p class="text-sm text-emerald-600 font-black mt-2">AI 동화책을 읽고 직접 만들어요</p>
                     </div>
                 </div>
             </div>
@@ -1813,7 +1810,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260915-stage-gauge-v164"></script>
+    <script type="module" src="app.js?v=20260915-glass-gauge-v165"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>
