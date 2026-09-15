@@ -14,6 +14,7 @@ import {
     setPersistence,
     inMemoryPersistence
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { createExperienceGauge } from './experience-gauge.mjs';
 import { installClassroomTools } from './classroom-tools.js';
 import { createClassroomService } from './classroom-service.js';
 import { createAieduLoading } from './aiedu-loading.js';
@@ -3404,75 +3405,12 @@ window.aiedueAsteroidPersistence = Object.freeze({
     loadLeaderboard: loadAsteroidLeaderboard
 });
 
-function getVisibleActivityExperienceTarget() {
-    const hud = document.getElementById('aiedue-rpg-hud');
-    return hud && !hud.classList.contains('hidden') ? hud : null;
-}
-
-function getExperienceAnimationStart(source) {
-    const canvas = source instanceof HTMLCanvasElement ? source : source?.closest?.('.trace-canvas-wrap')?.querySelector?.('canvas');
-    if (canvas) {
-        const paths = Array.isArray(canvas._tracePaths) ? canvas._tracePaths : [];
-        const lastPath = paths[paths.length - 1];
-        const lastPoint = Array.isArray(lastPath) ? lastPath[lastPath.length - 1] : null;
-        const rect = canvas.getBoundingClientRect();
-        if (lastPoint && Number.isFinite(lastPoint.x) && Number.isFinite(lastPoint.y)) {
-            return { x: rect.left + lastPoint.x, y: rect.top + lastPoint.y };
-        }
-        return { x: rect.right - 28, y: rect.top + rect.height * 0.45 };
-    }
-    const rect = source?.getBoundingClientRect?.();
-    return rect
-        ? { x: rect.left + rect.width * 0.7, y: rect.top + rect.height * 0.5 }
-        : { x: window.innerWidth * 0.5, y: window.innerHeight * 0.6 };
-}
-
-async function animateExperienceOrb(source, percent, onApproach) {
-    const target = getVisibleActivityExperienceTarget();
-    if (!target || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const track = target.querySelector('.rpg-experience-track, .activity-exp-track') || target;
-    const targetRect = track.getBoundingClientRect();
-    const start = getExperienceAnimationStart(source);
-    const end = { x: targetRect.left + targetRect.width * 0.5, y: targetRect.top + targetRect.height * 0.5 };
-    const orb = document.createElement('div');
-    orb.className = 'aiedue-exp-orb';
-    orb.setAttribute('aria-hidden', 'true');
-    orb.innerHTML = `<span>+${Math.floor(percent)}%</span>`;
-    orb.style.left = `${start.x}px`;
-    orb.style.top = `${start.y}px`;
-    document.body.appendChild(orb);
-
-    let approachTimer = null;
-    try {
-        if (typeof onApproach === 'function') approachTimer = window.setTimeout(onApproach, 590);
-        const animation = orb.animate([
-            { transform: 'translate(-50%, -50%) scale(.65)', opacity: 0 },
-            { transform: 'translate(-50%, -70%) scale(1.12)', opacity: 1, offset: 0.18 },
-            { transform: `translate(calc(-50% + ${(end.x - start.x) * 0.6}px), calc(-50% + ${(end.y - start.y) * 0.46 - 48}px)) scale(1)`, opacity: 1, offset: 0.65 },
-            { transform: `translate(calc(-50% + ${end.x - start.x}px), calc(-50% + ${end.y - start.y}px)) scale(.55)`, opacity: 0.2 }
-        ], { duration: 820, easing: 'cubic-bezier(.2,.82,.25,1)', fill: 'forwards' });
-        await animation.finished;
-    } catch {}
-    if (approachTimer) window.clearTimeout(approachTimer);
-    if (typeof onApproach === 'function') onApproach();
-    orb.remove();
-    target.classList.remove('experience-received');
-    requestAnimationFrame(() => target.classList.add('experience-received'));
-    window.setTimeout(() => target.classList.remove('experience-received'), 700);
-}
-
 async function awardKoreanPracticeExperience(percent, source, meta = {}) {
     const baseReward = Math.max(0, asNumber(percent, 0));
     const stageMultiplier = calculateStageExperienceMultiplier(2);
     const reward = baseReward * stageMultiplier;
     if (!reward) return { grantedExperience: 0, stageMultiplier };
-    let wallet = null;
-    const applyReward = () => {
-        if (wallet) return;
-        wallet = applyAiedueExperienceReward(reward, { ...meta, source: meta.source || source, baseReward, stageMultiplier });
-    };
-    await animateExperienceOrb(source, reward, applyReward);
-    applyReward();
+    const wallet = applyAiedueExperienceReward(reward, { ...meta, source: meta.source || source, baseReward, stageMultiplier });
     if (currentUserId) {
         try {
             await setDoc(doc(db, 'users', currentUserId), wallet, { merge: true });
@@ -5487,6 +5425,8 @@ window.purchaseAiedueKoreanShopItem = async function(itemId) {
     }
 }
 
+let experienceGauge = null;
+
 function updateSyncedActivityHeaders({ name, coins, icon } = {}) {
     document.querySelectorAll('.sync-account-name').forEach((el) => {
         el.innerText = name || '이름 없음';
@@ -5511,7 +5451,11 @@ function updateSyncedActivityHeaders({ name, coins, icon } = {}) {
     document.querySelectorAll('.sync-aedu-exp-bar').forEach((el) => {
         el.style.width = `${Math.min(100, Math.max(0, exp))}%`;
     });
-    document.getElementById('aiedue-rpg-hud')?.querySelector('[role="progressbar"]')?.setAttribute('aria-valuenow', String(Math.min(100, Math.max(0, Math.floor(exp)))));
+    const hud = document.getElementById('aiedue-rpg-hud');
+    if (hud) {
+        experienceGauge ||= createExperienceGauge(hud);
+        experienceGauge.update(currentUserId, level, exp);
+    }
     const warnings = typeof currentUserWarningTokens !== 'undefined' ? currentUserWarningTokens : 0;
     document.querySelectorAll('.sync-warning-tokens').forEach((el) => {
         el.innerText = Math.max(0, Math.floor(asNumber(warnings, 0)));
@@ -5814,6 +5758,7 @@ window.showAiedueTopLevelSection = showTopLevelSection;
 
 function setRpgHudVisible(isVisible) {
     isVisible = Boolean(isVisible);
+    if (!isVisible) experienceGauge?.reset();
     const hud = document.getElementById('aiedue-rpg-hud');
     hud?.classList.toggle('hidden', !isVisible);
     if (hud) {

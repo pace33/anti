@@ -24,6 +24,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check experience-gauge.mjs
           node --check classroom-tools.js
           node --check classroom-service.js
           node --check aiedu-loading.js
@@ -44,6 +45,7 @@ jobs:
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
+          node --test tools/test-experience-gauge.mjs
           node --test tools/test-classroom-tools.mjs tools/test-student-diagnostic-retake.mjs
           node --test tools/test-dictation-asteroid-game.mjs tools/test-asteroid-persistence.mjs
           node --test tools/test-shape-zoo-core.mjs tools/test-shape-zoo-game.mjs
