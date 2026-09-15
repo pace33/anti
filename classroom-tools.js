@@ -76,7 +76,7 @@ export function installClassroomTools(service) {
             if (busy) return;
             owner = service.assertTeacher();
             if (!dialog) {
-                dialog = document.createElement('dialog'); dialog.className = 'classroom-dialog';
+                dialog = document.createElement('dialog'); dialog.className = 'classroom-dialog'; dialog.id = 'new-class-students-dialog';
                 dialog.setAttribute('aria-labelledby', 'new-students-title');
                 dialog.addEventListener('cancel', event => { if (busy) event.preventDefault(); });
                 document.body.appendChild(dialog);
@@ -84,6 +84,7 @@ export function installClassroomTools(service) {
             try { rows = JSON.parse(sessionStorage.getItem(`aiedu-new-students:${owner}`) || '[]'); } catch { rows = []; }
             if (!Array.isArray(rows) || !rows.length || rows.every(row => row.status === 'complete')) rows = [{ name: '', status: 'new' }];
             previousFocus = document.activeElement; render(); dialog.showModal(); dialog.querySelector('input:not(:disabled)')?.focus();
+            return dialog;
         } catch (error) { service.notify(error.message); }
     };
     async function print(kind) {
@@ -107,7 +108,7 @@ export function installClassroomTools(service) {
     window.printClassShop = () => print('shop');
     window.openClassCurrency = () => {
         try { service.assertTeacher(); } catch (error) { service.notify(error.message); return; }
-        const moneyDialog = document.createElement('dialog'); moneyDialog.className = 'classroom-dialog';
+        const moneyDialog = document.createElement('dialog'); moneyDialog.className = 'classroom-dialog'; moneyDialog.id = 'class-currency-dialog';
         moneyDialog.setAttribute('aria-labelledby', 'currency-title');
         moneyDialog.innerHTML = `<div class="classroom-dialog-content"><div class="classroom-dialog-heading"><h2 id="currency-title">종이 화폐 출력</h2><button aria-label="닫기" data-close>✕</button></div><p>금액별 원본 그림 또는 여러 장을 배치한 A4 PDF를 받으세요.</p><div class="classroom-currency-grid">${CURRENCY_ASSETS.map(asset => `<article><img src="${asset.src}" alt="에이두 ${asset.label}"><h3>${asset.label}</h3><a href="${asset.src}" download="에이두-${asset.value}원.png">원본 PNG</a><button data-money="${asset.value}">A4 PDF 다운로드</button></article>`).join('')}</div><p data-money-status role="status" aria-live="polite"></p></div>`;
         moneyDialog.querySelector('[data-close]').onclick = () => moneyDialog.close();
@@ -136,5 +137,6 @@ export function installClassroomTools(service) {
             finally { button.disabled = false; }
         });
         document.body.appendChild(moneyDialog); moneyDialog.showModal();
+        return moneyDialog;
     };
 }

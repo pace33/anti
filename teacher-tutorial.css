@@ -1,0 +1,59 @@
+.teacher-tutorial {
+    position: fixed; inset: 0; margin: 0; padding: 0; border: 0;
+    width: 100vw; height: 100dvh; max-width: none; max-height: none;
+    background: transparent; color: #294639; overflow: hidden;
+}
+.teacher-tutorial::backdrop { background: transparent; }
+.teacher-tour-shade { position: absolute; inset: 0; background: #182c3866; backdrop-filter: grayscale(.9) brightness(.72); -webkit-backdrop-filter: grayscale(.9) brightness(.72); }
+.teacher-tour-highlights { position: absolute; inset: 0; pointer-events: none; }
+.teacher-tour-highlight { position: absolute; border: 3px solid #ddf5a6; border-radius: 12px; background: transparent; box-shadow: 0 0 0 3px #fff9, 0 0 22px #b4e87880; pointer-events: none; }
+.teacher-tour-target { pointer-events: auto; cursor: pointer; }
+.teacher-tour-target:hover { border-color: #fffbd5; box-shadow: 0 0 0 4px #fff, 0 0 28px #b4e878; }
+.teacher-tour-guide { position: absolute; left: 18px; right: 18px; bottom: max(16px, env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 12px; max-width: 1080px; margin-right: auto; pointer-events: none; }
+.teacher-tour-character { width: 145px; height: 194px; flex: 0 0 145px; object-fit: contain; object-position: bottom; filter: drop-shadow(0 8px 10px #172b3833); }
+.teacher-tour-bubble { flex: 1; min-width: 0; padding: 16px 20px; border: 3px solid #b8dba0; border-radius: 26px 26px 26px 6px; background: #fffffff7; box-shadow: 0 12px 38px #172b3833; pointer-events: auto; }
+.teacher-tour-bubble header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.teacher-tour-bubble header strong { color: #398249; font-size: 15px; }
+.teacher-tour-progress { margin-left: auto; color: #758674; font: 700 13px/1.4 sans-serif; white-space: nowrap; }
+.teacher-tour-close { padding: 0; width: 32px; height: 32px; border: 0; border-radius: 50%; color: #53775a; background: #edf5e6; font-size: 24px; cursor: pointer; }
+.teacher-tour-line { font-size: clamp(17px, 1.65vw, 22px); font-weight: 800; line-height: 1.6; word-break: keep-all; white-space: pre-wrap; max-height: 27dvh; overflow-y: auto; }
+.teacher-tour-bubble footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+.teacher-tour-bubble footer > div { display: flex; gap: 8px; margin-left: auto; }
+.teacher-tour-hint { color: #557641; font-size: 13px; font-weight: 800; }
+.teacher-tour-back, .teacher-tour-next { min-width: 76px; min-height: 42px; padding: 8px 16px; border: 2px solid #acd196; border-radius: 14px; font-size: 15px; font-weight: 900; cursor: pointer; }
+.teacher-tour-back { color: #47753e; background: #f5fbef; }
+.teacher-tour-next { color: #fff; background: #438443; border-color: #438443; }
+.teacher-tutorial button:disabled { opacity: .45; cursor: default; }
+.teacher-tutorial :focus-visible { outline: 3px solid #1685bb; outline-offset: 4px; }
+.teacher-tour-error { color: #a92d25; font-size: 14px; margin-top: 8px; }
+body.teacher-tour-open { overflow: hidden; }
+/* Keep real UI above the dialogue while the native tutorial dialog blocks edits. */
+body.teacher-tour-open:is([data-teacher-tour-step="experience"], [data-teacher-tour-step="level-up"], [data-teacher-tour-step="rewards"]) #main-container > #aiedue-rpg-hud { bottom: var(--teacher-tour-space, 230px) !important; }
+body.teacher-tour-open #dashboard-section .dashboard-stage-board { padding-bottom: var(--teacher-tour-space, 230px); }
+body.teacher-tour-open #class-management-modal { align-items: flex-start; padding: 12px; background: transparent; backdrop-filter: none; }
+body.teacher-tour-open #class-management-modal > .modal-content { max-height: calc(100dvh - var(--teacher-tour-space, 230px) - 24px); }
+body.teacher-tour-open .classroom-dialog { margin: 12px auto auto; max-height: calc(100dvh - var(--teacher-tour-space, 230px) - 24px); }
+body.teacher-tour-open .classroom-dialog::backdrop { background: transparent; backdrop-filter: none; }
+body.teacher-tour-open #class-management-modal .class-management-panel { scroll-margin: 12px; }
+@media (max-width: 760px) {
+    .teacher-tour-guide { left: 8px; right: 8px; bottom: 8px; gap: 6px; }
+    .teacher-tour-character { width: 86px; height: 116px; flex-basis: 86px; }
+    .teacher-tour-bubble { padding: 12px; border-radius: 20px 20px 20px 5px; }
+    .teacher-tour-line { font-size: 16px; max-height: 27dvh; line-height: 1.55; }
+    .teacher-tour-bubble header { gap: 6px; margin-bottom: 6px; }
+    .teacher-tour-bubble header strong { font-size: 12px; }
+    .teacher-tour-progress { font-size: 11px; }
+    .teacher-tour-bubble footer { flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .teacher-tour-hint { font-size: 12px; }
+    .teacher-tour-back, .teacher-tour-next { min-width: 60px; padding: 6px 10px; min-height: 40px; }
+    body.teacher-tour-open #class-management-modal > .modal-content { padding: 16px; }
+    body.teacher-tour-open #class-management-modal h3 { font-size: 22px; }
+    body.teacher-tour-open #class-management-modal .class-management-tab-btn { padding: 7px 9px; font-size: 13px; }
+    body.teacher-tour-open #dashboard-section .dashboard-stage-card { aspect-ratio: 1; }
+}
+@media (max-height: 560px) and (min-width: 761px) {
+    .teacher-tour-character { width: 96px; height: 129px; flex-basis: 96px; }
+    .teacher-tour-bubble { padding: 10px 16px; }
+    .teacher-tour-line { font-size: 16px; max-height: 20dvh; }
+}
+@media (prefers-reduced-motion: reduce) { body.teacher-tour-open *, body.teacher-tour-open *::before { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }

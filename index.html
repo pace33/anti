@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="syllable-slow-reader.css?v=20260914-syllable-reader-tab-v2">
     <link rel="stylesheet" href="literacy-adventure.css?v=20260913-detective-inference-v1">
     <link rel="stylesheet" href="classroom-refresh.css?v=20260915-unified-orb-frame-v8">
+    <link rel="stylesheet" href="teacher-tutorial.css?v=20260915-v1">
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -1461,7 +1462,7 @@
         <div class="modal-content max-w-7xl w-full max-h-[94vh] overflow-hidden flex flex-col">
             <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-5 shrink-0">
                 <div><h3 class="text-3xl font-black text-[#2c3e50]">🏫 우리 학급 관리</h3><p class="text-sm text-gray-500 font-bold mt-1">학생을 선택해 포인트, 진도와 실시간 활동을 관리합니다.</p></div>
-                <div class="flex gap-2 flex-wrap justify-end"><button type="button" class="btn-outline px-4 py-2" onclick="printClassRoster()">학급 명단 출력</button><button type="button" class="btn-outline px-4 py-2" onclick="openTeacherStudentAddPanel()">(기존)학생 추가</button><button type="button" class="btn-primary px-4 py-2" onclick="openNewClassStudents()">신규 학생 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="closeClassManagement()">닫기</button></div>
+                <div class="flex gap-2 flex-wrap justify-end"><button type="button" class="btn-outline px-4 py-2" onclick="printClassRoster()">학급 명단 출력</button><button type="button" class="btn-outline px-4 py-2" onclick="openTeacherStudentAddPanel()">(기존)학생 추가</button><button type="button" id="class-new-students-button" class="btn-primary px-4 py-2" onclick="openNewClassStudents()">신규 학생 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="closeClassManagement()">닫기</button></div>
             </div>
 
             <div id="teacher-student-add-panel" class="hidden bg-emerald-50 border border-emerald-100 p-4 rounded-3xl mb-5 shrink-0">
@@ -1816,7 +1817,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260915-reading-companion-v167"></script>
+    <script type="module" src="app.js?v=20260915-teacher-tutorial-v168"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>

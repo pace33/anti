@@ -15,7 +15,9 @@ import {
     inMemoryPersistence
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
-import { installClassroomTools } from './classroom-tools.js';
+import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
+import { installTeacherTutorial } from './teacher-tutorial.js?v=20260915-v1';
+import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs';
 import { createClassroomService } from './classroom-service.js';
 import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
@@ -525,14 +527,8 @@ const STUDENT_ONBOARDING_POSES = Object.freeze({
     quiz: 'assets/onboarding/aiedue-quiz.webp',
     celebrate: 'assets/onboarding/aiedue-celebrate.webp'
 });
-const ROLE_ONBOARDING_VERSION = 'role-onboarding-v1';
-const TEACHER_ONBOARDING_DIALOGUE = Object.freeze([
-    Object.freeze({ speaker: '에이두', text: '안녕하세요, 선생님! 저는 에이두예요. 에이두 한글의 선생님 기능을 안내해 드릴게요.', pose: 'wave' }),
-    Object.freeze({ speaker: '에이두', text: '단계 선택 화면에서는 1단계 그리기부터 4단계 문해력까지 모든 활동을 직접 살펴볼 수 있어요.', pose: 'welcome' }),
-    Object.freeze({ speaker: '에이두', text: '학급 관리에서 학생을 학급에 추가하고, 학생별 학습 기록과 포인트를 확인할 수 있어요.', pose: 'grow' }),
-    Object.freeze({ speaker: '에이두', text: '학생의 준비도에 맞춰 단계 잠금을 조정하고 각 단계의 자세한 기록도 확인해 보세요.', pose: 'think' }),
-    Object.freeze({ speaker: '에이두', text: '에이두 연구실에는 수업에 활용할 여러 활동이 있어요. 이 안내는 튜토리얼 버튼에서 언제든 다시 볼 수 있어요!', pose: 'celebrate' })
-]);
+const ROLE_ONBOARDING_VERSION = TEACHER_TUTORIAL_VERSION;
+let teacherTutorial = null;
 let studentOnboardingState = null;
 let studentOnboardingUid = null;
 let studentOnboardingPersisting = false;
@@ -603,7 +599,7 @@ function renderStudentOnboarding() {
     if (!modal || !studentOnboardingState) return;
     modal.setAttribute('aria-labelledby', 'student-onboarding-line');
     if (roleOnboardingMode !== 'diagnostic') {
-        const lines = roleOnboardingMode === 'teacher-guide' ? TEACHER_ONBOARDING_DIALOGUE : ONBOARDING_DIALOGUE;
+        const lines = ONBOARDING_DIALOGUE;
         modal.dataset.phase = 'guide';
         diagnostic?.classList.add('hidden');
         dialogue?.classList.remove('hidden');
@@ -673,9 +669,10 @@ window.openRoleTutorial = function openRoleTutorial() {
 };
 
 function openRoleOnboardingGuide(role) {
+    if (role === 'teacher') { void teacherTutorial?.start(); return; }
     const modal = document.getElementById('student-onboarding-modal');
     if (!modal || !loginSuccess || !currentUserId) return;
-    roleOnboardingMode = role === 'teacher' ? 'teacher-guide' : 'student-guide';
+    roleOnboardingMode = 'student-guide';
     roleOnboardingIndex = 0;
     studentOnboardingUid = currentUserId;
     studentOnboardingState = createInitialDiagnosticState();
@@ -741,14 +738,13 @@ window.closeRoleOnboardingGuide = function closeRoleOnboardingGuide() {
 window.advanceStudentOnboarding = async function advanceStudentOnboarding() {
     if (!studentOnboardingState || studentOnboardingPersisting) return;
     if (roleOnboardingMode !== 'diagnostic') {
-        const lines = roleOnboardingMode === 'teacher-guide' ? TEACHER_ONBOARDING_DIALOGUE : ONBOARDING_DIALOGUE;
+        const lines = ONBOARDING_DIALOGUE;
         if (roleOnboardingIndex < lines.length - 1) {
             roleOnboardingIndex += 1;
             renderStudentOnboarding();
             return;
         }
-        if (roleOnboardingMode === 'teacher-guide') await persistTeacherOnboardingCompletion();
-        else closeStudentOnboarding();
+        closeStudentOnboarding();
         return;
     }
     const eventType = studentOnboardingState.value === 'assigned' ? 'NEXT_RESULT' : 'NEXT';
@@ -759,34 +755,6 @@ window.advanceStudentOnboarding = async function advanceStudentOnboarding() {
     }
     renderStudentOnboarding();
 };
-
-async function persistTeacherOnboardingCompletion() {
-    const uid = studentOnboardingUid;
-    if (!uid || currentUserRole !== 'teacher' || auth.currentUser?.uid !== uid) return;
-    studentOnboardingPersisting = true;
-    renderStudentOnboardingDialogue({ speaker: '에이두', text: '선생님 안내를 저장하고 있어요.' }, { buttonLabel: '저장 중…' });
-    try {
-        await setDoc(doc(db, 'users', uid), {
-            teacherOnboardingVersion: ROLE_ONBOARDING_VERSION,
-            teacherOnboardingCompletedAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        }, { merge: true });
-        if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'teacher') return;
-        currentUserProfileSnapshot = { ...currentUserProfileSnapshot, teacherOnboardingVersion: ROLE_ONBOARDING_VERSION };
-        closeStudentOnboarding();
-        showAiedueAutoToast('선생님 안내 완료', '튜토리얼 버튼에서 언제든 다시 볼 수 있어요.');
-    } catch (error) {
-        console.error('Teacher onboarding save failed', error);
-        if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'teacher') return;
-        studentOnboardingPersisting = false;
-        const errorBox = document.getElementById('student-onboarding-error');
-        if (errorBox) {
-            errorBox.textContent = '안내 완료를 저장하지 못했어요. 다시 시도하거나 닫고 나중에 진행해 주세요.';
-            errorBox.classList.remove('hidden');
-        }
-        renderStudentOnboardingDialogue({ speaker: '에이두', text: '저장 중 문제가 생겼어요. 다시 눌러 주세요.' }, { buttonLabel: '저장 다시 시도' });
-    }
-}
 
 window.selectStudentDiagnosticOption = function selectStudentDiagnosticOption(optionId) {
     if (!studentOnboardingState || studentOnboardingState.value !== 'question' || studentOnboardingPersisting) return;
@@ -4380,7 +4348,7 @@ function renderAiedueKoreanTeacherShopManager(items = [], { embedded = false } =
     return `<section class="${embedded ? 'bg-amber-50/40 border border-amber-100 rounded-3xl p-4 md:p-5' : ''}">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
             <div><h3 class="text-2xl font-black text-[#2c3e50]">🛒 상점 물품 관리</h3><p class="text-sm text-gray-500 font-bold mt-1">물품을 만든 뒤 학생별로 배부하면 학생 상점에 표시됩니다. · 등록 ${items.length}개</p></div>
-            <div class="flex gap-2 flex-wrap"><button type="button" class="btn-outline px-4 py-2" onclick="printClassShop()">상점 물품 표로 출력하기</button><button type="button" class="btn-outline px-4 py-2" onclick="openClassCurrency()">종이 화폐 출력</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">물품 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">전체 학생에게 모두 배부</button></div>
+            <div class="flex gap-2 flex-wrap"><button type="button" class="btn-outline px-4 py-2" onclick="printClassShop()">상점 물품 표로 출력하기</button><button type="button" id="${embedded ? 'class-currency-button' : 'teacher-shop-currency-button'}" class="btn-outline px-4 py-2" onclick="openClassCurrency()">종이 화폐 출력</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueKoreanShopItemEditor()">물품 추가</button><button type="button" class="btn-outline px-4 py-2" onclick="distributeAllAiedueKoreanShopItems()">전체 학생에게 모두 배부</button></div>
         </div>
         <div class="space-y-3 ${embedded ? '' : 'max-h-[55vh] overflow-y-auto custom-scrollbar pr-1'}">${rows}</div>
     </section>`;
@@ -5497,6 +5465,7 @@ function updateDashboardExperience(userData = {}, options = {}) {
             ...incomingUserData
         };
     currentUserRole = (userData?.role || 'student').toLowerCase();
+    if (currentUserRole !== 'teacher') teacherTutorial?.stop();
     koreanMasteryCache = userData?.koreanQuestionMastery && typeof userData.koreanQuestionMastery === 'object'
         ? userData.koreanQuestionMastery
         : {};
@@ -21524,7 +21493,7 @@ window.selectClassManagementTab = function selectClassManagementTab(tab = 'point
         button.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     renderTeacherClassManagement();
-    if (activeClassManagementTab === 'shop') void renderAiedueKoreanClassShopPanel();
+    if (activeClassManagementTab === 'shop') return renderAiedueKoreanClassShopPanel();
 }
 
 window.openClassManagement = async function() {
@@ -21903,6 +21872,7 @@ onAuthStateChanged(auth, async (user) => {
     const nextUserId = user?.uid || null;
     const identityChanged = (previousUserId || null) !== nextUserId;
     if (identityChanged) {
+        teacherTutorial?.stop();
         if (typeof dismissDrawingTutorial === 'function') dismissDrawingTutorial({ remember: false, restoreFocus: false });
         window.clearTimeout(studentOnboardingAutoTimer);
         studentOnboardingAutoTimer = null;
@@ -23292,3 +23262,74 @@ installClassroomTools(createClassroomService({
     refreshStudents: () => window.loadStudents(),
     getShopItems: () => loadAiedueKoreanTeacherShopItems(currentUserId, { updateCache: false })
 }));
+
+function createTeacherTutorialActions() {
+    let studentDialog = null, currencyDialog = null;
+    const session = () => loginSuccess && currentUserRole === 'teacher' && auth.currentUser?.uid === currentUserId ? currentUserId : null;
+    const assertSession = uid => { if (session() !== uid) throw new Error('로그인 상태가 바뀌었어요. 다시 로그인해 주세요.'); };
+    const closeDialogs = (keep = '') => {
+        if (keep !== 'new-students') { if (studentDialog?.open) studentDialog.close(); studentDialog = null; }
+        if (keep !== 'currency') { if (currencyDialog?.open) currencyDialog.close(); currencyDialog = null; }
+    };
+    const classOpen = () => !document.getElementById('class-management-modal').classList.contains('hidden');
+    const setExpanded = expanded => {
+        const hud = document.getElementById('aiedue-rpg-hud');
+        hud?.classList.toggle('rpg-collapsed', !expanded);
+        const button = hud?.querySelector('.rpg-profile-portrait');
+        button?.setAttribute('aria-expanded', String(expanded));
+        button?.setAttribute('aria-label', expanded ? '메뉴 접기' : '메뉴 펼치기');
+    };
+    return {
+        session,
+        capture: () => ({ collapsed: document.getElementById('aiedue-rpg-hud')?.classList.contains('rpg-collapsed') }),
+        async prepare(step, uid) {
+            assertSession(uid);
+            closeDialogs(step.view);
+            if (['dashboard', 'wallet'].includes(step.view)) {
+                if (classOpen()) window.closeClassManagement();
+                showDashboardOnly();
+                if (step.view === 'wallet') setExpanded(true);
+            } else {
+                if (!classOpen()) await window.openClassManagement();
+                assertSession(uid);
+                if (!teacherTutorial?.state().active) return;
+                if (step.view === 'new-students') {
+                    if (!studentDialog?.open) studentDialog = window.openNewClassStudents();
+                    if (!studentDialog?.open) throw new Error('신규 학생 추가 화면을 열지 못했어요. 다시 시도해 주세요.');
+                } else if (step.view === 'currency') {
+                    if (!currencyDialog?.open) currencyDialog = window.openClassCurrency();
+                    if (!currencyDialog?.open) throw new Error('종이 화폐 화면을 열지 못했어요. 다시 시도해 주세요.');
+                } else {
+                    const tab = step.view === 'class' ? 'points' : step.view;
+                    await window.selectClassManagementTab(tab);
+                }
+            }
+            assertSession(uid);
+            if (!teacherTutorial?.state().active) return;
+            if (step.targets.length) document.querySelector(step.targets[0])?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+        },
+        async activate(action, uid) {
+            assertSession(uid);
+            if (action === 'class') await window.openClassManagement();
+            else if (action === 'new-students') {
+                studentDialog = window.openNewClassStudents();
+                if (!studentDialog?.open) throw new Error('신규 학생 추가 화면을 열지 못했어요. 다시 시도해 주세요.');
+            }
+        },
+        async complete(uid) {
+            assertSession(uid);
+            await setDoc(doc(db, 'users', uid), {
+                teacherOnboardingVersion: ROLE_ONBOARDING_VERSION,
+                teacherOnboardingCompletedAt: serverTimestamp(), updatedAt: serverTimestamp()
+            }, { merge: true });
+            if (session() === uid) currentUserProfileSnapshot = { ...currentUserProfileSnapshot, teacherOnboardingVersion: ROLE_ONBOARDING_VERSION };
+        },
+        restore(snapshot) {
+            closeDialogs();
+            if (classOpen()) window.closeClassManagement();
+            setExpanded(!snapshot?.collapsed);
+            if (session()) showDashboardOnly();
+        }
+    };
+}
+teacherTutorial = installTeacherTutorial(createTeacherTutorialActions());

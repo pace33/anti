@@ -49,7 +49,7 @@ assert.match(html, /id="dashboard-tutorial-button"[\s\S]*?onclick="openRoleTutor
 assert.match(html, /id="student-onboarding-modal"[\s\S]*?role="dialog"[\s\S]*?aria-modal="true"/, 'site-wide onboarding must use an accessible dialog');
 assert.match(html, /id="student-onboarding-character"[\s\S]*?assets\/onboarding\/aiedue-wave\.webp/, 'site-wide onboarding must use the optimized official Aiedue onboarding asset');
 assert.match(html, /id="student-onboarding-line"[\s\S]*?aria-live="polite"/, 'site-wide onboarding dialogue must announce each step');
-assert.match(app, /ONBOARDING_DIALOGUE[\s\S]*?const TEACHER_ONBOARDING_DIALOGUE = Object\.freeze\(/, 'onboarding must define distinct student and teacher tracks');
+assert.match(app, /installTeacherTutorial\(createTeacherTutorialActions\(\)\)/, 'teacher spotlight onboarding must remain separate from student assessment');
 assert.match(app, /function maybeStartStudentOnboarding\(profile[\s\S]*?currentUserRole === 'teacher'/, 'first-run onboarding must branch by authenticated role');
 assert.match(app, /diagnosticStatus[\s\S]*?assignedLevel[\s\S]*?unlockedLevels/, 'student diagnostic assignment must be persisted in the profile contract');
 assert.match(app, /function updateDashboardExperience\(userData = \{\}, options = \{\}\)[\s\S]*?options\.authoritative === true[\s\S]*?currentUserProfileSnapshot[\s\S]*?incomingUserData[\s\S]*?deriveStageAccessFromProfile\(userData\)/, 'partial dashboard refreshes must merge while authoritative snapshots replace cached diagnostic placement');
