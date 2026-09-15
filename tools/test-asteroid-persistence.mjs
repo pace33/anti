@@ -13,7 +13,7 @@ const between = (start, end) => {
 
 const facadeSection = between(
     "const AIEDUE_ASTEROID_LEADERBOARD_COLLECTION",
-    'function getVisibleActivityExperienceTarget'
+    'async function awardKoreanPracticeExperience'
 );
 const commitSection = between('async function commitAsteroidRun', 'async function loadAsteroidLeaderboard');
 const loadSection = between('async function loadAsteroidLeaderboard', 'window.aiedueAsteroidPersistence');

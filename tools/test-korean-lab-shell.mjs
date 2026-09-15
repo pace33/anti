@@ -100,7 +100,7 @@ test('연구실 게임은 에이두 한글 공통 둥근 카드 셸을 쓴다', 
     assert.ok(labCss.includes('body.aiedue-lab-game-open .aiedue-rpg-hud'));
 });
 
-test('대시보드는 좁은 화면에서도 1~4단계를 한 줄로 유지하고 내 정보 배너를 왼쪽 아래에 둔다', () => {
+test('대시보드는 큰 화면의 네 단계와 모바일 두 열 배치, 하단 정보 바를 유지한다', async () => {
     assert.ok(app.includes("document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section')"));
     assert.ok(app.includes("hud.classList.remove('rpg-collapsed')"));
     assert.ok(appCss.includes('body.dashboard-view-active .aiedue-rpg-hud'));
@@ -109,9 +109,10 @@ test('대시보드는 좁은 화면에서도 1~4단계를 한 줄로 유지하�
     assert.ok(appCss.includes('left: max(18px, env(safe-area-inset-left)) !important'));
     assert.ok(appCss.includes('body.dashboard-view-active #dashboard-section .dashboard-quick-actions'));
     const tablet = section(appCss, '@media (max-width: 992px)', '@media (max-width: 576px)');
-    const mobile = section(appCss, '@media (max-width: 576px)', '/* Hermes drawing UX refinements */');
+    const refreshCss = await readFile(new URL('classroom-refresh.css', root), 'utf8');
+    const mobile = section(refreshCss, '@media (max-width: 760px)', '@media (prefers-reduced-motion: reduce)');
     assert.ok(tablet.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'));
-    assert.ok(mobile.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'));
+    assert.ok(mobile.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'));
 });
 
 test('놀이 화면은 뷰포트 중앙에 오고 왼쪽 위 한글 로고가 복귀 버튼이다', () => {
