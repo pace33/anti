@@ -213,6 +213,28 @@ body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray { top: auto; bottom: calc(1
 /* The circle owns experience; the freed row is used for readable wallet/menu controls. */
 body.rpg-hud-active #main-container > .aiedue-rpg-hud { width: min(800px, calc(100% - 36px)); }
 #aiedue-rpg-hud .rpg-profile-banner { height: 88px; padding: 6px 14px 6px 150px; gap: 16px; }
+/* Draw the orb surround and panel as one silhouette, so overlaps have no seam. */
+#aiedue-rpg-hud .rpg-profile-banner {
+    --hud-crown-size: 138px; --hud-crown-rise: 52px;
+    --hud-panel-top: calc(var(--hud-crown-rise) - 2px);
+    isolation: isolate; border-color: transparent; background: transparent; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+#aiedue-rpg-hud .rpg-profile-banner::before {
+    content: ''; position: absolute; inset: calc(0px - var(--hud-crown-rise)) -2px -2px;
+    z-index: -1; pointer-events: none;
+    background:
+        radial-gradient(circle closest-side, #fff calc(100% - .5px), transparent) 6px 0 / var(--hud-crown-size) var(--hud-crown-size) no-repeat,
+        linear-gradient(#fff, #fff) 24px var(--hud-panel-top) / calc(100% - 48px) calc(100% - var(--hud-panel-top)) no-repeat,
+        linear-gradient(#fff, #fff) 0 calc(var(--hud-panel-top) + 24px) / 100% calc(100% - var(--hud-panel-top) - 48px) no-repeat,
+        radial-gradient(circle at bottom right, #fff 23.5px, transparent 24px) 0 var(--hud-panel-top) / 24px 24px no-repeat,
+        radial-gradient(circle at bottom left, #fff 23.5px, transparent 24px) 100% var(--hud-panel-top) / 24px 24px no-repeat,
+        radial-gradient(circle at top right, #fff 23.5px, transparent 24px) 0 100% / 24px 24px no-repeat,
+        radial-gradient(circle at top left, #fff 23.5px, transparent 24px) 100% 100% / 24px 24px no-repeat;
+    filter: drop-shadow(0 -1px 0 #cde4c7) drop-shadow(1px 0 0 #cde4c7) drop-shadow(-1px 0 0 #cde4c7) drop-shadow(0 1px 0 #cde4c7) drop-shadow(0 14px 18px #325b452e);
+    opacity: 1; transition: opacity .2s ease;
+}
+#aiedue-rpg-hud.rpg-collapsed .rpg-profile-banner::before { opacity: 0; }
 #aiedue-rpg-hud .rpg-profile-portrait { left: 10px; top: auto; bottom: 4px; transform: none; width: 126px; height: 126px; background: #ffffff45; border: 2px solid #ffffffd9; overflow: visible; box-shadow: 0 4px 12px #789d412e, 0 0 0 1px #bfd995b3; }
 .rpg-experience-circle { --experience: 0%; position: absolute; inset: 0; overflow: hidden; border-radius: 50%; background: linear-gradient(145deg, #ffffffb3, #f1f9d580 45%, #e2f3ba99); box-shadow: inset 0 1px 4px #fff, inset 0 -3px 8px #aacb754d; backdrop-filter: blur(6px); isolation: isolate; }
 .rpg-circle-water { position: absolute; inset: auto 0 0; height: var(--experience); background: linear-gradient(135deg, #d1efabcc, #a7d96ec9 52%, #b5e885d9); box-shadow: inset 0 2px 0 #edfac6cc; }
@@ -245,6 +267,7 @@ body.rpg-hud-active #main-container > #aiedue-rpg-hud.rpg-collapsed { width: 146
 #aiedue-rpg-hud.rpg-collapsed .rpg-profile-banner { width: 146px; min-width: 146px; height: 136px; padding: 0; border-color: transparent; background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 #aiedue-rpg-hud.rpg-collapsed .rpg-profile-portrait { left: 10px; top: auto; bottom: 4px; transform: none; }
 @media (max-width: 760px) {
+    #aiedue-rpg-hud .rpg-profile-banner { --hud-crown-size: 123px; --hud-crown-rise: 51px; }
     #aiedue-rpg-hud .rpg-profile-banner { height: 124px; padding: 6px 12px 54px 133px; gap: 8px; }
     #aiedue-rpg-hud .rpg-profile-portrait { width: 111px; height: 111px; top: auto; bottom: 54px; left: 10px; }
     #aiedue-rpg-hud .rpg-profile-copy { min-width: 0; }
@@ -264,6 +287,7 @@ body.rpg-hud-active #main-container > #aiedue-rpg-hud.rpg-collapsed { width: 146
     body[data-learning-stage] .view-section:not(.hidden) > .custom-scrollbar { padding-bottom: 150px !important; }
 }
 @media (prefers-reduced-motion: reduce) {
+    #aiedue-rpg-hud .rpg-profile-banner::before { transition: none; }
     #dashboard-section .dashboard-stage-card, #dashboard-section .stage-illustration,
     #dashboard-section .dashboard-stage-card::before,
     #dashboard-section .dashboard-stage-card :is(.level-title, .level-desc) { transition: none !important; transform: none !important; }
