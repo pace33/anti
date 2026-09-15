@@ -21,7 +21,7 @@ import { installStageTutorial } from './stage-tutorial.js?v=20260915-real-tour-v
 import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260915-real-tour-v2';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260915-stage-guides-v3';
 import { createClassroomService } from './classroom-service.js';
-import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v2';
+import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v3';
 import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
 import {
@@ -2881,54 +2881,6 @@ function calculateStageExperienceMultiplier(activityStep) {
     return typeof val === 'number' ? val : Math.min(1.0, numericStep / maxUnlockedStep);
 }
 
-async function saveKoreanExperienceMultipliers() {
-    if (!currentUserId) return;
-    const multipliers = {
-        max1: {
-            s1: asNumber(document.getElementById('exp-mult-m1-s1')?.value, 1.0)
-        },
-        max2: {
-            s1: asNumber(document.getElementById('exp-mult-m2-s1')?.value, 0.5),
-            s2: asNumber(document.getElementById('exp-mult-m2-s2')?.value, 1.0)
-        },
-        max3: {
-            s1: asNumber(document.getElementById('exp-mult-m3-s1')?.value, 0.33),
-            s2: asNumber(document.getElementById('exp-mult-m3-s2')?.value, 0.66),
-            s3: asNumber(document.getElementById('exp-mult-m3-s3')?.value, 1.0)
-        },
-        max4: {
-            s1: asNumber(document.getElementById('exp-mult-m4-s1')?.value, 0.25),
-            s2: asNumber(document.getElementById('exp-mult-m4-s2')?.value, 0.5),
-            s3: asNumber(document.getElementById('exp-mult-m4-s3')?.value, 0.75),
-            s4: asNumber(document.getElementById('exp-mult-m4-s4')?.value, 1.0)
-        }
-    };
-    const classId = currentUserId;
-    try {
-        await setDoc(doc(db, 'classes', classId), { koreanExperienceMultipliers: multipliers }, { merge: true });
-        window.koreanExperienceMultipliers = multipliers;
-        showModal('단계별 경험치 배율 설정이 저장되었습니다.');
-        if (typeof window.loadStudents === 'function') {
-            await window.loadStudents();
-        }
-    } catch (error) {
-        console.warn('classes/{classId} 저장 실패, fallback 시도:', error);
-        try {
-            await setDoc(doc(db, 'users', currentUserId), { koreanSettings: { koreanExperienceMultipliers: multipliers } }, { merge: true });
-            window.koreanExperienceMultipliers = multipliers;
-            showModal('단계별 경험치 배율 설정이 저장되었습니다. (교사 개인 설정)');
-            if (typeof window.loadStudents === 'function') {
-                await window.loadStudents();
-            }
-        } catch (err2) {
-            console.error('교사 설정 저장 실패', err2);
-            showModal('설정 저장 실패: ' + err2.message);
-        }
-    }
-}
-
-window.saveKoreanExperienceMultipliers = saveKoreanExperienceMultipliers;
-
 async function loadKoreanExperienceMultipliers(teacherId, classId) {
     let loaded = null;
     const classIds = Array.from(new Set([classId, teacherId].filter(Boolean)));
@@ -4170,8 +4122,8 @@ window.openAiedueLab = function openAiedueLab() {
             ${currentUserRole === 'teacher' ? `<button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-lime-50 to-emerald-50 border-2 border-lime-200 hover:scale-[1.01] transition-transform" onclick="openAiedueWorkshop()">
                 <span class="block text-5xl mb-3" aria-hidden="true">🌱</span>
                 <strong class="block text-2xl font-black text-green-700">에이두 수업 공방</strong>
-                <span class="block mt-2 font-bold text-gray-600">우리 반 학습지를 만들고, 학생별 시간표를 준비해요.</span>
-                <span class="block mt-3 text-sm font-black text-green-700">교사용 · 학습지 만들기 · 시간표</span>
+                <span class="block mt-2 font-bold text-gray-600">우리 반 속도에 맞는 읽기·쓰기 학습지를 만들고 인쇄해요.</span>
+                <span class="block mt-3 text-sm font-black text-green-700">교사용 · 학습지 만들기 · 인쇄 / PDF</span>
             </button>` : ''}
         </div>
     </div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
@@ -21504,19 +21456,8 @@ function stopTeacherClassStudentSubscriptions() {
     teacherClassStudentUnsubscribers = [];
 }
 
-function setKoreanMultiplierInputs() {
-    const m = window.koreanExperienceMultipliers || {};
-    const values = {
-        'exp-mult-m1-s1': m.max1?.s1 ?? 1,
-        'exp-mult-m2-s1': m.max2?.s1 ?? 0.5, 'exp-mult-m2-s2': m.max2?.s2 ?? 1,
-        'exp-mult-m3-s1': m.max3?.s1 ?? 0.33, 'exp-mult-m3-s2': m.max3?.s2 ?? 0.66, 'exp-mult-m3-s3': m.max3?.s3 ?? 1,
-        'exp-mult-m4-s1': m.max4?.s1 ?? 0.25, 'exp-mult-m4-s2': m.max4?.s2 ?? 0.5, 'exp-mult-m4-s3': m.max4?.s3 ?? 0.75, 'exp-mult-m4-s4': m.max4?.s4 ?? 1
-    };
-    Object.entries(values).forEach(([id, value]) => { const input = document.getElementById(id); if (input) input.value = value; });
-}
-
 window.selectClassManagementTab = function selectClassManagementTab(tab = 'points') {
-    const allowed = new Set(['points', 'multipliers', 'progress', 'activity', 'shop']);
+    const allowed = new Set(['points', 'timetable', 'progress', 'activity', 'shop']);
     activeClassManagementTab = allowed.has(tab) ? tab : 'points';
     if (activeClassManagementTab !== 'shop') classShopRenderRequestId += 1;
     document.querySelectorAll('.class-management-panel').forEach((panel) => panel.classList.toggle('hidden', panel.id !== `class-management-${activeClassManagementTab}-panel`));
@@ -21526,6 +21467,8 @@ window.selectClassManagementTab = function selectClassManagementTab(tab = 'point
         button.classList.toggle('btn-outline', !active);
         button.setAttribute('aria-selected', active ? 'true' : 'false');
     });
+    if (activeClassManagementTab === 'timetable') workshopLauncher.openTimetable(document.getElementById('class-management-timetable-content'));
+    else workshopLauncher.closeTimetable();
     renderTeacherClassManagement();
     if (activeClassManagementTab === 'shop') return renderAiedueKoreanClassShopPanel();
 }
@@ -21536,11 +21479,11 @@ window.openClassManagement = async function() {
     closeTeacherStudentAddPanel();
     selectClassManagementTab('points');
     await loadKoreanExperienceMultipliers(currentUserId, currentUserId);
-    setKoreanMultiplierInputs();
     await loadStudents();
 }
 
 window.closeClassManagement = function() {
+    workshopLauncher.closeTimetable();
     classShopRenderRequestId += 1;
     stopTeacherClassStudentSubscriptions();
     closeTeacherStudentAddPanel();

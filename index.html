@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260915-workshop-v175">
+    <link rel="stylesheet" href="app.css?v=20260915-class-timetable-v177">
     <link rel="stylesheet" href="shape-zoo.css?v=20260914-stage-game-reports-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260915-time-quiz-readability-v3">
@@ -1477,7 +1477,7 @@
 
             <div class="flex flex-wrap gap-2 mb-5 shrink-0" role="tablist" aria-label="학급 관리 항목">
                 <button type="button" class="class-management-tab-btn btn-primary px-4 py-2" data-class-tab="points" onclick="selectClassManagementTab('points')">💰 포인트</button>
-                <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="multipliers" onclick="selectClassManagementTab('multipliers')">⚙️ 경험치 배율</button>
+                <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="timetable" onclick="selectClassManagementTab('timetable')">📅 시간표</button>
                 <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="progress" onclick="selectClassManagementTab('progress')">📚 단계별 진도</button>
                 <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="activity" onclick="selectClassManagementTab('activity')">📡 학생 현황</button>
                 <button type="button" class="class-management-tab-btn btn-outline px-4 py-2" data-class-tab="shop" onclick="selectClassManagementTab('shop')">🛒 상점 물품 관리</button>
@@ -1512,18 +1512,8 @@
                     </div>
                 </section>
 
-                <section id="class-management-multipliers-panel" class="class-management-panel hidden">
-                    <div class="bg-gray-50 rounded-3xl p-5">
-                        <h4 class="text-xl font-black text-[#2c3e50] mb-3">⚙️ 단계별 경험치 배율 설정</h4>
-                        <p class="text-sm text-gray-500 mb-4">학생이 해금한 가장 높은 단계에 따라 각 단계 활동으로 받는 경험치 비율을 설정합니다.</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 text-xs font-bold text-gray-700 mb-4">
-                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 1단계 해금</div><label class="block">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m1-s1" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
-                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 2단계 해금</div><label class="block mb-1">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m2-s1" value="0.5" class="w-20 px-2 py-1 border rounded"></label><label class="block">2단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m2-s2" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
-                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 3단계 해금</div><label class="block mb-1">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m3-s1" value="0.33" class="w-20 px-2 py-1 border rounded"></label><label class="block mb-1">2단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m3-s2" value="0.66" class="w-20 px-2 py-1 border rounded"></label><label class="block">3단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m3-s3" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
-                            <div class="bg-white p-4 rounded-2xl"><div class="mb-2 font-black">최고 4단계 해금</div><label class="block mb-1">1단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s1" value="0.25" class="w-20 px-2 py-1 border rounded"></label><label class="block mb-1">2단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s2" value="0.5" class="w-20 px-2 py-1 border rounded"></label><label class="block mb-1">3단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s3" value="0.75" class="w-20 px-2 py-1 border rounded"></label><label class="block">4단계 <input type="number" step="0.01" min="0" max="1" id="exp-mult-m4-s4" value="1.0" class="w-20 px-2 py-1 border rounded"></label></div>
-                        </div>
-                        <div class="flex justify-end"><button type="button" class="btn-primary px-6 py-2" onclick="saveKoreanExperienceMultipliers()">배율 저장하기</button></div>
-                    </div>
+                <section id="class-management-timetable-panel" class="class-management-panel hidden">
+                    <div id="class-management-timetable-content"></div>
                 </section>
             </div>
         </div>
@@ -1818,7 +1808,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260915-workshop-two-tools-v176"></script>
+    <script type="module" src="app.js?v=20260915-class-timetable-v177"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260914-stage-game-reports-v1"></script>

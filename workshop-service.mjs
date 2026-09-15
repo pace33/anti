@@ -1,12 +1,13 @@
 // Records live under the signed-in teacher, using the Korean app's data adapter.
 export const WORKSHOP_KINDS = new Set(['worksheet', 'schedule']);
 
-export function createWorkshopService(api, teacherId) {
+export function createWorkshopService(api, teacherId, kind) {
     let closed = false;
+    const allowedKinds = kind ? new Set(WORKSHOP_KINDS.has(kind) ? [kind] : []) : WORKSHOP_KINDS;
     const assertTeacher = () => {
         const current = api.current();
         if (closed || !teacherId || current.id !== teacherId || current.role !== 'teacher') {
-            throw new Error('교사 로그인 정보를 확인한 뒤 수업 공방을 다시 열어 주세요.');
+            throw new Error('교사 로그인 정보를 확인한 뒤 다시 열어 주세요.');
         }
     };
     const records = () => api.collection(api.db, 'users', teacherId, 'workshopEntries');
@@ -36,13 +37,13 @@ export function createWorkshopService(api, teacherId) {
             assertTeacher();
             const [roster, snapshot] = await Promise.all([students(), api.getDocs(records())]);
             assertTeacher();
-            const entries = snapshot.docs.map(s => ({...s.data(),id:s.id})).filter(e => WORKSHOP_KINDS.has(e.kind) && !e.deletedAt);
+            const entries = snapshot.docs.map(s => ({...s.data(),id:s.id})).filter(e => allowedKinds.has(e.kind) && !e.deletedAt);
             entries.sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(b.createdAt).localeCompare(String(a.createdAt)));
             return {entries,students:roster};
         },
         async save(kind, payload, studentId = '', date, id) {
             assertTeacher();
-            if (!WORKSHOP_KINDS.has(kind) || !payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('기록 내용을 확인해 주세요.');
+            if (!allowedKinds.has(kind) || !payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('기록 내용을 확인해 주세요.');
             if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('날짜를 확인해 주세요.');
             if (id && !/^[\w-]{1,80}$/.test(id)) throw new Error('기록 번호를 확인해 주세요.');
             const serialized = JSON.stringify(payload);
@@ -65,7 +66,7 @@ export function createWorkshopService(api, teacherId) {
             if (!/^[\w-]{1,80}$/.test(id)) throw new Error('기록 번호를 확인해 주세요.');
             const ref = record(id), snapshot = await api.getDoc(ref);
             assertTeacher();
-            if (!snapshot.exists() || !WORKSHOP_KINDS.has(snapshot.data().kind)) throw new Error('기록을 찾지 못했습니다.');
+            if (!snapshot.exists() || !allowedKinds.has(snapshot.data().kind)) throw new Error('기록을 찾지 못했습니다.');
             await api.setDoc(ref, {deletedAt:new Date().toISOString()}, {merge:true});
             assertTeacher();
         }

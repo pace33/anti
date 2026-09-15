@@ -39,6 +39,25 @@ test('removed tools cannot load or save records',async()=>{
     }
     assert.deepEqual((await service.load()).entries,[]);
 });
+test('moving timetable to class management preserves schedules and separates both tool sessions',async()=>{
+    const {api,service}=setup();
+    const lesson=await service.save('schedule',{subject:'국어',weekday:'월',period:'1'},'student-a','2026-09-15');
+    const sheet=await service.save('worksheet',{title:'읽기'},'student-a','2026-09-15');
+    const timetable=createWorkshopService(api,'teacher-a','schedule');
+    const workshop=createWorkshopService(api,'teacher-a','worksheet');
+    assert.deepEqual((await timetable.load()).entries.map(e=>e.id),[lesson.id]);
+    assert.deepEqual((await workshop.load()).entries.map(e=>e.id),[sheet.id]);
+    await assert.rejects(workshop.save('schedule',{},'student-a','2026-09-15'));
+    await assert.rejects(timetable.save('worksheet',{},'student-a','2026-09-15'));
+    await assert.rejects(workshop.remove(lesson.id));
+    await assert.rejects(timetable.remove(sheet.id));
+    await timetable.save('schedule',{subject:'수학',weekday:'월',period:'1'},'student-a','2026-09-15',lesson.id);
+    timetable.close();
+    await assert.rejects(timetable.load());
+    const reopened=createWorkshopService(api,'teacher-a','schedule');
+    assert.equal((await reopened.load()).entries[0].payload.subject,'수학');
+    assert.equal((await workshop.load()).entries.length,1);
+});
 test('student sessions and closed sessions cannot read or save',async()=>{
     const state=setup();
     state.identity({id:'student-a',role:'student'});

@@ -9118,3 +9118,5 @@ body.dictation-asteroid-open { overflow: hidden; background: #050816; }
     .dictation-explosion.is-active::before { animation: none !important; opacity: 1; transform: translate(-50%, -50%) scale(2.4); }
     .dictation-explosion.is-active i { animation: none !important; opacity: .9; transform: rotate(calc(var(--particle) * 30deg)) translateY(-48px) scale(.75); }
 }
+
+.class-timetable-frame { display: block; width: 100%; height: 780px; border: 1px solid #dde9d6; border-radius: 24px; background: #f6faf4; }
