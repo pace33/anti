@@ -19,6 +19,8 @@ for (const role of ['teacher', 'student']) for (const level of [1,2,3,4]) {
         assert.equal(completed,1);assert.equal(controller.state().active,false);
         assert.ok(activated.length>5);assert.equal(new Set(steps.map(s=>s.id)).size,steps.length);
         assert.ok(steps.some(s=>s.interact));assert.ok(steps.every(s=>!s.practice));
+        assert.match(steps[0].text,new RegExp(`${level}단계 버튼을 눌러 주세요\\.$`));
+        assert.doesNotMatch(steps[0].text,/밝은 단계 카드/);
         assert.notDeepEqual(steps.map(s=>s.text),buildStageTutorial(level,role==='teacher'?'student':'teacher').map(s=>s.text));
         for(const step of steps.filter(s=>s.destination)) assert.equal(steps[steps.indexOf(step)+1].view,step.destination);
     });

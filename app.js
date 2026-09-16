@@ -17,8 +17,8 @@ import {
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
-import { installStageTutorial } from './stage-tutorial.js?v=20260915-real-tour-v2';
-import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260915-real-tour-v2';
+import { installStageTutorial } from './stage-tutorial.js?v=20260916-stage-button-copy-v1';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260916-stage-button-copy-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v3';

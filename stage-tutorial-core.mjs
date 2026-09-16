@@ -20,8 +20,8 @@ export function buildStageTutorial(level, role) {
     const explore = (id, view, targets, student, teaching, interact = [], event = 'click') => add(id, view, targets, student, teaching,
         interact.length ? { interact, event, click: 'explore', clickLabel: '체험' } : {});
     add('enter', 'dashboard', [`#card-level-${level}`],
-        `${level}단계 ${info.name}! 실제 버튼을 누르며 하나씩 둘러보자. 밝은 단계 카드를 눌러 줘.`,
-        `${level}단계 ${info.name}의 실제 화면을 함께 사용해 보겠습니다. 밝은 단계 카드를 눌러 주세요.`,
+        `${level}단계 ${info.name}! 실제 버튼을 누르며 하나씩 둘러보자. ${level}단계 버튼을 눌러 주세요.`,
+        `${level}단계 ${info.name}의 실제 화면을 함께 사용해 보겠습니다. ${level}단계 버튼을 눌러 주세요.`,
         { click: 'enter', clickLabel: `${level}단계`, destination: 'hub' });
     if (level === 1) {
         enter('drawing', '그림 미션', 'openCurrentDrawingMission()', 'drawing', '‘그림 미션’을 눌러 보자. 지금 할 차례인 그림이 열려.', '그림 미션은 학생의 진행 단계에 맞는 도안을 엽니다. 직접 눌러 현재 제시되는 그림을 확인해 주세요.');
