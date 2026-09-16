@@ -20,7 +20,8 @@
 .teacher-tour-bubble footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
 .teacher-tour-bubble footer > div { display: flex; gap: 8px; margin-left: auto; }
 .teacher-tour-hint { color: #557641; font-size: 13px; font-weight: 800; }
-.teacher-tour-back, .teacher-tour-next { min-width: 76px; min-height: 42px; padding: 8px 16px; border: 2px solid #acd196; border-radius: 14px; font-size: 15px; font-weight: 900; cursor: pointer; }
+.teacher-tour-skip, .teacher-tour-back, .teacher-tour-next { min-width: 76px; min-height: 42px; padding: 8px 16px; border: 2px solid #acd196; border-radius: 14px; font-size: 15px; font-weight: 900; cursor: pointer; }
+.teacher-tour-skip { color: #59685d; background: #fff; border-color: #cbd7c8; }
 .teacher-tour-back { color: #47753e; background: #f5fbef; }
 .teacher-tour-next { color: #fff; background: #438443; border-color: #438443; }
 .teacher-tutorial button:disabled { opacity: .45; cursor: default; }
@@ -35,4 +36,9 @@ body.teacher-tour-open #class-management-modal > .modal-content { max-height: ca
 body.teacher-tour-open .classroom-dialog { margin: 12px auto auto; max-height: calc(100dvh - var(--teacher-tour-space, 230px) - 24px); }
 body.teacher-tour-open .classroom-dialog::backdrop { background: transparent; backdrop-filter: none; }
 body.teacher-tour-open #class-management-modal .class-management-panel { scroll-margin: 12px; }
+@media (max-width: 620px) {
+    .teacher-tour-bubble footer { align-items: flex-end; }
+    .teacher-tour-bubble footer > div { flex-wrap: wrap; justify-content: flex-end; }
+    .teacher-tour-skip { flex-basis: 100%; }
+}
 @media (prefers-reduced-motion: reduce) { body.teacher-tour-open *, body.teacher-tour-open *::before { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }

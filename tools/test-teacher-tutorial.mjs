@@ -100,6 +100,22 @@ test('unauthenticated sessions cannot start a guide', async () => {
     const h = harness(); h.setUid(null); await h.controller.start(); assert.equal(h.controller.state().active, false);
 });
 
+test('skip saves completion and closes the guide from any step', async () => {
+    const h = harness(); await h.controller.start(); await h.controller.next();
+    await h.controller.skip();
+    assert.deepEqual(h.completed, ['teacher-a']);
+    assert.deepEqual(h.closed, [{ completed: true }]);
+    assert.equal(h.controller.state().active, false);
+});
+
+test('teacher copy uses respectful wording and the guide exposes a skip control', () => {
+    assert.equal(TEACHER_TUTORIAL_STEPS[0].text, '안녕하세요, 선생님. 늘 아이들을 정성껏 지도해 주셔서 감사합니다.');
+    assert.equal(TEACHER_TUTORIAL_STEPS[1].text, '저는 선생님의 수업 준비 부담을 덜어 드리고, 아이들의 한글 학습을 돕는 에이두입니다.');
+    const tutorialUi = readFileSync(new URL('../teacher-tutorial.js', import.meta.url), 'utf8');
+    assert.match(tutorialUi, /class="teacher-tour-skip">안내 건너뛰기<\/button>/);
+    assert.match(tutorialUi, /controller\.skip\(\)/);
+});
+
 const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
 const adapterSource = app.slice(app.indexOf('function createTeacherTutorialActions()'), app.indexOf('teacherTutorial = installTeacherTutorial('));
 test('real adapter opens read-only dialogs, switches tabs, and restores the collapsed HUD', async () => {

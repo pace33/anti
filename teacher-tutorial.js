@@ -1,4 +1,4 @@
-import { createTeacherTutorialController, TEACHER_TUTORIAL_STEPS } from './teacher-tutorial-core.mjs?v=20260915-stage-guides-v3';
+import { createTeacherTutorialController, TEACHER_TUTORIAL_STEPS } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 
 export function installTeacherTutorial(actions, options = {}) {
     const steps = options.steps || TEACHER_TUTORIAL_STEPS;
@@ -17,7 +17,7 @@ export function installTeacherTutorial(actions, options = {}) {
                 <header><strong id="teacher-tutorial-title">에이두 · 선생님 안내</strong><span class="teacher-tour-progress"></span><button type="button" class="teacher-tour-close" aria-label="교사 튜토리얼 닫기">×</button></header>
                 <p class="teacher-tour-line" aria-live="polite"></p>
                 <p class="teacher-tour-error" role="alert" hidden></p>
-                <footer><span class="teacher-tour-hint"></span><div><button type="button" class="teacher-tour-back">이전</button><button type="button" class="teacher-tour-next">다음</button></div></footer>
+                <footer><span class="teacher-tour-hint"></span><div><button type="button" class="teacher-tour-skip">안내 건너뛰기</button><button type="button" class="teacher-tour-back">이전</button><button type="button" class="teacher-tour-next">다음</button></div></footer>
             </div>
         </section>`;
     document.body.appendChild(dialog);
@@ -26,7 +26,7 @@ export function installTeacherTutorial(actions, options = {}) {
     if (options.title) $('.teacher-tour-bubble header strong').textContent = options.title;
     if (options.id) $('.teacher-tour-close').setAttribute('aria-label', '단계 안내 닫기');
     const shade = $('.teacher-tour-shade'), highlights = $('.teacher-tour-highlights');
-    const next = $('.teacher-tour-next'), back = $('.teacher-tour-back');
+    const next = $('.teacher-tour-next'), back = $('.teacher-tour-back'), skip = $('.teacher-tour-skip');
     let view, frame = 0, previousIndex = -1, savedFocus, snapshot, resizeObserver, mutationObserver;
     let missingTimer = 0;
 
@@ -126,6 +126,7 @@ export function installTeacherTutorial(actions, options = {}) {
         next.textContent = state.busy ? '준비 중…' : state.error ? '다시 시도' : state.index === steps.length - 1 ? '종료' : '다음';
         next.disabled = state.busy || Boolean(state.step.click && !state.error);
         back.disabled = state.busy || state.index === 0;
+        skip.disabled = state.busy;
         $('.teacher-tour-hint').textContent = state.step.practice ? '위에서 함께 연습해 봐요.' : state.step.click ? `밝게 표시된 ‘${state.step.clickLabel}’ 버튼을 눌러주세요.` : '';
         options.render?.(state, dialog, action => controller.activate(action));
         if (!state.busy && previousIndex !== state.index) {
@@ -177,6 +178,7 @@ export function installTeacherTutorial(actions, options = {}) {
     }, steps);
     next.onclick = () => void (next.dataset.retry === 'true' ? controller.retry() : controller.next());
     back.onclick = () => void controller.previous();
+    skip.onclick = () => void controller.skip();
     $('.teacher-tour-close').onclick = () => controller.stop();
     dialog.addEventListener('cancel', event => { event.preventDefault(); controller.stop(); });
     return { ...controller, destroy() { controller.stop(); dialog.remove(); } };
