@@ -284,7 +284,15 @@ async function defaultTransport(operation, payload, context = {}) {
     const options = { headers, credentials: 'same-origin', signal: context.signal };
     let url = endpoint;
 
-    if (operation === 'getDocument') {
+    if (operation === 'signupProfile') {
+        if (!headers.authorization) {
+            throw new AdapterError('Firebase authentication is required to create a profile.', 401, { code: 'unauthenticated' });
+        }
+        url += '/signup/profile';
+        options.method = 'POST';
+        headers['content-type'] = 'application/json';
+        options.body = JSON.stringify(encodeValue(payload));
+    } else if (operation === 'getDocument') {
         url += `/documents/${encodeUrlPath(payload.path)}`;
         options.method = 'GET';
     } else if (operation === 'query') {
@@ -336,6 +344,35 @@ async function defaultTransport(operation, payload, context = {}) {
 
 async function callPrimary(operation, payload, instance, signal) {
     return (testTransport || defaultTransport)(operation, payload, { instance, signal });
+}
+
+/**
+ * Creates the self-hosted profile for the currently authenticated Firebase user.
+ * The server derives uid from the bearer token; callers must never send/trust a uid.
+ */
+export async function createSignupProfile(db, profile, options = {}) {
+    const name = String(profile?.name || '').trim();
+    const email = String(profile?.email || '').trim();
+    const role = String(profile?.role || '').trim().toLowerCase();
+    if (!name || !email || !['student', 'teacher'].includes(role)) {
+        throw new TypeError('createSignupProfile requires name, email, and a student or teacher role.');
+    }
+
+    const payload = { name, email, role };
+    if (profile?.userCode !== undefined && profile?.userCode !== null) {
+        const userCode = Number(profile.userCode);
+        if (!Number.isSafeInteger(userCode) || userCode <= 0) {
+            throw new TypeError('createSignupProfile userCode must be a positive safe integer.');
+        }
+        payload.userCode = userCode;
+    }
+
+    const response = await callPrimary('signupProfile', payload, db, options.signal);
+    if (!response?.profile || !isPlainObject(response.profile)) {
+        throw new AdapterError('Korean signup API returned no profile.', 502, { code: 'invalid-response' });
+    }
+    const profileData = isPlainObject(response.profile.data) ? response.profile.data : response.profile;
+    return reviveValue(profileData);
 }
 
 function getDb(referenceOrQuery) {

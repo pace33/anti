@@ -19,26 +19,71 @@ export function buildNewStudentProfile({ uid, name, code, timestamp, teacherId }
     };
 }
 
-// Each row keeps its reserved number and Auth uid across retries. Never recreate successful rows.
+const FAILURE_LABELS = Object.freeze({
+    duplicate: '로그인 번호 중복',
+    auth: '계정 인증',
+    profile: '학생 정보 저장',
+    enrollment: '학급 연결',
+    code: '로그인 번호 발급',
+    unknown: '알 수 없는 오류'
+});
+
+export function classifyProvisionError(error, phase = '') {
+    if (error?.failureType && FAILURE_LABELS[error.failureType]) return error.failureType;
+    if (error?.code === 'auth/email-already-in-use') return 'duplicate';
+    if (String(error?.code || '').startsWith('auth/') || phase === 'auth' || phase === 'identity') return 'auth';
+    if (phase === 'profile') return 'profile';
+    if (phase === 'enrollment') return 'enrollment';
+    if (phase === 'code') return 'code';
+    return 'unknown';
+}
+
+export function provisionFailureLabel(type) {
+    return FAILURE_LABELS[type] || FAILURE_LABELS.unknown;
+}
+
+export function summarizeProvisionRows(rows) {
+    const complete = rows.filter(row => row.status === 'complete').length;
+    const failed = rows.filter(row => row.status === 'failed').length;
+    return { complete, failed, pending: rows.length - complete - failed, total: rows.length };
+}
+
+// Each row keeps its reserved number, Auth uid, and profile checkpoint across retries.
+// Every row owns its catch so one failure can never discard the remaining results.
 export async function provisionStudentRows(rows, service, onChange = () => {}) {
+    // Rendering/sessionStorage failures must not interrupt account provisioning.
+    const emit = row => { try { onChange(row); } catch { /* best-effort progress reporting */ } };
     for (const row of rows) {
         if (row.status === 'complete') continue;
-        service.assertTeacher();
-        row.status = 'working';
-        row.error = '';
-        onChange(row);
+        let phase = 'auth';
         try {
-            if (!row.code) { row.code = await service.reserveCode(); onChange(row); }
             service.assertTeacher();
-            if (!row.uid) { row.uid = await service.createIdentity(row.code, row); onChange(row); }
+            row.status = 'working';
+            row.error = '';
+            row.failureType = '';
+            emit(row);
+            phase = 'code';
+            if (!row.code) { row.code = await service.reserveCode(); emit(row); }
             service.assertTeacher();
+            phase = 'identity';
+            if (!row.uid) { row.uid = await service.createIdentity(row.code, row); emit(row); }
+            service.assertTeacher();
+            phase = 'profile';
+            if (service.createProfile && !row.profileCreated) {
+                await service.createProfile(row);
+                row.profileCreated = true;
+                emit(row);
+            }
+            service.assertTeacher();
+            phase = 'enrollment';
             await service.saveAndEnroll(row);
             row.status = 'complete';
         } catch (error) {
             row.status = 'failed';
             row.error = error?.message || '다시 시도해 주세요.';
+            row.failureType = classifyProvisionError(error, phase);
         }
-        onChange(row);
+        emit(row);
     }
     return rows;
 }

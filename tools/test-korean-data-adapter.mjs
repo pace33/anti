@@ -8,7 +8,7 @@ const {
     Timestamp, getFirestore, doc, collection, collectionGroup, query, where, orderBy, limit,
     getDoc, getDocs, setDoc, updateDoc, deleteDoc, runTransaction, serverTimestamp,
     arrayUnion, arrayRemove, onSnapshot, getStorage, ref, uploadBytes, listAll,
-    getMetadata, getDownloadURL, deleteObject, __adapterTest
+    getMetadata, getDownloadURL, deleteObject, createSignupProfile, __adapterTest
 } = adapter;
 
 const documents = new Map();
@@ -47,6 +47,7 @@ function applyWrite(write) {
 
 async function transport(operation, payload) {
     calls.push({ operation, payload });
+    if (operation === 'signupProfile') return { profile: { path: 'users/auth-user', data: { uid: 'auth-user', ...payload }, revision: 1 } };
     if (operation === 'getDocument') {
         const found = documents.get(payload.path);
         return found ? { exists: true, document: { path: payload.path, data: copy(found.data), version: found.version } } : { exists: false };
@@ -90,6 +91,23 @@ async function transport(operation, payload) {
 
 __adapterTest.setTransport(transport);
 const db = getFirestore({ options: { storageBucket: 'test.appspot.com' } });
+
+// Signup bootstrap is a dedicated operation and never accepts a caller-supplied uid.
+const signupProfile = await createSignupProfile(db, {
+    name: ' 새봄 ', email: '12345678@abc.com', role: 'STUDENT', userCode: '12345678', uid: 'spoofed'
+});
+assert.deepEqual(signupProfile, {
+    uid: 'auth-user', name: '새봄', email: '12345678@abc.com', role: 'student', userCode: 12345678
+});
+const signupCall = calls.at(-1);
+assert.equal(signupCall.operation, 'signupProfile');
+assert.deepEqual(signupCall.payload, {
+    name: '새봄', email: '12345678@abc.com', role: 'student', userCode: 12345678
+});
+await assert.rejects(
+    createSignupProfile(db, { name: '새봄', email: 'student@example.com', role: 'student', userCode: 'not-numeric' }),
+    /positive safe integer/
+);
 
 // References, snapshots, timestamp revival, transforms, and supported queries.
 const first = doc(db, 'users', 'student-1');
@@ -209,4 +227,39 @@ await deleteDoc(first);
 assert.equal((await getDoc(first)).exists(), false);
 
 __adapterTest.reset();
-console.log(`adapter tests passed: ${calls.length} primary calls; disabled production bridge; ${bridgeWrites.length} isolated opt-in bridge checks`);
+
+// The production transport posts to the dedicated endpoint with a Firebase bearer token.
+const originalFetch = globalThis.fetch;
+const httpCalls = [];
+globalThis.__KOREAN_DATA_ADAPTER__.endpoint = '/db-api/korean/v2';
+globalThis.__KOREAN_DATA_ADAPTER__.tokenProvider = async () => 'firebase-id-token';
+globalThis.fetch = async (url, options) => {
+    httpCalls.push({ url, options });
+    return new Response(JSON.stringify({ profile: { path: 'users/network-user', data: { uid: 'network-user', ...JSON.parse(options.body) }, revision: 1 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' }
+    });
+};
+try {
+    const networkAdapter = await import(`../korean-data-adapter.js?signup-network=${Date.now()}`);
+    const networkDb = networkAdapter.getFirestore({});
+    await networkAdapter.createSignupProfile(networkDb, {
+        name: '하늘', email: 'teacher@example.com', role: 'teacher'
+    });
+    assert.equal(httpCalls[0].url, '/db-api/korean/v2/signup/profile');
+    assert.equal(httpCalls[0].options.method, 'POST');
+    assert.equal(httpCalls[0].options.headers.authorization, 'Bearer firebase-id-token');
+    assert.deepEqual(JSON.parse(httpCalls[0].options.body), {
+        name: '하늘', email: 'teacher@example.com', role: 'teacher'
+    });
+
+    globalThis.__KOREAN_DATA_ADAPTER__.tokenProvider = async () => null;
+    await assert.rejects(
+        networkAdapter.createSignupProfile(networkDb, { name: '하늘', email: 'teacher@example.com', role: 'teacher' }),
+        (error) => error?.status === 401 && error?.code === 'unauthenticated'
+    );
+} finally {
+    globalThis.fetch = originalFetch;
+}
+
+console.log(`adapter tests passed: ${calls.length} primary calls; disabled production bridge; ${bridgeWrites.length} isolated opt-in bridge checks; authenticated signup transport checked`);

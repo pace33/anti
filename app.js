@@ -62,8 +62,9 @@ import {
     serverTimestamp,
     arrayUnion,
     arrayRemove,
-    onSnapshot
-} from "./korean-data-adapter.js?v=20260901-data-cutover-v2";
+    onSnapshot,
+    createSignupProfile
+} from "./korean-data-adapter.js?v=20260901-data-cutover-v3";
 import {
     getStorage,
     ref as storageRef,
@@ -72,7 +73,7 @@ import {
     getMetadata,
     getDownloadURL,
     deleteObject
-} from "./korean-data-adapter.js?v=20260901-data-cutover-v2";
+} from "./korean-data-adapter.js?v=20260901-data-cutover-v3";
 import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm";
 import { PDFDocument } from "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm";
 import {
@@ -115,6 +116,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dis
 let currentView = 'student';
 let inputPassword = "";
 let loginSuccess = false;
+// Firebase emits auth state before the authenticated profile bootstrap request
+// necessarily finishes. Keep the task visible briefly so that callback does not
+// misreport a missing profile during sign-up.
+let signupProfileTask = null;
 let currentLearningStep = -1;
 let unlockedLevels = [];
 
@@ -5920,26 +5925,14 @@ async function ensureTeacherProfile(user, fallbackName) {
     const userRef = doc(db, 'users', user.uid);
     const snap = await getDoc(userRef);
     if (!snap.exists()) {
-        await setDoc(userRef, {
-            uid: user.uid,
-            name: fallbackName || user.displayName || '선생님',
+        const isGoogleAccount = user.providerData?.some(provider => provider.providerId === 'google.com');
+        const signupName = String(fallbackName || (isGoogleAccount ? user.displayName : '') || '').trim();
+        if (!signupName) throw new Error('teacher-profile-missing');
+        return createSignupProfile(db, {
+            name: signupName,
             email: user.email || '',
-            role: 'teacher',
-            userCode: null,
-            coins: 0,
-            balance: 0,
-            portfolio: {},
-            drawingPortfolio: { missions: {}, free: [] },
-            dictationPortfolio: { missions: {}, aiWords: [] },
-            aeduTokens: 0,
-            aeduExperience: 0,
-            aeduLevel: 1,
-            currentDrawingStep: 5,
-            currentDictationStep: 5,
-            warningTokens: 0,
-            createdAt: serverTimestamp()
-        }, { merge: true });
-        return { name: fallbackName || user.displayName || '선생님', role: 'teacher' };
+            role: 'teacher'
+        });
     }
     const data = snap.data();
     if ((data.role || '').toLowerCase() !== 'teacher') {
@@ -21040,6 +21033,10 @@ window.checkTeacherLogin = async function checkTeacherLogin() {
             showModal('교사 계정만 로그인할 수 있어요.');
             return;
         }
+        if (error.message === 'teacher-profile-missing') {
+            showModal('계정 인증은 있지만 선생님 정보가 없어요. 회원가입 화면에서 이름을 입력해 저장을 마무리해주세요.');
+            return;
+        }
         showModal('이메일 또는 비밀번호가 올바르지 않아요.');
     }
 }
@@ -21328,6 +21325,67 @@ window.closeTeacherSignupModal = function closeTeacherSignupModal() {
     document.getElementById('teacher-signup-modal').classList.add('hidden');
 }
 
+function beginSignupProfileTask(work) {
+    if (signupProfileTask?.pending) return Promise.reject(new Error('signup-already-in-progress'));
+    const task = { uid: null, pending: true, promise: null };
+    task.promise = Promise.resolve().then(() => work(task));
+    signupProfileTask = task;
+    task.promise.finally(() => {
+        task.pending = false;
+        // Auth callbacks are scheduled independently. Retain the settled task for
+        // a short bounded window so a late callback can still recognize sign-up.
+        window.setTimeout(() => {
+            if (signupProfileTask === task) signupProfileTask = null;
+        }, 10000);
+    }).catch(() => {});
+    return task.promise;
+}
+
+async function waitForSignupProfileTask(user) {
+    const task = signupProfileTask;
+    if (!task || task.uid && task.uid !== user.uid) return { waited: false, ready: true };
+    let timer;
+    try {
+        await Promise.race([
+            task.promise,
+            new Promise((_, reject) => { timer = window.setTimeout(() => reject(new Error('signup-profile-timeout')), 8000); })
+        ]);
+        return { waited: true, ready: true };
+    } catch {
+        // The sign-up handler owns the actionable error. Avoid a second, misleading
+        // "profile not found" modal from the auth observer.
+        return { waited: true, ready: false };
+    } finally {
+        window.clearTimeout(timer);
+    }
+}
+
+function randomStudentLoginCode() {
+    const range = 90000000;
+    const maxUnbiased = Math.floor(0x100000000 / range) * range;
+    const values = new Uint32Array(1);
+    let value;
+    do {
+        crypto.getRandomValues(values);
+        value = values[0];
+    } while (value >= maxUnbiased);
+    return 10000000 + (value % range);
+}
+
+async function createStudentAuthAccount() {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        const userCode = randomStudentLoginCode();
+        const email = `${userCode}@abc.com`;
+        try {
+            const credential = await createUserWithEmailAndPassword(auth, email, `${userCode}qwerty`);
+            return { credential, email, userCode };
+        } catch (error) {
+            if (error.code !== 'auth/email-already-in-use') throw error;
+        }
+    }
+    throw new Error('student-code-allocation-failed');
+}
+
 window.createStudentAccount = async function createStudentAccount() {
     const name = document.getElementById('student-signup-name').value.trim();
     if (!name) {
@@ -21335,42 +21393,23 @@ window.createStudentAccount = async function createStudentAccount() {
         return;
     }
 
+    let authAccountCreated = false;
     try {
-        const counterRef = doc(db, 'metadata', 'counters');
-        const newCode = await runTransaction(db, async (transaction) => {
-            const counterDoc = await transaction.get(counterRef);
-            let nextCode = 1;
-            if (counterDoc.exists() && counterDoc.data().lastUserCode) {
-                nextCode = counterDoc.data().lastUserCode + 1;
-            }
-            transaction.set(counterRef, { lastUserCode: nextCode }, { merge: true });
-            return nextCode;
+        const { userCode: newCode } = await beginSignupProfileTask(async (task) => {
+            const existingCode = /^(\d+)@abc\.com$/i.exec(auth.currentUser?.email || '');
+            const account = existingCode
+                ? { credential: { user: auth.currentUser }, email: auth.currentUser.email, userCode: Number(existingCode[1]) }
+                : await createStudentAuthAccount();
+            authAccountCreated = true;
+            task.uid = account.credential.user.uid;
+            const profile = await createSignupProfile(db, {
+                name,
+                email: account.email,
+                role: 'student',
+                userCode: account.userCode
+            });
+            return { ...account, profile };
         });
-
-        const email = `${newCode}@abc.com`;
-        const password = `${newCode}qwerty`;
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-            uid: userCredential.user.uid,
-            name,
-            email,
-            userCode: newCode,
-            role: 'student',
-            coins: 0,
-            balance: 0,
-            portfolio: {},
-            drawingPortfolio: { missions: {}, free: [] },
-            dictationPortfolio: { missions: {}, aiWords: [] },
-            aeduTokens: 0,
-            aeduExperience: 0,
-            aeduLevel: 1,
-            currentLearningStep: -1,
-            currentDrawingStep: -1,
-            currentDictationStep: -1,
-            warningTokens: 0,
-            createdAt: serverTimestamp()
-        }, { merge: true });
 
         await signOut(auth);
         closeStudentSignupModal();
@@ -21379,7 +21418,13 @@ window.createStudentAccount = async function createStudentAccount() {
         renderStudentLoginNumber();
     } catch (error) {
         console.error('Student sign-up error:', error);
-        showModal('회원가입 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.');
+        if (error.message === 'student-code-allocation-failed') {
+            showModal('로그인 번호를 만들지 못했어요. 잠시 후 다시 시도해주세요.');
+            return;
+        }
+        showModal(authAccountCreated
+            ? '계정 인증은 만들어졌지만 학생 정보를 저장하지 못했어요. 같은 화면에서 잠시 후 다시 시도하거나 관리자에게 문의해주세요.'
+            : '회원가입 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.');
     }
 }
 
@@ -21393,27 +21438,16 @@ window.createTeacherAccount = async function createTeacherAccount() {
         return;
     }
 
+    let authAccountCreated = false;
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-            uid: userCredential.user.uid,
-            name,
-            email,
-            role: 'teacher',
-            userCode: null,
-            coins: 0,
-            balance: 0,
-            portfolio: {},
-            drawingPortfolio: { missions: {}, free: [] },
-            dictationPortfolio: { missions: {}, aiWords: [] },
-            aeduTokens: 0,
-            aeduExperience: 0,
-            aeduLevel: 1,
-            currentDrawingStep: 5,
-            currentDictationStep: 5,
-            warningTokens: 0,
-            createdAt: serverTimestamp()
-        }, { merge: true });
+        await beginSignupProfileTask(async (task) => {
+            const userCredential = auth.currentUser?.email?.toLowerCase() === email.toLowerCase()
+                ? { user: auth.currentUser }
+                : await createUserWithEmailAndPassword(auth, email, password);
+            authAccountCreated = true;
+            task.uid = userCredential.user.uid;
+            return createSignupProfile(db, { name, email, role: 'teacher' });
+        });
 
         await signOut(auth);
         closeTeacherSignupModal();
@@ -21428,7 +21462,9 @@ window.createTeacherAccount = async function createTeacherAccount() {
             showModal('비밀번호는 6자 이상이어야 해요.');
             return;
         }
-        showModal('선생님 회원가입 중 오류가 발생했어요.');
+        showModal(authAccountCreated
+            ? '계정 인증은 만들어졌지만 선생님 정보를 저장하지 못했어요. 같은 화면에서 잠시 후 다시 시도하거나 관리자에게 문의해주세요.'
+            : '선생님 회원가입 중 오류가 발생했어요.');
     }
 }
 
@@ -21891,6 +21927,8 @@ onAuthStateChanged(auth, async (user) => {
 
     try {
         currentUserId = user.uid;
+        const signupWait = await waitForSignupProfileTask(user);
+        if (!signupWait.ready || auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
         startAiedueSchoolProfileSync(user.uid);
         let userRef = doc(db, 'users', user.uid);
         let userSnap = await getDoc(userRef);
@@ -23235,6 +23273,9 @@ installClassroomTools(createClassroomService({
     db, doc, collection, query, where, getDoc, getDocs, runTransaction, serverTimestamp,
     initializeApp, getAuth, firebaseConfig, setPersistence, inMemoryPersistence,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, PDFDocument,
+    // createSignupProfile normally follows the default Auth instance. Point it at
+    // the secondary app so this request carries the new student's token, not the teacher's.
+    bootstrapStudentProfile: ({ user, profile }) => createSignupProfile(getFirestore(user.auth.app), profile),
     current: () => ({ id: currentUserId, role: currentUserRole }),
     notify: message => showModal(escapeHtml(message)),
     safeImage: safeImageSource,
