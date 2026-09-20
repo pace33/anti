@@ -376,7 +376,7 @@ let drawingAiSketchbookController = null;
 let drawingAiSketchbookPendingRecord = null;
 let drawingAiSketchbookRevision = 0;
 let currentUserDictationStep = -1;
-let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [], wordStats: {} }, wrongBank: [], completedBank: [], captures: [], dictationLocked: true, hasCompletedOnce: false, curricularWriting: { activeWords: [], photoWords: [], reviewWords: [], totalRounds: 0, stepStats: {}, wordStats: {}, history: [], rewardedSessions: [] } };
+let dictationPortfolio = { missions: {}, aiWords: [], koreanBank: { words: [], wordStats: {}, syllableStats: {} }, wrongBank: [], completedBank: [], captures: [], dictationLocked: true, hasCompletedOnce: false, curricularWriting: { activeWords: [], photoWords: [], reviewWords: [], totalRounds: 0, stepStats: {}, wordStats: {}, syllableStats: {}, history: [], rewardedSessions: [] } };
 let activeDictationItem = null;
 let activeDictationSession = null;
 let activeDictationCameraStream = null;
@@ -8542,6 +8542,114 @@ window.selectVowels = function() {
 
 function cleanKoreanWord(text) { return String(text || '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ]/g, '').trim(); }
 function cleanKoreanSentence(text) { return String(text || '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?]/g, '').replace(/\s+/g, ' ').trim(); }
+const CURRICULAR_SYLLABLE_BANK_MARKER = 'curricular-syllable-bank-priority-v1-20260920';
+function cleanKoreanSyllable(value = '') {
+    const first = Array.from(String(value || '')).find((char) => /^[가-힣]$/.test(char));
+    return first || '';
+}
+function extractKoreanSyllables(text = '') {
+    return Array.from(String(text || '')).filter((char) => /^[가-힣]$/.test(char));
+}
+function normalizeCurricularSyllableStats(raw = {}, fallbackSyllable = '') {
+    const syllable = cleanKoreanSyllable(raw?.syllable || fallbackSyllable);
+    if (!syllable) return null;
+    const attempts = Math.max(0, Math.floor(Number(raw?.attempts || 0)));
+    const corrects = Math.max(0, Math.floor(Number(raw?.corrects || 0)));
+    const wrongs = Math.max(0, Math.floor(Number(raw?.wrongs ?? Math.max(0, attempts - corrects)) || 0));
+    return {
+        syllable,
+        attempts,
+        corrects,
+        wrongs,
+        lastTriedAt: raw?.lastTriedAt || null,
+        savedAt: raw?.savedAt || new Date().toISOString()
+    };
+}
+function normalizeCurricularSyllableBank(raw = {}) {
+    const source = raw && typeof raw === 'object' ? raw : {};
+    return Object.fromEntries(Object.entries(source)
+        .map(([key, value]) => normalizeCurricularSyllableStats(value, key))
+        .filter(Boolean)
+        .sort((a, b) => String(b.lastTriedAt || b.savedAt || '').localeCompare(String(a.lastTriedAt || a.savedAt || '')))
+        .slice(0, 500)
+        .map((item) => [item.syllable, item]));
+}
+function compareAnswerWrittenSyllables(answer = '', written = '') {
+    const target = extractKoreanSyllables(answer);
+    const actual = extractKoreanSyllables(written);
+    const rows = target.length + 1;
+    const cols = actual.length + 1;
+    const dp = Array.from({ length: rows }, () => Array(cols).fill(0));
+    for (let i = 0; i < rows; i += 1) dp[i][0] = i;
+    for (let j = 0; j < cols; j += 1) dp[0][j] = j;
+    for (let i = 1; i < rows; i += 1) {
+        for (let j = 1; j < cols; j += 1) {
+            const cost = target[i - 1] === actual[j - 1] ? 0 : 1;
+            dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+        }
+    }
+    const correct = [];
+    const wrong = [];
+    let i = target.length;
+    let j = actual.length;
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && target[i - 1] === actual[j - 1] && dp[i][j] === dp[i - 1][j - 1]) {
+            correct.push(target[i - 1]);
+            i -= 1; j -= 1;
+        } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
+            wrong.push(target[i - 1]);
+            i -= 1; j -= 1;
+        } else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+            wrong.push(target[i - 1]);
+            i -= 1;
+        } else {
+            j -= 1;
+        }
+    }
+    return { correct: correct.reverse(), wrong: wrong.reverse(), target };
+}
+function recordCurricularSyllableAttempts(entries = [], { source = 'curricular-writing', now = new Date().toISOString(), persist = false } = {}) {
+    dictationPortfolio = normalizeDictationPortfolio(dictationPortfolio);
+    const state = getCurricularWritingState();
+    const syllableStats = { ...(dictationPortfolio.koreanBank?.syllableStats || {}), ...(state.syllableStats || {}) };
+    let changed = false;
+    entries.forEach((entry) => {
+        const syllable = cleanKoreanSyllable(entry?.syllable || entry);
+        if (!syllable) return;
+        const isCorrect = entry?.correct === true;
+        const current = normalizeCurricularSyllableStats(syllableStats[syllable], syllable) || { syllable, attempts: 0, corrects: 0, wrongs: 0, savedAt: now, lastTriedAt: null };
+        current.attempts += 1;
+        if (isCorrect) current.corrects += 1;
+        else current.wrongs += 1;
+        current.lastTriedAt = now;
+        current.source = source;
+        syllableStats[syllable] = current;
+        changed = true;
+    });
+    if (!changed) return Promise.resolve({ changed: false, syllableStats });
+    dictationPortfolio.curricularWriting = normalizeCurricularWriting({ ...(state || {}), syllableStats });
+    dictationPortfolio.koreanBank = { ...(dictationPortfolio.koreanBank || {}), syllableStats: dictationPortfolio.curricularWriting.syllableStats };
+    const result = { changed: true, syllableStats: dictationPortfolio.curricularWriting.syllableStats };
+    return persist ? persistDictationData().then(() => result).catch((error) => { console.warn('syllable bank persistence failed', error); return { ...result, persisted: false }; }) : Promise.resolve(result);
+}
+function recordCurricularWritingResultSyllables(result = {}, options = {}) {
+    const answer = result.answer || result.sentence || result.word || '';
+    const written = result.written || '';
+    const comparison = compareAnswerWrittenSyllables(answer, written);
+    const existing = new Set(Object.keys(dictationPortfolio?.koreanBank?.syllableStats || {}).concat(Object.keys(dictationPortfolio?.curricularWriting?.syllableStats || {})));
+    const entries = [];
+    comparison.wrong.forEach((syllable) => entries.push({ syllable, correct: false }));
+    comparison.correct.forEach((syllable) => { if (existing.has(syllable)) entries.push({ syllable, correct: true }); });
+    return recordCurricularSyllableAttempts(entries, options);
+}
+function getCurricularSyllablePriorityPools() {
+    const stats = normalizeCurricularSyllableBank({ ...(dictationPortfolio?.koreanBank?.syllableStats || {}), ...(dictationPortfolio?.curricularWriting?.syllableStats || {}) });
+    const ranked = Object.values(stats).filter((item) => item.attempts > 0);
+    const sortWeak = (a, b) => (b.wrongs - a.wrongs) || (a.corrects / Math.max(1, a.attempts) - b.corrects / Math.max(1, b.attempts)) || (a.attempts - b.attempts) || a.syllable.localeCompare(b.syllable, 'ko');
+    const first = ranked.filter((item) => item.attempts <= 10).sort(sortWeak).map((item) => item.syllable);
+    const second = ranked.filter((item) => item.attempts > 10 && (item.corrects / Math.max(1, item.attempts)) <= 0.8).sort(sortWeak).map((item) => item.syllable);
+    return { first, second, stats };
+}
 function normalizeDictationBankItem(item) {
     const sentence = cleanKoreanSentence(item?.sentence || item?.prompt || '');
     if (!sentence) return null;
@@ -8618,6 +8726,10 @@ function normalizeCurricularStepStats(raw = {}) {
 function normalizeCurricularWriting(raw = {}) {
     const stepStats = raw?.stepStats || {};
     const wordStats = raw?.wordStats || {};
+    const syllableStats = {
+        ...normalizeCurricularSyllableBank(raw?.syllableBank?.stats || {}),
+        ...normalizeCurricularSyllableBank(raw?.syllableStats || {})
+    };
     const normalizedWordStats = {};
     Object.entries(wordStats).forEach(([key, value]) => {
         const word = cleanKoreanWord(value?.word || key);
@@ -8643,6 +8755,8 @@ function normalizeCurricularWriting(raw = {}) {
             step3: normalizeCurricularStepStats(stepStats.step3)
         },
         wordStats: normalizedWordStats,
+        syllableStats,
+        syllableBank: { stats: syllableStats },
         history: Array.isArray(raw?.history) ? raw.history.map(sanitizeDictationMissionRecord).slice(0, 80) : [],
         rewardedSessions: Array.isArray(raw?.rewardedSessions) ? raw.rewardedSessions.slice(0, 120) : [],
         activeRoundId: String(raw?.activeRoundId || ''),
@@ -8654,13 +8768,17 @@ function normalizeDictationPortfolio(raw = {}) {
     const bank = raw?.koreanBank || {};
     const curricular = normalizeCurricularWriting(raw?.curricularWriting);
     const legacyWordStats = bank.wordStats && typeof bank.wordStats === 'object' ? bank.wordStats : {};
+    const legacySyllableStats = bank.syllableStats && typeof bank.syllableStats === 'object' ? bank.syllableStats : {};
     curricular.wordStats = { ...normalizeCurricularWriting({ wordStats: legacyWordStats }).wordStats, ...curricular.wordStats };
+    curricular.syllableStats = { ...normalizeCurricularSyllableBank(legacySyllableStats), ...curricular.syllableStats };
+    curricular.syllableBank = { stats: curricular.syllableStats };
     return {
         missions: sanitizeDictationMissionsMap(raw?.missions || {}),
         aiWords: Array.isArray(raw?.aiWords) ? raw.aiWords : [],
         koreanBank: {
             words: Array.from(new Set((Array.isArray(bank.words) ? bank.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, 300),
-            wordStats: curricular.wordStats
+            wordStats: curricular.wordStats,
+            syllableStats: curricular.syllableStats
         },
         wrongBank: Array.isArray(raw?.wrongBank) ? raw.wrongBank.map(normalizeDictationBankItem).filter(Boolean) : [],
         completedBank: Array.isArray(raw?.completedBank) ? raw.completedBank.map(normalizeDictationBankItem).filter(Boolean) : [],
@@ -8682,9 +8800,10 @@ function extractKoreanBankFromText(text) {
     return { words };
 }
 function mergeKoreanBank({ words = [] }) {
-    const bank = dictationPortfolio.koreanBank || { words: [], wordStats: {} };
+    const bank = dictationPortfolio.koreanBank || { words: [], wordStats: {}, syllableStats: {} };
     const cleanWords = words.map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord);
     const wordStats = { ...(bank.wordStats || {}), ...(dictationPortfolio.curricularWriting?.wordStats || {}) };
+    const syllableStats = { ...(bank.syllableStats || {}), ...(dictationPortfolio.curricularWriting?.syllableStats || {}) };
     cleanWords.forEach((word) => {
         if (!wordStats[word]) {
             wordStats[word] = { word, step1: normalizeCurricularStepStats(), step2: normalizeCurricularStepStats(), step3: normalizeCurricularStepStats(), savedAt: new Date().toISOString(), lastTriedAt: null };
@@ -8692,9 +8811,10 @@ function mergeKoreanBank({ words = [] }) {
     });
     dictationPortfolio.koreanBank = {
         words: Array.from(new Set([...(bank.words || []), ...cleanWords])).slice(0, 300),
-        wordStats
+        wordStats,
+        syllableStats
     };
-    dictationPortfolio.curricularWriting = normalizeCurricularWriting({ ...(dictationPortfolio.curricularWriting || {}), wordStats });
+    dictationPortfolio.curricularWriting = normalizeCurricularWriting({ ...(dictationPortfolio.curricularWriting || {}), wordStats, syllableStats });
 }
 async function persistDictationData(extra = {}) {
     dictationPortfolio = normalizeDictationPortfolio(dictationPortfolio);
@@ -8851,12 +8971,14 @@ function prepareCurricularWritingRound(candidateWords = [], newWords = []) {
         reviewWords: reviewWords.slice(0, 3),
         totalRounds: state.totalRounds + 1,
         dan: getCurrentCurricularDan(),
-        wordStats: { ...(dictationPortfolio.koreanBank?.wordStats || {}), ...(state.wordStats || {}) }
+        wordStats: { ...(dictationPortfolio.koreanBank?.wordStats || {}), ...(state.wordStats || {}) },
+        syllableStats: { ...(dictationPortfolio.koreanBank?.syllableStats || {}), ...(state.syllableStats || {}) }
     });
     dictationPortfolio.curricularWriting.activeRoundId = activeRoundId;
     dictationPortfolio.curricularWriting.photoCapturedAt = photoCapturedAt;
     dictationPortfolio.curricularWriting.roundReadyFromPhoto = true;
     dictationPortfolio.koreanBank.wordStats = dictationPortfolio.curricularWriting.wordStats;
+    dictationPortfolio.koreanBank.syllableStats = dictationPortfolio.curricularWriting.syllableStats;
     return dictationPortfolio.curricularWriting;
 }
 function makeCurricularSentence(word, index = 0) {
@@ -9295,6 +9417,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
             score: isRetryAttempt ? (rawCorrect ? 0.5 : 0) : (rawCorrect ? 1 : 0),
             analysis: String(parsed.analysis || parsed.reason || '').trim() || 'AI가 캔버스 손글씨를 확인했어요.'
         };
+        await recordCurricularWritingResultSyllables(result, { source: isRetryAttempt ? 'curricular-writing-retry' : 'curricular-writing-ai', persist: true });
         if (!isRetryAttempt && !rawCorrect) {
             item.aiGrading = false;
             startCurricularRetryMode(item, index, result);
@@ -9452,6 +9575,21 @@ function renderCurricularWordBankStats() {
         }).join(' ');
         return `<div class="rounded-2xl bg-red-50/60 border border-red-100 p-3"><div class="font-black text-[#2c3e50]">${escapeHtml(word)}</div><div class="text-xs font-bold mt-2 flex flex-wrap gap-1">${chips}</div></div>`;
     }).join('') || '<div class="text-gray-400 font-bold">아직 단어가 없어요.</div>';
+}
+function renderCurricularSyllableBankStats() {
+    const pools = getCurricularSyllablePriorityPools();
+    const rows = Object.values(pools.stats || {})
+        .sort((a, b) => {
+            const priorityA = a.attempts <= 10 ? 0 : (((a.corrects / Math.max(1, a.attempts)) <= 0.8) ? 1 : 2);
+            const priorityB = b.attempts <= 10 ? 0 : (((b.corrects / Math.max(1, b.attempts)) <= 0.8) ? 1 : 2);
+            return (priorityA - priorityB) || (b.wrongs - a.wrongs) || (a.corrects / Math.max(1, a.attempts) - b.corrects / Math.max(1, b.attempts)) || a.syllable.localeCompare(b.syllable, 'ko');
+        })
+        .slice(0, 60);
+    return rows.map((item) => {
+        const rate = item.attempts ? Math.round((Number(item.corrects || 0) / Math.max(1, Number(item.attempts || 0))) * 100) : 0;
+        const badge = item.attempts <= 10 ? '1순위' : (rate <= 80 ? '2순위' : '보관');
+        return `<div class="rounded-2xl bg-amber-50/70 border border-amber-100 p-3"><div class="flex items-center justify-between gap-2"><div class="text-2xl font-black text-[#2c3e50]">${escapeHtml(item.syllable)}</div><span class="text-xs font-black text-amber-600 bg-white border border-amber-100 rounded-full px-2 py-1">${badge}</span></div><div class="text-xs font-bold text-gray-500 mt-2">${item.corrects}/${item.attempts} 정답 · 오답 ${item.wrongs}회 · 정답률 ${rate}%</div></div>`;
+    }).join('') || '<div class="text-gray-400 font-bold">아직 음절 은행 기록이 없어요.</div>';
 }
 function renderMyDictationSection() {
     const label = document.getElementById('my-dictation-progress-label'); if (label) label.innerText = currentUserDictationStep < 0 ? '교과 맞춤쓰기 새싹' : `교과 맞춤쓰기 ${currentUserDictationStep}회 완료 · ${getCurricularGateText()}`;
@@ -10684,8 +10822,9 @@ function applyCurricularWritingStats(graded, difficulty, now) {
         current.lastTriedAt = now;
         wordStats[word] = current;
     });
-    dictationPortfolio.curricularWriting = normalizeCurricularWriting({ ...state, stepStats: { ...(state.stepStats || {}), [stepKey]: step }, wordStats });
+    dictationPortfolio.curricularWriting = normalizeCurricularWriting({ ...state, stepStats: { ...(state.stepStats || {}), [stepKey]: step }, wordStats, syllableStats: { ...(dictationPortfolio.koreanBank?.syllableStats || {}), ...(state.syllableStats || {}) } });
     dictationPortfolio.koreanBank.wordStats = dictationPortfolio.curricularWriting.wordStats;
+    dictationPortfolio.koreanBank.syllableStats = dictationPortfolio.curricularWriting.syllableStats;
 }
 async function saveMissionGradingResult() {
     if (!activeDictationSession?.graded || activeDictationSession.autoSaved) return;
@@ -10840,7 +10979,7 @@ window.completeDictationItem = async function() {
     }
     showModal('미션 채점 결과는 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
 }
-window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [] }; showModal(`<div class="text-left relative pr-8 dictation-bank-modal-shell"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어 은행</h3><div class="mb-4"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="dictation-bank-word-grid">${renderCurricularWordBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">각 단어에는 교과 맞춤쓰기 1·2·3단계별 정답률/오답률이 저장됩니다. 2회차부터는 오답률 높은 단어 3개를 자동 복습으로 섞어요.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
+window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [], syllableStats: {} }; const syllableCount = Object.keys(bank.syllableStats || {}).length; showModal(`<div class="text-left relative pr-8 dictation-bank-modal-shell"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어·음절 은행</h3><div class="mb-6"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="dictation-bank-word-grid">${renderCurricularWordBankStats()}</div></div><div class="mb-4"><div class="font-black text-amber-600 mb-2">음절 은행 ${syllableCount}개</div><div class="dictation-bank-word-grid">${renderCurricularSyllableBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">3스텝 받아쓰기에서 정답 대비 틀린 음절을 기록하고, 2단계 한글 게임은 10회 이하 음절을 1순위, 10회 초과·정답률 80% 이하 음절을 2순위로 먼저 냅니다.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
 
 window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
 window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button type="button" class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${escapeHtml(text)}</button>`).join(''); }
@@ -12805,17 +12944,22 @@ function initializeWordWritingQuizActivity() {
         speakTextKo(currentWord);
     }
     async function score() {
+        const syllablePractice = mode === 'syllable' && cleanKoreanSyllable(currentWord);
+        const isCorrect = syllablePractice ? isTraceWritingComplete(canvas) : true;
         await recordKoreanAttempt({
             lessonId: currentLearningActivityStep || 'word-writing',
             lessonTitle: '낱말 쓰기 연습',
             unitId: getUnitIdForLesson(currentLearningActivityStep) || null,
             activityType: 'writeOnCanvas',
             word: currentWord,
-            isCorrect: true,
-            errorType: null
+            isCorrect,
+            errorType: isCorrect ? null : KOREAN_ERROR_TYPES.SYLLABLE
         });
-        feedback.textContent = '쓰기 완료로 기록했어요.';
-        feedback.className = 'text-center text-2xl font-bold mt-3 h-8 text-green-600';
+        if (syllablePractice) {
+            await recordCurricularSyllableAttempts([{ syllable: currentWord, correct: isCorrect }], { source: 'word-writing-syllable-practice', persist: true });
+        }
+        feedback.textContent = isCorrect ? '쓰기 완료로 기록했어요.' : '아직 음절을 충분히 따라 쓰지 못했어요. 오답 1회로 기록했어요.';
+        feedback.className = `text-center text-2xl font-bold mt-3 h-8 ${isCorrect ? 'text-green-600' : 'text-orange-500'}`;
     }
 
     document.querySelectorAll('.word-mode-tab').forEach((btn) => btn.addEventListener('click', async () => {
@@ -12895,6 +13039,17 @@ function initializeHangulSoundGame() {
         return { letters: unique(letters), words: unique(words) };
     }
 
+    function getPrioritizedLetterAnswerPool() {
+        const pools = getCurricularSyllablePriorityPools();
+        const baseLetters = bank?.letters || fallbackLetters;
+        const valid = (list) => unique(list.map(cleanHangul).filter((item) => Array.from(item).length === 1));
+        const first = valid(pools.first);
+        if (first.length) return { answers: first, all: unique([...first, ...valid(pools.second), ...baseLetters]), priority: 'syllable-bank-1' };
+        const second = valid(pools.second);
+        if (second.length) return { answers: second, all: unique([...second, ...baseLetters]), priority: 'syllable-bank-2' };
+        return { answers: baseLetters, all: baseLetters, priority: 'base' };
+    }
+
     const bank = buildGameBank();
     let mode = 'letter';
     let correctCount = 0;
@@ -12949,9 +13104,11 @@ function initializeHangulSoundGame() {
             void finishGame();
             return;
         }
-        const source = mode === 'letter' ? bank.letters : bank.words;
+        const letterPool = mode === 'letter' ? getPrioritizedLetterAnswerPool() : null;
+        const source = mode === 'letter' ? (letterPool.answers.length ? letterPool.answers : bank.letters) : bank.words;
         answer = pick(source);
-        const wrongs = shuffle(source.filter((item) => item !== answer)).slice(0, 3);
+        const distractorSource = mode === 'letter' ? (letterPool.all.length ? letterPool.all : bank.letters) : source;
+        const wrongs = shuffle(distractorSource.filter((item) => item !== answer)).slice(0, 3);
         const choices = shuffle([answer, ...wrongs]);
         targetEl.textContent = mode === 'letter' ? '글자 듣기 문제' : '낱말 듣기 문제';
         feedbackEl.className = 'hangul-game-feedback text-2xl font-black text-gray-500';
@@ -12999,6 +13156,9 @@ function initializeHangulSoundGame() {
             errorType: isCorrect ? null : KOREAN_ERROR_TYPES.MEANING_MATCH,
             skillTags: ['한글게임', mode === 'letter' ? '글자' : '낱말']
         });
+        if (mode === 'letter' && cleanKoreanSyllable(answer)) {
+            await recordCurricularSyllableAttempts([{ syllable: answer, correct: isCorrect }], { source: 'hangul-sound-game', persist: true });
+        }
         if (sessionAtAnswer !== gameSession) return;
         round += 1;
         nextQuestionTimer = window.setTimeout(nextQuestion, isCorrect ? 850 : 1350);
