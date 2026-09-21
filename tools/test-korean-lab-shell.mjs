@@ -224,13 +224,17 @@ test('4단계 문해력 탐정단은 왼쪽 추리 지문과 오른쪽 유형별
     assert.ok(html.includes('사건 추리 지문'));
     assert.ok(html.includes('추리해서 답해 보세요'));
     assert.ok(html.includes('assets/aiedue-literacy-detective.webp'));
-    assert.ok(html.includes('에이두 탐정의 수사 팁'));
+    assert.ok(html.includes('에이두 탐정의 미해결 사건'));
+    assert.ok(html.includes('여기에 미해결된 사건이 있어. 지문과 문제를 잘 읽고 문제를 풀면 분명 이 문제를 해결할 수 있을 거야.'));
+    assert.equal(html.includes('에이두 탐정의 수사 팁'), false);
+    assert.equal(html.includes('공용 한계돌파 지문을 맞히면 정답률이 올라가고'), false);
     assert.equal(html.includes('문해력 편집국'), false);
     assert.ok(html.includes('id="literacy-adventure-difficulty"'));
     assert.ok(html.includes('id="literacy-adventure-type"'));
     assert.ok(html.includes('id="literacy-adventure-response-guide"'));
     assert.match(html, /id="literacy-adventure-options"[^>]*role="group"[^>]*aria-labelledby="literacy-adventure-question"/);
     assert.match(html, /id="literacy-adventure-input"[^>]*aria-labelledby="literacy-adventure-question"[^>]*aria-describedby="literacy-adventure-response-guide"/);
+    assert.equal(html.includes('placeholder="지문을 바탕으로 추리한 답을 적어 보세요."'), false);
     assert.equal(html.includes('단서 선택'), false);
     assert.equal(html.includes('id="literacy-adventure-clue"'), false);
     assert.equal(html.includes('id="literacy-adventure-next"'), false);

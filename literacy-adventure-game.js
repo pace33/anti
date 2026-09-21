@@ -96,9 +96,7 @@ function renderAnswer() {
         ? `한계돌파 · ${DIFFICULTY_LABELS[round.difficulty] || round.difficulty || '맞춤'}`
         : (DIFFICULTY_LABELS[round.difficulty] || round.difficulty || '맞춤');
     $('literacy-adventure-type').textContent = TYPE_LABELS[round.type] || '추리 문제';
-    $('literacy-adventure-response-guide').textContent = round.isLimitBreakMode
-        ? '공용 한계돌파 은행의 지문이에요. 맞히면 정답률이 올라가고, 충분히 쉬워진 문제는 은행에서 사라져요.'
-        : (RESPONSE_GUIDES[round.type] || RESPONSE_GUIDES.essay);
+    $('literacy-adventure-response-guide').textContent = RESPONSE_GUIDES[round.type] || RESPONSE_GUIDES.essay;
     const options = $('literacy-adventure-options');
     const inputWrap = $('literacy-adventure-input-wrap');
     options.replaceChildren();
@@ -122,9 +120,7 @@ function renderAnswer() {
         input.value = '';
         input.rows = round.type === 'essay' ? 6 : 2;
         input.maxLength = round.type === 'essay' ? 800 : 80;
-        input.placeholder = round.type === 'essay'
-            ? '예: 제 추리는 ○○입니다. 왜냐하면 지문에서 …'
-            : '추리한 답을 짧게 적어 보세요.';
+        input.placeholder = '';
     }
     updateProgress();
 }
