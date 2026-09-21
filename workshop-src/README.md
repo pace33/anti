@@ -13,6 +13,6 @@ Node.js 22.13 이상에서 이 디렉터리의 `npm ci` 후 `npm run build`를 �
 - 부모 페이지의 `workshop-launcher.mjs`가 도구별 세션을 제공합니다. 공방은 `aiedueWorkshopSession`, 학급 시간표는 `aiedueTimetableSession`을 사용합니다. 단독으로 열면 진입 안내를 표시합니다.
 - `workshop-service.mjs`는 기존 한글 데이터 어댑터를 사용합니다. 교사의 학급 학생을 읽고, `users/{teacherId}/workshopEntries/{entryId}`에 학습지(`worksheet`)와 시간표(`schedule`)만 저장합니다. 학생 선택은 두 기능 안에서 제공하고, 학생 계정 생성이나 학급 명단 변경은 기존 학급 관리에서 수행합니다.
 - 모든 작업에서 교사 신원과 해당 도구의 기록 종류를 검사하고, 닫기·계정 변경 시 세션을 폐기합니다. 시간표 탭을 떠나면 시간표 세션도 폐기합니다. 기존 시간표의 저장 위치는 유지합니다. 삭제는 `deletedAt`을 기록해 목록에서 제외합니다.
-- 학습지와 시간표는 프레임 내부의 인쇄 스타일로 출력합니다. 읽기 자료 사진은 제공받은 자료의 정적 자산입니다.
+- 학습지와 시간표는 프레임 내부의 인쇄 스타일로 출력합니다. 읽기 학습지는 사진 없이 지문과 문항만 표시하며, 기존에 저장한 학습지도 같은 형식으로 불러옵니다.
 
 서비스 회귀 테스트: 저장소 루트에서 `node --test tools/test-workshop-service.mjs`.
