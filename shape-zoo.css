@@ -1,4 +1,4 @@
-.shape-zoo-game { --zoo-ink: #263e35; --zoo-green: #286657; --zoo-paper: #fffdf6; position: fixed; inset: 0; z-index: 1000 !important; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; overflow: auto; margin: 0; color: var(--zoo-ink); background: #f6f5ed; font-family: 'Noto Sans KR', sans-serif; text-align: left; line-height: 1.5; animation: none; }
+.shape-zoo-game { --zoo-ink: #2c3e50; --zoo-green: #55b346; --zoo-paper: #fffdf6; position: fixed; inset: 0; z-index: 1000 !important; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; overflow: auto; margin: 0; color: var(--zoo-ink); background: radial-gradient(circle at 18% 12%, #fff7ed 0 18%, transparent 36%), linear-gradient(135deg, #fdf0ff 0%, #f0faf9 48%, #e0f2fe 100%); font-family: 'Noto Sans KR', sans-serif; text-align: left; line-height: 1.5; animation: none; }
 .shape-zoo-game *, .shape-zoo-game *::before, .shape-zoo-game *::after { box-sizing: border-box; }
 .shape-zoo-game.hidden, .shape-zoo-game [hidden] { display: none !important; }
 body.shape-zoo-open { overflow: hidden; }
@@ -6,7 +6,7 @@ body.shape-zoo-open { overflow: hidden; }
 .shape-zoo-game button:disabled { cursor: default; opacity: .45; }
 .shape-zoo-game button:focus-visible, .shape-zoo-game canvas:focus-visible { outline: 3px solid #d78a37; outline-offset: 4px; }
 .shape-zoo-game h1, .shape-zoo-game h2, .shape-zoo-game p { margin: 0; }
-.zoo-header { position: relative; z-index: 30; flex-shrink: 0; min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px clamp(20px, 4vw, 64px); border-bottom: 1px solid #dce1d5; background: #fbfbf4; }
+.zoo-header { position: relative; z-index: 30; flex-shrink: 0; min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px clamp(20px, 4vw, 64px); border-bottom: 4px solid #b7e4a1; background: rgba(255,255,255,.88); backdrop-filter: blur(12px); box-shadow: 0 8px 24px rgba(85,179,70,.12); }
 .zoo-back { border: 1px solid #d1d9ce; border-radius: 12px; padding: 11px 17px; background: transparent; color: #54665a; font-size: 14px !important; font-weight: 700 !important; }
 .zoo-back.aiedue-lab-logo-home { appearance: none; width: auto; height: auto; display: inline-flex; align-items: center; justify-content: flex-start; padding: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; line-height: 0; }
 .zoo-back.aiedue-lab-logo-home img { display: block; width: 148px; height: auto; margin: 0; object-fit: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,.1)); }
@@ -34,7 +34,7 @@ body.shape-zoo-open { overflow: hidden; }
 .zoo-scoreboard small { margin-left: 4px; color: #7b8677; font-size: 12px; font-weight: 500; }
 #zoo-lives { padding-top: 4px; color: #cf795f; font-size: 24px; }
 .zoo-play-layout { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: stretch; }
-.zoo-habitat { position: relative; min-height: 565px; overflow: hidden; isolation: isolate; border: 1px solid #d0d8b6; border-radius: 28px; background: #c9d893 url('assets/shape-zoo-scenes.png') 0 50% / 300% 100% no-repeat; }
+.zoo-habitat { position: relative; min-height: 565px; overflow: hidden; isolation: isolate; border: 4px solid #b7e4a1; border-radius: 30px; background: #c9d893 url('assets/shape-zoo-scenes.png') 0 50% / 300% 100% no-repeat; box-shadow: 0 14px 0 rgba(85,179,70,.16), 0 24px 48px rgba(69,150,58,.14); }
 .zoo-habitat[data-mood="happy"] { background-position-x: 50%; }
 .zoo-habitat[data-mood="angry"] { background-position-x: 100%; }
 .zoo-scene-label { position: absolute; z-index: 2; left: 22px; top: 21px; display: flex; align-items: center; gap: 7px; min-width: 172px; padding: 9px 13px; border: 1px solid #ffffff80; border-radius: 50px; background: #fffdf2e8; color: #546747; font-size: 11px; font-weight: 700; box-shadow: 0 3px 15px #405a2610; }
@@ -56,7 +56,7 @@ body.shape-zoo-open { overflow: hidden; }
 .zoo-nameplate strong { color: #675432; font-size: 16px; }
 .zoo-nameplate i { color: #bd9049; font-size: 20px; font-style: normal; }
 .zoo-scene-caption { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; padding: 12px 20px; color: #f9ffe5; background: #476440b8; font-size: 11px; text-align: center; }
-.zoo-workshop { min-width: 0; padding: 24px 27px 17px; border: 1px solid #dedfd1; border-radius: 28px; background: #fffdf7; box-shadow: 0 5px 0 #e7e8dc60; }
+.zoo-workshop { min-width: 0; padding: 24px 27px 17px; border: 4px solid #c4b5fd; border-radius: 30px; background: linear-gradient(180deg, #ffffff 0%, #fdf0ff 100%); box-shadow: 0 12px 0 rgba(196,181,253,.24), 0 24px 44px rgba(124,58,237,.10); }
 .zoo-workshop-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 17px; }
 .zoo-workshop-heading .zoo-eyebrow { color: #ac946b; font: 600 10px 'Outfit', sans-serif; letter-spacing: .14em; }
 .zoo-workshop-heading h2 { margin-top: 3px; font-size: 23px; letter-spacing: -.06em; font-weight: 900; }
@@ -67,7 +67,7 @@ body.shape-zoo-open { overflow: hidden; }
 .zoo-timer { height: 8px; margin-bottom: 16px; overflow: hidden; border-radius: 20px; background: #eaece0; }
 .zoo-timer i { display: block; width: 100%; height: 100%; border-radius: inherit; background: #80a57b; }
 .zoo-timer[data-urgent="true"] i { background: #d77959; }
-.zoo-board-wrap { position: relative; width: min(100%, 360px); margin: 0 auto; overflow: hidden; border: 1px solid #e4e6d9; border-radius: 20px; background-color: #fffffb; background-image: radial-gradient(#b8c5b550 .8px, transparent .8px); background-size: 18px 18px; }
+.zoo-board-wrap { position: relative; width: min(100%, 360px); margin: 0 auto; overflow: hidden; border: 4px dashed #f9a8d4; border-radius: 24px; background-color: #fffffb; background-image: radial-gradient(#b8c5b550 .8px, transparent .8px); background-size: 18px 18px; box-shadow: inset 0 0 0 8px rgba(255,255,255,.72); }
 #zoo-canvas { display: block; width: 100%; aspect-ratio: 1; height: auto; border: 0; padding: 0; border-radius: 20px; touch-action: none; user-select: none; cursor: crosshair; }
 .zoo-board-label { position: absolute; top: 14px; left: 17px; color: #7f8b77; font-size: 11px; pointer-events: none; }
 .zoo-board-hint { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #9ca48e; font-size: 10px; pointer-events: none; }
@@ -76,7 +76,7 @@ body.shape-zoo-open { overflow: hidden; }
 .zoo-feedback[data-tone="danger"] { color: #ae6246; font-weight: 700; }
 .zoo-drawing-actions { display: flex; gap: 9px; }
 .zoo-clear { min-height: 48px; flex: 0 0 35%; border: 1px solid #dbe0d0; border-radius: 12px; color: #718069; background: #f6f7ee; font-size: 12px !important; font-weight: 700 !important; }
-.zoo-primary { display: flex; justify-content: center; align-items: center; gap: 18px; width: 100%; min-height: 49px; padding: 12px 16px; border: 1px solid #235947; border-radius: 12px; color: #fffdf0; background: #306f59; box-shadow: 0 4px 0 #1e503f; font-size: 14px !important; font-weight: 700 !important; transition: background .15s, transform .15s; }
+.zoo-primary { display: flex; justify-content: center; align-items: center; gap: 18px; width: 100%; min-height: 52px; padding: 12px 16px; border: 0; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #55b346, #46b3a5); box-shadow: 0 6px 0 #2f8a27, 0 12px 22px rgba(85,179,70,.22); font-size: 16px !important; font-weight: 900 !important; transition: background .15s, transform .15s; }
 .zoo-primary:hover:not(:disabled) { background: #235b46; transform: translateY(-1px); }
 .zoo-primary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #1e503f; }
 .zoo-primary > span { font-size: 20px; }
@@ -99,6 +99,12 @@ body.shape-zoo-open { overflow: hidden; }
 .zoo-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 .aiedue-lab-zoo-card { border: 2px solid #b8c99e; background: #f0f5e7; color: #315d41; }
 .aiedue-lab-zoo-card strong { color: #315d41; }
+.drawing-zoo-card-art { position: relative; width: 150px; min-height: 112px; display: grid; place-items: center; margin-bottom: 8px; }
+.drawing-zoo-animal { font-size: 5.2rem; line-height: 1; filter: drop-shadow(0 8px 10px rgba(85,179,70,.18)); }
+.drawing-zoo-shape { position: absolute; display: grid; place-items: center; width: 42px; height: 42px; border: 3px solid #fff; border-radius: 999px; color: #2c3e50; font-size: 1.35rem; font-weight: 900; box-shadow: 0 8px 18px rgba(44,62,80,.12); }
+.drawing-zoo-shape:nth-of-type(2) { left: 0; bottom: 4px; }
+.drawing-zoo-shape:nth-of-type(3) { right: 0; top: 8px; }
+.drawing-zoo-shape:nth-of-type(4) { right: 16px; bottom: 0; }
 @media (min-width: 1000px) and (max-height: 850px) {
     .zoo-header { min-height: 72px; padding-top: 8px; padding-bottom: 8px; }
     .zoo-main { padding-top: 20px; }

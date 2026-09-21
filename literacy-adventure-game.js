@@ -92,9 +92,13 @@ function chooseOption(index, button) {
 function renderAnswer() {
     const round = state.round;
     $('literacy-adventure-question').textContent = round.question;
-    $('literacy-adventure-difficulty').textContent = DIFFICULTY_LABELS[round.difficulty] || round.difficulty || '맞춤';
+    $('literacy-adventure-difficulty').textContent = round.isLimitBreakMode
+        ? `한계돌파 · ${DIFFICULTY_LABELS[round.difficulty] || round.difficulty || '맞춤'}`
+        : (DIFFICULTY_LABELS[round.difficulty] || round.difficulty || '맞춤');
     $('literacy-adventure-type').textContent = TYPE_LABELS[round.type] || '추리 문제';
-    $('literacy-adventure-response-guide').textContent = RESPONSE_GUIDES[round.type] || RESPONSE_GUIDES.essay;
+    $('literacy-adventure-response-guide').textContent = round.isLimitBreakMode
+        ? '공용 한계돌파 은행의 지문이에요. 맞히면 정답률이 올라가고, 충분히 쉬워진 문제는 은행에서 사라져요.'
+        : (RESPONSE_GUIDES[round.type] || RESPONSE_GUIDES.essay);
     const options = $('literacy-adventure-options');
     const inputWrap = $('literacy-adventure-input-wrap');
     options.replaceChildren();
@@ -160,7 +164,7 @@ async function startRound() {
         const round = await facade.createRound();
         state.round = round;
         resetDesk();
-        $('literacy-adventure-dan').textContent = `문해력 ${round.dan || 1}단`;
+        $('literacy-adventure-dan').textContent = round.isLimitBreakMode ? `문해력 ${round.dan || 1}단 · 한계돌파` : `문해력 ${round.dan || 1}단`;
         renderPassage();
         renderAnswer();
         $('literacy-adventure-loading').classList.add('hidden');
@@ -224,7 +228,9 @@ async function submit() {
         const detail = document.createElement('span');
         detail.textContent = `${result.detail}${result.explanation ? ` ${result.explanation}` : ''}`;
         const evidence = document.createElement('small');
-        evidence.textContent = result.isCorrect
+        evidence.textContent = result.levelUpCount > 0
+            ? `레벨 ${result.aeduLevel}로 올랐어요!${result.removedWarningTokens ? ` 주의토큰 ${result.removedWarningTokens}개도 줄었어요.` : ''}`
+            : result.isCorrect
             ? '지문 속 여러 정보를 연결해 타당한 결론을 찾았어요.'
             : '인물의 행동, 시간, 장소, 원인 사이에 모순이 없는지 다시 살펴보세요.';
         feedback.append(headline, detail, evidence);

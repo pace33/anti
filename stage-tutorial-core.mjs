@@ -96,22 +96,21 @@ export function buildStageTutorial(level, role) {
             explore('passage', 'literacy', ['#literacy-passage-content'], '먼저 읽기 지문을 읽어 보자. 민수가 무엇을 했는지 생각해 봐. 다음으로 문제와 보기를 볼 거야.', '왼쪽 실제 지문 상자를 먼저 확인합니다. 예시 글에서 인물의 행동을 읽은 뒤 질문으로 이동해 주세요.');
             explore('answer', 'literacy', ['#literacy-passage-content', '#literacy-question-content', '#literacy-options-container'], '질문을 읽고 보기 중 답을 눌러 봐. 모르겠으면 왼쪽 지문을 다시 읽어도 돼.', '실제 보기를 눌러 답을 선택해 보세요. 정답을 재촉하기보다 어느 문장을 보고 선택했는지 물어봐 주세요.', ['#literacy-options-container button']);
             explore('feedback', 'literacy', ['#literacy-feedback-container'], '정답과 해설이 여기에 나와. 내 답과 비교하고 지문에서 근거를 다시 찾아보자. 체험 결과는 기록에 남지 않아.', '실제 결과 영역에서 정답과 해설을 확인합니다. 정오답 모두 근거를 다시 읽게 해 주세요. 예시 답변은 개인 기록·공용 오답 은행에 저장하지 않습니다.');
-            enter('limit', '도전! 한계 돌파', '#literacy-limit-break-card', 'limit', '‘도전! 한계 돌파’를 눌러 보자. 여러 사용자의 오답이 모인 은행에서 문제를 고르는 곳이야.', '한계 돌파를 열어 공용 오답 은행의 난이도 선택 화면을 확인합니다. 개인 오답만 모인 곳과는 다릅니다.');
-            press('difficulty', 'limit', '#modal-message [onclick="window.changeLimitBreakDifficulty(\'normal\')"]', 'NORMAL', 'NORMAL 버튼을 눌러 보자. 난이도를 바꾸면 도전할 문제 수가 달라져.', 'NORMAL을 눌러 난이도별 공용 문제 개수를 확인해 주세요.');
-            explore('limit-view', 'limit', ['#modal-message'], '문제가 있으면 아래 시작 버튼으로 도전할 수 있어. 0개라면 그 난이도에 모인 문제가 아직 없는 거야.', '현재 문제 수와 시작 버튼을 확인합니다. 문제가 없는 난이도는 시작할 수 없으므로 다른 난이도나 본 미션을 사용합니다.');
+            enter('limit', '문해력 탐정단 한계돌파', '#stage-4-game-literacy', 'limit', '이제 한계 돌파 문제는 문해력 탐정단 안에서 이어서 나와. 탐정단 버튼을 눌러 보자.', '문해력 탐정단이 공용 한계돌파 오답 은행 지문을 사건처럼 이어서 제시합니다.');
+            explore('limit-view', 'limit', ['#literacy-adventure-loading'], '한계돌파 지문이 사건 기록처럼 이어져. 맞히면 정답률이 올라가고 충분히 쉬워진 문제는 사라져.', '탐정단 안의 한계돌파 통합 구조를 안내합니다. 기존 공용 은행의 졸업 규칙은 그대로 유지됩니다.');
             enter('record', '나의 기록', 'openMyLiteracyRecord()', 'literacy-record', '‘나의 기록’을 눌러 이전 문제의 결과를 보자.', '나의 기록을 열어 정답·오답과 풀이 이력을 확인해 주세요.');
             explore('record-view', 'literacy-record', ['#modal-message'], '풀었던 문제를 여기서 다시 확인해. 아직 기록이 없으면 실제 문제를 푼 뒤 볼 수 있어.', '결과와 실제 풀이 과정을 함께 해석해 주세요. 기록이 없는 학생은 첫 문제 풀이 후 확인할 수 있습니다.');
         }
         enter('repository', '단어 카드 저장소', `openSharedWordCardRepository('${info.route}')`, 'repository', '‘단어 카드 저장소’를 열어 보자. 낱말의 뜻과 그림이 담긴 카드를 모아 보는 곳이야.', '단어 카드 저장소를 열어 공유된 단어·설명·그림 카드를 확인해 보세요.');
         explore('repository-view', 'repository', ['#shared-word-card-content'], '카드가 보이면 하나를 눌러 안쪽을 살펴봐도 좋아. 카드가 없으면 아직 만들어진 공용 카드가 없는 거야.', '게시된 카드가 있으면 눌러 상세 내용을 탐색할 수 있습니다. 아직 카드가 없다면 빈 목록을 확인한 뒤 계속 진행하세요.');
-        enter('library', '에이두 도서관', `#stage-${level}-library`, 'library', '위쪽 ‘에이두 도서관’을 눌러 동화책 목록을 열어 보자.', '에이두 도서관을 열어 읽기 자료를 살펴보세요.');
-        explore('library-view', 'library', ['#aiedue-library-content'], '책이 보이면 표지를 눌러 읽고 페이지를 넘겨 봐도 좋아. 아직 책이 없으면 나중에 다시 와 보자.', '책이 있으면 표지를 눌러 페이지를 탐색할 수 있습니다. 학생에게 그림과 글을 연결해 이야기를 말하게 해 주세요. 선생님은 상단의 동화책 만들기로 자료를 준비할 수도 있습니다.');
+        enter('library', '에이두 도서관', 'openAiedueLab()', 'library', '도서관은 이제 에이두 연구실 안에 있어. 연구실을 열어 도서관 카드를 찾아보자.', '에이두 도서관은 연구실 카드에서 여는 구조입니다.');
+        explore('library-view', 'library', ['#modal-message'], '연구실 안의 ‘에이두 도서관’ 카드를 누르면 책 목록을 볼 수 있어.', '연구실 모달 안의 도서관 카드를 확인합니다. 실제 독서는 카드를 눌러 진행합니다.');
         enter('game', level === 3 ? '단어 카드 한 판' : '문해력 탐정단', level === 3 ? '#stage-3-game-word-card' : '#stage-4-game-literacy', level === 3 ? 'word-game' : 'detective',
             level === 3 ? '‘단어 카드 한 판’을 눌러 카드 게임 준비 화면을 보자.' : '‘문해력 탐정단’을 눌러 사건을 푸는 게임 화면을 보자.',
             level === 3 ? '단어 카드 한 판을 열어 어휘 카드로 하는 게임의 준비 화면을 확인합니다.' : '문해력 탐정단을 열어 사건 지문과 추리 답변 화면을 확인합니다.');
         explore('game-view', level === 3 ? 'word-game' : 'detective', [level === 3 ? '#word-card-table-game-section' : '#literacy-adventure-loading'],
-            level === 3 ? '저장소의 그림과 설명을 보고, 내 카드 네 장 중 같은 단어를 고르는 게임이야. 정답은 1점이고 시간 제한은 없어.' : '사건 지문에서 시간·장소·행동의 단서를 연결해 답을 쓰는 게임이야. 준비되면 실제 활동에서 첫 사건을 시작해 봐.',
-            level === 3 ? '공용 저장소 카드의 그림·설명을 보고 네 장 중 같은 단어를 고릅니다. 시간 제한 없이 어휘의 의미를 떠올리는 활동으로 활용해 주세요.' : '사건의 여러 단서를 연결해 추리하는 활동입니다. 기본 문해력 문제와 구분해, 근거를 연결하는 연습에 활용해 주세요.');
+            level === 3 ? '저장소의 그림과 설명을 보고, 내 카드 네 장 중 같은 단어를 고르는 게임이야. 정답은 1점이고 시간 제한은 없어.' : '공용 한계돌파 지문이 사건처럼 이어져 나와. 준비되면 첫 사건을 시작해 봐.',
+            level === 3 ? '공용 저장소 카드의 그림·설명을 보고 네 장 중 같은 단어를 고릅니다. 시간 제한 없이 어휘의 의미를 떠올리는 활동으로 활용해 주세요.' : '공용 한계돌파 오답 은행의 지문을 탐정단 안에서 연이어 해결합니다. 정답률이 올라간 문제는 기존 한계돌파 규칙대로 은행에서 졸업합니다.');
     }
     add('finish', 'hub', [], '버튼들을 직접 둘러봤어! 이제 하고 싶은 활동 하나를 골라 시작하자. 다시 보고 싶으면 홈의 ‘처음해봐요’를 눌러 줘.', '실제 화면 탐색을 마쳤습니다. 학생에게 필요한 활동 하나를 골라 시작해 주세요. 홈의 처음해봐요에서 다시 볼 수 있습니다.');
     for (const step of steps) {

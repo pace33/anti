@@ -18,7 +18,7 @@ import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readabl
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
 import { installStageTutorial } from './stage-tutorial.js?v=20260916-stage-button-copy-v1';
-import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260916-stage-button-copy-v1';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260921-korean-layout-lab-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v3';
@@ -4116,8 +4116,14 @@ window.openAiedueWorkshop = () => workshopLauncher.open();
 window.openAiedueLab = function openAiedueLab() {
     showModal(`<div class="text-left relative">
         <button type="button" class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()" aria-label="에이두 연구실 닫기">×</button>
-        <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">${currentUserRole === 'teacher' ? '시간 퀴즈와 수업을 준비하는 공방을 만나 보세요.' : '시계를 읽고 시간을 알아보는 시간 퀴즈에 도전해 보세요.'}</p></div>
+        <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">${currentUserRole === 'teacher' ? '시간 퀴즈와 도서관, 수업 공방을 만나 보세요.' : '시계 퀴즈와 도서관을 연구실에서 함께 만나 보세요.'}</p></div>
         <div class="aiedue-lab-activity-grid">
+            <button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLibrary()">
+                <span class="block text-5xl mb-3" aria-hidden="true">📚</span>
+                <strong class="block text-2xl font-black text-amber-700">에이두 도서관</strong>
+                <span class="block mt-2 font-bold text-gray-600">동화책을 읽고, 선생님은 새 책을 준비해요.</span>
+                <span class="block mt-3 text-sm font-black text-orange-600">읽기 자료 · 동화책 만들기 · 등장인물 사전</span>
+            </button>
             <button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLabTimeQuiz()">
                 <span class="block text-5xl mb-3" aria-hidden="true">🕒</span>
                 <strong class="block text-2xl font-black text-sky-700">시간 퀴즈</strong>
@@ -11463,20 +11469,40 @@ ${lengthGuide}
     };
 }
 
+async function pickLiteracyDetectiveLimitBreakQuestion(plan) {
+    const preferred = String(plan?.difficulty || 'easy').toLowerCase();
+    const difficulties = Array.from(new Set([preferred, 'easy', 'normal', 'hard', 'expert']));
+    for (const difficulty of difficulties) {
+        const problems = await getSharedBankProblems(difficulty);
+        if (problems.length) {
+            const question = problems[Math.floor(Math.random() * problems.length)];
+            question.detectiveLimitBreak = true;
+            return question;
+        }
+    }
+    return null;
+}
+
 window.aiedueLiteracyAdventureData = Object.freeze({
     async createRound() {
         const plan = getLiteracyDanPlan();
-        const question = await createLiteracyMissionQuestion(plan.difficulty, plan.type, { detective: true });
+        const limitBreakQuestion = await pickLiteracyDetectiveLimitBreakQuestion(plan);
+        const question = limitBreakQuestion || await createLiteracyMissionQuestion(plan.difficulty, plan.type, { detective: true });
         activeLiteracyDetectiveQuestion = question;
+        activeLiteracyQuestion = question;
+        isLiteracyLimitBreakMode = Boolean(limitBreakQuestion);
+        userLiteracyAnswerChecked = false;
         return {
             ...question,
             dan: plan.dan,
+            isLimitBreakMode: Boolean(limitBreakQuestion),
             keywords: Array.isArray(question.keywords) ? [...question.keywords] : []
         };
     },
     async submitAnswer(answer) {
         if (!activeLiteracyDetectiveQuestion) throw new Error('먼저 사건 기록을 불러와 주세요.');
         const question = activeLiteracyDetectiveQuestion;
+        activeLiteracyQuestion = question;
         const value = String(answer ?? '').trim();
         let isCorrect = false;
         let detail = '';
@@ -11507,7 +11533,30 @@ window.aiedueLiteracyAdventureData = Object.freeze({
         } else {
             throw new Error('지원하지 않는 문해력 문제 유형이에요.');
         }
-        return { isCorrect, detail, score, correctAnswer: correctAnswerText, explanation: question.explanation || '' };
+        const displayDetails = Object.freeze({
+            score,
+            feedback: question.type === 'essay' ? detail : '',
+            correctAnswerText,
+            userAnswerText
+        });
+        const attempt = createLiteracyAttemptPayload(isCorrect, displayDetails);
+        const committed = await persistLiteracyAttemptAtomic(attempt);
+        question.pendingLiteracyAttemptId = null;
+        applyCommittedLiteracyAttempt(committed);
+        const renderedAttempt = committed.canonicalAttempt || attempt;
+        const sourceNote = attempt.isLimitBreakMode
+            ? (renderedAttempt.isCorrect ? ' 한계돌파 은행의 정답률도 함께 올라갔어요.' : ' 한계돌파 은행에 계속 남아 다음 도전으로 이어져요.')
+            : (renderedAttempt.isCorrect ? '' : ' 이 오답은 한계돌파 은행에 들어가 다음 탐정단 도전에 이어져요.');
+        return {
+            isCorrect: renderedAttempt.isCorrect,
+            detail: detail || (renderedAttempt.isCorrect ? '정확한 답을 찾았어요.' : `모범 답: ${correctAnswerText}`),
+            score: renderedAttempt.score,
+            correctAnswer: correctAnswerText,
+            explanation: `${question.explanation || ''}${sourceNote}`.trim(),
+            levelUpCount: committed.levelUpCount || 0,
+            aeduLevel: committed.aeduLevel,
+            removedWarningTokens: committed.removedWarningTokens || 0
+        };
     }
 });
 
@@ -23584,10 +23633,10 @@ window.openStageTutorial = function(level) {
         } else if (next === 'review') { ownsModal = true; window.openDictationPracticeActivity(); }
         else if (next === 'dictation-record') window.openMyDictationFromDashboard();
         else if (next === 'literacy') setupLiteracyWorkspace({ ...STAGE_TUTORIAL_QUESTION, options: [...STAGE_TUTORIAL_QUESTION.options] });
-        else if (next === 'limit') { ownsModal = true; await window.openLiteracyLimitBreak({ isCurrent: () => running && stageTutorialSession() === session }); }
+        else if (next === 'limit') window.openLiteracyAdventureGame();
         else if (next === 'literacy-record') { ownsModal = true; window.openMyLiteracyRecord(); }
         else if (next === 'repository') { ownsRepository = true; await window.openSharedWordCardRepository(info.route); }
-        else if (next === 'library') { ownsLibrary = true; await window.openAiedueLibrary(); }
+        else if (next === 'library') { ownsModal = true; window.openAiedueLab(); }
         else if (next === 'word-game') window.openAiedueLabWordCardGame();
         else if (next === 'detective') window.openLiteracyAdventureGame();
         else throw new Error('안내 화면을 찾지 못했어요.');
