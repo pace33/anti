@@ -53,15 +53,17 @@ test('로그인 역할에 따라 홈의 학급 관리와 상점 버튼을 서로
     assert.ok(css.includes('padding-top: 180px'));
 });
 
-test('노트 촬영은 3·4단계에만 유지되고 두 단계 도서관은 게임 왼쪽에 있다', () => {
+test('노트 촬영은 3·4단계에만 유지되고 도서관은 연구실 카드에 있다', () => {
     const dictation = section(html, 'id="dictation-activities-section"', 'id="literacy-activities-section"');
     const literacy = section(html, 'id="literacy-activities-section"', 'id="literacy-workspace-section"');
+    const lab = section(app, 'window.openAiedueLab =', 'const AIEDUE_LAB_STAGE_SECTIONS');
     assert.ok(dictation.includes('triggerLessonPhotoCapture()'));
     assert.ok(literacy.includes('triggerLessonPhotoCapture()'));
     assert.equal((html.match(/triggerLessonPhotoCapture\(\)/g) || []).length, 2);
-    assert.ok(literacy.includes('openAiedueLibrary()'));
-    assert.ok(dictation.indexOf('openAiedueLibrary()') < dictation.indexOf('openAiedueLabWordCardGame()'));
-    assert.ok(literacy.indexOf('openAiedueLibrary()') < literacy.indexOf('openLiteracyAdventureGame()'));
+    assert.equal(dictation.includes('openAiedueLibrary()'), false);
+    assert.equal(literacy.includes('openAiedueLibrary()'), false);
+    assert.ok(lab.includes('onclick="openAiedueLibrary()"'));
+    assert.ok(lab.indexOf('openAiedueLibrary()') < lab.indexOf('openAiedueLabTimeQuiz()'));
     assert.ok(html.includes('id="lesson-photo-input"'));
 });
 
@@ -121,16 +123,18 @@ test('학급 상점 탭은 교사 물품을 로드하고 저장·삭제 후 같�
     assert.equal((mutations.match(/refreshAiedueKoreanTeacherShopSurface\(\)/g) || []).length >= 3, true);
 });
 
-test('연구실에는 시간 퀴즈와 교사용 수업 공방이 있고 다른 놀이는 단계별 진입점을 유지한다', () => {
+test('연구실에는 도서관·시간 퀴즈와 교사용 수업 공방이 있고 다른 놀이는 단계별 진입점을 유지한다', () => {
     const lab = section(app, 'window.openAiedueLab =', 'function renderAiedueKoreanShopItems');
     const hub = section(app, 'window.openAiedueLab =', 'const AIEDUE_LAB_STAGE_SECTIONS');
-    assert.equal((hub.match(/class="korean-embed-card/g) || []).length, 2);
+    assert.equal((hub.match(/class="korean-embed-card/g) || []).length, 3);
+    assert.ok(hub.includes('onclick="openAiedueLibrary()"'));
     assert.match(hub, /currentUserRole === 'teacher' \? `<button[^>]*onclick="openAiedueWorkshop\(\)"/);
     assert.ok(hub.includes('onclick="openAiedueLabTimeQuiz()"'));
     for (const entry of ['DictationGame', 'ShapeZoo', 'WordCardGame']) {
         assert.equal(hub.includes(`openAiedueLab${entry}()`), false);
         assert.ok(html.includes(`openAiedueLab${entry}()`));
     }
+    assert.ok(lab.includes('에이두 도서관'));
     assert.ok(lab.includes('시간 퀴즈'));
     assert.equal(lab.includes('음절 슬로우 리더'), false);
     assert.equal(lab.includes('window.openSyllableSlowReader?.()'), false);

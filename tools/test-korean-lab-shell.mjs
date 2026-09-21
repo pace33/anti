@@ -155,7 +155,7 @@ test('홈에는 네 단계 카드만 있고 단계별 게임 카드를 노출하
     assert.doesNotMatch(dashboard, /\bdashboard-lab-card\b/);
 });
 
-test('각 단계 게임은 오른쪽 위 헤더에 있고 3·4단계는 카메라·도서관·게임 순서로 통일한다', () => {
+test('각 단계 게임은 단계 메인 카드에 있고 3·4단계 노트 촬영은 헤더에 유지한다', () => {
     const contracts = [
         ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원', false],
         ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '낱말 우주 방어대', false],
@@ -167,47 +167,49 @@ test('각 단계 게임은 오른쪽 위 헤더에 있고 3·4단계는 카메�
         const actionsStart = stage.indexOf('<div class="stage-header-actions">');
         assert.ok(actionsStart >= 0, `${start} 오른쪽 위 액션 묶음 없음`);
         const directChildren = directChildrenOfDivAt(stage, actionsStart);
-        const gameIndex = directChildren.findIndex((child) => child.includes(`id="${id}"`));
-        assert.equal(gameIndex, hasCamera ? 3 : 1, `${id}가 헤더 오른쪽 끝에 있지 않음`);
-        assert.ok(directChildren[gameIndex]?.includes('stage-header-game-button'), `${id}가 상단 게임 버튼 스타일을 쓰지 않음`);
+        assert.equal(directChildren.some((child) => child.includes(`id="${id}"`)), false, `${id}는 헤더가 아니라 단계 메인 카드에 있어야 함`);
         if (hasCamera) {
-            assert.ok(directChildren[1]?.includes('lesson-photo-button'), `${start} 카메라가 첫 번째 동작 버튼이 아님`);
-            assert.ok(directChildren[2]?.includes('stage-header-library-button'), `${start} 도서관이 게임 바로 왼쪽에 없음`);
-            assert.ok(directChildren[2]?.includes('openAiedueLibrary()'));
-            assert.equal((stage.match(/onclick="openAiedueLibrary\(\)"/g) || []).length, 1, '도서관 진입 버튼은 한 번만 배치');
+            assert.ok(directChildren[1]?.includes('lesson-photo-button'), `${start} 카메라가 헤더 첫 번째 동작 버튼이 아님`);
         } else {
             assert.equal(stage.includes('lesson-photo-button'), false, `${start}에는 카메라 버튼이 없어야 함`);
         }
+        assert.equal(stage.includes('stage-header-library-button'), false, `${start} 도서관은 헤더가 아니라 연구실에 있어야 함`);
         assert.equal((stage.match(new RegExp(`id="${id}"`, 'g')) || []).length, 1, `${id}가 중복 배치됨`);
-        assert.ok(stage.includes(opener), `${opener} 없음`);
-        assert.ok(stage.includes(title), `${title} 없음`);
+        const cardStart = stage.indexOf(`id="${id}"`);
+        assert.ok(cardStart >= 0, `${id} 카드 없음`);
+        const card = stage.slice(cardStart, cardStart + 1200);
+        assert.ok(card.includes('grid-item'), `${id}가 단계 메인 카드 스타일을 쓰지 않음`);
+        assert.ok(card.includes(opener), `${opener} 없음`);
+        assert.ok(card.includes(title), `${title} 없음`);
     }
     const literacy = section(html, 'id="literacy-activities-section"', 'id="literacy-workspace-section"');
     assert.doesNotMatch(literacy, /openAiedueLabTimeQuiz\(\)/);
     assert.equal((html.match(/data-stage-game-entry=/g) || []).length, 4);
     assert.ok(appCss.includes('.stage-header-actions'));
-    assert.ok(appCss.includes('.stage-header-game-button'));
     assert.ok(appCss.includes('.stage-header-actions > [onclick="toggleInfoDrawer()"] { display: none !important; }'));
 });
 
-test('4단계 탐정단은 일반 문해력 상태·공용 은행 저장과 분리된 facade를 사용한다', () => {
+test('4단계 탐정단은 한계돌파 은행을 통합하고 일반 문해력 기록 규칙을 재사용한다', () => {
     assert.ok(html.includes('id="literacy-adventure-game-section"'));
     assert.ok(html.includes('id="literacy-adventure-answer"'));
     assert.ok(html.includes('literacy-adventure-game.js'));
     assert.ok(html.includes('literacy-adventure.css'));
+    assert.ok(html.includes('한계돌파 통합'));
     assert.ok(app.includes("'literacy-adventure-game-section'"));
     assert.ok(app.includes('window.aiedueLiteracyAdventureData'));
+    assert.ok(app.includes('async function pickLiteracyDetectiveLimitBreakQuestion'));
+    assert.ok(app.includes('getSharedBankProblems(difficulty)'));
     assert.ok(app.includes('const plan = getLiteracyDanPlan()'));
     const facade = section(app, 'window.aiedueLiteracyAdventureData = Object.freeze({', 'const AIEDUE_LITERACY_FALLBACK_TOPICS');
+    assert.ok(facade.includes('const limitBreakQuestion = await pickLiteracyDetectiveLimitBreakQuestion(plan)'));
     assert.ok(facade.includes('await createLiteracyMissionQuestion(plan.difficulty, plan.type, { detective: true })'));
     assert.ok(facade.includes('activeLiteracyDetectiveQuestion'));
-    assert.equal(facade.includes('activeLiteracyQuestion ='), false);
+    assert.ok(facade.includes('activeLiteracyQuestion = question'));
     assert.equal(facade.includes('showLiteracyResult('), false);
-    assert.equal(facade.includes('persistLiteracyAttemptAtomic'), false);
+    assert.ok(facade.includes('persistLiteracyAttemptAtomic'));
     assert.ok(app.includes("question.type === 'multipleChoice'"));
     assert.ok(app.includes("question.type === 'shortAnswer'"));
     assert.ok(app.includes("question.type === 'essay'"));
-    assert.ok(app.includes('persistLiteracyAttemptAtomic'));
     assert.ok(literacyGame.includes("gameId: 'literacy-detective'"));
     assert.ok(labCss.includes('#literacy-adventure-game-section.aiedue-lab-game-shell'));
     assert.match(literacyCss, /z-index:\s*30/);
