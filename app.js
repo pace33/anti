@@ -185,7 +185,7 @@ function getActivityRouteFromLocation() {
 let pendingActivityRoute = getActivityRouteFromLocation();
 
 function getKoreanStudentViewFromLocation() {
-    if (getActivityRouteFromLocation() !== 'hangul') return null;
+    if (!['hangul', 'dictation', 'literacy'].includes(getActivityRouteFromLocation())) return null;
     const view = new URLSearchParams(window.location.search).get('view');
     return ['records', 'mistakes', 'review'].includes(view) ? view : null;
 }
@@ -223,9 +223,9 @@ const protectedStageSections = Object.freeze({
     'word-listening-quiz-section': [2],
     'reading-practice-section': [2],
     'hangul-game-section': [2],
-    'korean-records-section': [2],
+    'korean-records-section': [2, 3, 4],
     'korean-mistakes-section': [2],
-    'korean-review-section': [2],
+    'korean-review-section': [2, 3, 4],
     'dictation-activities-section': [3],
     'my-dictation-section': [3],
     'dictation-workspace-section': [3],
@@ -243,7 +243,8 @@ function enforceCurrentStageAccess() {
         const section = document.getElementById(sectionId);
         return section && !section.classList.contains('hidden');
     });
-    const allowedLevels = visibleEntry?.[1] || [];
+    const allowedLevels = ['korean-records-section', 'korean-review-section'].includes(visibleEntry?.[0])
+        ? [activeKoreanLearningStage] : (visibleEntry?.[1] || []);
     if (!allowedLevels.length || allowedLevels.some((level) => unlockedLevels.includes(level))) return;
     pendingActivityRoute = null;
     showDashboardOnly();
@@ -1085,6 +1086,7 @@ window.koreanAudioReplayCounts = {};
 window.koreanRetryCounts = {};
 let koreanMasteryCache = {};
 let activeKoreanReview = null;
+let activeKoreanLearningStage = 2;
 
 const learningDetailData = {
     1: {
@@ -5662,7 +5664,9 @@ function showTopLevelSection(sectionId) {
     const isKoreanLabGame = labGameSectionIds.includes(sectionId);
     document.body.classList.toggle('aiedue-lab-game-open', isKoreanLabGame);
     document.body.classList.toggle('dashboard-view-active', sectionId === 'dashboard-section');
-    const learningStage = protectedStageSections[sectionId]?.[0];
+    document.body.classList.toggle('korean-learning-view-open', ['korean-records-section', 'korean-mistakes-section', 'korean-review-section'].includes(sectionId));
+    const learningStage = ['korean-records-section', 'korean-review-section'].includes(sectionId)
+        ? activeKoreanLearningStage : protectedStageSections[sectionId]?.[0];
     if (learningStage) document.body.dataset.learningStage = String(learningStage);
     else delete document.body.dataset.learningStage;
     if (sectionId !== 'reading-practice-section') window.stopSyllableSlowReader?.();
@@ -14021,8 +14025,97 @@ function setKoreanLearningMenuActive(view = '') {
     document.getElementById('rpg-records-btn')?.classList.toggle('is-active', ['records', 'mistakes'].includes(view));
 }
 
+// Review and records follow the student's current stage without opening locked stages.
+function getKoreanLearningStage(options = {}) {
+    if (options.masteryKey) return 2;
+    if (options.stage !== undefined) return [2, 3, 4].includes(Number(options.stage)) ? Number(options.stage) : 0;
+    const allowed = [2, 3, 4].filter((stage) => currentUserRole !== 'student' || unlockedLevels.includes(stage));
+    const visible = Number(document.body.dataset.learningStage);
+    const assigned = Number(currentUserProfileSnapshot?.assignedLevel);
+    const stage = [visible, assigned, ...allowed].find((value) => allowed.includes(value));
+    if (!stage) showModal('복습과 학습 기록은 2·3·4단계에서 이용할 수 있어요.');
+    return stage || 0;
+}
+
+function prepareKoreanLearningShell(view, stage) {
+    const labels = { 2: '한글 해득', 3: '교과 맞춤쓰기', 4: '문해력' };
+    const section = document.getElementById(`korean-${view}-section`);
+    document.getElementById('main-container').style.maxWidth = '1100px';
+    const badge = section?.querySelector('.korean-learning-stage-badge');
+    if (badge) badge.textContent = `${stage}단계 · ${labels[stage]}`;
+    const tabs = section?.querySelector('.korean-learning-stage-tabs');
+    if (tabs) tabs.innerHTML = [2, 3, 4].map((level) => {
+        const locked = currentUserRole === 'student' && !unlockedLevels.includes(level);
+        const action = view === 'review' ? 'openKoreanTodayReview' : 'openKoreanRecords';
+        return `<button type="button" ${locked ? 'disabled' : ''} aria-pressed="${stage === level}" class="${stage === level ? 'is-active' : ''}" onclick="${action}({ stage: ${level} })">${locked ? '🔒 ' : ''}${level}단계 ${labels[level]}</button>`;
+    }).join('');
+    const scroll = section?.querySelector('.korean-learning-scroll');
+    if (scroll) scroll.scrollTop = 0;
+    const heading = section?.querySelector('h1');
+    heading?.focus({ preventScroll: true });
+}
+
+window.openKoreanLearningStageHome = function openKoreanLearningStageHome() {
+    const stage = activeKoreanLearningStage;
+    if (!requireStageAccess(stage)) return;
+    openActivityRoute({ 2: 'hangul', 3: 'dictation', 4: 'literacy' }[stage], { pushUrl: true });
+};
+
+function renderKoreanHigherStageReview(stage) {
+    const root = document.getElementById('korean-review-content');
+    const progress = document.getElementById('korean-review-progress');
+    if (!root || !progress) return;
+    if (stage === 3) {
+        const items = getCurricularPracticeReviewItems(10);
+        progress.textContent = '틀렸던 글을 다시 쓰고, 단어 카드로 뜻을 익혀요.';
+        root.innerHTML = `<div class="korean-review-activity-grid">
+            <article class="korean-review-activity"><span class="korean-review-activity-icon" aria-hidden="true">✏️</span><h2>교과 맞춤쓰기 오답 복습</h2><p>틀렸던 단어와 문장을 따라 쓴 뒤, 소리를 듣고 다시 써 보세요.</p><p class="korean-review-availability">${items.length ? `이번에 다시 연습할 문제 ${items.length}개` : '아직 다시 쓸 오답이 없어요. 단어 카드 한 판으로 복습해 보세요.'}</p><button type="button" class="btn-primary" onclick="startKoreanStageReview('curricular')" ${items.length ? '' : 'disabled'}>오답 다시 쓰기</button></article>
+            <article class="korean-review-activity"><span class="korean-review-activity-icon" aria-hidden="true">🃏</span><h2>단어 카드 한 판</h2><p>그림과 설명을 보고 알맞은 단어 카드를 골라요. 배운 낱말의 뜻을 다시 떠올려 보세요.</p><button type="button" class="btn-primary" onclick="startKoreanStageReview('word-card')">단어 카드로 복습하기</button></article>
+        </div>`;
+    } else {
+        progress.textContent = '문해력 탐정단에서 글 속 단서를 찾아 복습해요.';
+        root.innerHTML = `<div class="korean-review-activity-grid is-single"><article class="korean-review-activity"><span class="korean-review-activity-icon" aria-hidden="true">🔎</span><h2>문해력 탐정단</h2><p>사건의 지문을 읽고 단서를 찾아 문제를 풀어요. 글의 내용을 이해하고 내 생각을 답하며 복습해 보세요.</p><button type="button" class="btn-primary" onclick="startKoreanStageReview('detective')">탐정단으로 복습하기</button></article></div>`;
+    }
+}
+
+window.startKoreanStageReview = function startKoreanStageReview(activity) {
+    const stage = { curricular: 3, 'word-card': 3, detective: 4 }[activity];
+    if (![3, 4].includes(stage) || !requireStageAccess(stage)) return;
+    if (activity === 'curricular' && !getCurricularPracticeReviewItems(10).length) {
+        showModal('아직 다시 연습할 오답이 없어요. 단어 카드 한 판으로 복습해 보세요.');
+        return;
+    }
+    if (!openActivityRoute(stage === 3 ? 'dictation' : 'literacy', { pushUrl: true })) return;
+    if (activity === 'curricular') window.openDictationPracticeActivity();
+    else if (activity === 'word-card') window.openAiedueLabWordCardGame();
+    else window.openLiteracyAdventureGame();
+};
+
+function renderKoreanHigherStageRecords(stage) {
+    const root = document.getElementById('korean-records-content');
+    if (!root) return;
+    const student = { ...currentUserProfileSnapshot, dictationPortfolio, literacyPortfolio };
+    let content;
+    if (stage === 3) {
+        const state = getCurricularWritingState();
+        const records = [...(state.history || []), ...Object.values(dictationPortfolio.missions || {})];
+        const unique = new Map();
+        records.forEach((record) => {
+            const key = record.id || record.savedAt || JSON.stringify(record);
+            if (!unique.has(key)) unique.set(key, record);
+        });
+        const recent = [...unique.values()].sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))).slice(0, 30);
+        content = `<h2 class="korean-record-section-title">최근 교과 맞춤쓰기</h2><div class="korean-stage-record-list">${recent.map((record) => `<article class="korean-stage-record"><h3>${record.practiceReview ? '오답 다시 쓰기' : '교과 맞춤쓰기'} · ${Number(record.difficulty) || 1}스텝</h3><p>${escapeHtml(String(record.savedAt || '').slice(0, 10))} · 정확도 ${Math.round(Number(record.accuracy) || 0)}%</p><p>${escapeHtml((record.words || (record.items || []).map((item) => item.word || item.answer || item.sentence)).join(' · '))}</p></article>`).join('') || '<p class="korean-empty-state">아직 교과 맞춤쓰기 기록이 없어요.</p>'}</div>`;
+    } else {
+        const history = (literacyPortfolio.history || []).slice(0, 50);
+        content = `<h2 class="korean-record-section-title">최근 문해력 학습</h2><div class="korean-stage-record-list">${history.map((record) => `<article class="korean-stage-record"><h3>${record.isCorrect ? '⭕ 정답' : '다시 살펴볼 문제'}</h3><p>${escapeHtml(String(record.solvedAt || '').slice(0, 10))}</p><strong>${escapeHtml(record.question || '')}</strong><p>내 답: ${escapeHtml(record.userAnswer || '(없음)')}</p></article>`).join('') || '<p class="korean-empty-state">아직 문해력 기록이 없어요.</p>'}</div>`;
+    }
+    root.innerHTML = `${renderKoreanStageGameReport(student, stage)}<div class="korean-record-actions"><button type="button" class="btn-primary" onclick="openKoreanTodayReview({ stage: ${stage} })">🔁 오늘의 복습</button><button type="button" class="btn-outline" onclick="openKoreanLearningStageHome()">공부하러 가기</button></div>${content}`;
+}
+
 function updateKoreanStudentViewUrl(view, replace = false) {
-    const url = `index.html?activity=hangul&view=${view}`;
+    const activity = view === 'mistakes' ? 'hangul' : { 2: 'hangul', 3: 'dictation', 4: 'literacy' }[activeKoreanLearningStage];
+    const url = `index.html?activity=${activity}&view=${view}`;
     window.history?.[replace ? 'replaceState' : 'pushState']?.(null, '', url);
 }
 
@@ -14088,11 +14181,15 @@ function renderKoreanRecordDashboard() {
 }
 
 window.openKoreanRecords = async function openKoreanRecords(options = {}) {
-    if (!requireStageAccess(2, '2단계 한글')) return;
+    const stage = getKoreanLearningStage(options);
+    if (!stage || !requireStageAccess(stage)) return;
+    activeKoreanLearningStage = stage;
     showTopLevelSection('korean-records-section');
+    prepareKoreanLearningShell('records', stage);
     setKoreanLearningMenuActive('records');
     if (options.pushUrl !== false) updateKoreanStudentViewUrl('records');
-    renderKoreanRecordDashboard();
+    if (stage === 2) renderKoreanRecordDashboard();
+    else renderKoreanHigherStageRecords(stage);
 };
 
 window.openKoreanGrowthUnit = function openKoreanGrowthUnit(unitId) {
@@ -14142,7 +14239,9 @@ window.setKoreanMistakeFilter = function setKoreanMistakeFilter(filter) {
 
 window.openKoreanMistakes = async function openKoreanMistakes(options = {}) {
     if (!requireStageAccess(2, '2단계 한글')) return;
+    activeKoreanLearningStage = 2;
     showTopLevelSection('korean-mistakes-section');
+    prepareKoreanLearningShell('mistakes', 2);
     setKoreanLearningMenuActive('mistakes');
     if (options.pushUrl !== false) updateKoreanStudentViewUrl('mistakes');
     renderKoreanMistakes();
@@ -14265,27 +14364,44 @@ function renderKoreanReviewQuestion() {
 }
 
 async function finishKoreanReviewAttempt(item, studentAnswer, isCorrect, extra = {}) {
-    await recordKoreanAttempt({
-        lessonId: item.lessonId,
-        lessonTitle: item.lessonTitle,
-        unitId: item.unitId,
-        activityType: item.activityType,
-        questionId: item.questionId,
-        questionType: item.questionType,
-        inputType: item.inputType,
-        word: item.questionText,
-        prompt: item.questionText,
-        answer: item.correctAnswer,
-        userAnswer: studentAnswer,
-        isCorrect,
-        errorType: isCorrect ? null : item.errorType,
-        attemptSource: 'review',
-        ...extra
-    });
-    activeKoreanReview.correctCount += isCorrect ? 1 : 0;
-    activeKoreanReview.wrongCount += isCorrect ? 0 : 1;
-    activeKoreanReview.index += 1;
-    window.setTimeout(renderKoreanReviewQuestion, 650);
+    const review = activeKoreanReview;
+    const studentId = currentUserId;
+    if (!review || review.saving || review.queue[review.index] !== item) return;
+    review.saving = true;
+    try {
+        await recordKoreanAttempt({
+            lessonId: item.lessonId,
+            lessonTitle: item.lessonTitle,
+            unitId: item.unitId,
+            activityType: item.activityType,
+            questionId: item.questionId,
+            questionType: item.questionType,
+            inputType: item.inputType,
+            word: item.questionText,
+            prompt: item.questionText,
+            answer: item.correctAnswer,
+            userAnswer: studentAnswer,
+            isCorrect,
+            errorType: isCorrect ? null : item.errorType,
+            attemptSource: 'review',
+            ...extra
+        });
+        if (activeKoreanReview !== review || currentUserId !== studentId) return;
+        review.correctCount += isCorrect ? 1 : 0;
+        review.wrongCount += isCorrect ? 0 : 1;
+        review.index += 1;
+        window.setTimeout(() => {
+            if (activeKoreanReview === review && currentUserId === studentId) renderKoreanReviewQuestion();
+        }, 650);
+    } catch (error) {
+        if (activeKoreanReview !== review || currentUserId !== studentId) return;
+        const feedback = document.getElementById('korean-review-feedback');
+        if (feedback) feedback.textContent = '결과를 저장하지 못했어요. 다시 눌러 주세요.';
+        document.querySelectorAll('.korean-review-choice').forEach((choice) => { choice.disabled = false; });
+        console.warn('Korean review save failed.', error);
+    } finally {
+        review.saving = false;
+    }
 }
 
 window.submitKoreanReviewChoice = async function submitKoreanReviewChoice(studentAnswer, button) {
@@ -14326,13 +14442,21 @@ window.submitKoreanReviewReading = async function submitKoreanReviewReading() {
 };
 
 window.openKoreanTodayReview = async function openKoreanTodayReview(options = {}) {
-    if (!requireStageAccess(2, '2단계 한글')) return;
+    const stage = getKoreanLearningStage(options);
+    if (!stage || !requireStageAccess(stage)) return;
+    activeKoreanLearningStage = stage;
+    activeKoreanReview = null;
+    showTopLevelSection('korean-review-section');
+    prepareKoreanLearningShell('review', stage);
+    setKoreanLearningMenuActive('review');
+    if (options.pushUrl !== false) updateKoreanStudentViewUrl('review');
+    if (stage !== 2) {
+        renderKoreanHigherStageReview(stage);
+        return;
+    }
     let queue = getTodayReviewQuestions(koreanMasteryCache, 10);
     if (options.masteryKey) queue = queue.filter((item) => item.masteryKey === options.masteryKey);
     activeKoreanReview = { queue, index: 0, correctCount: 0, wrongCount: 0 };
-    showTopLevelSection('korean-review-section');
-    setKoreanLearningMenuActive('review');
-    if (options.pushUrl !== false) updateKoreanStudentViewUrl('review');
     if (!queue.length) {
         const root = document.getElementById('korean-review-content');
         document.getElementById('korean-review-progress').textContent = '지금까지 정말 잘했어요.';
@@ -14352,9 +14476,10 @@ window.openRpgClass = function openRpgClass() {
 };
 
 function openKoreanStudentViewRoute(view, options = {}) {
-    if (view === 'records') return window.openKoreanRecords({ pushUrl: options.pushUrl });
+    const stage = activityRoutes[getActivityRouteFromLocation()]?.level;
+    if (view === 'records') return window.openKoreanRecords({ stage, pushUrl: options.pushUrl });
     if (view === 'mistakes') return window.openKoreanMistakes({ pushUrl: options.pushUrl });
-    if (view === 'review') return window.openKoreanTodayReview({ pushUrl: options.pushUrl });
+    if (view === 'review') return window.openKoreanTodayReview({ stage, pushUrl: options.pushUrl });
     return false;
 }
 

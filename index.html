@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260921-original-review-v1">
+    <meta name="aiedue-korean-build" content="20260922-stage-review-v1">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260921-original-review-v1">
+    <link rel="stylesheet" href="app.css?v=20260922-stage-review-v1">
     <link rel="stylesheet" href="shape-zoo.css?v=20260921-stage-card-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260915-time-quiz-readability-v3">
@@ -1313,6 +1313,46 @@
                 </div>
             </div>
         </div>
+        <!-- [단계별 학생 기록과 맞춤 복습] -->
+        <div id="korean-records-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
+            <main class="korean-records-shell" aria-labelledby="korean-records-title">
+                <header class="korean-records-header">
+                    <button type="button" class="korean-learning-logo" onclick="openKoreanLearningStageHome()" aria-label="에이두 단계 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" width="148" height="111" alt="에이두 한글"></button>
+                    <div><span class="aiedu-badge korean-learning-stage-badge bg-teal-500">2단계 · 한글 해득</span><h1 id="korean-records-title" tabindex="-1">📒 나의 기록</h1><p>꾸준히 쌓은 나의 배움을 확인해요.</p></div>
+                    <button type="button" class="btn-outline" onclick="openKoreanLearningStageHome()">공부하러 가기</button>
+                </header>
+                <nav class="korean-learning-stage-tabs" aria-label="기록 단계 선택"></nav>
+                <div class="korean-learning-scroll custom-scrollbar"><div id="korean-records-content" aria-live="polite"></div></div>
+            </main>
+        </div>
+
+        <div id="korean-mistakes-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
+            <main class="korean-records-shell" aria-labelledby="korean-mistakes-title">
+                <header class="korean-records-header">
+                    <button type="button" class="korean-learning-logo" onclick="openKoreanLearningStageHome()" aria-label="에이두 단계 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" width="148" height="111" alt="에이두 한글"></button>
+                    <div><span class="aiedu-badge bg-orange-500">오답노트</span><h1 id="korean-mistakes-title" tabindex="-1">📕 다시 연습할 한글</h1><p>조금 어려웠던 한글을 다시 만나 봐요.</p></div>
+                    <button type="button" class="btn-outline" onclick="openKoreanRecords()">나의 기록</button>
+                </header>
+                <div class="korean-learning-scroll custom-scrollbar">
+                <div id="korean-mistake-filters" class="korean-record-filters" aria-label="오답 종류"></div>
+                <div id="korean-mistakes-content" class="korean-mistake-list" aria-live="polite"></div>
+                </div>
+            </main>
+        </div>
+
+        <div id="korean-review-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
+            <main class="korean-records-shell" aria-labelledby="korean-review-title">
+                <header class="korean-records-header">
+                    <button type="button" class="korean-learning-logo" onclick="openKoreanLearningStageHome()" aria-label="에이두 단계 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" width="148" height="111" alt="에이두 한글"></button>
+                    <div><span class="aiedu-badge korean-learning-stage-badge bg-green-500">맞춤 학습</span><h1 id="korean-review-title" tabindex="-1">🌱 오늘의 복습</h1><p id="korean-review-progress">복습 문제를 준비하고 있어요.</p></div>
+                    <button type="button" class="btn-outline" onclick="openKoreanRecords()">나의 기록</button>
+                </header>
+                <nav class="korean-learning-stage-tabs" aria-label="복습 단계 선택"></nav>
+                <div class="korean-learning-scroll custom-scrollbar"><div id="korean-review-content" aria-live="polite"></div></div>
+            </main>
+        </div>
+
+
         <nav id="aiedue-rpg-hud" class="aiedue-rpg-hud rpg-collapsed hidden" aria-label="에이두 한글 메뉴">
             <section class="rpg-profile-banner" aria-label="내 정보">
                 <button type="button" class="rpg-profile-portrait" onclick="toggleRpgHudPanel(this)" aria-label="메뉴 펼치기" aria-expanded="false" aria-controls="rpg-profile-menu">
@@ -1435,38 +1475,6 @@
                 </section>
             </div>
         </div>
-    </div>
-
-    <!-- [한글 2단계 학생 기록과 맞춤 복습] -->
-    <div id="korean-records-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
-        <main class="korean-records-shell" aria-labelledby="korean-records-title">
-            <header class="korean-records-header">
-                <div><span class="aiedu-badge bg-teal-500">한글 2단계</span><h1 id="korean-records-title">📒 나의 기록</h1><p>오늘도 한글 실력이 자라고 있어요!</p></div>
-                <button type="button" class="btn-outline" onclick="goHangulDashboard()">한글 공부</button>
-            </header>
-            <div id="korean-records-content" aria-live="polite"></div>
-        </main>
-    </div>
-
-    <div id="korean-mistakes-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
-        <main class="korean-records-shell" aria-labelledby="korean-mistakes-title">
-            <header class="korean-records-header">
-                <div><span class="aiedu-badge bg-orange-500">오답노트</span><h1 id="korean-mistakes-title">📕 다시 연습할 한글</h1><p>조금 어려웠던 한글을 다시 만나 봐요.</p></div>
-                <button type="button" class="btn-outline" onclick="openKoreanRecords()">나의 기록</button>
-            </header>
-            <div id="korean-mistake-filters" class="korean-record-filters" aria-label="오답 종류"></div>
-            <div id="korean-mistakes-content" class="korean-mistake-list" aria-live="polite"></div>
-        </main>
-    </div>
-
-    <div id="korean-review-section" class="view-section korean-learning-records-view fade-in hidden bg-white">
-        <main class="korean-records-shell" aria-labelledby="korean-review-title">
-            <header class="korean-records-header">
-                <div><span class="aiedu-badge bg-green-500">맞춤 학습</span><h1 id="korean-review-title">🌱 오늘의 복습</h1><p id="korean-review-progress">복습 문제를 준비하고 있어요.</p></div>
-                <button type="button" class="btn-outline" onclick="openKoreanRecords()">나의 기록</button>
-            </header>
-            <div id="korean-review-content" aria-live="polite"></div>
-        </main>
     </div>
 
     <!-- [5. 교사용 학급 관리 모달] -->
@@ -1819,7 +1827,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260921-original-review-v1"></script>
+    <script type="module" src="app.js?v=20260922-stage-review-v1"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260921-stage-card-v1"></script>
