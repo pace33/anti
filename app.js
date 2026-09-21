@@ -43,6 +43,7 @@ import {
     summarizeKoreanMasteryDistribution,
     summarizeKoreanStudentRecords
 } from "./korean-learning-records.mjs";
+import { resolveKoreanReviewQuestion } from './korean-review-questions.mjs?v=20260921-original-review-v1';
 import {
     getFirestore,
     doc,
@@ -14161,6 +14162,69 @@ function getKoreanReviewChoices(item) {
     return [answer, ...Array.from(new Set(sameShape)).slice(0, 3)].sort((a, b) => `${item.questionId}|${a}`.localeCompare(`${item.questionId}|${b}`));
 }
 
+function getKoreanReviewPictureSources(item) {
+    const lessonId = Number(item.lessonId);
+    const answer = String(item.correctAnswer || item.questionText || '');
+    const mapPictureItems = (entries = [], fallbackChoices = []) => entries.map((entry) => ({
+        answer: entry.answer || entry.word,
+        icon: entry.icon,
+        choices: entry.choices || [entry.answer || entry.word, ...fallbackChoices.filter((choice) => choice !== (entry.answer || entry.word)).slice(0, 3)]
+    }));
+
+    if (lessonId === 20) return mapPictureItems(LESSON20_READ_FIND_ITEMS);
+    if (lessonId === 26) return mapPictureItems(LESSON26_FIND_GROUPS.flat());
+    if (lessonId === 25) return mapPictureItems(LESSON25_PATH_GAME_STAGES);
+    if (lessonId === 30) {
+        return LESSON30_PATH.map(([icon, choices, result]) => ({ answer: result, icon, choices }));
+    }
+    if ([31, 32, 33].includes(lessonId)) {
+        return UNIT9_FIND_SETS.flat().map(([icon, result, choices]) => ({ answer: result, icon, choices }));
+    }
+    if ([21, 22, 23, 24].includes(lessonId)) {
+        return mapPictureItems((LESSON_BATCHIM_PAGE_SEQUENCES[lessonId] || [])
+            .flatMap((batchim) => LESSON21_BATCHIM_CONFIGS[batchim]?.wordFind || []));
+    }
+    if ([13, 14].includes(lessonId)) {
+        const entries = getPictureWordLessonItems(lessonId);
+        const words = entries.map((entry) => entry.word);
+        return mapPictureItems(entries, words);
+    }
+
+    const lesson = getChanchanLesson(lessonId);
+    const entries = lesson?.pictureItems || [];
+    const words = entries.map((entry) => entry.word);
+    if (entries.some((entry) => entry.word === answer)) return mapPictureItems(entries, words);
+    return [];
+}
+
+function getKoreanReviewListeningSources(item) {
+    const lessonId = Number(item.lessonId);
+    const activityType = String(item.activityType || '');
+    if (lessonId === 12 && activityType === 'listenAndFind') {
+        return LESSON12_FINAL_CHECK_ITEMS.map((entry) => ({ answer: entry.target, choices: entry.choices }));
+    }
+    if (lessonId === 25 && activityType === 'listenAndFind') return LESSON25_LISTEN_CHOICE_QUESTIONS;
+    if (lessonId === 30 && activityType === 'listenAndFind') {
+        return LESSON30_QUESTIONS.map(([choices, answer]) => ({ answer, choices }));
+    }
+    const mouthConfig = LESSON_MOUTH_ACTIVITY_CONFIGS[lessonId];
+    if (mouthConfig?.activityType === activityType) {
+        return mouthConfig.quizChoices.map((answer) => ({ answer, choices: mouthConfig.quizChoices }));
+    }
+    return [];
+}
+
+function getKoreanReviewSourcePresentation(item) {
+    return resolveKoreanReviewQuestion(item, {
+        pictureItems: getKoreanReviewPictureSources(item),
+        listeningItems: getKoreanReviewListeningSources(item)
+    });
+}
+
+function renderKoreanReviewChoiceButtons(choices = []) {
+    return choices.map((choice) => `<button type="button" class="korean-review-choice" onclick="submitKoreanReviewChoice('${escapeInlineJsString(choice)}', this)">${escapeHtml(choice)}</button>`).join('');
+}
+
 function renderKoreanReviewQuestion() {
     const root = document.getElementById('korean-review-content');
     const progress = document.getElementById('korean-review-progress');
@@ -14187,8 +14251,17 @@ function renderKoreanReviewQuestion() {
         root.innerHTML = `<article class="korean-review-card"><p>소리 내어 세 번 읽어 보세요.</p><h2>${target}</h2><div class="korean-record-actions justify-center"><button type="button" class="btn-outline" onclick="speakTextKo('${escapeInlineJsString(item.correctAnswer || item.questionText || '')}')">🔊 소리 듣기</button><button type="button" class="btn-primary" onclick="submitKoreanReviewReading()">세 번 읽었어요</button></div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
         return;
     }
+    const sourcePresentation = getKoreanReviewSourcePresentation(item);
+    if (sourcePresentation?.kind === 'picture-choice') {
+        root.innerHTML = `<article class="korean-review-card is-picture-question"><p>${escapeHtml(sourcePresentation.prompt)}</p><div class="korean-review-picture" role="img" aria-label="${target} 그림">${sourcePresentation.icon}</div><button type="button" class="btn-outline korean-review-listen" onclick="speakTextKo('${escapeInlineJsString(sourcePresentation.audioText)}')">🔊 그림 이름 듣기</button><div class="korean-review-choices">${renderKoreanReviewChoiceButtons(sourcePresentation.choices)}</div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
+        return;
+    }
+    if (sourcePresentation?.kind === 'listening-choice') {
+        root.innerHTML = `<article class="korean-review-card is-listening-question"><p>${escapeHtml(sourcePresentation.prompt)}</p><div class="korean-review-sound-mark" aria-hidden="true">🔊</div><button type="button" class="btn-outline korean-review-listen" onclick="speakTextKo('${escapeInlineJsString(sourcePresentation.audioText)}')">문제 소리 듣기</button><div class="korean-review-choices">${renderKoreanReviewChoiceButtons(sourcePresentation.choices)}</div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
+        return;
+    }
     const choices = getKoreanReviewChoices(item);
-    root.innerHTML = `<article class="korean-review-card"><p>${item.activityType === 'listenAndFind' ? '소리를 듣고 알맞은 답을 골라요.' : '알맞은 답을 골라요.'}</p><h2>${item.activityType === 'listenAndFind' ? '🔊' : target}</h2>${item.activityType === 'listenAndFind' ? `<button type="button" class="btn-outline mb-4" onclick="speakTextKo('${escapeInlineJsString(item.correctAnswer || item.questionText || '')}')">소리 듣기</button>` : ''}<div class="korean-review-choices">${choices.map((choice) => `<button type="button" class="korean-review-choice" onclick="submitKoreanReviewChoice('${escapeInlineJsString(choice)}', this)">${escapeHtml(choice)}</button>`).join('')}</div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
+    root.innerHTML = `<article class="korean-review-card"><p>${item.activityType === 'listenAndFind' ? '소리를 듣고 알맞은 답을 골라요.' : '알맞은 답을 골라요.'}</p><h2>${item.activityType === 'listenAndFind' ? '🔊' : target}</h2>${item.activityType === 'listenAndFind' ? `<button type="button" class="btn-outline mb-4" onclick="speakTextKo('${escapeInlineJsString(item.correctAnswer || item.questionText || '')}')">소리 듣기</button>` : ''}<div class="korean-review-choices">${renderKoreanReviewChoiceButtons(choices)}</div><div id="korean-review-feedback" class="korean-review-feedback"></div></article>`;
 }
 
 async function finishKoreanReviewAttempt(item, studentAnswer, isCorrect, extra = {}) {

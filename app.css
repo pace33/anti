@@ -949,6 +949,11 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
 .korean-review-card { width: min(680px, 100%); margin: 0 auto; padding: clamp(22px, 5vw, 40px); border: 3px solid #9bd8bd; border-radius: 8px; background: #fff; text-align: center; box-shadow: 0 14px 34px rgba(37,115,77,.1); }
 .korean-review-card h2 { color: #173c58; font-size: clamp(2.3rem, 8vw, 4.5rem); font-weight: 1000; }
 .korean-review-card p { margin: 8px 0 18px; color: #617584; font-weight: 800; }
+.korean-review-card.is-picture-question { width: min(760px, 100%); }
+.korean-review-picture { display: grid; place-items: center; width: min(250px, 72vw); min-height: 190px; margin: 0 auto 14px; padding: 18px; border: 2px solid #b8dfcf; border-radius: 8px; background: #f4fcf7; font-size: clamp(6rem, 15vw, 9rem); line-height: 1; }
+.korean-review-picture .word-picture-asset { width: auto; max-width: 100%; height: auto; max-height: 170px; object-fit: contain; }
+.korean-review-listen { min-height: 48px; margin: 0 auto 18px; }
+.korean-review-sound-mark { margin: 2px 0 12px; font-size: clamp(3.2rem, 10vw, 5rem); line-height: 1; }
 .korean-review-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .korean-review-choice { min-height: 70px; border: 2px solid #a9cfe5; border-radius: 8px; background: #edf7fc; color: #123f5e; font-size: 1.55rem; font-weight: 1000; }
 .korean-review-choice:disabled { opacity: .65; }
