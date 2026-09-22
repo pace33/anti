@@ -94,7 +94,7 @@ import {
     getUnlockedLevelsForPlacement,
     shouldRunStudentDiagnostic,
     transitionDiagnostic
-} from "./student-onboarding-diagnostic-core.mjs?v=20260914-student-placement-v3";
+} from "./student-onboarding-diagnostic-core.mjs?v=20260922-cumulative-unlock-v1";
 import {
     WORD_CARD_GENERATION_VERSION,
     buildWordCardId,
@@ -140,7 +140,7 @@ function deriveStageAccessFromProfile(profile = {}) {
         diagnosticStatus: profile?.diagnosticStatus,
         diagnosticVersion: profile?.diagnosticVersion
     })) return [];
-    // 진단 저장 직후에는 배정 단계 하나만 열고, 이후 교사가 저장한 명시적 단계 설정을 따른다.
+    // 진단 저장 직후에는 배정 단계와 그 하위 단계를 열고, 이후 교사가 저장한 명시적 단계 설정을 따른다.
     if (Object.prototype.hasOwnProperty.call(profile, 'unlockedLevels')) {
         return normalizeUnlockedLevels(profile.unlockedLevels, role);
     }
@@ -273,7 +273,7 @@ function requireStageAccess(level, label = `${level}단계`) {
     }
     if (currentUserRole === 'student' && !unlockedLevels.includes(Number(level))) {
         showDashboardOnly();
-        showModal(`${label}은 지금 잠겨 있어요. 에이두와 튜토리얼 진단을 마치면 맞는 단계 하나를 열어 줄게요.`);
+        showModal(`${label}은 지금 잠겨 있어요. 에이두와 튜토리얼 진단을 마치면 맞는 단계와 그 하위 단계를 열어 줄게요.`);
         return false;
     }
     return true;
@@ -817,12 +817,13 @@ async function persistStudentPlacement() {
     const errorBox = document.getElementById('student-onboarding-error');
     errorBox?.classList.add('hidden');
     renderStudentOnboardingDialogue({ speaker: '에이두', text: '잠깐만! 너에게 맞는 단계를 열고 있어.' }, { buttonLabel: '단계 여는 중…' });
+    const placementUnlockedLevels = [...getUnlockedLevelsForPlacement(state.assignedLevel)];
     const payload = {
         studentOnboardingVersion: DIAGNOSTIC_CONTENT_VERSION,
         diagnosticStatus: 'complete',
         diagnosticVersion: DIAGNOSTIC_CONTENT_VERSION,
         assignedLevel: state.assignedLevel,
-        unlockedLevels: [state.assignedLevel],
+        unlockedLevels: placementUnlockedLevels,
         diagnosticScores: { ...state.scores },
         diagnosticAnsweredQuestionIds: [...state.answeredQuestionIds],
         diagnosticCompletedAt: serverTimestamp(),
@@ -835,7 +836,7 @@ async function persistStudentPlacement() {
             if (!existingSnapshot.exists()) throw new Error('사용자 프로필을 찾을 수 없습니다.');
             const existingProfile = existingSnapshot.data() || {};
             const existingAccess = deriveStageAccessFromProfile(existingProfile);
-            if (existingAccess.length === 1 && !isRetake) return;
+            if (existingAccess.length > 0 && !isRetake) return;
             transaction.set(userRef, payload, { merge: true });
         });
         if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'student') return;
@@ -844,7 +845,11 @@ async function persistStudentPlacement() {
         const savedProfile = savedSnapshot.data() || {};
         const savedAssignedLevel = Number(savedProfile.assignedLevel);
         const savedUnlockedLevels = deriveStageAccessFromProfile(savedProfile);
-        if (!savedSnapshot.exists() || savedProfile.diagnosticStatus !== 'complete' || savedProfile.diagnosticVersion !== DIAGNOSTIC_CONTENT_VERSION || savedUnlockedLevels.length !== 1 || savedUnlockedLevels[0] !== savedAssignedLevel) {
+        const expectedUnlockedLevels = [...getUnlockedLevelsForPlacement(savedAssignedLevel)];
+        const placementConfirmed = expectedUnlockedLevels.length > 0
+            && savedUnlockedLevels.length === expectedUnlockedLevels.length
+            && expectedUnlockedLevels.every((level, index) => savedUnlockedLevels[index] === level);
+        if (!savedSnapshot.exists() || savedProfile.diagnosticStatus !== 'complete' || savedProfile.diagnosticVersion !== DIAGNOSTIC_CONTENT_VERSION || !placementConfirmed) {
             throw new Error('서버에서 단계 배정 결과를 확인하지 못했습니다.');
         }
         unlockedLevels = savedUnlockedLevels;
@@ -852,7 +857,7 @@ async function persistStudentPlacement() {
         updateDashboardExperience(currentUserProfileSnapshot);
         closeStudentOnboarding();
         showDashboardOnly();
-        showAiedueAutoToast('단계가 열렸어요!', `${savedAssignedLevel}단계부터 에이두와 함께 공부해요.`);
+        showAiedueAutoToast('단계가 열렸어요!', `${savedAssignedLevel}단계까지 에이두와 함께 공부해요.`);
     } catch (error) {
         console.error('Student placement save failed', error);
         if (auth.currentUser?.uid !== uid || currentUserId !== uid || studentOnboardingUid !== uid || currentUserRole !== 'student') return;
@@ -5450,7 +5455,7 @@ function updateDashboardExperience(userData = {}, options = {}) {
     const rawLearningStep = Number(userData?.currentLearningStep);
     currentLearningStep = Number.isFinite(rawLearningStep) ? Math.min(33, Math.max(-1, Math.floor(rawLearningStep))) : -1;
 
-    // 학생은 현재 버전 진단이 완료된 배정 단계 하나만, 교사는 전체 단계를 활성화한다.
+    // 학생은 현재 버전 진단이 완료된 배정 단계와 그 하위 단계, 교사는 전체 단계를 활성화한다.
     unlockedLevels = deriveStageAccessFromProfile(userData);
     const dashboardTeacherClassButton = document.getElementById('dashboard-teacher-class-button');
     const dashboardStudentShopButton = document.getElementById('dashboard-student-shop-button');
@@ -21584,7 +21589,7 @@ function buildTestUserProfile(user, account, existingData = {}) {
         currentLearningStep: 33,
         currentDrawingStep: 5,
         currentDictationStep: 5,
-        unlockedLevels: account.role === 'teacher' ? [1, 2, 3, 4] : (hasPlacement ? [assignedLevel] : []),
+        unlockedLevels: account.role === 'teacher' ? [1, 2, 3, 4] : (hasPlacement ? [...getUnlockedLevelsForPlacement(assignedLevel)] : []),
         warningTokens: 0,
         ...(account.role === 'student' ? { koreanStageGameStats: {
             'shape-zoo': { successes: 8, attempts: 10, plays: 2, lastPlayedAt: new Date().toISOString() },

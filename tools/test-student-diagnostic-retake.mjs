@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
-import { DIAGNOSTIC_CONTENT_VERSION } from '../student-onboarding-diagnostic-core.mjs';
+import { DIAGNOSTIC_CONTENT_VERSION, getUnlockedLevelsForPlacement } from '../student-onboarding-diagnostic-core.mjs';
 
 const source = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
 function section(start, end) {
@@ -38,14 +38,14 @@ test('teacher tutorial retains its teacher guide', () => {
 });
 
 function saveHarness(retake) {
-    let profile = { role: 'student', assignedLevel: 2, unlockedLevels: [2], diagnosticStatus: 'complete', diagnosticVersion: DIAGNOSTIC_CONTENT_VERSION, coins: 750, teacherId: 'teacher' };
+    let profile = { role: 'student', assignedLevel: 2, unlockedLevels: [1, 2], diagnosticStatus: 'complete', diagnosticVersion: DIAGNOSTIC_CONTENT_VERSION, coins: 750, teacherId: 'teacher' };
     let writes = 0;
     let closed = false;
     const context = {
         studentOnboardingUid: 'student', currentUserId: 'student', currentUserRole: 'student', auth: { currentUser: { uid: 'student' } },
         studentOnboardingState: { assignedLevel: 4, scores: { 4: 3 }, answeredQuestionIds: ['literacy-easy-1', 'literacy-easy-2', 'literacy-easy-3'] },
         studentOnboardingRetake: retake, studentOnboardingPersisting: false, currentUserProfileSnapshot: profile,
-        DIAGNOSTIC_CONTENT_VERSION, db: {}, document: { getElementById: () => ({ classList: { add() {}, remove() {} } }) },
+        DIAGNOSTIC_CONTENT_VERSION, getUnlockedLevelsForPlacement, db: {}, document: { getElementById: () => ({ classList: { add() {}, remove() {} } }) },
         console: { error() {} }, renderStudentOnboardingDialogue() {}, serverTimestamp: () => 'server-time', doc: () => 'users/student',
         deriveStageAccessFromProfile: value => value.unlockedLevels,
         runTransaction: async (_, callback) => callback({ get: async () => ({ exists: () => true, data: () => profile }),
@@ -62,7 +62,7 @@ test('retake replaces the old placement and scores while preserving classroom an
     await h.context.persistStudentPlacement();
     assert.equal(h.writes(), 1);
     assert.equal(h.profile().assignedLevel, 4);
-    assert.deepEqual(Array.from(h.profile().unlockedLevels), [4]);
+    assert.deepEqual(Array.from(h.profile().unlockedLevels), [1, 2, 3, 4]);
     assert.equal(h.profile().diagnosticScores[4], 3);
     assert.equal(h.profile().teacherId, 'teacher');
     assert.equal(h.profile().coins, 750);

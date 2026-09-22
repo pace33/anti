@@ -101,18 +101,18 @@ test('선택하지 않은 제출, 잘못된 보기, 완료 문제의 중복 제�
     assert.strictEqual(transitionDiagnostic(submitted, { type: 'SUBMIT' }), submitted);
 });
 
-test('배정 단계 하나만 열리고 나머지 세 단계는 잠긴다', () => {
+test('배정 단계와 그 하위 단계는 열리고 상위 단계만 잠긴다', () => {
     for (const assignedLevel of [1, 2, 3, 4]) {
         const access = getStageAccess(assignedLevel);
-        assert.equal(Object.values(access).filter((value) => value === 'open').length, 1);
-        for (const level of [1, 2, 3, 4]) assert.equal(access[level], level === assignedLevel ? 'open' : 'locked');
+        assert.equal(Object.values(access).filter((value) => value === 'open').length, assignedLevel);
+        for (const level of [1, 2, 3, 4]) assert.equal(access[level], level <= assignedLevel ? 'open' : 'locked');
     }
     assert.ok(Object.values(getStageAccess(null)).every((value) => value === 'locked'));
 });
 
-test('코어 단계 접근 객체를 앱에서 사용하는 단일 단계 배열로 안전하게 변환한다', () => {
+test('코어 단계 접근 객체를 앱에서 사용하는 누적 단계 배열로 안전하게 변환한다', () => {
     for (const assignedLevel of [1, 2, 3, 4]) {
-        assert.deepEqual([...getUnlockedLevelsForPlacement(assignedLevel)], [assignedLevel]);
+        assert.deepEqual([...getUnlockedLevelsForPlacement(assignedLevel)], Array.from({ length: assignedLevel }, (_, index) => index + 1));
     }
     for (const invalidLevel of [null, 0, 5, '잘못된 단계']) {
         assert.deepEqual([...getUnlockedLevelsForPlacement(invalidLevel)], []);

@@ -166,13 +166,14 @@ export function transitionDiagnostic(state, event) {
 
 export function getStageAccess(assignedLevel) {
     if (![1, 2, 3, 4].includes(assignedLevel)) return Object.freeze({ 1: 'locked', 2: 'locked', 3: 'locked', 4: 'locked' });
-    return Object.freeze(Object.fromEntries([1, 2, 3, 4].map((level) => [level, level === assignedLevel ? 'open' : 'locked'])));
+    return Object.freeze(Object.fromEntries([1, 2, 3, 4].map((level) => [level, level <= assignedLevel ? 'open' : 'locked'])));
 }
 
 export function getUnlockedLevelsForPlacement(assignedLevel) {
     const normalizedLevel = Number(assignedLevel);
     const access = getStageAccess(normalizedLevel);
-    return Object.freeze(access[normalizedLevel] === 'open' ? [normalizedLevel] : []);
+    if (access[normalizedLevel] !== 'open') return Object.freeze([]);
+    return Object.freeze([1, 2, 3, 4].filter((level) => access[level] === 'open'));
 }
 
 export function shouldRunStudentDiagnostic({ role, assignedLevel, diagnosticStatus, diagnosticVersion } = {}) {

@@ -60,8 +60,11 @@ assert.match(app, /function enforceCurrentStageAccess\(\)[\s\S]*?protectedStageS
 assert.match(app, /currentUserProfileSyncGeneration \+= 1;[\s\S]*?const snapshotGeneration = \+\+currentUserProfileSyncGeneration[\s\S]*?snapshot\.exists\(\) \? \(snapshot\.data\(\) \|\| \{\}\) : \{\}[\s\S]*?snapshotGeneration !== currentUserProfileSyncGeneration/, 'live profile sync must ignore out-of-order snapshots and treat deleted profiles as authoritative empty data');
 assert.match(app, /applyDashboardStageAccess\(unlockedLevels\);[\s\S]*?enforceCurrentStageAccess\(\);/, 'every dashboard profile refresh must enforce the current visible route');
 assert.match(app, /function requireStageAccess\(level[\s\S]*?!loginSuccess[\s\S]*?!unlockedLevels\.includes\(Number\(level\)\)/, 'all direct stage entry points must use a fail-closed access guard');
-for (const entryPoint of ['goHangulDashboard', 'openKoreanRecords', 'openKoreanMistakes', 'openKoreanTodayReview']) {
+for (const entryPoint of ['goHangulDashboard', 'openKoreanMistakes']) {
   assert.match(app, new RegExp(`${entryPoint}[^\\{]*\\{[\\s\\S]{0,180}?requireStageAccess\\(2, '2단계 한글'\\)`), `${entryPoint} must block direct access when level 2 is locked`);
+}
+for (const entryPoint of ['openKoreanRecords', 'openKoreanTodayReview']) {
+  assert.match(app, new RegExp(`${entryPoint}[^\\{]*\\{[\\s\\S]{0,220}?const stage = getKoreanLearningStage\\(options\\);[\\s\\S]{0,120}?requireStageAccess\\(stage\\)`), `${entryPoint} must block direct access for the requested stage`);
 }
 assert.doesNotMatch(app, /localStorage/, 'the Korean site must not persist tutorial state in browser storage');
 assert.match(app, /function closeStudentOnboarding\(\)[\s\S]*?roleOnboardingReturnFocus[\s\S]*?returnFocus\.focus\(\)/, 'onboarding close must restore focus');
