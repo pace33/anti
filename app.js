@@ -10487,7 +10487,7 @@ window.openSharedWordCardRepository = async function openSharedWordCardRepositor
     const subtitle = sharedWordCardElement('shared-word-card-subtitle');
     const content = sharedWordCardElement('shared-word-card-content');
     if (title) title.textContent = '단어 카드 저장소';
-    if (subtitle) subtitle.textContent = '모두가 함께 사용하는 단어·설명·그림 카드예요.';
+    if (subtitle) subtitle.textContent = '공부한 단어를 다시 확인해요';
     if (content) content.innerHTML = '';
     setSharedWordCardBusy(true, '단어 카드 저장소를 불러오고 있어요…', '공용 카드를 모으고 있어요.');
     try {

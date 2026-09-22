@@ -31,6 +31,13 @@ test('3·4단계 게임 메뉴는 단어 카드 저장소 왼쪽에 있다', () 
     assert.ok(literacy.indexOf("openSharedWordCardRepository('literacy')") < literacy.indexOf('openMyLiteracyRecord()'));
 });
 
+test('단어 카드 저장소는 공부한 단어를 다시 확인하는 곳으로 안내한다', () => {
+    assert.equal((html.match(/공부한 단어를 다시 확인해요/g) || []).length, 3);
+    assert.ok(app.includes("subtitle.textContent = '공부한 단어를 다시 확인해요'"));
+    assert.equal(html.includes('모두가 함께 보는 단어·설명·그림 카드'), false);
+    assert.equal(app.includes('모두가 함께 사용하는 단어·설명·그림 카드예요.'), false);
+});
+
 test('2스텝의 단어 뜻 버튼은 확인 버튼 왼쪽에 있고 trace에서만 렌더링된다', () => {
     const card = section(app, 'function renderCurricularWritingCanvasCard', 'function renderDictationSessionList');
     assert.ok(card.includes("activeDictationSession?.kind === 'trace'"));
