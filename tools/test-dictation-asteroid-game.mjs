@@ -31,8 +31,10 @@ test('2단계에서 나의 한글을 큰 카드로, 쓰기 게임을 작은 카�
     const stage = section(html, 'id="hangul-activities-section"', 'id="learning-start-section"');
     const compactGrid = stage.indexOf('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4');
     const myKorean = stage.indexOf('openMyKoreanFromDashboard()');
+    const todayKorean = stage.indexOf('openTodayKoreanActivity()');
     const writingGame = stage.indexOf('id="stage-2-game-asteroid"');
     assert.ok(myKorean >= 0 && myKorean < compactGrid, '나의 한글은 위쪽 큰 카드여야 한다');
+    assert.ok(myKorean < todayKorean && todayKorean < compactGrid, '나의 한글은 왼쪽, 오늘의 한글은 오른쪽 큰 카드여야 한다');
     assert.ok(writingGame > compactGrid, '쓰기 게임은 아래쪽 작은 카드여야 한다');
     assert.ok(stage.includes('쓰기 게임'));
     assert.equal(stage.includes('낱말 우주 방어대'), false);
