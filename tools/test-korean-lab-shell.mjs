@@ -159,7 +159,7 @@ test('각 단계 게임은 단계 메인 카드에 있고 3·4단계 노트 촬�
     const contracts = [
         ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원', false],
         ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '쓰기 게임', false],
-        ['dictation-activities-section', 'literacy-activities-section', 'stage-3-game-word-card', 'openAiedueLabWordCardGame()', '단어 카드 한 판', true],
+        ['dictation-activities-section', 'literacy-activities-section', 'stage-3-game-word-card', 'openAiedueLabWordCardGame()', '어휘 게임', true],
         ['literacy-activities-section', 'literacy-workspace-section', 'stage-4-game-literacy', 'openLiteracyAdventureGame()', '문해력 탐정단', true]
     ];
     for (const [start, end, id, opener, title, hasCamera] of contracts) {

@@ -57,7 +57,7 @@ test('기록이 없거나 잘못된 누계는 안전하게 정규화한다', () 
     assert.equal(stats['word-card-table'].successRate, null);
     const html = context.renderReport({ koreanStageGameStats: {} }, 3);
     assert.match(html, /3단계 게임/);
-    assert.match(html, /단어 카드 한 판/);
+    assert.match(html, /어휘 게임/);
     assert.match(html, /기록 없음/);
 });
 

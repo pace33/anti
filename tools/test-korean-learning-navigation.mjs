@@ -50,7 +50,7 @@ test('stage-3-only students open two review activities without a stage-2 gate or
     await h.context.window.openKoreanTodayReview();
     assert.equal(h.context.activeKoreanLearningStage, 3);
     assert.match(h.element('korean-review-content').innerHTML, /오답 다시 쓰기/);
-    assert.match(h.element('korean-review-content').innerHTML, /단어 카드 한 판/);
+    assert.match(h.element('korean-review-content').innerHTML, /어휘 게임/);
     assert(!h.calls.some(([name]) => name === 'queue'));
     h.context.window.startKoreanStageReview('curricular');
     h.context.window.startKoreanStageReview('word-card');
@@ -136,5 +136,5 @@ test('a pending stage-2 save cannot render a newly opened stage-3 review', async
     await h.context.window.openKoreanTodayReview({ stage: 3 });
     finish(); await saving;
     assert.equal(h.context.activeKoreanReview, null);
-    assert.match(h.element('korean-review-content').innerHTML, /단어 카드 한 판/);
+    assert.match(h.element('korean-review-content').innerHTML, /어휘 게임/);
 });

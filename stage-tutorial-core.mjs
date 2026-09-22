@@ -105,9 +105,9 @@ export function buildStageTutorial(level, role) {
         explore('repository-view', 'repository', ['#shared-word-card-content'], '카드가 보이면 하나를 눌러 안쪽을 살펴봐도 좋아. 카드가 없으면 아직 만들어진 공용 카드가 없는 거야.', '게시된 카드가 있으면 눌러 상세 내용을 탐색할 수 있습니다. 아직 카드가 없다면 빈 목록을 확인한 뒤 계속 진행하세요.');
         enter('library', '에이두 도서관', 'openAiedueLab()', 'library', '도서관은 이제 에이두 연구실 안에 있어. 연구실을 열어 도서관 카드를 찾아보자.', '에이두 도서관은 연구실 카드에서 여는 구조입니다.');
         explore('library-view', 'library', ['#modal-message'], '연구실 안의 ‘에이두 도서관’ 카드를 누르면 책 목록을 볼 수 있어.', '연구실 모달 안의 도서관 카드를 확인합니다. 실제 독서는 카드를 눌러 진행합니다.');
-        enter('game', level === 3 ? '단어 카드 한 판' : '문해력 탐정단', level === 3 ? '#stage-3-game-word-card' : '#stage-4-game-literacy', level === 3 ? 'word-game' : 'detective',
-            level === 3 ? '‘단어 카드 한 판’을 눌러 카드 게임 준비 화면을 보자.' : '‘문해력 탐정단’을 눌러 사건을 푸는 게임 화면을 보자.',
-            level === 3 ? '단어 카드 한 판을 열어 어휘 카드로 하는 게임의 준비 화면을 확인합니다.' : '문해력 탐정단을 열어 사건 지문과 추리 답변 화면을 확인합니다.');
+        enter('game', level === 3 ? '어휘 게임' : '문해력 탐정단', level === 3 ? '#stage-3-game-word-card' : '#stage-4-game-literacy', level === 3 ? 'word-game' : 'detective',
+            level === 3 ? '‘어휘 게임’을 눌러 카드 게임 준비 화면을 보자.' : '‘문해력 탐정단’을 눌러 사건을 푸는 게임 화면을 보자.',
+            level === 3 ? '어휘 게임을 열어 어휘 카드로 하는 게임의 준비 화면을 확인합니다.' : '문해력 탐정단을 열어 사건 지문과 추리 답변 화면을 확인합니다.');
         explore('game-view', level === 3 ? 'word-game' : 'detective', [level === 3 ? '#word-card-table-game-section' : '#literacy-adventure-loading'],
             level === 3 ? '저장소의 그림과 설명을 보고, 내 카드 네 장 중 같은 단어를 고르는 게임이야. 정답은 1점이고 시간 제한은 없어.' : '미해결된 사건 기록이 도착해. 준비되면 첫 사건을 시작해 봐.',
             level === 3 ? '공용 저장소 카드의 그림·설명을 보고 네 장 중 같은 단어를 고릅니다. 시간 제한 없이 어휘의 의미를 떠올리는 활동으로 활용해 주세요.' : '문해력 탐정단의 사건 지문과 추리 답변 화면을 확인합니다.');

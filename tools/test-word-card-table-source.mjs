@@ -167,7 +167,7 @@ test('the stage-3 lab action is allowlisted, launches the controller, and regist
     assert.match(allowlist, /'openAiedueLabWordCardGame'/);
     const stage = html.slice(html.indexOf('id="dictation-activities-section"'), html.indexOf('id="literacy-activities-section"'));
     assert.match(stage, /onclick="openAiedueLabWordCardGame\(\)"/);
-    assert.match(stage, /단어 카드 한 판/);
+    assert.match(stage, /어휘 게임/);
     let launched = 0;
     const launcher = { window: { openWordCardTableGame: () => { launched += 1; } } };
     vm.runInNewContext(between('window.openAiedueLabWordCardGame =', 'window.openAiedueLabTimeQuiz ='), launcher);

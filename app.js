@@ -13442,7 +13442,7 @@ let koreanAttemptDocumentStorageAvailable = true;
 const KOREAN_STAGE_GAMES = Object.freeze({
     'shape-zoo': Object.freeze({ stage: 1, title: '도형 동물원', successLabel: '완성한 도형' }),
     'dictation-asteroid': Object.freeze({ stage: 2, title: '쓰기 게임', successLabel: '격추한 소행성' }),
-    'word-card-table': Object.freeze({ stage: 3, title: '단어 카드 한 판', successLabel: '맞힌 카드' }),
+    'word-card-table': Object.freeze({ stage: 3, title: '어휘 게임', successLabel: '맞힌 카드' }),
     'literacy-detective': Object.freeze({ stage: 4, title: '문해력 탐정단', successLabel: '해결한 사건' })
 });
 
@@ -14074,8 +14074,8 @@ function renderKoreanHigherStageReview(stage) {
         const items = getCurricularPracticeReviewItems(10);
         progress.textContent = '틀렸던 글을 다시 쓰고, 단어 카드로 뜻을 익혀요.';
         root.innerHTML = `<div class="korean-review-activity-grid">
-            <article class="korean-review-activity"><span class="korean-review-activity-icon" aria-hidden="true">✏️</span><h2>교과 맞춤쓰기 오답 복습</h2><p>틀렸던 단어와 문장을 따라 쓴 뒤, 소리를 듣고 다시 써 보세요.</p><p class="korean-review-availability">${items.length ? `이번에 다시 연습할 문제 ${items.length}개` : '아직 다시 쓸 오답이 없어요. 단어 카드 한 판으로 복습해 보세요.'}</p><button type="button" class="btn-primary" onclick="startKoreanStageReview('curricular')" ${items.length ? '' : 'disabled'}>오답 다시 쓰기</button></article>
-            <article class="korean-review-activity"><span class="korean-review-activity-icon" aria-hidden="true">🃏</span><h2>단어 카드 한 판</h2><p>그림과 설명을 보고 알맞은 단어 카드를 골라요. 배운 낱말의 뜻을 다시 떠올려 보세요.</p><button type="button" class="btn-primary" onclick="startKoreanStageReview('word-card')">단어 카드로 복습하기</button></article>
+            <article class="korean-review-activity"><span class="korean-review-activity-icon" aria-hidden="true">✏️</span><h2>교과 맞춤쓰기 오답 복습</h2><p>틀렸던 단어와 문장을 따라 쓴 뒤, 소리를 듣고 다시 써 보세요.</p><p class="korean-review-availability">${items.length ? `이번에 다시 연습할 문제 ${items.length}개` : '아직 다시 쓸 오답이 없어요. 어휘 게임으로 복습해 보세요.'}</p><button type="button" class="btn-primary" onclick="startKoreanStageReview('curricular')" ${items.length ? '' : 'disabled'}>오답 다시 쓰기</button></article>
+            <article class="korean-review-activity"><span class="korean-review-activity-icon" aria-hidden="true">🃏</span><h2>어휘 게임</h2><p>그림과 설명을 보고 알맞은 단어 카드를 골라요. 배운 낱말의 뜻을 다시 떠올려 보세요.</p><button type="button" class="btn-primary" onclick="startKoreanStageReview('word-card')">어휘 게임으로 복습하기</button></article>
         </div>`;
     } else {
         progress.textContent = '문해력 탐정단에서 글 속 단서를 찾아 복습해요.';
@@ -14087,7 +14087,7 @@ window.startKoreanStageReview = function startKoreanStageReview(activity) {
     const stage = { curricular: 3, 'word-card': 3, detective: 4 }[activity];
     if (![3, 4].includes(stage) || !requireStageAccess(stage)) return;
     if (activity === 'curricular' && !getCurricularPracticeReviewItems(10).length) {
-        showModal('아직 다시 연습할 오답이 없어요. 단어 카드 한 판으로 복습해 보세요.');
+        showModal('아직 다시 연습할 오답이 없어요. 어휘 게임으로 복습해 보세요.');
         return;
     }
     if (!openActivityRoute(stage === 3 ? 'dictation' : 'literacy', { pushUrl: true })) return;
