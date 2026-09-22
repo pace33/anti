@@ -41,6 +41,8 @@ test('2단계에서 나의 한글을 큰 카드로, 쓰기 게임을 작은 카�
     assert.ok(writingGame > compactGrid, '쓰기 게임은 아래쪽 작은 카드여야 한다');
     assert.ok(compactGrid < hangulCard && hangulCard < writingPractice && writingPractice < writingGame && writingGame < listeningGame,
         '아래쪽 카드는 한글 카드, 쓰기 연습, 쓰기 게임, 듣기 게임 순서여야 한다');
+    assert.ok(stage.includes('낱말과 문장을 써봐요'));
+    assert.equal(stage.includes('눌러서 글자·낱말·문장을 연습해요'), false);
     assert.ok(stage.includes('쓰기 게임'));
     assert.equal(stage.includes('낱말 우주 방어대'), false);
     assert.ok(stage.includes('openAiedueLabDictationGame()'));
