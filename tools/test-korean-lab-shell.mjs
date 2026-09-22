@@ -194,7 +194,7 @@ test('4단계 탐정단은 한계돌파 은행을 통합하고 일반 문해력 
     assert.ok(html.includes('id="literacy-adventure-answer"'));
     assert.ok(html.includes('literacy-adventure-game.js'));
     assert.ok(html.includes('literacy-adventure.css'));
-    assert.ok(html.includes('한계돌파 통합'));
+    assert.ok(html.includes('문제를 다시 해결해 봐요'));
     assert.ok(app.includes("'literacy-adventure-game-section'"));
     assert.ok(app.includes('window.aiedueLiteracyAdventureData'));
     assert.ok(app.includes('async function pickLiteracyDetectiveLimitBreakQuestion'));
