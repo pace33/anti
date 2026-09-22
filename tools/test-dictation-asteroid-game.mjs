@@ -32,10 +32,15 @@ test('2단계에서 나의 한글을 큰 카드로, 쓰기 게임을 작은 카�
     const compactGrid = stage.indexOf('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4');
     const myKorean = stage.indexOf('openMyKoreanFromDashboard()');
     const todayKorean = stage.indexOf('openTodayKoreanActivity()');
+    const hangulCard = stage.indexOf('openReadingPracticeActivity()');
+    const writingPractice = stage.indexOf('openLetterWritingActivity()');
     const writingGame = stage.indexOf('id="stage-2-game-asteroid"');
+    const listeningGame = stage.indexOf('openHangulGameActivity()');
     assert.ok(myKorean >= 0 && myKorean < compactGrid, '나의 한글은 위쪽 큰 카드여야 한다');
     assert.ok(myKorean < todayKorean && todayKorean < compactGrid, '나의 한글은 왼쪽, 오늘의 한글은 오른쪽 큰 카드여야 한다');
     assert.ok(writingGame > compactGrid, '쓰기 게임은 아래쪽 작은 카드여야 한다');
+    assert.ok(compactGrid < hangulCard && hangulCard < writingPractice && writingPractice < writingGame && writingGame < listeningGame,
+        '아래쪽 카드는 한글 카드, 쓰기 연습, 쓰기 게임, 듣기 게임 순서여야 한다');
     assert.ok(stage.includes('쓰기 게임'));
     assert.equal(stage.includes('낱말 우주 방어대'), false);
     assert.ok(stage.includes('openAiedueLabDictationGame()'));

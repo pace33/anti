@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260922-listening-game-v3">
+    <meta name="aiedue-korean-build" content="20260922-hangul-card-swap-v4">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -579,21 +579,21 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
-                    <button type="button" id="stage-2-game-asteroid" data-stage-game-entry="2" class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-sky-50 to-indigo-50" onclick="openAiedueLabDictationGame()" aria-label="2단계 쓰기 게임 열기">
-                        <div class="text-6xl mb-3" aria-hidden="true">🚀</div>
-                        <div class="text-2xl font-black text-[#2c3e50]">쓰기 게임</div>
-                        <p class="text-sm text-sky-600 font-black mt-2">글자를 획순대로 써서 소행성을 막아요</p>
-                    </button>
-                    <button type="button" class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-green-50" onclick="openLetterWritingActivity()">
-                        <div class="text-6xl mb-3">✍️</div>
-                        <div class="text-2xl font-black text-[#2c3e50]">쓰기 연습</div>
-                        <p class="text-sm text-green-600 font-black mt-2">눌러서 글자·낱말·문장을 연습해요</p>
-                    </button>
                     <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-indigo-50 to-purple-50" onclick="openReadingPracticeActivity()">
                         <div class="text-6xl mb-3">📖</div>
                         <div class="text-2xl font-black text-[#2c3e50]">한글 카드</div>
                         <p class="text-sm text-purple-600 font-black mt-2">그림 카드를 누르면 글자를 읽어줘요</p>
                     </div>
+                    <button type="button" class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-green-50" onclick="openLetterWritingActivity()">
+                        <div class="text-6xl mb-3">✍️</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">쓰기 연습</div>
+                        <p class="text-sm text-green-600 font-black mt-2">눌러서 글자·낱말·문장을 연습해요</p>
+                    </button>
+                    <button type="button" id="stage-2-game-asteroid" data-stage-game-entry="2" class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-sky-50 to-indigo-50" onclick="openAiedueLabDictationGame()" aria-label="2단계 쓰기 게임 열기">
+                        <div class="text-6xl mb-3" aria-hidden="true">🚀</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">쓰기 게임</div>
+                        <p class="text-sm text-sky-600 font-black mt-2">글자를 획순대로 써서 소행성을 막아요</p>
+                    </button>
                     <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-amber-50 to-orange-50" onclick="openHangulGameActivity()">
                         <div class="text-6xl mb-3">🎮</div>
                         <div class="text-2xl font-black text-[#2c3e50]">듣기 게임</div>
