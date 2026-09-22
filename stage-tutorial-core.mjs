@@ -67,7 +67,7 @@ export function buildStageTutorial(level, role) {
         explore('word-view', 'writing', ['#letter-word-level-tabs', '#letter-generate-word'], '낱말 난이도를 고르고 ‘새 낱말 만들기’를 누르면 연습할 낱말이 바뀌어.', '난이도를 고른 뒤 새 낱말 만들기로 쓰기 대상을 바꿀 수 있습니다.');
         press('sentence-tab', 'writing', '.letter-top-btn[data-category="sentence"]', '문장 연습', '‘문장 연습’도 눌러 보자. 이번에는 문장 전체를 쓰는 곳이야.', '문장 연습 탭도 열어 보세요. 낱말 쓰기가 익숙해진 뒤 문장과 띄어쓰기를 살펴볼 때 활용합니다.');
         explore('sentence-view', 'writing', ['#letter-sentence-writing-canvas'], '문장을 먼저 읽고 차근차근 쓰면 돼. 글자·낱말·문장을 골라 연습할 수 있지!', '실제 문장 쓰기판입니다. 문장을 먼저 읽고 의미를 확인한 뒤 쓰기로 이어 주세요.');
-        enter('sound-game', '한글 게임', 'openHangulGameActivity()', 'sound-game', '‘한글 게임’을 눌러 보자. 소리를 듣고 알맞은 카드를 고르는 게임이야.', '한글 게임을 열어 소리 듣기와 카드 선택 화면을 살펴보세요.');
+        enter('sound-game', '듣기 게임', 'openHangulGameActivity()', 'sound-game', '‘듣기 게임’을 눌러 보자. 소리를 듣고 알맞은 카드를 고르는 게임이야.', '듣기 게임을 열어 소리 듣기와 카드 선택 화면을 살펴보세요.');
         press('game-listen', 'sound-game', '#hangul-game-sound', '소리 듣기', '소리 듣기 버튼을 눌러 어떤 소리가 나오는지 들어 보자.', '소리 듣기를 눌러 문제 제시 방식을 확인해 주세요.');
         explore('game-view', 'sound-game', ['#hangul-game-choices'], '실제 게임에서는 들은 소리와 맞는 카드를 골라. 글자 모드와 낱말 모드가 있어.', '실제 게임에서는 보기 중 들은 소리에 맞는 카드를 고릅니다. 글자·낱말 모드를 학생 수준에 맞춰 사용해 주세요.');
         enter('space', '쓰기 게임', '#stage-2-game-asteroid', 'space', '‘쓰기 게임’을 열어 보자. 글자 쓰기를 게임으로 연습하는 곳이야.', '쓰기 게임에 들어가 글자 쓰기 게임의 준비 화면을 확인합니다.');

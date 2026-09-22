@@ -32,6 +32,18 @@ test('losing access during asynchronous navigation stops the tutorial',async()=>
     const pending=c.start();uid=null;resolve();await pending;assert.equal(c.state().active,false);assert.equal(closed,1);
 });
 
+test('stage 2 uses the listening-game name in the card, screen and tutorial', () => {
+    const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+    const stage=html.slice(html.indexOf('id="hangul-activities-section"'),html.indexOf('id="learning-start-section"'));
+    const game=html.slice(html.indexOf('id="hangul-game-section"'),html.indexOf('id="korean-review-section"'));
+    const step=buildStageTutorial(2,'teacher').find(item=>item.id==='stage-2-sound-game');
+    assert.match(stage,/>듣기 게임</);
+    assert.match(game,/🎮 듣기 게임/);
+    assert.equal(step.clickLabel,'듣기 게임');
+    assert.doesNotMatch(`${stage}${game}${step.text}`,/한글 게임|한글 소리 찾기/);
+    assert.match(app,/lessonTitle:\s*'듣기 게임'/);
+});
+
 const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
 const adapterSource=app.slice(app.indexOf('function stageTutorialSession()'));
 function fixture(role='student',level=1){

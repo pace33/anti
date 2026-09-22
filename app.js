@@ -17,8 +17,8 @@ import {
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
-import { installStageTutorial } from './stage-tutorial.js?v=20260922-writing-game-v1';
-import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260922-writing-game-v1';
+import { installStageTutorial } from './stage-tutorial.js?v=20260922-listening-game-v1';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260922-listening-game-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v3';
@@ -10995,7 +10995,7 @@ window.completeDictationItem = async function() {
     }
     showModal('미션 채점 결과는 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
 }
-window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [], syllableStats: {} }; const syllableCount = Object.keys(bank.syllableStats || {}).length; showModal(`<div class="text-left relative pr-8 dictation-bank-modal-shell"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어·음절 은행</h3><div class="mb-6"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="dictation-bank-word-grid">${renderCurricularWordBankStats()}</div></div><div class="mb-4"><div class="font-black text-amber-600 mb-2">음절 은행 ${syllableCount}개</div><div class="dictation-bank-word-grid">${renderCurricularSyllableBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">3스텝 받아쓰기에서 정답 대비 틀린 음절을 기록하고, 2단계 한글 게임은 10회 이하 음절을 1순위, 10회 초과·정답률 80% 이하 음절을 2순위로 먼저 냅니다.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
+window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [], syllableStats: {} }; const syllableCount = Object.keys(bank.syllableStats || {}).length; showModal(`<div class="text-left relative pr-8 dictation-bank-modal-shell"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어·음절 은행</h3><div class="mb-6"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="dictation-bank-word-grid">${renderCurricularWordBankStats()}</div></div><div class="mb-4"><div class="font-black text-amber-600 mb-2">음절 은행 ${syllableCount}개</div><div class="dictation-bank-word-grid">${renderCurricularSyllableBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">3스텝 받아쓰기에서 정답 대비 틀린 음절을 기록하고, 2단계 듣기 게임은 10회 이하 음절을 1순위, 10회 초과·정답률 80% 이하 음절을 2순위로 먼저 냅니다.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
 
 window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
 window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button type="button" class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${escapeHtml(text)}</button>`).join(''); }
@@ -13205,7 +13205,7 @@ function initializeHangulSoundGame() {
         updateHud();
         await recordKoreanAttempt({
             lessonId: 'hangul-sound-game',
-            lessonTitle: '한글 소리 찾기 게임',
+            lessonTitle: '듣기 게임',
             unitId: null,
             activityType: 'listenAndFind',
             word: answer,
