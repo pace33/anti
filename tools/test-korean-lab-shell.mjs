@@ -158,7 +158,7 @@ test('홈에는 네 단계 카드만 있고 단계별 게임 카드를 노출하
 test('각 단계 게임은 단계 메인 카드에 있고 3·4단계 노트 촬영은 헤더에 유지한다', () => {
     const contracts = [
         ['drawing-activities-section', 'dictation-activities-section', 'stage-1-game-shape', 'openAiedueLabShapeZoo()', '도형 동물원', false],
-        ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '낱말 우주 방어대', false],
+        ['hangul-activities-section', 'my-drawing-section', 'stage-2-game-asteroid', 'openAiedueLabDictationGame()', '쓰기 게임', false],
         ['dictation-activities-section', 'literacy-activities-section', 'stage-3-game-word-card', 'openAiedueLabWordCardGame()', '단어 카드 한 판', true],
         ['literacy-activities-section', 'literacy-workspace-section', 'stage-4-game-literacy', 'openLiteracyAdventureGame()', '문해력 탐정단', true]
     ];

@@ -70,7 +70,7 @@ export function buildStageTutorial(level, role) {
         enter('sound-game', '한글 게임', 'openHangulGameActivity()', 'sound-game', '‘한글 게임’을 눌러 보자. 소리를 듣고 알맞은 카드를 고르는 게임이야.', '한글 게임을 열어 소리 듣기와 카드 선택 화면을 살펴보세요.');
         press('game-listen', 'sound-game', '#hangul-game-sound', '소리 듣기', '소리 듣기 버튼을 눌러 어떤 소리가 나오는지 들어 보자.', '소리 듣기를 눌러 문제 제시 방식을 확인해 주세요.');
         explore('game-view', 'sound-game', ['#hangul-game-choices'], '실제 게임에서는 들은 소리와 맞는 카드를 골라. 글자 모드와 낱말 모드가 있어.', '실제 게임에서는 보기 중 들은 소리에 맞는 카드를 고릅니다. 글자·낱말 모드를 학생 수준에 맞춰 사용해 주세요.');
-        enter('space', '낱말 우주 방어대', '#stage-2-game-asteroid', 'space', '위쪽 ‘낱말 우주 방어대’도 열어 보자. 쓰기를 게임으로 연습하는 곳이야.', '상단 낱말 우주 방어대에 들어가 쓰기 게임의 준비 화면을 확인합니다.');
+        enter('space', '쓰기 게임', '#stage-2-game-asteroid', 'space', '‘쓰기 게임’을 열어 보자. 글자 쓰기를 게임으로 연습하는 곳이야.', '쓰기 게임에 들어가 글자 쓰기 게임의 준비 화면을 확인합니다.');
         explore('space-view', 'space', ['#dictation-asteroid-game-section'], '글자를 획순대로 써서 소행성을 막는 게임이야. 쓰기 연습이 익숙해지면 도전해 보자.', '획순대로 글자를 써서 소행성을 막는 게임입니다. 기본 쓰기 연습 이후 반복 활동으로 활용할 수 있습니다.');
     } else {
         enter('photo', '오늘의 노트 사진 찍기', `#${info.section} .lesson-photo-button`, 'photo', '먼저 ‘오늘의 노트 사진 찍기’를 눌러 단어를 모으는 화면을 보자.', '오늘의 노트 사진 찍기를 열어 어휘 수집 화면을 확인합니다. 3·4단계에서 같은 단어 은행을 사용합니다.');

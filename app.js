@@ -17,8 +17,8 @@ import {
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
-import { installStageTutorial } from './stage-tutorial.js?v=20260916-stage-button-copy-v1';
-import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260921-korean-layout-lab-v1';
+import { installStageTutorial } from './stage-tutorial.js?v=20260922-writing-game-v1';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260922-writing-game-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v3';
@@ -13441,7 +13441,7 @@ let koreanAttemptDocumentStorageAvailable = true;
 
 const KOREAN_STAGE_GAMES = Object.freeze({
     'shape-zoo': Object.freeze({ stage: 1, title: '도형 동물원', successLabel: '완성한 도형' }),
-    'dictation-asteroid': Object.freeze({ stage: 2, title: '낱말 우주 방어대', successLabel: '격추한 소행성' }),
+    'dictation-asteroid': Object.freeze({ stage: 2, title: '쓰기 게임', successLabel: '격추한 소행성' }),
     'word-card-table': Object.freeze({ stage: 3, title: '단어 카드 한 판', successLabel: '맞힌 카드' }),
     'literacy-detective': Object.freeze({ stage: 4, title: '문해력 탐정단', successLabel: '해결한 사건' })
 });

@@ -27,9 +27,15 @@ function section(source, start, end) {
     return source.slice(from, to);
 }
 
-test('2단계에서 낱말 우주 방어 게임을 연다', () => {
+test('2단계에서 나의 한글을 큰 카드로, 쓰기 게임을 작은 카드로 연다', () => {
     const stage = section(html, 'id="hangul-activities-section"', 'id="learning-start-section"');
-    assert.ok(stage.includes('낱말 우주 방어대'));
+    const compactGrid = stage.indexOf('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4');
+    const myKorean = stage.indexOf('openMyKoreanFromDashboard()');
+    const writingGame = stage.indexOf('id="stage-2-game-asteroid"');
+    assert.ok(myKorean >= 0 && myKorean < compactGrid, '나의 한글은 위쪽 큰 카드여야 한다');
+    assert.ok(writingGame > compactGrid, '쓰기 게임은 아래쪽 작은 카드여야 한다');
+    assert.ok(stage.includes('쓰기 게임'));
+    assert.equal(stage.includes('낱말 우주 방어대'), false);
     assert.ok(stage.includes('openAiedueLabDictationGame()'));
     assert.ok(app.includes('window.setupAsteroidTraceCanvas'));
     assert.ok(app.includes("'dictation-asteroid-game-section'"));
@@ -37,6 +43,7 @@ test('2단계에서 낱말 우주 방어 게임을 연다', () => {
 
 test('화면은 60초·한 글자 쓰기·다음 두 글자·연출·명예의 전당을 제공한다', () => {
     const screen = section(html, 'id="dictation-asteroid-game-section"', '<!-- [에이두 도서관');
+    assert.ok(screen.includes('🚀 쓰기 게임'));
     for (const marker of [
         'id="dictation-asteroid-field"', 'id="dictation-asteroid"', 'id="dictation-defense-line"',
         'id="dictation-aiedue-pilot"', 'id="dictation-asteroid-writing-canvas"', 'data-guide="가"',

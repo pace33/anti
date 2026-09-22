@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260922-cumulative-unlock-v1">
+    <meta name="aiedue-korean-build" content="20260922-hangul-card-order-v1">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -570,20 +570,20 @@
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">오늘의 한글</h3>
                         <p id="today-korean-step-label" class="text-2xl text-[#46b3a5] font-bold">배움 시작 활동</p>
                     </div>
-                    <button type="button" id="stage-2-game-asteroid" data-stage-game-entry="2" class="grid-item p-10 text-center flex flex-col items-center justify-center bg-gradient-to-br from-sky-50 to-indigo-50" onclick="openAiedueLabDictationGame()" aria-label="2단계 게임 낱말 우주 방어대 열기">
-                        <div class="text-7xl mb-5" aria-hidden="true">🚀</div>
-                        <div class="aiedu-badge bg-sky-500 mb-6">쓰기 게임</div>
-                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">낱말 우주 방어대</h3>
-                        <p class="text-xl text-sky-600 font-bold">글자를 획순대로 써서 소행성을 막아요</p>
+                    <button type="button" class="grid-item p-10 text-center flex flex-col items-center justify-center bg-gradient-to-br from-white to-[#f0faf9]" onclick="openMyKoreanFromDashboard()" aria-label="나의 한글 열기">
+                        <div class="text-7xl mb-5" aria-hidden="true">📚</div>
+                        <div class="aiedu-badge mb-6">학습 기록</div>
+                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">나의 한글</h3>
+                        <p class="text-xl text-teal-600 font-bold">내가 배운 한글을 확인해요</p>
                     </button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
-                    <div class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-[#f0faf9]" onclick="openMyKoreanFromDashboard()">
-                        <div class="text-6xl mb-3">📚</div>
-                        <div class="text-2xl font-black text-[#2c3e50]">나의 한글</div>
-                        <p class="text-sm text-teal-600 font-black mt-2">내가 배운 한글을 확인해요</p>
-                    </div>
+                    <button type="button" id="stage-2-game-asteroid" data-stage-game-entry="2" class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-sky-50 to-indigo-50" onclick="openAiedueLabDictationGame()" aria-label="2단계 쓰기 게임 열기">
+                        <div class="text-6xl mb-3" aria-hidden="true">🚀</div>
+                        <div class="text-2xl font-black text-[#2c3e50]">쓰기 게임</div>
+                        <p class="text-sm text-sky-600 font-black mt-2">글자를 획순대로 써서 소행성을 막아요</p>
+                    </button>
                     <button type="button" class="grid-item p-6 text-center flex flex-col bg-gradient-to-br from-white to-green-50" onclick="openLetterWritingActivity()">
                         <div class="text-6xl mb-3">✍️</div>
                         <div class="text-2xl font-black text-[#2c3e50]">쓰기 연습</div>
@@ -1712,12 +1712,12 @@
     <!-- [에이두 연구실: 단어 카드 한 판] -->
     <section id="word-card-table-game-section" class="view-section aiedue-lab-game-shell word-card-table-game hidden" aria-labelledby="wct-title"></section>
 
-    <!-- [에이두 연구실: 낱말 우주 방어대] -->
+    <!-- [에이두 연구실: 쓰기 게임] -->
     <section id="dictation-asteroid-game-section" class="view-section aiedue-lab-game-shell dictation-asteroid-game hidden" aria-labelledby="dictation-asteroid-title">
         <header class="dictation-asteroid-header">
             <button type="button" class="dictation-asteroid-home aiedue-lab-home aiedue-lab-logo-home" onclick="closeAsteroidDictationGame()" aria-label="2단계 한글 해득 화면으로 돌아가기"><img src="aiedu_hangul_logo.webp" alt="에이두 한글" class="login-mini-logo"></button>
             <div class="dictation-asteroid-title-wrap aiedue-lab-brand">
-                <div><p>2단계 · AIEDUE LAB</p><h1 id="dictation-asteroid-title">🚀 낱말 우주 방어대</h1></div>
+                <div><p>2단계 · AIEDUE LAB</p><h1 id="dictation-asteroid-title">🚀 쓰기 게임</h1></div>
             </div>
             <div class="dictation-asteroid-header-tools">
                 <button id="dictation-bgm-toggle" class="dictation-bgm-toggle" type="button" aria-label="게임 배경음악 켜기 또는 끄기" aria-pressed="true"><span aria-hidden="true">♫</span> BGM</button>
@@ -1827,7 +1827,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260922-cumulative-unlock-v1"></script>
+    <script type="module" src="app.js?v=20260922-hangul-card-order-v1"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260914-syllable-reader-tab-v2"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260921-stage-card-v1"></script>
