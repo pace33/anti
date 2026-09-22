@@ -9544,7 +9544,7 @@ function configureDictationWorkspace(session, options = {}) {
     const difficulty = Number(session.difficulty || getCurricularUnlockedDifficulty());
     const danInfo = getCurricularDanInfo(difficulty);
     const difficultyTitle = difficulty === 1 ? '1단 단어 받아쓰기' : (difficulty === 2 ? '2단 문장 힌트 받아쓰기' : '3단 문장 받아쓰기');
-    document.getElementById('dictation-workspace-badge').innerText = options.badge || (session.kind === 'trace' ? '2스텝 단어 따라쓰기' : (session.kind === 'practice' ? '교과 맞춤쓰기 연습하기' : difficultyTitle));
+    document.getElementById('dictation-workspace-badge').innerText = options.badge || (session.kind === 'trace' ? '2스텝 단어 따라쓰기' : (session.kind === 'practice' ? '교과 맞춤 다시 쓰기' : difficultyTitle));
     document.getElementById('dictation-workspace-title').innerText = options.title || (session.kind === 'trace' ? '화면 글자 따라 채우기' : (session.kind === 'practice' ? '문장 따라 쓰기 연습' : `${danInfo.title} 받아쓰기`));
     document.getElementById('dictation-workspace-desc').innerText = options.desc || (session.kind === 'trace' ? '회색 점선 글자 위를 태블릿 터치나 마우스로 따라 채워요. 각 단어가 80% 이상이면 완료됩니다.' : (isCurricularCanvasMission ? `${danInfo.help} 10번까지 쓰고 채점해요.` : (session.kind === 'mission' ? `${getCurricularGateText()} · 다 쓴 노트를 사진 찍으면 AI가 채점해요.` : '오답/완료/단어 은행 기반 문장을 보고 따라 써요.')));
     document.getElementById('dictation-session-kind').innerText = session.kind === 'trace' ? '2스텝: 화면 따라쓰기' : (session.kind === 'practice' ? '연습에서는 문장을 보고 따라 써요' : (isCurricularCanvasMission ? `${difficulty}단: 듣고 빈 칸에 받아쓰기` : `${difficulty}단: TTS를 듣고 캔버스에 써요`));
@@ -9745,7 +9745,7 @@ window.openDictationPracticeActivity = function(filter = 'all') {
     const reviewItems = getCurricularPracticeReviewItems(10, filter);
     if (!reviewItems.length) { showModal('아직 다시 연습할 오답 단어/문장이 없어요. 교과 맞춤쓰기 미션을 먼저 풀어 오답 기록을 만들어요.'); return; }
     const session = createCurricularPracticeTraceSession(reviewItems);
-    configureDictationWorkspace(session, { badge: '교과 맞춤쓰기 연습하기', title: '오답 2스텝-3스텝 다시 연습', desc: '나의 기록에서 오답률이 높은 단어/문장을 그대로 가져와 2스텝 따라쓰기 후 3스텝 받아쓰기로 다시 연습해요.' });
+    configureDictationWorkspace(session, { badge: '교과 맞춤 다시 쓰기', title: '오답 2스텝-3스텝 다시 연습', desc: '나의 기록에서 오답률이 높은 단어/문장을 그대로 가져와 2스텝 따라쓰기 후 3스텝 받아쓰기로 다시 연습해요.' });
 }
 function stopDictationCamera() {
     if (activeDictationCameraStream) {
@@ -10972,7 +10972,7 @@ window.completeDictationItem = async function() {
             mergeKoreanBank({ words: traceWords.length ? traceWords : getCurricularWords() });
             await persistDictationData();
             if (activeDictationSession.practiceReview && activeDictationSession.nextMissionSession) {
-                configureDictationWorkspace(activeDictationSession.nextMissionSession, { badge: '교과 맞춤쓰기 연습하기', title: '오답 3스텝 받아쓰기', desc: '새 문장을 만들지 않고 기존에 틀렸던 단어/문장을 그대로 듣고 빈 칸에 다시 써요.' });
+                configureDictationWorkspace(activeDictationSession.nextMissionSession, { badge: '교과 맞춤 다시 쓰기', title: '오답 3스텝 받아쓰기', desc: '새 문장을 만들지 않고 기존에 틀렸던 단어/문장을 그대로 듣고 빈 칸에 다시 써요.' });
             } else {
                 const nextSession = createDictationMissionSession();
                 if (!nextSession) {

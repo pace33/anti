@@ -87,7 +87,7 @@ export function buildStageTutorial(level, role) {
             press('dictate-listen', 'dictate', '#dictation-prompt-button', '듣기', '듣기 버튼을 눌러 낱말을 들어 보자.', '듣기 버튼을 눌러 문제 음성을 확인해 주세요. 필요하면 반복해서 들을 수 있습니다.');
             explore('dictate-write', 'dictate', ['#curricular-writing-canvas-0'], '들은 ‘나무’를 실제 빈칸에 써 보자. 안내에서는 AI 채점과 저장은 하지 않아.', '실제 받아쓰기판에 직접 써 보세요. 이 체험에서는 AI 채점과 기록 저장을 실행하지 않습니다.', ['#curricular-writing-canvas-0'], 'stroke');
             explore('dictate-check', 'dictate', ['#curricular-confirm-btn-0'], '실제 공부에서는 다 쓴 뒤 ‘확인’을 눌러 AI 채점을 받아. 틀리면 보여 주는 정답을 읽고 다시 써 보자.', '문항별 확인 버튼이 AI 손글씨 채점을 실행합니다. 오답은 제시되는 정답을 확인한 뒤 재시도하도록 안내해 주세요.');
-            enter('practice', '교과 맞춤쓰기 연습하기', 'openDictationPracticeActivity()', 'review', '‘교과 맞춤쓰기 연습하기’를 눌러 보자. 이전에 틀린 단어와 문장을 다시 연습하는 버튼이야.', '연습하기를 열어 실제 오답 복습 화면을 확인합니다. 오답이 없으면 아직 연습할 내용이 없다는 안내가 표시됩니다.');
+            enter('practice', '교과 맞춤 다시 쓰기', 'openDictationPracticeActivity()', 'review', '‘교과 맞춤 다시 쓰기’를 눌러 보자. 이전에 틀린 단어와 문장을 다시 연습하는 버튼이야.', '다시 쓰기를 열어 실제 오답 복습 화면을 확인합니다. 오답이 없으면 아직 연습할 내용이 없다는 안내가 표시됩니다.');
             explore('practice-view', 'review', [], '오답이 있으면 따라쓰기와 받아쓰기로 이어져. 없다면 잘못된 게 아니야. 실제 미션 기록이 생긴 뒤 사용할 수 있어.', '저장된 오답이 있으면 2스텝 따라쓰기와 3스텝 받아쓰기를 진행합니다. 오답이 없는 계정은 빈 상태 안내를 확인해 주세요.');
             enter('record', '나의 기록', 'openMyDictationFromDashboard()', 'dictation-record', '‘나의 기록’을 열어 보자. 오답과 완료한 내용을 모아 보는 곳이야.', '나의 기록에서 오답·완료 목록과 단어별 학습 통계를 확인해 주세요.');
             explore('record-view', 'dictation-record', ['#dictation-wrong-bank-list'], '이전에 어떤 내용을 공부했는지 확인하고 다시 연습할 수 있어. 이번 체험 글씨는 이 기록에 들어가지 않아.', '이전 수행을 확인하고 오답 연습으로 연결할 수 있습니다. 이번 안내의 예시 글씨는 개인 기록에 포함되지 않습니다.');

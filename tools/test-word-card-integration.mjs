@@ -38,6 +38,13 @@ test('단어 카드 저장소는 공부한 단어를 다시 확인하는 곳으�
     assert.equal(app.includes('모두가 함께 사용하는 단어·설명·그림 카드예요.'), false);
 });
 
+test('3단계 다시 쓰기 메뉴는 공부한 단어를 다시 쓰도록 안내한다', () => {
+    assert.ok(html.includes('교과 맞춤 다시 쓰기'));
+    assert.ok(html.includes('공부한 단어를 다시 써봐요.'));
+    assert.equal(html.includes('교과 맞춤쓰기 연습하기'), false);
+    assert.equal(app.includes('교과 맞춤쓰기 연습하기'), false);
+});
+
 test('2스텝의 단어 뜻 버튼은 확인 버튼 왼쪽에 있고 trace에서만 렌더링된다', () => {
     const card = section(app, 'function renderCurricularWritingCanvasCard', 'function renderDictationSessionList');
     assert.ok(card.includes("activeDictationSession?.kind === 'trace'"));
