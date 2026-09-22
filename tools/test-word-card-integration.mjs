@@ -17,12 +17,14 @@ function section(source, start, end) {
     return source.slice(from, to);
 }
 
-test('3단계와 4단계에서 단어 카드 저장소가 하단 두 번째 카드다', () => {
+test('3단계 저장소는 연습 뒤에 있고 4단계 탐정단은 저장소 왼쪽에 있다', () => {
     const dictation = section(html, 'id="dictation-activities-section"', 'id="literacy-activities-section"');
     const literacy = section(html, 'id="literacy-activities-section"', 'id="literacy-workspace-section"');
     assert.ok(dictation.indexOf("openDictationPracticeActivity()") < dictation.indexOf("openSharedWordCardRepository('dictation')"));
     assert.ok(dictation.indexOf("openSharedWordCardRepository('dictation')") < dictation.indexOf('openMyDictationFromDashboard()'));
-    assert.ok(literacy.indexOf('openLiteracyLimitBreak()') < literacy.indexOf("openSharedWordCardRepository('literacy')"));
+    const detective = literacy.indexOf('id="stage-4-game-literacy"');
+    const repository = literacy.indexOf("openSharedWordCardRepository('literacy')");
+    assert.ok(detective >= 0 && detective < repository);
     assert.ok(literacy.indexOf("openSharedWordCardRepository('literacy')") < literacy.indexOf('openMyLiteracyRecord()'));
 });
 

@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="aiedue-korean-build" content="20260922-vocabulary-game-v5">
+    <meta name="aiedue-korean-build" content="20260922-literacy-game-menu-v6">
     <meta name="theme-color" content="#f4faf0">
     <title>에이두 한글</title>
     <!-- Google Fonts: 렌더 블로킹 없는 비동기 preconnect 방식 -->
@@ -423,22 +423,21 @@
             </div>
 
             <div class="w-full max-w-[1150px] px-10 flex flex-col items-center flex-grow pt-36 pb-4 overflow-y-auto custom-scrollbar">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-6">
+                <div class="grid grid-cols-1 gap-8 w-full mb-6">
                     <!-- 오늘의 미션 -->
                     <div id="literacy-mission-card" class="grid-item p-10 flex flex-col items-center justify-center bg-blue-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openTodayLiteracyMission()">
                         <div class="aiedu-badge bg-blue-600 mb-6">오늘의 미션</div>
                         <h3 class="text-5xl font-black text-[#2c3e50] mb-2">문해력 문제</h3>
                         <p id="literacy-mission-desc" class="text-xl text-blue-600 font-bold">내 문해력 단증에 맞춰 자동으로 문제가 나와요!</p><div id="literacy-dan-dashboard-badge" class="mt-4 px-4 py-2 rounded-2xl bg-white text-blue-700 font-black shadow-sm">문해력 1단</div>
                     </div>
-                    <button type="button" id="stage-4-game-literacy" data-stage-game-entry="4" class="grid-item p-10 text-center flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyAdventureGame()" aria-label="4단계 게임 문해력 탐정단 열기">
-                        <div class="text-7xl mb-5" aria-hidden="true">🔎</div>
-                        <div class="aiedu-badge bg-indigo-600 mb-6">한계돌파 통합</div>
-                        <h3 class="text-5xl font-black text-[#2c3e50] mb-2">문해력 탐정단</h3>
-                        <p class="text-xl text-indigo-600 font-bold">공용 오답 지문을 연이어 수사해요</p>
-                    </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
+                    <button type="button" id="stage-4-game-literacy" data-stage-game-entry="4" class="grid-item p-6 text-center flex flex-col items-center bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyAdventureGame()" aria-label="4단계 게임 문해력 탐정단 열기">
+                        <div class="text-5xl mb-3" aria-hidden="true">🔎</div>
+                        <div class="text-xl font-bold">문해력 탐정단</div>
+                        <p class="text-sm text-indigo-600 font-black mt-2">한계돌파 통합으로 오답 지문을 연이어 수사해요</p>
+                    </button>
                     <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openSharedWordCardRepository('literacy')">
                         <div class="text-5xl mb-3">🗂️</div>
                         <div class="text-xl font-bold">단어 카드 저장소</div>
