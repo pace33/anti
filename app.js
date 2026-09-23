@@ -21,7 +21,7 @@ import { installStageTutorial } from './stage-tutorial.js?v=20260922-listening-g
 import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260922-listening-game-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
-import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260915-v3';
+import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1';
 import { createAieduLoading } from './aiedu-loading.js';
 import { firebaseConfig } from "./firebase-config.js";
 import {

@@ -1,4 +1,4 @@
-import {createWorkshopService} from './workshop-service.mjs?v=20260915-v3';
+import {createWorkshopService} from './workshop-service.mjs?v=20260923-worksheet-sidebar-v1';
 
 export function installWorkshopLauncher(api) {
     let dialog, service, previousFocus;
@@ -25,7 +25,7 @@ export function installWorkshopLauncher(api) {
         timetableFrame = document.createElement('iframe');
         timetableFrame.className = 'class-timetable-frame';
         timetableFrame.title = '학급 시간표';
-        timetableFrame.src = new URL('./workshop/index.html?view=timetable&v=20260915-v3', import.meta.url).href;
+        timetableFrame.src = new URL('./workshop/index.html?view=timetable&v=20260923-worksheet-sidebar-v1', import.meta.url).href;
         const frame = timetableFrame;
         frame.addEventListener('load', () => {
             if (frame !== timetableFrame) return;
@@ -72,7 +72,7 @@ export function installWorkshopLauncher(api) {
         exit.addEventListener('click', () => { close(); api.openLab(); });
         const frame = document.createElement('iframe');
         frame.title = '에이두 수업 공방';
-        frame.src = new URL('./workshop/index.html?v=20260915-v3', import.meta.url).href;
+        frame.src = new URL('./workshop/index.html?v=20260923-worksheet-sidebar-v1', import.meta.url).href;
         dialog.append(exit, frame);
         dialog.addEventListener('cancel', event => {event.preventDefault(); close(); api.openLab();});
         document.body.append(dialog);
