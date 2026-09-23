@@ -114,6 +114,8 @@ jobs:
           grep -q 'activity-loading-overlay' /tmp/korean-index.html
           grep -q 'src="app.js' /tmp/korean-index.html
           grep -q 'href="app.css' /tmp/korean-index.html
+          grep -q 'aiedue-korean-build" content="20260923-workshop-launcher-v2' /tmp/korean-index.html
+          grep -q 'app.js?v=20260923-workshop-launcher-v2' /tmp/korean-index.html
           grep -q 'dashboard-warning-tokens-header' /tmp/korean-index.html
           grep -q 'reading-custom-maker' /tmp/korean-index.html
           grep -q 'syllable-slow-reader.js' /tmp/korean-index.html
