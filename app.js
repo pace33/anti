@@ -21772,27 +21772,40 @@ async function waitForSignupProfileTask(user) {
     }
 }
 
-function randomStudentLoginCode() {
-    const range = 90000000;
-    const maxUnbiased = Math.floor(0x100000000 / range) * range;
-    const values = new Uint32Array(1);
-    let value;
-    do {
-        crypto.getRandomValues(values);
-        value = values[0];
-    } while (value >= maxUnbiased);
-    return 10000000 + (value % range);
+function normalizeStudentLoginCode(value) {
+    const code = Number.parseInt(String(value ?? '').replace(/\D/g, ''), 10);
+    return Number.isSafeInteger(code) && code > 0 ? code : 0;
+}
+
+async function reserveSequentialStudentLoginCode(minimumPreviousCode = 0) {
+    const counterRef = doc(db, 'metadata', 'counters');
+    return runTransaction(db, async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        const lastCode = normalizeStudentLoginCode(counterDoc.exists() ? counterDoc.data().lastUserCode : 0);
+        const nextCode = Math.max(lastCode, normalizeStudentLoginCode(minimumPreviousCode)) + 1;
+        transaction.set(counterRef, {
+            lastUserCode: nextCode,
+            lastStudentUserCode: nextCode,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        return nextCode;
+    });
 }
 
 async function createStudentAuthAccount() {
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-        const userCode = randomStudentLoginCode();
+    let lastTriedCode = 0;
+    for (let attempt = 0; attempt < 300; attempt += 1) {
+        const userCode = await reserveSequentialStudentLoginCode(lastTriedCode);
+        lastTriedCode = userCode;
         const email = `${userCode}@abc.com`;
         try {
             const credential = await createUserWithEmailAndPassword(auth, email, `${userCode}qwerty`);
             return { credential, email, userCode };
         } catch (error) {
             if (error.code !== 'auth/email-already-in-use') throw error;
+            // The counter can be stale if old accounts were created before the
+            // counter existed. Keep advancing from the collision instead of
+            // falling back to random long login numbers.
         }
     }
     throw new Error('student-code-allocation-failed');
