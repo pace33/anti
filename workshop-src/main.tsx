@@ -1,6 +1,6 @@
 import React, {useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {CalendarDays,FileText,ArrowLeft,RefreshCw} from 'lucide-react';
+import {CalendarDays,RefreshCw} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Toaster} from '@/components/ui/toast';
 import {AlertDialog,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
@@ -14,7 +14,6 @@ import './workshop.css';
 
 const isTimetable=new URLSearchParams(window.location.search).get('view')==='timetable';
 document.title=isTimetable?'학급 시간표':'에이두 수업 공방';
-const current=isTimetable?{icon:CalendarDays,label:'시간표',hint:'우리 반 학생의 요일별 수업을 배치하고 시간표를 인쇄해요.'}:{icon:FileText,label:'학습지 만들기',hint:'한글 읽기부터 생각 쓰기까지, 아이에게 맞는 한 장을 준비해요.'};
 function Home(){
     const [entries,setEntries]=useState<Entry[]>([]),[students,setStudents]=useState<Entry[]>([]);
     const [selectedStudent,setSelectedStudent]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[deleting,setDeleting]=useState<Entry|null>(null);
@@ -49,8 +48,8 @@ function Home(){
     return <AppContext.Provider value={{entries,students,selectedStudent,setSelectedStudent,save,remove:setDeleting,busy:busy||loading||!!error}}>
         <div className={isTimetable?'workshop-app timetable-app':'workshop-app'}>
             <main className="app-main">
-                {!isTimetable&&<header className="topbar no-print"><div className="workshop-brand"><img src="../aiedu_hangul_logo.webp" alt="에이두 한글"/><span>에이두 수업 공방</span></div><Button variant="outline" onClick={close}><ArrowLeft size={16}/>연구실로 돌아가기</Button></header>}
-                <div className="workspace"><div className="page-heading no-print"><div><p className="eyebrow">AIEDUE TEACHER STUDIO</p><h1>{current.label}</h1><p>{current.hint}</p></div><current.icon size={32}/></div>
+                {!isTimetable&&<header className="topbar no-print"><div className="workshop-brand"><button type="button" className="workshop-home" onClick={close} aria-label="에이두 한글"><img src="../aiedu_hangul_logo.webp" alt="에이두 한글"/></button><span>에이두 수업 공방</span></div></header>}
+                <div className="workspace">{isTimetable&&<div className="page-heading no-print"><div><h1>시간표</h1><p>우리 반 학생의 요일별 수업을 배치하고 시간표를 인쇄해요.</p></div><CalendarDays size={32}/></div>}
                     {error&&<div role="alert" className="error-banner no-print">{error}<Button variant="outline" onClick={load}><RefreshCw size={16}/>다시 불러오기</Button></div>}
                     {isTimetable?<Timetable/>:<Worksheet/>}
                 </div>
