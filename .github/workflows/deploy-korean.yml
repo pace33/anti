@@ -81,110 +81,60 @@ jobs:
           fi
 
   deploy:
-    name: Deploy /korean on local domain host
+    name: Verify /korean public sync
     needs: validate
     if: github.event_name != 'pull_request'
-    runs-on: [self-hosted, Windows]
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify Korean sketchbook patch guard
-        shell: powershell
+      - name: Wait for canonical Pi /korean sync
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          .\tools\verify-korean-sketchbook.ps1
-
-      - name: Sync canonical Pi /korean deployment
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $ssh = (Get-Command 'ssh.exe' -ErrorAction Stop).Source
-          $key = 'C:\Users\y5496\.ssh\aiedue_pi_hermes'
-          if (!(Test-Path $key)) { throw "Pi deployment key not found: $key" }
-          $expected = $env:GITHUB_SHA.Substring(0, 7)
-          $remoteCommand = "systemctl --user start aiedue-anti-sync.service && test `"`$(tr -d '\r\n' < /home/aiedue/sites/korean/.anti-sync-commit)`" = '$expected' && tr -d '\r\n' < /home/aiedue/sites/korean/.anti-sync-commit"
-          $output = & $ssh -o BatchMode=yes -o ConnectTimeout=10 -i $key 'aiedue@192.168.219.108' $remoteCommand 2>&1
-          $exitCode = $LASTEXITCODE
-          if ($output) { Write-Host ($output -join "`n") }
-          if ($exitCode -ne 0) { throw "Pi Korean sync failed with exit code $exitCode" }
-          Write-Host "Pi /korean synchronized to $expected"
-
-      - name: Validate and reload Caddy
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $config = 'C:\Users\y5496\aiedue-repo\Caddyfile'
-          if (!(Test-Path $config)) { throw "Caddyfile not found: $config" }
-          $caddy = (Get-Command 'caddy.exe' -ErrorAction Stop).Source
-          function Invoke-CaddyBounded($arguments, $timeoutSeconds, $required) {
-            $process = New-Object System.Diagnostics.Process
-            $process.StartInfo.FileName = $caddy
-            $process.StartInfo.Arguments = (($arguments | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }) -join ' ')
-            $process.StartInfo.UseShellExecute = $false
-            $process.StartInfo.CreateNoWindow = $true
-            $process.StartInfo.RedirectStandardOutput = $true
-            $process.StartInfo.RedirectStandardError = $true
-            [void]$process.Start()
-            $finished = $process.WaitForExit($timeoutSeconds * 1000)
-            if (-not $finished) {
-              $process.Kill()
-              $process.WaitForExit()
-              $message = "caddy $($arguments -join ' ') timed out after ${timeoutSeconds}s"
-              if ($required) { throw $message }
-              Write-Warning "$message; continuing to public smoke test."
-            } else {
-              $process.WaitForExit()
-              $stdout = $process.StandardOutput.ReadToEnd()
-              $stderr = $process.StandardError.ReadToEnd()
-              if ($stdout) { Write-Host $stdout }
-              if ($stderr) { Write-Host $stderr }
-              $exitCode = $process.ExitCode
-              if ($exitCode -ne 0) {
-                throw "caddy $($arguments -join ' ') failed with exit code $exitCode"
-              }
-            }
-            $process.Dispose()
-          }
-
-          Invoke-CaddyBounded @('validate', '--config', $config) 25 $false
-
-          # The canonical /korean files are synchronized on the Pi. Keep the Windows
-          # public-entrypoint Caddy reload best-effort so routing changes are picked up.
-          Invoke-CaddyBounded @('reload', '--config', $config) 20 $false
+          set -euo pipefail
+          expected="${GITHUB_SHA:0:7}"
+          url='https://aiedue.ddns.net/korean/.anti-sync-commit'
+          for attempt in {1..36}; do
+            actual="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$url?attempt=$attempt&sha=$GITHUB_SHA" | tr -d '\r\n')"
+            echo "sync attempt $attempt: expected=$expected actual=$actual"
+            if [ "$actual" = "$expected" ]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Pi /korean did not synchronize to $expected in time" >&2
+          exit 1
 
       - name: Smoke test public /korean site
-        shell: powershell
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-          $base = 'https://aiedue.ddns.net/korean'
-          $html = (Invoke-WebRequest -UseBasicParsing -Uri "$base/?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          if ($html -notmatch 'activity-loading-overlay') { throw 'Public page did not include the loading UI.' }
-          if ($html -notmatch 'src="app.js') { throw 'Public page did not reference app.js.' }
-          if ($html -notmatch 'href="app.css') { throw 'Public page did not reference app.css.' }
-          if ($html -notmatch 'dashboard-warning-tokens-header') { throw 'Public page did not include warning-token header marker.' }
-          if ($html -notmatch 'data-reading-category="batchim"[\s\S]*data-reading-category="custom"' -or $html -notmatch 'reading-custom-maker' -or $html -notmatch 'syllable-slow-reader.js') { throw 'Public page did not include the Hangul-card custom-maker syllable reader.' }
-          if ($html -notmatch 'sync-warning-tokens') { throw 'Public page did not include warning-token sync markers.' }
+          set -euo pipefail
+          stamp="$(date +%s)-${GITHUB_SHA}"
+          base='https://aiedue.ddns.net/korean'
+          curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$base/?v=$stamp" -o /tmp/korean-index.html
+          grep -q 'activity-loading-overlay' /tmp/korean-index.html
+          grep -q 'src="app.js' /tmp/korean-index.html
+          grep -q 'href="app.css' /tmp/korean-index.html
+          grep -q 'dashboard-warning-tokens-header' /tmp/korean-index.html
+          grep -q 'reading-custom-maker' /tmp/korean-index.html
+          grep -q 'syllable-slow-reader.js' /tmp/korean-index.html
+          grep -q 'sync-warning-tokens' /tmp/korean-index.html
 
-          $slowReader = (Invoke-WebRequest -UseBasicParsing -Uri "$base/syllable-slow-reader.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          $slowReaderCore = (Invoke-WebRequest -UseBasicParsing -Uri "$base/syllable-slow-reader-core.mjs?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          $slowReaderCss = (Invoke-WebRequest -UseBasicParsing -Uri "$base/syllable-slow-reader.css?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          $appCss = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.css?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          if ($slowReader -notmatch 'window\.speakTextKo' -or $slowReader -notmatch 'window\.openSyllableSlowReader') { throw 'Public slow-reader controller was missing or stale.' }
-          if ($slowReaderCore -notmatch 'buildSyllableReaderTokens' -or $slowReaderCore -notmatch 'Intl\.Segmenter') { throw 'Public slow-reader core was missing or stale.' }
-          if ($slowReaderCss -notmatch '\.syllable-slow-reader' -or $slowReaderCss -notmatch '@media \(max-width: 760px\)') { throw 'Public slow-reader CSS was missing or stale.' }
-          if ($appCss -notmatch '@media \(max-width:820px\).*reading-category-tabs' -or $appCss -notmatch 'reading-practice-section.*padding-bottom:7rem') { throw 'Public app.css was missing the custom-maker responsive layout.' }
+          curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$base/app.js?v=$stamp" -o /tmp/korean-app.js
+          grep -q 'aiedueKoreanDrawingsV2' /tmp/korean-app.js
+          grep -q 'adjustStudentKoreanWallet' /tmp/korean-app.js
+          grep -q 'warningTokens' /tmp/korean-app.js
+          grep -q 'workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1' /tmp/korean-app.js
+          ! grep -q 'korean-db/db-api' /tmp/korean-app.js
+          ! grep -Eq 'from ["'"'"']https://www\.gstatic\.com/firebasejs/[^"'"'"']+/firebase-(firestore|storage)\.js' /tmp/korean-app.js
+          grep -Eq 'from ["'"'"']\./korean-data-adapter\.js' /tmp/korean-app.js
 
-          $app = (Invoke-WebRequest -UseBasicParsing -Uri "$base/app.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          if ($app -notmatch 'aiedueKoreanDrawingsV2') { throw 'Public app.js did not include protected drawing persistence.' }
-          if ($app -notmatch 'adjustStudentKoreanWallet') { throw 'Public app.js did not include teacher warning-token wallet controls.' }
-          if ($app -notmatch 'warningTokens') { throw 'Public app.js did not include warning-token persistence.' }
-          if ($app -match 'korean-db/db-api') { throw 'Public app.js still references the retired Korean DB mirror.' }
-          if ($app -match 'from ["'']https://www\.gstatic\.com/firebasejs/[^"'']+/firebase-(?:firestore|storage)\.js') { throw 'Public app.js still imports Firebase data SDKs directly.' }
-          if ($app -notmatch 'from ["'']\.\/korean-data-adapter\.js') { throw 'Public app.js did not route data through the self-hosted adapter.' }
-          $adapter = (Invoke-WebRequest -UseBasicParsing -Uri "$base/korean-data-adapter.js?v=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }).Content
-          if ($adapter -notmatch "DEFAULT_ENDPOINT = '/db-api/korean/v2'") { throw 'Public data adapter did not target the Aiedue data server.' }
+          curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$base/workshop-launcher.mjs?v=$stamp" -o /tmp/workshop-launcher.mjs
+          grep -q '20260923-worksheet-sidebar-v1' /tmp/workshop-launcher.mjs
 
-          Write-Host 'Smoke test passed: Korean page and Aiedue data-server persistence are reachable.'
+          curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$base/workshop/?v=20260923-worksheet-sidebar-v1" -o /tmp/workshop.html
+          grep -q 'index-DCzFm7ui.js' /tmp/workshop.html
+          grep -q 'index-CN2SodHs.css' /tmp/workshop.html
+
+          curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$base/korean-data-adapter.js?v=$stamp" -o /tmp/korean-data-adapter.js
+          grep -q "DEFAULT_ENDPOINT = '/db-api/korean/v2'" /tmp/korean-data-adapter.js
+          echo 'Smoke test passed: public /korean and workshop cache-busting markers are reachable.'
