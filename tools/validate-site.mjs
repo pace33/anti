@@ -85,28 +85,11 @@ const app = read('app.js');
 const appCss = read('app.css');
 const styleCss = read('style.css');
 const dataAdapter = read('korean-data-adapter.js');
-const separatedFolder = `aiedue-${'ma'}${'th'}-backup`;
 const excludedEntry = `${'ma'}${'th'}.html`;
 const excludedBrand = `에이두 ${'수'}${'학'}`;
-const separatedRequiredFiles = [
-    'index.html',
-    'math.js',
-    'math.css',
-    'math-spiral.js',
-    'math-spiral.css',
-    'math-domain-navigation.js',
-    'math-domain-navigation.css',
-    'style.css',
-    'app.css',
-    'firebase-config.js',
-    'aiedu_math_logo_cutout.png',
-    'legacy-math-app/index.html',
-    'legacy-math-app/app.js',
-    'legacy-math-app/styles.css'
-];
+const excludedBackupFolder = `aiedue-${'ma'}${'th'}-backup`;
 assert(!existsSync(resolve(root, excludedEntry)), '분리 제외 자료 진입 파일이 저장소 루트에 남아 있습니다.');
-assert(existsSync(resolve(root, separatedFolder, 'index.html')), '분리된 에이두 수학 백업 진입 파일이 없습니다.');
-separatedRequiredFiles.forEach((path) => assert(existsSync(resolve(root, separatedFolder, path)), `에이두 수학 백업 필수 파일이 없습니다: ${path}`));
+assert(!existsSync(resolve(root, excludedBackupFolder)), '제거된 에이두 수학 백업 폴더가 저장소 루트에 남아 있습니다.');
 
 assert(/<script\s+type=["']module["']\s+src=["']app\.js(?:\?[^"']*)?["']\s*>/i.test(index), 'index.html이 app.js 모듈을 불러오지 않습니다.');
 assert((app.match(/word:\s*["']가수["'],\s*icon:\s*["']🧑‍🎤["']/g) || []).length === 3 && !/word:\s*["']가수["'],\s*icon:\s*["']🎤["']/.test(app), '가수 그림이 마이크를 든 가수 모습으로 통일되지 않았습니다.');
@@ -162,7 +145,7 @@ assert(app.includes("canvas.dataset.answerRevealed = 'true';") && app.includes("
 assert(app.includes('delete canvas.dataset.answerRevealed;') && app.includes("placeholder.textContent = '쓰기';") && app.includes("placeholder.classList.remove('is-answer');"), '다시 쓰기에서 공개된 정답 글자를 초기화하지 않습니다.');
 assert(!app.includes("button.textContent = '완성 완료';"), '이전 완성 완료 버튼 문구가 남아 있습니다.');
 assert(/<link\s+rel=["']stylesheet["']\s+href=["']app\.css(?:\?[^"']*)?["']/i.test(index), 'index.html이 app.css를 불러오지 않습니다.');
-assert(![excludedEntry, excludedBrand, separatedFolder].some((marker) => index.includes(marker)), '에이두 한글 루트 화면에 분리된 수학 자료 링크/표시가 남아 있습니다.');
+assert(![excludedEntry, excludedBrand, excludedBackupFolder].some((marker) => index.includes(marker)), '에이두 한글 루트 화면에 제거된 수학 자료 링크/표시가 남아 있습니다.');
 assert(!/<script\s+type=["']module["']\s*>/i.test(index), 'index.html에 인라인 모듈 스크립트가 다시 들어왔습니다.');
 assert(/id=["']result-modal["'][^>]*z-\[1300\]/i.test(index), '상세 결과 모달이 학급 관리 모달보다 위에 표시되지 않습니다.');
 assert(/from "\.\/korean-data-adapter\.js\?v=20260901-data-cutover-v\d+";/.test(app), 'app.js가 에이두 데이터 서버 adapter를 사용하지 않습니다.');
