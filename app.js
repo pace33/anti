@@ -11097,6 +11097,39 @@ function isLiteracyUnlocked(difficulty, type) {
     return false;
 }
 
+const LITERACY_DIFFICULTY_LABELS = Object.freeze({
+    easy: '쉬움',
+    normal: '보통',
+    hard: '어려움',
+    expert: '도전'
+});
+
+const LITERACY_TYPE_LABELS = Object.freeze({
+    multipleChoice: '객관식',
+    shortAnswer: '단답형',
+    essay: '서술형'
+});
+
+function getLiteracyDifficultyLabel(difficulty) {
+    const key = String(difficulty || '').trim();
+    return LITERACY_DIFFICULTY_LABELS[key] || key || '문해력';
+}
+
+function getLiteracyTypeLabel(type) {
+    const key = String(type || '').trim();
+    return LITERACY_TYPE_LABELS[key] || key || '활동';
+}
+
+function formatLiteracyActivityLabel(difficulty, type) {
+    return `문해력 ${getLiteracyDifficultyLabel(difficulty)} ${getLiteracyTypeLabel(type)}`;
+}
+
+function humanizeLiteracyActivityText(text = '') {
+    return String(text || '')
+        .replace(/문해력\s+(easy|normal|hard|expert)\s+(multipleChoice|shortAnswer|essay)\s+활동/gi, (_match, difficulty, type) => `${formatLiteracyActivityLabel(String(difficulty).toLowerCase(), type)} 활동`)
+        .replace(/\b(easy|normal|hard|expert)[-\s]+(multipleChoice|shortAnswer|essay)\b/gi, (_match, difficulty, type) => `${getLiteracyDifficultyLabel(String(difficulty).toLowerCase())} ${getLiteracyTypeLabel(type)}`);
+}
+
 function getLiteracyDanPlan(dan = null) {
     const level = Math.max(1, Math.floor(asNumber(dan ?? literacyPortfolio?.dan ?? currentUserProfileSnapshot?.literacyDan, 1)));
     const cycle = Math.floor((level - 1) / 3);
@@ -11125,11 +11158,10 @@ function advanceLiteracyDanIfReady(targetPortfolio = literacyPortfolio) {
 
 function showLiteracyPromotionNotice(promotion) {
     if (!promotion) return;
-    const typeNames = { multipleChoice: '객관식', shortAnswer: '단답형', essay: '서술형' };
-    const nextTypes = promotion.nextPlan.types.map(type => typeNames[type] || type).join(' · ');
+    const nextTypes = promotion.nextPlan.types.map(type => getLiteracyTypeLabel(type)).join(' · ');
     showAiedueAutoToast(
         `🎉 문해력 ${promotion.nextDan}단 승단!`,
-        `이제 ${promotion.nextPlan.difficulty.toUpperCase()} · ${nextTypes} 문제가 나와요.`,
+        `이제 ${getLiteracyDifficultyLabel(promotion.nextPlan.difficulty)} · ${nextTypes} 문제가 나와요.`,
         5000
     );
 }
@@ -11139,7 +11171,7 @@ function updateLiteracyDanBadges() {
     const badge = document.getElementById('literacy-dan-dashboard-badge');
     if (badge) badge.innerText = label;
     const desc = document.getElementById('literacy-mission-desc');
-    if (desc) desc.innerText = `${label} 기준으로 ${plan.difficulty.toUpperCase()} · ${plan.types.map(t => ({multipleChoice:'객관식', shortAnswer:'단답형', essay:'서술형'}[t] || t)).join('/')} 문제가 자동 출제돼요.`;
+    if (desc) desc.innerText = `${label} 기준으로 ${getLiteracyDifficultyLabel(plan.difficulty)} · ${plan.types.map(type => getLiteracyTypeLabel(type)).join('/')} 문제가 자동 출제돼요.`;
 }
 
 function chooseRecommendedLiteracyMission() {
@@ -12074,9 +12106,11 @@ function mergeLiteracyAttemptWithServer(serverData, attempt) {
     const promotion = advanceLiteracyDanIfReady(portfolio);
     const rewarded = applyLiteracyWalletReward(base, attempt.pointReward, attempt.experienceReward);
     const levelUpPoints = Math.max(0, rewarded.aeduLevel - base.aeduLevel) * AIEDUE_LEVEL_UP_POINT_REWARD;
-    const activityMessage = `${base.studentName}이 문해력 ${attempt.difficulty} ${attempt.type} 활동을 통해 기본 경험치 ${asNumber(attempt.baseExperience, 0).toFixed(1)}%의 ${Math.round(asNumber(attempt.stageMultiplier, 1) * 100)}%인 ${asNumber(attempt.experienceReward, 0).toFixed(1)}%를 받았다.${rewarded.levelUpCount > 0 ? ` 레벨 ${base.aeduLevel}에서 ${rewarded.aeduLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${rewarded.removedWarningTokens}개가 감소되었다.` : ''}`;
+    const literacyActivityLabel = formatLiteracyActivityLabel(attempt.difficulty, attempt.type);
+    const activityTimeMs = Number.isFinite(Date.parse(attempt.solvedAt)) ? Date.parse(attempt.solvedAt) : Date.now();
+    const activityMessage = `${base.studentName}이 ${literacyActivityLabel} 활동을 통해 기본 경험치 ${asNumber(attempt.baseExperience, 0).toFixed(1)}%의 ${Math.round(asNumber(attempt.stageMultiplier, 1) * 100)}%인 ${asNumber(attempt.experienceReward, 0).toFixed(1)}%를 받았다.${rewarded.levelUpCount > 0 ? ` 레벨 ${base.aeduLevel}에서 ${rewarded.aeduLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${rewarded.removedWarningTokens}개가 감소되었다.` : ''}`;
     const koreanActivityLog = attempt.experienceReward > 0
-        ? [{ id: `literacy_${attempt.attemptId}`, type: 'experience', source: '문해력 활동', baseExperience: attempt.baseExperience, multiplier: attempt.stageMultiplier, grantedExperience: attempt.experienceReward, levelBefore: base.aeduLevel, levelAfter: rewarded.aeduLevel, levelUpPoints, warningTokensReduced: rewarded.removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...base.koreanActivityLog].slice(0, 200)
+        ? [{ id: `literacy_${attempt.attemptId}`, type: 'experience', source: literacyActivityLabel, difficulty: attempt.difficulty, questionType: attempt.type, baseExperience: attempt.baseExperience, multiplier: attempt.stageMultiplier, grantedExperience: attempt.experienceReward, levelBefore: base.aeduLevel, levelAfter: rewarded.aeduLevel, levelUpPoints, warningTokensReduced: rewarded.removedWarningTokens, createdAtMs: activityTimeMs, solvedAt: attempt.solvedAt, message: activityMessage }, ...base.koreanActivityLog].slice(0, 200)
         : base.koreanActivityLog;
     return {
         ...rewarded,
@@ -22002,9 +22036,54 @@ function renderTeacherClassProgressRows() {
     }).join('') : classEmptyRow(3);
 }
 
-function formatClassActivityTime(value) {
-    const millis = Number(value?.toMillis?.() ?? value?.seconds * 1000 ?? value ?? 0);
-    return millis ? new Date(millis).toLocaleString('ko-KR') : '시간 정보 없음';
+function getActivityLogTimestampMs(log = {}) {
+    const candidates = [
+        log.createdAtMs,
+        log.clientCreatedAtMs,
+        log.solvedAt,
+        log.createdAt,
+        log.clientCreatedAt,
+        log.timestamp,
+        log.time,
+        log.date,
+        log.updatedAt
+    ];
+    for (const value of candidates) {
+        if (value == null || value === '') continue;
+        if (typeof value?.toMillis === 'function') {
+            const millis = value.toMillis();
+            if (Number.isFinite(millis) && millis > 0) return millis;
+        }
+        if (Number.isFinite(Number(value?.seconds)) && Number(value.seconds) > 0) {
+            const millis = Number(value.seconds) * 1000;
+            if (Number.isFinite(millis) && millis > 0) return millis;
+        }
+        if (typeof value === 'number' || /^\d+$/.test(String(value).trim())) {
+            const raw = Number(value);
+            if (Number.isFinite(raw) && raw > 0) return raw < 100000000000 ? raw * 1000 : raw;
+        }
+        const parsed = Date.parse(String(value));
+        if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+    const idMatch = String(log.id || '').match(/(?:^|_)(\d{12,})(?:_|$)/);
+    if (idMatch) {
+        const fromId = Number(idMatch[1]);
+        if (Number.isFinite(fromId) && fromId > 0) return fromId;
+    }
+    return 0;
+}
+
+function formatClassActivityTime(log = {}) {
+    const millis = getActivityLogTimestampMs(log);
+    return millis ? new Date(millis).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '시간 정보 없음';
+}
+
+function getClassActivityMessage(log = {}) {
+    const message = humanizeLiteracyActivityText(log.message || '');
+    if (message.trim()) return message;
+    const source = humanizeLiteracyActivityText(log.source || '');
+    if (source.trim()) return `${source} 활동이 기록되었습니다.`;
+    return '활동이 기록되었습니다.';
 }
 
 function renderTeacherClassActivity() {
@@ -22013,7 +22092,11 @@ function renderTeacherClassActivity() {
     const entries = classStudentEntries();
     root.innerHTML = entries.length ? entries.map(([, student]) => {
         const logs = Array.isArray(student.koreanActivityLog) ? student.koreanActivityLog.slice(0, 30) : [];
-        const logHtml = logs.length ? logs.map((log) => `<li class="border-l-4 ${log.type === 'teacher-wallet' ? 'border-amber-400' : 'border-teal-400'} bg-gray-50 rounded-r-2xl px-4 py-3"><div class="text-sm font-bold text-[#2c3e50]">${escapeHtml(log.message || '활동이 기록되었습니다.')}</div><div class="text-[11px] text-gray-400 mt-1">${escapeHtml(formatClassActivityTime(log.createdAtMs || log.createdAt))}</div></li>`).join('') : '<li class="text-sm text-gray-400 font-bold py-4">새로 지급되는 경험치와 교사 지급·차감부터 여기에 기록됩니다.</li>';
+        const logHtml = logs.length ? logs.map((log) => {
+            const timeText = formatClassActivityTime(log);
+            const timeClass = timeText === '시간 정보 없음' ? 'text-rose-400' : 'text-gray-500';
+            return `<li class="border-l-4 ${log.type === 'teacher-wallet' ? 'border-amber-400' : 'border-teal-400'} bg-gray-50 rounded-r-2xl px-4 py-3"><div class="text-sm font-bold text-[#2c3e50]">${escapeHtml(getClassActivityMessage(log))}</div><div class="text-[11px] ${timeClass} font-bold mt-1">🕒 ${escapeHtml(timeText)}</div></li>`;
+        }).join('') : '<li class="text-sm text-gray-400 font-bold py-4">새로 지급되는 경험치와 교사 지급·차감부터 여기에 기록됩니다.</li>';
         return `<article class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><h4 class="text-xl font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</h4><p class="text-xs text-teal-600 font-bold">${escapeHtml(student.userCode || student.code || '-')}</p></div><div class="text-xs font-black text-gray-500">Lv.${Math.max(1, asNumber(student.aeduLevel, 1))} · 경험치 ${asNumber(student.aeduExperience, 0).toFixed(1)}%</div></div><ol class="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">${logHtml}</ol></article>`;
     }).join('') : '<p class="text-center py-10 text-gray-400 font-bold">학급에 등록된 학생이 없어요.</p>';
 }
