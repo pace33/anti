@@ -10079,12 +10079,19 @@ function parseAiJsonObject(rawText, fallback = {}) {
     }
 }
 
+const AIEDUE_KOREAN_FAST_VISION_MODEL = 'aiedue-gemma-vision';
+const AIEDUE_KOREAN_FAST_TEXT_MODEL = 'aiedue-gemma';
+
 async function callKoreanAiGenerate(prompt, options = {}) {
-    const body = { prompt, model: options.model || '', printTimeout: options.printTimeout || '2m' };
+    const body = {
+        prompt,
+        model: options.model || (options.imageBase64 ? AIEDUE_KOREAN_FAST_VISION_MODEL : ''),
+        printTimeout: options.printTimeout || '2m'
+    };
     if (options.imageBase64) {
         body.imageBase64 = options.imageBase64;
         body.imageMime = options.imageMime || 'image/jpeg';
-        body.model = options.model || '';
+        body.model = options.model || AIEDUE_KOREAN_FAST_VISION_MODEL;
         body.printTimeout = options.printTimeout || '4m';
     }
     const endpoint = '/korean-ai/generate';
@@ -10143,7 +10150,7 @@ async function extractDictationWordsWithAi(text, options = {}) {
 ${text}
 
 반드시 JSON만 출력: {"words":["명사"]}`;
-    const raw = await callKoreanAiGenerate(prompt, { printTimeout: '3m' }) || '{}';
+    const raw = await callKoreanAiGenerate(prompt, { printTimeout: '3m', model: AIEDUE_KOREAN_FAST_TEXT_MODEL }) || '{}';
     const parsed = parseAiJsonObject(raw, { words: [] });
     return {
         words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, limit),
