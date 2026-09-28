@@ -35,7 +35,14 @@ body.dashboard-view-active #dashboard-section .dashboard-quick-actions {
     flex-direction: row !important; flex-wrap: wrap; justify-content: flex-end !important;
     align-items: flex-start !important;
 }
-body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; transform-origin: bottom left; }
+body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray {
+    position: absolute; top: auto; bottom: calc(100% + 8px); left: 0; right: auto;
+    width: 0; max-width: calc(100vw - 36px); flex-shrink: 0; transform-origin: bottom left;
+}
+body.rpg-hud-active .aiedue-rpg-hud.actions-open .rpg-action-tray { width: min(540px, calc(100vw - 36px)); }
+body.rpg-hud-active .aiedue-rpg-hud .rpg-action-button > span:last-child {
+    overflow: visible; text-overflow: clip;
+}
 #login-section .login-tabs-container .nav-tab { color: #23462b; background: #f6fff1; }
 #login-section .login-tabs-container .nav-tab.active {
     color: #fff !important; -webkit-text-fill-color: #fff;
@@ -277,6 +284,15 @@ body.rpg-hud-active #main-container > #aiedue-rpg-hud.rpg-collapsed { width: 146
     #aiedue-rpg-hud .rpg-profile-tools { position: absolute; bottom: 6px; left: 10px; right: 10px; justify-content: space-between; gap: 4px; }
     #aiedue-rpg-hud .rpg-tool-button { min-width: 40px; width: 46px; flex: 1; max-width: 60px; height: 44px; gap: 0; font-size: 10px; }
     #aiedue-rpg-hud .rpg-tool-button > span:first-child { font-size: 19px; }
+    body.rpg-hud-active .aiedue-rpg-hud .rpg-action-tray {
+        width: 0; max-width: calc(100vw - 16px); height: 0; display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0;
+    }
+    body.rpg-hud-active .aiedue-rpg-hud.actions-open .rpg-action-tray {
+        width: min(340px, calc(100vw - 16px)); height: auto; padding: 7px;
+    }
+    #aiedue-rpg-hud .rpg-action-button { width: 100%; min-width: 0; max-width: none; height: 50px; }
+    #aiedue-rpg-hud .rpg-action-button > span:last-child { white-space: normal; line-height: 1.15; }
     body.rpg-hud-active #main-container > #aiedue-rpg-hud.rpg-collapsed { width: 131px; }
     #aiedue-rpg-hud.rpg-collapsed .rpg-profile-banner { width: 131px; min-width: 131px; height: 121px; }
     #dashboard-section .dashboard-stage-board { padding: 110px 18px 155px; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
