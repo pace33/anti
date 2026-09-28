@@ -42,6 +42,7 @@ assert.match(app, /brandTitleElement\.textContent = brandTitle/);
 assert.doesNotMatch(app, /그림을 그린 뒤 AI 생성으로 AntiAI가 완성하게 해 보세요\.|선을 따라 그려보아요\./);
 assert.match(drawingDashboard, /그림을 AI와 같이 만들어보아요/);
 assert.match(drawingDashboard, /drawing-dashboard-content/);
+assert.doesNotMatch(css, /#drawing-activities-section \.drawing-dashboard-content::before/);
 assert.doesNotMatch(drawingDashboard, /aiedu_hangul_logo\.webp[^>]*style="[^"]*width:/, 'dashboard logo width must remain responsive');
 
 assert.doesNotMatch(drawingDashboard, /id="drawing-tutorial-open-btn"|openDrawingTutorial\(\)/, 'drawing dashboard must not keep the obsolete drawing-only tutorial');
