@@ -502,7 +502,8 @@ const menuOrder = [
     'aria-label="로그아웃"',
     'aria-label="하단 메뉴 펼치기"'
 ].map((marker) => index.indexOf(marker));
-assert(menuOrder.every((position) => position >= 0) && menuOrder.every((position, index) => index === 0 || position > menuOrder[index - 1]), '학생 공통 메뉴가 홈-상점-학급-오늘의 복습-기록-나가기-메뉴 순서가 아닙니다.');
+assert(menuOrder.every((position) => position >= 0) && menuOrder.every((position, index) => index === 0 || position > menuOrder[index - 1]), '학생 공통 메뉴가 홈-상점-학급-오늘의 복습-기록-로그아웃-메뉴 순서가 아닙니다.');
+assert(/aria-label="로그아웃"[^>]*><span[^>]*>🚪<\/span><span>로그아웃<\/span>/.test(index), '하단 로그아웃 버튼의 표시 이름이 로그아웃이 아닙니다.');
 assert(app.includes("updateKoreanStudentViewUrl('review')") && index.includes('onclick="openKoreanTodayReview()"'), '오늘의 복습 메뉴와 기록 화면이 같은 복습 경로를 사용하지 않습니다.');
 assert(app.includes("attemptSource: 'review'") && app.includes('studentAnswer: userAnswer'), '복습 출처 또는 실제 학생 답 저장이 없습니다.');
 assert(app.includes('runTransaction(db') && app.includes('koreanQuestionMastery'), '시도 기록과 문제별 숙련 상태의 트랜잭션 저장이 없습니다.');
