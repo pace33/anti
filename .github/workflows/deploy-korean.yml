@@ -115,7 +115,7 @@ jobs:
           grep -q 'src="app.js' /tmp/korean-index.html
           grep -q 'href="app.css' /tmp/korean-index.html
           grep -q 'aiedue-korean-build" content="20260923-workshop-launcher-v2' /tmp/korean-index.html
-          grep -q 'app.js?v=20260923-workshop-launcher-v2' /tmp/korean-index.html
+          grep -q 'app.js?v=20260923-student-code-v1' /tmp/korean-index.html
           grep -q 'dashboard-warning-tokens-header' /tmp/korean-index.html
           grep -q 'reading-custom-maker' /tmp/korean-index.html
           grep -q 'syllable-slow-reader.js' /tmp/korean-index.html
@@ -128,7 +128,7 @@ jobs:
           grep -q 'workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1' /tmp/korean-app.js
           ! grep -q 'korean-db/db-api' /tmp/korean-app.js
           ! grep -Eq 'from ["'"'"']https://www\.gstatic\.com/firebasejs/[^"'"'"']+/firebase-(firestore|storage)\.js' /tmp/korean-app.js
-          grep -Eq 'from ["'"'"']\./korean-data-adapter\.js' /tmp/korean-app.js
+          grep -q './korean-data-adapter.js?v=20260901-data-cutover-v3' /tmp/korean-app.js
 
           curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$base/workshop-launcher.mjs?v=$stamp" -o /tmp/workshop-launcher.mjs
           grep -q '20260923-worksheet-sidebar-v1' /tmp/workshop-launcher.mjs
