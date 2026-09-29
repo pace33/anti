@@ -32,8 +32,8 @@ export function buildStageTutorial(level, role) {
         press('eraser', 'drawing', '#drawing-eraser-btn', '지우개', '지우개를 눌러 보자. 그린 선을 고칠 수 있어.', '지우개를 켜 보세요. 실수를 지우고 수정하는 도구입니다.');
         explore('erase', 'drawing', ['#drawing-canvas'], '방금 그린 선 위를 문질러 지워 봐. 틀려도 이렇게 고칠 수 있어!', '그린 선 일부를 지워 보세요. 학생이 수정한 뒤 다시 시도할 수 있도록 기다려 주세요.', ['#drawing-canvas'], 'stroke');
         explore('complete-button', 'drawing', ['#drawing-complete-mission-btn'], '실제 미션을 끝냈을 때는 ‘완료하기’를 눌러 확인받아. 이제 다른 그리기 버튼도 살펴보자.', '실제 수업에서는 완료하기로 미션 결과를 확인합니다. 여기서는 버튼의 위치를 확인하고 다음 활동으로 이동합니다.');
-        enter('shape', '도형 미션', 'openTodayDrawingActivity()', 'shape', '‘도형 미션’을 눌러 보자. 이번에는 도형을 그리는 그림판이 열려.', '도형 미션을 열어 보세요. 그림 미션과 구분하여 도형의 윤곽을 따라 그리는 활동입니다.');
-        explore('shape-draw', 'shape', ['#drawing-canvas'], '나온 도형을 보고 선을 조금 따라 그려 보자. 꺾이는 곳과 둥근 곳이 어디일까?', '제시된 도형의 선을 그어 보세요. 꼭짓점에서 방향이 바뀌는지, 곡선을 따라 움직이는지 관찰할 수 있습니다.', ['#drawing-canvas'], 'stroke');
+        enter('zoo', '도형 동물원', '#stage-1-game-shape', 'zoo', '‘도형 동물원’을 눌러 보자. 도형 그리기를 게임으로 만날 수 있어.', '도형 동물원에 들어가 게임의 시작 화면과 규칙을 확인해 주세요.');
+        explore('zoo-view', 'zoo', ['#zoo-overlay'], '사자가 원하는 도형을 점선 따라 그리고 과자를 주는 게임이야. 제한 시간과 생명이 있으니 규칙을 먼저 읽어 보자.', '시작 화면에서 제한 시간·생명·도형 완성 규칙을 확인합니다. 기본 그리기에 익숙해진 학생에게 활용해 주세요.');
         enter('mine', '나의 그림', 'openMyDrawingFromDashboard()', 'drawings', '‘나의 그림’을 눌러 보자. 내가 진행한 그림 미션을 볼 수 있어.', '나의 그림을 열어 진행 단계와 저장된 결과를 확인해 보세요.');
         explore('mine-view', 'drawings', ['#my-drawing-mission-list'], '미션별 기록이 여기에 모여. 아직 기록이 없다면 실제 그림 미션을 마친 뒤 다시 확인해 보자.', '목록에서 미션의 진행 상태를 확인합니다. 기록이 없을 때는 학생이 첫 미션을 수행한 뒤 다시 확인해 주세요.');
         enter('friends', '친구들 그림', 'openFriendsDrawingGallery()', 'friends', '이번엔 ‘친구들 그림’을 눌러 다른 작품을 구경하자.', '친구들 그림을 열어 작품 감상 화면을 살펴보세요.');
@@ -41,8 +41,6 @@ export function buildStageTutorial(level, role) {
         enter('sketch', 'AI 스케치북', 'openSketchbookActivity()', 'sketch', '‘AI 스케치북’을 눌러 보자. 이번에는 내가 그리고 싶은 그림을 그려.', 'AI 스케치북을 열어 자유롭게 그리는 화면을 살펴보겠습니다.');
         explore('sketch-draw', 'sketch', ['#drawing-canvas'], '그림판에 생각나는 모양을 그려 봐. 완성된 그림을 AI가 어떻게 바꾸면 좋을지도 생각해 보자.', '실제 그림판에 간단한 모양을 그려 보세요. AI 결과를 보기 전에 학생이 표현하려던 것을 먼저 말하게 해 주세요.', ['#drawing-canvas'], 'stroke');
         explore('sketch-ai', 'sketch', ['#drawing-ai-generate-btn'], '‘AI 생성’은 내 그림을 바탕으로 새 그림을 만드는 버튼이야. 실제로 사용할 때는 그림을 그린 다음 눌러 줘.', 'AI 생성은 학생이 그린 그림을 바탕으로 결과를 만드는 기능입니다. 이 안내에서는 생성 버튼의 위치까지 살펴봅니다.');
-        enter('zoo', '도형 동물원', '#stage-1-game-shape', 'zoo', '‘도형 동물원’도 눌러 보자. 도형 그리기를 게임으로 만날 수 있어.', '도형 동물원에 들어가 게임의 시작 화면과 규칙을 확인해 주세요.');
-        explore('zoo-view', 'zoo', ['#zoo-overlay'], '사자가 원하는 도형을 점선 따라 그리고 과자를 주는 게임이야. 제한 시간과 생명이 있으니 규칙을 먼저 읽어 보자.', '시작 화면에서 제한 시간·생명·도형 완성 규칙을 확인합니다. 기본 그리기에 익숙해진 학생에게 활용해 주세요.');
     } else if (level === 2) {
         enter('today', '오늘의 한글', 'openTodayKoreanActivity()', 'today', '‘오늘의 한글’을 눌러 보자. 내 차례인 배움으로 들어가는 버튼이야.', '오늘의 한글을 열어 학생의 다음 배움이 어디에서 시작되는지 확인해 주세요.');
         explore('today-view', 'today', ['#learning-detail-content'], '지금 할 배움이 이 화면에 나와. 안내에 따라 활동한 다음 ‘다음으로’ 이어가면 돼. 배움을 모두 끝냈다면 첫 배움 화면을 함께 살펴볼 거야.', '학생의 현재 진도에 따른 배움 화면입니다. 내용과 과제는 배움마다 달라집니다. 이미 모두 완료한 계정은 첫 배움을 둘러보도록 열었습니다.');

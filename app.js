@@ -17,8 +17,8 @@ import {
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
-import { installStageTutorial } from './stage-tutorial.js?v=20260922-listening-game-v1';
-import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260922-listening-game-v1';
+import { installStageTutorial } from './stage-tutorial.js?v=20260929-tutorial-targets-v1';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260929-tutorial-targets-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1';
@@ -405,16 +405,16 @@ let userLiteracyAnswerChecked = false;
 
 const DRAWING_TUTORIAL_STEPS = Object.freeze({
     student: Object.freeze([
-        Object.freeze({ title: '반가워요! 에이두 그리기예요', message: '그림 미션에서는 주어진 주제를 자유롭게 그리고, 도형 미션에서는 선을 따라 정확하게 그려요. 하고 싶은 카드부터 눌러 시작해요!' }),
+        Object.freeze({ title: '반가워요! 에이두 그리기예요', message: '그림 미션에서는 주어진 주제를 자유롭게 그리고, 도형 동물원에서는 선을 따라 도형을 완성하는 게임으로 태블릿 사용을 연습해요. 하고 싶은 카드부터 눌러 시작해요!' }),
         Object.freeze({ title: '색과 붓을 골라요', message: '작업실 왼쪽에서 색과 붓 크기를 고른 뒤 손가락, 펜, 마우스로 도화지에 그려요. 잘못 그렸다면 지우개나 지우기 버튼을 쓰면 돼요.' }),
-        Object.freeze({ title: '완성한 그림을 저장해요', message: '그림 미션은 저장하기, 도형 미션은 완료하기를 눌러 기록해요. 저장한 작품과 도형 정확도는 나의 그림에서 다시 볼 수 있어요.' }),
+        Object.freeze({ title: '완성한 그림을 저장해요', message: '그림 미션은 저장하기, 도형 동물원은 게임 규칙에 맞게 도형을 완성하며 연습해요. 저장한 작품과 활동 기록은 나의 그림에서 다시 볼 수 있어요.' }),
         Object.freeze({ title: 'AI와 그림을 완성해요', message: 'AI 스케치북에서 도안을 고르고 그림을 더한 뒤 AI 생성을 눌러요. 완성된 작품은 자동으로 내 그림과 친구들 그림에 함께 저장돼요.' }),
         Object.freeze({ title: '서로의 작품을 감상해요', message: '나의 그림에서는 내 성장 기록을 보고, 친구들 그림에서는 함께 저장된 작품을 감상할 수 있어요. 이제 멋진 그림을 시작해 볼까요?' })
     ]),
     teacher: Object.freeze([
-        Object.freeze({ title: '선생님용 그리기 안내예요', message: '그림 미션은 자유 표현, 도형 미션은 소근육 조절과 형태 정확도를 살피는 활동이에요. 학생의 목표에 맞는 활동을 먼저 시범 보여 주세요.' }),
-        Object.freeze({ title: '도구 사용을 짧게 시범 보여요', message: '색, 붓 크기, 지우개를 차례로 직접 보여 주고 학생이 입력 도구를 선택하게 해 주세요. 도형 미션에서는 결과보다 선을 따라가는 과정도 함께 관찰할 수 있어요.' }),
-        Object.freeze({ title: '저장 기록으로 성장을 확인해요', message: '학생이 저장하기 또는 완료하기를 누르면 작품과 도형 정확도가 기록돼요. 나의 그림과 교사 학생관리의 그리기 기록에서 누적 변화를 확인하세요.' }),
+        Object.freeze({ title: '선생님용 그리기 안내예요', message: '그림 미션은 자유 표현, 도형 동물원은 소근육 조절과 형태 인식을 게임으로 살피는 활동이에요. 학생의 목표에 맞는 활동을 먼저 시범 보여 주세요.' }),
+        Object.freeze({ title: '도구 사용을 짧게 시범 보여요', message: '색, 붓 크기, 지우개를 차례로 직접 보여 주고 학생이 입력 도구를 선택하게 해 주세요. 도형 동물원에서는 결과보다 선을 따라가는 과정도 함께 관찰할 수 있어요.' }),
+        Object.freeze({ title: '저장 기록으로 성장을 확인해요', message: '학생이 저장하기를 누르거나 활동을 마치면 작품과 활동 기록을 확인할 수 있어요. 나의 그림과 교사 학생관리의 그리기 기록에서 누적 변화를 확인하세요.' }),
         Object.freeze({ title: 'AI 스케치북을 수업에 활용해요', message: '학생의 원본 선을 먼저 충분히 표현하게 한 뒤 AI 생성을 사용해 보세요. 결과물은 자동 저장되므로 학생과 원본 생각과 완성 결과를 비교해 이야기할 수 있어요.' }),
         Object.freeze({ title: '감상 대화를 이어 가요', message: '친구들 그림에서 서로의 작품을 보며 무엇을 그렸는지, 어떤 도구를 썼는지 말하게 해 보세요. 이제 수업 흐름에 맞춰 활동을 선택하면 됩니다.' })
     ])

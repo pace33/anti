@@ -44,6 +44,15 @@ test('stage 2 uses the listening-game name in the card, screen and tutorial', ()
     assert.match(app,/lessonTitle:\s*'듣기 게임'/);
 });
 
+test('stage 1 tutorial matches the current drawing dashboard buttons', () => {
+    const steps = buildStageTutorial(1, 'student');
+    assert.equal(steps.find(step => step.id === 'stage-1-zoo')?.targets[0], '#stage-1-game-shape');
+    assert.equal(steps.find(step => step.id === 'stage-1-zoo')?.clickLabel, '도형 동물원');
+    assert.ok(steps.find(step => step.id === 'stage-1-zoo-view'));
+    assert.equal(steps.filter(step => /도형 미션|openTodayDrawingActivity|stage-1-shape|shape-draw/.test(`${step.id} ${step.clickLabel || ''} ${step.press || ''} ${step.destination || ''} ${step.targets?.join(' ') || ''}`)).length, 0);
+    assert.equal(new Set(steps.map(step => step.id)).size, steps.length);
+});
+
 const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
 const adapterSource=app.slice(app.indexOf('function stageTutorialSession()'));
 function fixture(role='student',level=1){
