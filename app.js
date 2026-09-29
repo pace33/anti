@@ -9970,10 +9970,17 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         if (preview && dataUrl) { preview.src = dataUrl; preview.classList.remove('hidden'); }
         if (video) video.classList.add('hidden');
         setWordBankCameraStatus('OCR+AI 분석중~~', true);
-        const [ocrText, aiText] = await Promise.all([runDictationOcr(analysisFile), analyzeDictationImageWithAi(dataUrl)]);
+        const useLegacyCurricularPhotoAnalysis = pendingWordBankCameraAfterSave === 'curricular-writing';
+        const [ocrText, aiText] = await Promise.all([
+            runDictationOcr(analysisFile),
+            analyzeDictationImageWithAi(dataUrl, { useLegacyImageModel: useLegacyCurricularPhotoAnalysis })
+        ]);
         const combined = ['[OCR]', ocrText, '[AI 사진 분석]', aiText].filter(Boolean).join('\n');
-        const aiExtracted = await extractDictationWordsWithAi(combined, { limit: pendingWordBankCameraAfterSave === 'curricular-writing' ? 10 : 40 });
-        const targetWordLimit = pendingWordBankCameraAfterSave === 'curricular-writing' ? 10 : 40;
+        const aiExtracted = await extractDictationWordsWithAi(combined, {
+            limit: useLegacyCurricularPhotoAnalysis ? 10 : 40,
+            useLegacyTextModel: useLegacyCurricularPhotoAnalysis
+        });
+        const targetWordLimit = useLegacyCurricularPhotoAnalysis ? 10 : 40;
         const sourceWords = pendingWordBankCameraAfterSave === 'curricular-writing'
             ? [...(aiExtracted.words || []), ...(aiExtracted.visibleCandidates || [])]
             : (aiExtracted.words || []);
@@ -10083,15 +10090,16 @@ const AIEDUE_KOREAN_FAST_VISION_MODEL = 'aiedue-gemma-vision';
 const AIEDUE_KOREAN_FAST_TEXT_MODEL = 'aiedue-gemma';
 
 async function callKoreanAiGenerate(prompt, options = {}) {
+    const hasExplicitModel = Object.prototype.hasOwnProperty.call(options, 'model');
     const body = {
         prompt,
-        model: options.model || (options.imageBase64 ? AIEDUE_KOREAN_FAST_VISION_MODEL : ''),
+        model: hasExplicitModel ? options.model : (options.imageBase64 ? AIEDUE_KOREAN_FAST_VISION_MODEL : ''),
         printTimeout: options.printTimeout || '2m'
     };
     if (options.imageBase64) {
         body.imageBase64 = options.imageBase64;
         body.imageMime = options.imageMime || 'image/jpeg';
-        body.model = options.model || AIEDUE_KOREAN_FAST_VISION_MODEL;
+        body.model = hasExplicitModel ? options.model : AIEDUE_KOREAN_FAST_VISION_MODEL;
         body.printTimeout = options.printTimeout || '4m';
     }
     const endpoint = '/korean-ai/generate';
@@ -10109,12 +10117,14 @@ async function callKoreanAiGenerate(prompt, options = {}) {
     return getAiTextFromResponse(data);
 }
 
-async function analyzeDictationImageWithAi(dataUrl) {
+async function analyzeDictationImageWithAi(dataUrl, options = {}) {
     if (!dataUrl || !dataUrl.startsWith('data:image/')) return '';
     const [header, base64] = dataUrl.split(',');
     const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
     const prompt = '이 이미지는 초등학생의 오늘의 노트 사진입니다. OCR처럼 글자만 읽지 말고, 이미지 자체를 보고 노트/교과서/칠판/그림에 보이는 한국어 문구, 낱말, 사물 이름, 학습 주제어를 최대한 많이 추출해 주세요. 설명하지 말고 단어와 짧은 문구를 줄바꿈으로만 출력하세요.';
-    const text = await callKoreanAiGenerate(prompt, { imageBase64: base64, imageMime: mime, printTimeout: '4m' });
+    const requestOptions = { imageBase64: base64, imageMime: mime, printTimeout: '4m' };
+    if (options.useLegacyImageModel) requestOptions.model = '';
+    const text = await callKoreanAiGenerate(prompt, requestOptions);
     return text || '';
 }
 
@@ -10150,7 +10160,10 @@ async function extractDictationWordsWithAi(text, options = {}) {
 ${text}
 
 반드시 JSON만 출력: {"words":["명사"]}`;
-    const raw = await callKoreanAiGenerate(prompt, { printTimeout: '3m', model: AIEDUE_KOREAN_FAST_TEXT_MODEL }) || '{}';
+    const raw = await callKoreanAiGenerate(prompt, {
+        printTimeout: '3m',
+        model: options.useLegacyTextModel ? '' : AIEDUE_KOREAN_FAST_TEXT_MODEL
+    }) || '{}';
     const parsed = parseAiJsonObject(raw, { words: [] });
     return {
         words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, limit),
