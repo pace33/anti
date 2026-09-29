@@ -57,7 +57,6 @@ export function buildStageTutorial(level, role) {
         press('batchim', 'reading', '#reading-tab-batchim', '받침 낱말', '‘받침 낱말’도 눌러 보자. 아는 글자가 있는지 찾아봐.', '받침 낱말 묶음도 확인해 주세요. 학생의 읽기 수준에 따라 카드 묶음을 바꿀 수 있습니다.');
         press('custom', 'reading', '#reading-tab-custom', '직접 만들기', '‘직접 만들기’를 누르면 내가 입력한 글로 읽기 카드를 만들 수 있어.', '직접 만들기 화면을 열어 수업에서 사용할 글자·문장을 입력하는 위치를 확인해 주세요.');
         explore('custom-view', 'reading', ['#reading-custom-maker'], '입력 칸에 읽어 보고 싶은 글을 적는 곳이야. 오늘 배운 낱말이나 내 이름으로 써볼 수 있어.', '이 화면에서 원하는 글을 입력해 음절별 읽기를 구성합니다. 학생의 이름이나 교실에서 쓰는 짧은 표현을 활용해 보세요.');
-        press('custom-sample', 'reading', '#ssr-sample', '예시 바꾸기', '‘예시 바꾸기’를 눌러 실제 입력 칸과 음절 카드가 어떻게 바뀌는지 보자.', '예시 바꾸기를 눌러 입력한 글이 음절 카드로 나뉘는 모습을 확인해 주세요.');
         press('custom-play', 'reading', '#ssr-play', '천천히 읽기', '‘천천히 읽기’를 눌러 만들어진 카드를 순서대로 들어 보자.', '천천히 읽기를 눌러 입력한 글의 음절별 읽기를 체험해 보세요.');
         enter('writing', '쓰기 연습', 'openLetterWritingActivity()', 'writing', '‘쓰기 연습’을 눌러 실제 글자 쓰기 화면을 열자.', '쓰기 연습을 열어 글자·낱말·문장 탭을 차례대로 살펴보겠습니다.');
         press('letter-sound', 'writing', '#letter-play-sound', '소리 듣기', '먼저 소리 듣기를 누르고 어떤 글자인지 들어 보자.', '소리 듣기를 먼저 눌러 현재 제시된 글자와 소리를 연결해 주세요.');

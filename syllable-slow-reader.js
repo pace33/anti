@@ -20,7 +20,6 @@ const state = {
     bound: false,
     isPlaying: false,
     runId: 0,
-    sampleIndex: 0,
     gapTimer: null,
     gapResolve: null,
     historyTab: 'today',
@@ -36,8 +35,6 @@ const ui = () => ({
     play: $('ssr-play'),
     playIcon: $('ssr-play-icon'),
     playText: $('ssr-play-text'),
-    clear: $('ssr-clear'),
-    sample: $('ssr-sample'),
     range: $('ssr-gap-range'),
     gapDisplay: $('ssr-gap-display'),
     settings: $('ssr-settings'),
@@ -429,20 +426,6 @@ function bind() {
     elements.input.addEventListener('input', () => {
         if (state.isPlaying) stopReader('입력이 바뀌어 읽기를 멈췄습니다.');
         render();
-    });
-    elements.clear.addEventListener('click', () => {
-        stopReader();
-        elements.input.value = '';
-        render();
-        setStatus('읽을 글자를 입력해 주세요.');
-        elements.input.focus();
-    });
-    elements.sample.addEventListener('click', () => {
-        stopReader();
-        state.sampleIndex = (state.sampleIndex + 1) % SAMPLE_TEXTS.length;
-        elements.input.value = SAMPLE_TEXTS[state.sampleIndex];
-        render();
-        setStatus('예시 글을 바꿨습니다.');
     });
     elements.range.addEventListener('input', () => {
         const gap = getSyllableReaderGap(elements.range.value);

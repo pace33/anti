@@ -29,10 +29,6 @@
 .ssr-gap-control { min-height: 54px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
 .ssr-gap-control input { width: 100%; min-height: 32px; accent-color: #2563eb; cursor: pointer; }
 #ssr-gap-display { color: #2563eb; font-size: .8rem; white-space: nowrap; }
-.ssr-field-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
-.ssr-field-actions button { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 13px; cursor: pointer; font: 900 .88rem/1 'Noto Sans KR', sans-serif; }
-#ssr-clear { color: #475569; background: #e2e8f0; }
-#ssr-sample { color: #1d4ed8; background: #dbeafe; }
 .ssr-board-wrap, .ssr-history { min-height: 146px; padding: 16px; border: 2px solid #dbeafe; border-radius: 25px; background: rgba(255,255,255,.96); box-shadow: 0 10px 24px rgba(37,99,235,.08); }
 .ssr-board-label { margin: 0 0 11px; color: #64748b; font-size: .82rem; font-weight: 900; }
 .ssr-board { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; max-height: 176px; overflow-y: auto; padding: 3px; }

@@ -56,7 +56,9 @@ test('모바일과 접근성 계약을 유지한다', () => {
     assert.match(html, /id="ssr-status"[^>]*role="status"[^>]*aria-live="polite"/);
     assert.match(html, /id="ssr-play"[^>]*aria-pressed="false"/);
     assert.ok(css.includes('@media (max-width: 760px)'));
-    assert.ok(css.includes('min-height: 44px'));
+    assert.ok(css.includes('.ssr-play { width: 100%; min-height: 82px'));
+    assert.equal(html.includes('ssr-clear'), false);
+    assert.equal(html.includes('ssr-sample'), false);
     assert.ok(css.includes('@media (prefers-reduced-motion: reduce)'));
     assert.ok(game.includes("reduceMotion ? 'auto' : 'smooth'"));
     assert.ok(game.includes("section: $('reading-custom-maker')"));
