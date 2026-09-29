@@ -342,6 +342,9 @@ window.addEventListener('popstate', () => {
 
 let activeUnitKey = 'vowel';
 let currentUserId = null;
+window.getAiedueKoreanCurrentUserId = function getAiedueKoreanCurrentUserId() {
+    return currentUserId || auth?.currentUser?.uid || null;
+};
 let currentUserName = '이름 없음';
 let currentUserIcon = '🐻';
 let currentUserCoins = 0;
@@ -9399,6 +9402,31 @@ function startCurricularRetryMode(item, index, firstResult = {}) {
     showAiedueAutoToast('한 번 더 써봐요', '다시 적어서 확인 버튼을 눌러요.', 4200);
     renderDictationSessionList();
 }
+function normalizeCurricularAiText(text) {
+    return String(text || '')
+        .normalize('NFC')
+        .replace(/[\s\u00a0]+/g, '')
+        .replace(/[\u200b-\u200d\ufeff]/g, '')
+        .replace(/[^가-힣0-9A-Za-z]/g, '')
+        .toLowerCase();
+}
+
+function getCurricularExpectedTextForAi(item = {}, difficulty = 1) {
+    if (Number(difficulty) === 3) return item.answer || item.sentence || item.word || '';
+    return item.answer || item.word || item.sentence || '';
+}
+
+function decideCurricularAiCorrect(parsed = {}, item = {}, difficulty = 1) {
+    const expected = getCurricularExpectedTextForAi(item, difficulty);
+    const normalizedExpected = normalizeCurricularAiText(expected);
+    const normalizedWritten = normalizeCurricularAiText(parsed.written || parsed.studentAnswer || '');
+    if (!normalizedExpected || !normalizedWritten) return false;
+    if (Number(difficulty) === 2) {
+        return normalizedWritten === normalizedExpected || normalizedWritten.includes(normalizedExpected);
+    }
+    return normalizedWritten === normalizedExpected;
+}
+
 async function gradeCurricularCanvasItemWithAi(index) {
     const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
     const item = activeDictationSession?.items?.[index];
@@ -9414,12 +9442,13 @@ async function gradeCurricularCanvasItemWithAi(index) {
         const dataUrl = canvas.toDataURL('image/png');
         const base64 = dataUrl.split(',')[1] || '';
         const difficulty = Number(item.difficulty || activeDictationSession?.difficulty || 1);
-        const target = { index: index + 1, difficulty, answer: item.answer || item.sentence || item.word, sentence: item.sentence || '', word: item.word || '' };
-        const prompt = `초등학생이 태블릿 캔버스의 빈 칸에 손글씨로 받아쓴 이미지를 AI 시각 분석으로 채점하세요. 화면에는 정답 미리보기가 없었고, 학생은 스피커로 들은 내용을 썼습니다.\n- 1단: 정답 단어와 같으면 correct=true\n- 2단: 문장 속 빈칸 정답 단어와 같으면 correct=true\n- 3단: 정답 문장 전체와 의미/철자가 거의 같으면 correct=true\n흐린 획/삐뚤어진 초등학생 손글씨를 감안하되, 다른 단어나 누락이 있으면 false입니다.\n문제(JSON): ${JSON.stringify(target)}\n반드시 JSON만 출력하세요. 형식: {"written":"학생이 쓴 답","correct":true,"analysis":"판단 근거 1문장"}`;
+        const expectedText = getCurricularExpectedTextForAi(item, difficulty);
+        const target = { index: index + 1, difficulty, expected: expectedText, answer: item.answer || item.sentence || item.word, sentence: item.sentence || '', word: item.word || '' };
+        const prompt = `초등학생이 태블릿 캔버스 빈 칸에 손글씨로 받아쓴 이미지를 채점합니다. 먼저 이미지에 실제로 보이는 학생 손글씨만 최대한 그대로 전사한 뒤 정답과 비교하세요. 정답을 보고 추측해서 written을 채우면 안 됩니다.\n\n채점 규칙:\n- 캔버스 밖 UI, 버튼, 예시 문구는 무시하고 진한 손글씨 획만 봅니다.\n- 흐리거나 삐뚤어진 초등학생 손글씨는 허용하지만, 다른 글자/누락/추가 글자가 있으면 오답입니다.\n- 1단/2단은 expected 단어와 철자가 같아야 correct=true입니다.\n- 3단은 expected 문장 전체의 철자가 같아야 correct=true입니다. 의미만 비슷하면 오답입니다.\n- 읽기 어렵거나 확신이 낮으면 correct=false로 두고 written에는 보이는 글자를 적으세요.\n\n문제(JSON): ${JSON.stringify(target)}\n반드시 JSON만 출력하세요. 형식: {"written":"학생 손글씨 전사","correct":false,"confidence":0.0,"analysis":"판단 근거 1문장"}`;
         const raw = await callKoreanAiGenerate(prompt, { imageBase64: base64, imageMime: 'image/png', printTimeout: '4m' });
         const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
         const isRetryAttempt = item.retryMode === true;
-        const rawCorrect = parsed.correct === true;
+        const rawCorrect = parsed.correct === true && decideCurricularAiCorrect(parsed, item, difficulty);
         const result = {
             sentence: item.sentence || item.answer || item.word,
             answer: item.answer || item.sentence || item.word,
