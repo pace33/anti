@@ -1942,6 +1942,29 @@ body.korean-learning-view-open .premium-card { max-height: calc(100dvh - 24px); 
     user-select: none;
     cursor: crosshair;
 }
+/* Each retry button belongs to one syllable, not the whole word. */
+.trace-syllable-stage { position: relative; width: 100%; }
+.trace-syllable-stage > canvas { display: block; }
+.trace-syllable-reset {
+    position: absolute;
+    transform: translateX(-100%);
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #fdba74;
+    border-radius: 50%;
+    background: #fffdf8;
+    color: #9a4b12;
+    cursor: pointer;
+    touch-action: manipulation;
+    z-index: 1;
+}
+.trace-syllable-reset:hover { background: #ffedd5; }
+.trace-syllable-reset:focus-visible { outline: 3px solid #45963a; outline-offset: 2px; }
+.trace-syllable-reset:active { background: #fed7aa; }
+
 .trace-writing-canvas.double-row {
     height: 440px;
 }

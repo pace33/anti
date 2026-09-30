@@ -12785,8 +12785,11 @@ function initializeLetterWritingActivity() {
         }
         if (feedback) feedback.textContent = '';
         if (canvas) {
+            canvas._cancelTraceDrawing?.();
             canvas.dataset.promptVersion = String(Number(canvas.dataset.promptVersion || 0) + 1);
-            canvas.dataset.guide = writingGuideForPractice(text, kind === 'sentence');
+            canvas.dataset.guide = kind === 'word' ? Array.from(text).join('/') : writingGuideForPractice(text, true);
+            delete canvas.dataset.completed;
+            delete canvas.dataset.traceCompletionNotified;
             canvas.dataset.spokenText = text;
             delete canvas.dataset.traceSpokenPrompt;
             canvas._traceCompleted = {};
@@ -12885,10 +12888,21 @@ function initializeLetterWritingActivity() {
         const gradeButton = isWord ? wordGradeButton : sentenceGradeButton;
         const targetCanvas = document.getElementById(`letter-${kind}-writing-canvas`);
         const promptVersion = targetCanvas.dataset.promptVersion || '0';
-        if (practiceCompletionPending[kind].has(promptVersion)) return;
-        practiceCompletionPending[kind].add(promptVersion);
+        const retryVersion = targetCanvas.dataset.traceRetryVersion || '0';
+        const completionKey = `${promptVersion}:${retryVersion}`;
+        const attemptIsCurrent = () => targetCanvas.dataset.promptVersion === promptVersion
+            && (targetCanvas.dataset.traceRetryVersion || '0') === retryVersion
+            && isTraceWritingComplete(targetCanvas);
+        if (practiceCompletionPending[kind].has(completionKey)) return;
+        practiceCompletionPending[kind].add(completionKey);
         const completedText = embeddedPracticeState[kind].text;
         const completedLevel = embeddedPracticeState[kind].level;
+        const advance = () => {
+            if (!attemptIsCurrent()) return;
+            const exampleGroups = isWord ? wordExamplesByLevel : sentenceExamplesByLevel;
+            const examples = exampleGroups[completedLevel] || exampleGroups.low;
+            setEmbeddedPractice(kind, pickDifferentPracticeItem(examples, completedText));
+        };
         try {
             const grading = gradeCompletedWriting({
                 targetCanvas,
@@ -12905,23 +12919,15 @@ function initializeLetterWritingActivity() {
             });
             if (autoAdvance) {
                 await waitForNextWritingPrompt(900);
-                if (targetCanvas.dataset.promptVersion === promptVersion) {
-                    const exampleGroups = isWord ? wordExamplesByLevel : sentenceExamplesByLevel;
-                    const examples = exampleGroups[completedLevel] || exampleGroups.low;
-                    setEmbeddedPractice(kind, pickDifferentPracticeItem(examples, completedText));
-                }
+                advance();
                 void grading;
                 return;
             }
             const completed = await grading;
-            if (!completed) return;
-            await advanceAfterSuccessfulWriting(gradeButton, () => {
-                const exampleGroups = isWord ? wordExamplesByLevel : sentenceExamplesByLevel;
-                const examples = exampleGroups[completedLevel] || exampleGroups.low;
-                setEmbeddedPractice(kind, pickDifferentPracticeItem(examples, completedText));
-            });
+            if (!completed || !attemptIsCurrent()) return;
+            await advanceAfterSuccessfulWriting(gradeButton, advance);
         } finally {
-            practiceCompletionPending[kind].delete(promptVersion);
+            practiceCompletionPending[kind].delete(completionKey);
         }
     }
 
@@ -13033,7 +13039,10 @@ function initializeWordWritingQuizActivity() {
     }
 
     function drawGuide() {
-        canvas.dataset.guide = mode === 'sentence' ? guideTextForWriting(currentWord) : (currentWord || '');
+        canvas._cancelTraceDrawing?.();
+        if (mode === 'word') canvas.dataset.traceSyllableReset = '';
+        else delete canvas.dataset.traceSyllableReset;
+        canvas.dataset.guide = mode === 'word' ? Array.from(currentWord).join('/') : (mode === 'sentence' ? guideTextForWriting(currentWord) : (currentWord || ''));
         canvas._traceCompleted = {};
         canvas._tracePaths = [];
         initializeTraceWritingCanvas(canvas);
@@ -21033,7 +21042,72 @@ function drawTraceWritingGuide(target) {
         cells.push({ index: i, char, bx, by, boxW, boxH, strokes });
     });
     canvas._traceCells = cells;
+    syncTraceSyllableResetButtons(canvas);
 }
+
+function syncTraceSyllableResetButtons(canvas) {
+    const enabled = canvas.dataset.traceSyllableReset !== undefined;
+    let stage = canvas.closest('.trace-syllable-stage');
+    if (!enabled) {
+        stage?.querySelectorAll('.trace-syllable-reset').forEach((button) => button.remove());
+        return;
+    }
+    if (!stage) {
+        stage = document.createElement('div');
+        stage.className = 'trace-syllable-stage';
+        canvas.before(stage);
+        stage.append(canvas);
+    }
+    const cells = canvas._traceCells || [];
+    const signature = cells.map((cell) => cell.char).join('/');
+    if (stage.dataset.guide !== signature || stage.querySelectorAll('button').length !== cells.length) {
+        stage.querySelectorAll('.trace-syllable-reset').forEach((button) => button.remove());
+        cells.forEach((cell) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'trace-syllable-reset';
+            button.dataset.cellIndex = String(cell.index);
+            button.setAttribute('aria-label', `${cell.index + 1}번째 음절 ${cell.char} 다시 쓰기`);
+            button.title = `${cell.char} 다시 쓰기`;
+            button.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M20 12a8 8 0 1 0-2.3 5.7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                window.resetTraceWritingSyllable(canvas, cell.index);
+            });
+            stage.append(button);
+        });
+        stage.dataset.guide = signature;
+    }
+    const rect = canvas.getBoundingClientRect();
+    stage.querySelectorAll('.trace-syllable-reset').forEach((button, index) => {
+        const cell = cells[index];
+        button.style.left = `calc(${(cell.bx + cell.boxW) / rect.width * 100}% - 6px)`;
+        button.style.top = `calc(${cell.by / rect.height * 100}% + 6px)`;
+    });
+}
+
+window.resetTraceWritingSyllable = function resetTraceWritingSyllable(target, cellIndex) {
+    const canvas = getTraceWritingCanvas(target);
+    if (!canvas || canvas.dataset.traceSyllableReset === undefined) return false;
+    const cell = (canvas._traceCells || []).find((item) => item.index === cellIndex);
+    if (!cell) return false;
+    canvas._cancelTraceDrawing?.();
+    canvas._traceCompleted = canvas._traceCompleted || {};
+    delete canvas._traceCompleted[cellIndex];
+    canvas._tracePaths = (canvas._tracePaths || []).filter((path) =>
+        path.cellIndex !== undefined ? path.cellIndex !== cellIndex : !tracePointInBox(path[0], cell));
+    // Invalidate next-word transitions without orphaning this prompt's in-flight grading.
+    canvas.dataset.traceRetryVersion = String(Number(canvas.dataset.traceRetryVersion || 0) + 1);
+    delete canvas.dataset.completed;
+    delete canvas.dataset.traceCompletionNotified;
+    delete canvas.dataset.traceSpokenPrompt;
+    const feedbackId = canvas.id === 'letter-word-writing-canvas' ? 'letter-word-feedback' : 'word-write-feedback';
+    const feedback = document.getElementById(feedbackId);
+    if (feedback) feedback.textContent = '';
+    drawTraceWritingGuide(canvas);
+    drawSavedTracePaths(canvas.getContext('2d'), canvas._tracePaths);
+    return true;
+};
 
 function drawSavedTracePaths(ctx, paths) {
     paths.forEach((path) => {
@@ -21243,6 +21317,7 @@ function initializeTraceWritingCanvas(target) {
         if (activeTrace && traceDidCompleteStroke(activePath, activeTrace.stroke)) {
             canvas._tracePaths = canvas._tracePaths || [];
             canvas._traceCompleted = canvas._traceCompleted || {};
+            activePath.cellIndex = activeTrace.cellIndex;
             canvas._tracePaths.push(activePath);
             canvas._traceCompleted[activeTrace.cellIndex] = activeTrace.strokeIndex + 1;
             const completedCell = (canvas._traceCells || []).find((item) => item.index === activeTrace.cellIndex);
@@ -21292,10 +21367,19 @@ function initializeTraceWritingCanvas(target) {
         canvas.addEventListener('touchend', stop);
         canvas.addEventListener('touchcancel', stop);
     }
+    canvas._cancelTraceDrawing = () => {
+        drawing = false;
+        activeTrace = null;
+        activePath = [];
+        if (activePointerId !== null) {
+            try { canvas.releasePointerCapture(activePointerId); } catch {}
+        }
+        activePointerId = null;
+    };
     canvas.dataset.ready = 'true';
     refreshGuide();
     window.addEventListener('resize', () => {
-        if (document.getElementById('trace-writing-canvas') === canvas) refreshGuide();
+        if (canvas.offsetParent !== null) refreshGuide();
     });
 }
 
@@ -21338,6 +21422,8 @@ function initializeVisibleTraceWritingCanvases() {
 window.resetTraceWritingCanvas = function resetTraceWritingCanvas(target) {
     const canvas = getTraceWritingCanvas(target);
     if (canvas) {
+        canvas._cancelTraceDrawing?.();
+        canvas.dataset.traceRetryVersion = String(Number(canvas.dataset.traceRetryVersion || 0) + 1);
         canvas._traceCompleted = {};
         canvas._tracePaths = [];
         delete canvas.dataset.rewarded;

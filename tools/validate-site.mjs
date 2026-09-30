@@ -309,7 +309,7 @@ assert(appCss.includes('.my-korean-unit-tab {flex:1 1 0;') && appCss.includes('f
 assert(appCss.includes('#my-korean-section .stitched {margin-top:calc(10rem - 1cm) !important;}'), '단원 메뉴와 내용 사이의 간격이 1cm 줄어들지 않았습니다.');
 assert(app.includes("'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ'") && app.includes("horizontalVowels.includes(tile.vowel) ? 'horizontal' : 'vertical'"), '복합 모음 쓰기 칸이 초성 아래에 배치되지 않습니다.');
 assert(app.includes("completeEmbeddedWriting('word', { autoAdvance: true })") && app.includes("completeEmbeddedWriting('sentence', { autoAdvance: true })"), '2단계 낱말·문장 쓰기가 완료 후 자동 전환되지 않습니다.');
-assert(app.includes('canvas.dataset.promptVersion = String(Number(canvas.dataset.promptVersion || 0) + 1)') && app.includes('if (targetCanvas.dataset.promptVersion === promptVersion)'), '자동 전환과 비동기 저장의 문제 구분 처리가 없습니다.');
+assert(app.includes('canvas.dataset.promptVersion = String(Number(canvas.dataset.promptVersion || 0) + 1)') && app.includes("(targetCanvas.dataset.traceRetryVersion || '0') === retryVersion") && app.includes('&& isTraceWritingComplete(targetCanvas)'), '자동 전환과 비동기 저장의 문제 구분 처리가 없습니다.');
 assert(app.includes('function getUnit9WordWritingGuide(word)') && app.includes("letters.length === 1 ? `${word}/${word}` : letters.join('/')"), '겹받침 낱말 쓰기가 글자 수에 맞게 칸을 나누지 않습니다.');
 assert(app.includes('data-guide="${getUnit9WordWritingGuide(word)}"') && !app.includes('data-guide="${word}/${word}"'), '두 글자 이상인 겹받침 낱말이 한 칸에 통째로 반복됩니다.');
 assert(app.includes('function getUnit9WordWritingColumnCount(word)') && app.includes('data-grid-cols="${getUnit9WordWritingColumnCount(word)}"'), '세 글자 겹받침 낱말의 쓰기 칸 수가 명시되지 않았습니다.');

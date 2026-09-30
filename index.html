@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260928-drawing-label-v1">
+    <link rel="stylesheet" href="app.css?v=20260930-syllable-reset-v1">
     <link rel="stylesheet" href="shape-zoo.css?v=20260921-stage-card-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260915-time-quiz-readability-v3">
@@ -1057,7 +1057,7 @@
                     <div class="trace-canvas-wrap mt-8">
                         <div class="trace-canvas-title">✍️ 낱말 따라쓰기</div>
                         <p id="letter-word-output" class="embedded-practice-output word"></p>
-                        <canvas id="letter-word-writing-canvas" class="trace-writing-canvas embedded-writing-canvas" data-guide="나무" data-trace-hide-label data-trace-speak-once></canvas>
+                        <canvas id="letter-word-writing-canvas" class="trace-writing-canvas embedded-writing-canvas" data-guide="나/무" data-trace-syllable-reset data-trace-hide-label data-trace-speak-once></canvas>
                         <div class="trace-canvas-help">낱말을 끝까지 쓰면 다음 낱말이 자동으로 나와요.</div>
                         <div id="letter-word-feedback" class="text-center text-2xl font-black mt-3 min-h-[2rem] text-green-600"></div>
                     </div>
@@ -1835,7 +1835,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20260929-tutorial-targets-v1"></script>
+    <script type="module" src="app.js?v=20260930-syllable-reset-v1"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260929-hangul-card-clean-v1"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260921-stage-card-v1"></script>
