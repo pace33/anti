@@ -100,8 +100,6 @@ export function buildStageTutorial(level, role) {
         }
         enter('repository', '단어 카드 저장소', `openSharedWordCardRepository('${info.route}')`, 'repository', '‘단어 카드 저장소’를 열어 보자. 낱말의 뜻과 그림이 담긴 카드를 모아 보는 곳이야.', '단어 카드 저장소를 열어 공유된 단어·설명·그림 카드를 확인해 보세요.');
         explore('repository-view', 'repository', ['#shared-word-card-content'], '카드가 보이면 하나를 눌러 안쪽을 살펴봐도 좋아. 카드가 없으면 아직 만들어진 공용 카드가 없는 거야.', '게시된 카드가 있으면 눌러 상세 내용을 탐색할 수 있습니다. 아직 카드가 없다면 빈 목록을 확인한 뒤 계속 진행하세요.');
-        enter('library', '에이두 도서관', 'openAiedueLab()', 'library', '도서관은 이제 에이두 연구실 안에 있어. 연구실을 열어 도서관 카드를 찾아보자.', '에이두 도서관은 연구실 카드에서 여는 구조입니다.');
-        explore('library-view', 'library', ['#modal-message'], '연구실 안의 ‘에이두 도서관’ 카드를 누르면 책 목록을 볼 수 있어.', '연구실 모달 안의 도서관 카드를 확인합니다. 실제 독서는 카드를 눌러 진행합니다.');
         enter('game', level === 3 ? '어휘 게임' : '문해력 탐정단', level === 3 ? '#stage-3-game-word-card' : '#stage-4-game-literacy', level === 3 ? 'word-game' : 'detective',
             level === 3 ? '‘어휘 게임’을 눌러 카드 게임 준비 화면을 보자.' : '‘문해력 탐정단’을 눌러 사건을 푸는 게임 화면을 보자.',
             level === 3 ? '어휘 게임을 열어 어휘 카드로 하는 게임의 준비 화면을 확인합니다.' : '문해력 탐정단을 열어 사건 지문과 추리 답변 화면을 확인합니다.');
@@ -112,7 +110,6 @@ export function buildStageTutorial(level, role) {
     add('finish', 'hub', [], '버튼들을 직접 둘러봤어! 이제 하고 싶은 활동 하나를 골라 시작하자. 다시 보고 싶으면 홈의 ‘처음해봐요’를 눌러 줘.', '실제 화면 탐색을 마쳤습니다. 학생에게 필요한 활동 하나를 골라 시작해 주세요. 홈의 처음해봐요에서 다시 볼 수 있습니다.');
     for (const step of steps) {
         if (step.id.endsWith('-repository-view')) step.allow = ['#shared-word-card-content .shared-word-card-tile', '#shared-word-card-content .shared-word-card-back', '#shared-word-card-content .shared-word-card-sentence', '#shared-word-card-content .shared-word-card-tts'];
-        if (step.id.endsWith('-library-view')) step.allow = ['#aiedue-library-content .aiedue-book-card', '#aiedue-library-content .aiedue-book-nav button', '#aiedue-library-content [onclick="refreshAiedueLibrary()"]'];
     }
     return steps;
 }

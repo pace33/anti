@@ -17,8 +17,8 @@ import {
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
-import { installStageTutorial } from './stage-tutorial.js?v=20260929-tutorial-targets-v1';
-import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20260929-tutorial-targets-v1';
+import { installStageTutorial } from './stage-tutorial.js?v=20261001-stage-tour-no-library-v1';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20261001-stage-tour-no-library-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1';
@@ -24013,7 +24013,7 @@ window.openStageTutorial = function(level) {
     const assertCurrent = () => {
         if (!running || stageTutorialSession() !== session || (currentUserRole === 'student' && !unlockedLevels.includes(level))) throw new Error('로그인 또는 단계 이용 권한이 바뀌었어요. 안내를 닫고 다시 시작해 주세요.');
     };
-    let view = '', ownsModal = false, ownsCamera = false, ownsLibrary = false, ownsRepository = false;
+    let view = '', ownsModal = false, ownsCamera = false, ownsRepository = false;
     const originals = { dictation: activeDictationSession, dictationItem: activeDictationItem, literacy: activeLiteracyQuestion,
         checked: userLiteracyAnswerChecked, limit: isLiteracyLimitBreakMode, reading: activeReadingCategory, slow: readingSlowMode };
     const closeScreens = () => {
@@ -24023,7 +24023,6 @@ window.openStageTutorial = function(level) {
             modal.classList.add('hidden'); modal.setAttribute('aria-hidden', 'true'); ownsCamera = false;
             document.body.classList.remove('modal-open');
         }
-        if (ownsLibrary) { window.closeAiedueLibrary(); ownsLibrary = false; }
         if (ownsRepository) { window.closeSharedWordCardModal(); ownsRepository = false; }
     };
     async function openView(next) {
@@ -24070,7 +24069,6 @@ window.openStageTutorial = function(level) {
         else if (next === 'limit') window.openLiteracyAdventureGame();
         else if (next === 'literacy-record') { ownsModal = true; window.openMyLiteracyRecord(); }
         else if (next === 'repository') { ownsRepository = true; await window.openSharedWordCardRepository(info.route); }
-        else if (next === 'library') { ownsModal = true; window.openAiedueLab(); }
         else if (next === 'word-game') window.openAiedueLabWordCardGame();
         else if (next === 'detective') window.openLiteracyAdventureGame();
         else throw new Error('안내 화면을 찾지 못했어요.');

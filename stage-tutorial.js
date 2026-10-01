@@ -1,5 +1,5 @@
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260915-real-stage-tour-v5';
-import { buildStageTutorial, STAGE_TUTORIALS } from './stage-tutorial-core.mjs?v=20260929-tutorial-targets-v1';
+import { buildStageTutorial, STAGE_TUTORIALS } from './stage-tutorial-core.mjs?v=20261001-stage-tour-no-library-v1';
 
 export function installStageTutorial(actions, level, role) {
     const steps = buildStageTutorial(level, role);

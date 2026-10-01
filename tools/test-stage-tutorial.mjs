@@ -54,6 +54,20 @@ test('stage 1 tutorial matches the current drawing dashboard buttons', () => {
 });
 
 const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
+for (const role of ['teacher', 'student']) for (const level of [3, 4]) {
+    test(`${role} stage ${level}: repository continues to the game without library or lab guidance`, () => {
+        const steps = buildStageTutorial(level, role);
+        assert.doesNotMatch(JSON.stringify(steps), /library|openAiedueLab\(|에이두 도서관|연구실/);
+        const repositoryIndex = steps.findIndex(step => step.id === `stage-${level}-repository`);
+        assert.ok(repositoryIndex >= 0);
+        assert.deepEqual(steps.slice(repositoryIndex).map(step => step.id), [
+            `stage-${level}-repository`, `stage-${level}-repository-view`,
+            `stage-${level}-game`, `stage-${level}-game-view`, `stage-${level}-finish`
+        ]);
+        assert.equal(steps[repositoryIndex + 2].targets[0], level === 3 ? '#stage-3-game-word-card' : '#stage-4-game-literacy');
+    });
+}
+
 const adapterSource=app.slice(app.indexOf('function stageTutorialSession()'));
 function fixture(role='student',level=1){
     const calls=[];let actions,step,installed=0;
