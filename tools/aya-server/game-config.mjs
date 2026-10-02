@@ -8,12 +8,12 @@ export const MAPS = Object.freeze([
   {id:'rocket-arena', title:'Rocket Arena', file:'maps/rocket-arena.rbxlx', description:'고전 로켓 아레나의 높이 쌓인 발판', source:'Roblox 공식 공개 원본 · MIT', mode:'탐험'},
 ]);
 export const AVATARS = Object.freeze([
-  {id:'classic', title:'클래식', skin:'#ffcc33', torso:'#4caf50', legs:'#3366cc'},
-  {id:'sprout', title:'새싹 친구', skin:'#ffd8b1', torso:'#80d87b', legs:'#365c39'},
-  {id:'space', title:'우주 탐험가', skin:'#ffd8b1', torso:'#735bdf', legs:'#263454'},
-  {id:'ocean', title:'바다 친구', skin:'#f4c7a1', torso:'#43c6d9', legs:'#235886'},
-  {id:'rose', title:'장미 친구', skin:'#ffd8b1', torso:'#f184b3', legs:'#814766'},
-  {id:'flame', title:'불꽃 친구', skin:'#dba877', torso:'#e96a49', legs:'#473a37'},
+  {id:'classic', title:'브라운 캐주얼', skin:'#e1ded8', torso:'#4caf50', legs:'#30393d', hair:'swept', hairColor:'#6e3f20', jacket:'#22282d'},
+  {id:'sprout', title:'새싹 재킷', skin:'#ebe3d9', torso:'#80d87b', legs:'#365c39', hair:'bun', hairColor:'#92572c', jacket:'#245f50'},
+  {id:'space', title:'우주 스트리트', skin:'#e8e2dc', torso:'#735bdf', legs:'#263454', hair:'swept', hairColor:'#513122', jacket:'#252738'},
+  {id:'ocean', title:'바다 재킷', skin:'#e7e3dc', torso:'#43c6d9', legs:'#6b4c5a', hair:'bun', hairColor:'#92502c', jacket:'#236979'},
+  {id:'rose', title:'장미 캐주얼', skin:'#eee5de', torso:'#f184b3', legs:'#814766', hair:'bun', hairColor:'#6c3d27', jacket:'#664251'},
+  {id:'flame', title:'불꽃 스트리트', skin:'#dcc6ad', torso:'#e96a49', legs:'#473a37', hair:'swept', hairColor:'#4a2c20', jacket:'#303234'},
 ]);
 export function avatarNativeSettings(id) {
   const a = AVATARS.find(x => x.id === id) || AVATARS[0];

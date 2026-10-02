@@ -12,7 +12,7 @@ class MotionTests(unittest.TestCase):
   for t in [0,1,10]:
    p=pose(0,99,t,'idle');self.assertEqual(p['rh'],0);self.assertEqual(p['lh'],0);self.assertLess(abs(p['ra']),.08);self.assertLess(abs(p['bob']),.04)
  def test_jump_fall_and_sit_are_distinct(self):
-  self.assertLess(pose(0,0,0,'jump')['ra'],-1.5);self.assertNotEqual(pose(0,0,0,'fall')['ra'],pose(0,0,0,'jump')['ra']);self.assertLess(pose(0,0,0,'sit')['rh'],-1)
+  jump=pose(0,0,0,'jump');self.assertAlmostEqual(jump['ra'],-math.pi);self.assertAlmostEqual(jump['la'],-math.pi);self.assertNotEqual(pose(0,0,0,'fall')['ra'],jump['ra']);self.assertLess(pose(0,0,0,'sit')['rh'],-1)
  def test_state_transitions(self):
   self.assertEqual(classify(0,0,False,False),'idle');self.assertEqual(classify(16,0,False,False),'walk');self.assertEqual(classify(16,12,True,False),'jump');self.assertEqual(classify(2,-12,True,False),'fall');self.assertEqual(classify(0,0,False,True),'sit')
  def test_pose_bounds_and_no_external_animations(self):

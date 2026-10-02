@@ -313,7 +313,7 @@ export function makeServer({
         const peer=[...peers.values()].find(p=>p.account?.userId===id);
         if(!peer)return json(res,404,{detail:'Verified player not connected'});
         const a=config.avatar(peer.account.uid),rgb=hex=>{const n=parseInt(hex.slice(1),16);return [(n>>16)&255,(n>>8)&255,n&255].map(x=>x/255);};
-        return json(res,200,{head:rgb(a.skin),torso:rgb(a.torso),legs:rgb(a.legs)});
+        return json(res,200,{id:a.id,head:rgb(a.skin),torso:rgb(a.torso),legs:rgb(a.legs),hair:a.hair,hairColor:rgb(a.hairColor),jacket:rgb(a.jacket)});
       }
       if (u.pathname === '/host-config') {
         if (!isInternal || !hostKey || req.headers['x-aya-host-key'] !== hostKey)

@@ -16,7 +16,7 @@ local function motionPose(speed, phase, now, state)
   p.ra=swing*0.82;p.la=-p.ra;p.rh=-swing*0.95;p.lh=-p.rh
   p.bob=(1-math.cos(phase*2))*0.032*weight;p.pitch=-0.045*weight
  elseif state=='jump' then
-  p.ra=-2.05;p.la=-2.05;p.rh=-0.3;p.lh=0.15;p.pitch=-0.035;p.roll=0.06
+  p.ra=-math.pi;p.la=-math.pi;p.rh=-0.3;p.lh=0.15;p.pitch=-0.035;p.roll=0.10
  elseif state=='fall' then
   p.ra=-1.05;p.la=-1.05;p.rh=0.08;p.lh=-0.08;p.roll=0.18
  elseif state=='sit' then
@@ -126,9 +126,11 @@ while true do
     local name=tostring(state)
     air=string.find(name,'Jumping')~=nil or string.find(name,'Freefall')~=nil
     local poseState=classifyMotion(rig.speed,vertical,air,rig.humanoid.Sit)
+    if poseState=='jump' then rig.raisedUntil=now+0.3 end
+    if rig.raisedUntil and now<rig.raisedUntil then poseState='jump' end
     rig.phase=(rig.phase+rig.speed*dt*0.66)%(math.pi*2)
     local pose=motionPose(rig.speed,rig.phase,now,poseState)
-    local alpha=1-math.exp(-14*dt)
+    local alpha=poseState=='jump' and 1 or (1-math.exp(-14*dt))
     writeJoint(rig.joints.ra,pose.ra,pose.roll,alpha);writeJoint(rig.joints.la,pose.la,-pose.roll,alpha)
     writeJoint(rig.joints.rh,pose.rh,0,alpha);writeJoint(rig.joints.lh,pose.lh,0,alpha)
     if rig.rootJoint then
@@ -139,7 +141,10 @@ while true do
     local logInterval=(poseState=='jump' or poseState=='fall') and 0.1 or 0.5
     if now-rig.lastLog>=logInterval then
      rig.lastLog=now
-     print('ROBL_MOTION '..http:JSONEncode({name=player.Name,state=poseState,speed=rig.speed,phase=rig.phase,ra=upVector(rig.torso,rig.joints.ra.limb),la=upVector(rig.torso,rig.joints.la.limb),rh=upVector(rig.torso,rig.joints.rh.limb),lh=upVector(rig.torso,rig.joints.lh.limb)}))
+     local head=rig.character:FindFirstChild('Head') or rig.torso
+     local look=rig.character:FindFirstChild('AiedueLook')
+     local rightHand=look and look:FindFirstChild('RightHand');local leftHand=look and look:FindFirstChild('LeftHand')
+     print('ROBL_MOTION '..http:JSONEncode({name=player.Name,state=poseState,speed=rig.speed,phase=rig.phase,ra=upVector(rig.torso,rig.joints.ra.limb),la=upVector(rig.torso,rig.joints.la.limb),rh=upVector(rig.torso,rig.joints.rh.limb),lh=upVector(rig.torso,rig.joints.lh.limb),headY=head.Position.Y,handRY=rightHand and rightHand.Position.Y or (rig.joints.ra.limb.CFrame*Vector3.new(0,-1.04,0)).Y,handLY=leftHand and leftHand.Position.Y or (rig.joints.la.limb.CFrame*Vector3.new(0,-1.04,0)).Y}))
     end
    end)
    if not ok then print('ROBL_MOTION_ERROR '..player.Name..' '..tostring(err));release(player) end
