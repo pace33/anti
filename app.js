@@ -389,6 +389,7 @@ let activeWordBankCameraStream = null;
 let pendingWordBankCameraReward = null;
 let pendingWordBankCameraAfterSave = null;
 let pendingCurricularWritingRoundStart = null;
+let wordBankCameraRevision = 0;
 let activeDictationPhotoFile = null;
 let activeDictationPhotoDataUrl = '';
 let activeDictationImageAnalysis = '';
@@ -9849,9 +9850,10 @@ function stopWordBankCamera() {
     if (video) video.srcObject = null;
 }
 
-function resetWordBankCameraModal() {
+function resetWordBankCameraModal({ preserveContext = false } = {}) {
+    wordBankCameraRevision += 1;
     pendingWordBankCameraReward = null;
-    pendingWordBankCameraAfterSave = null;
+    if (!preserveContext) pendingWordBankCameraAfterSave = null;
     pendingCurricularWritingRoundStart = null;
     const preview = document.getElementById('word-bank-camera-preview');
     const video = document.getElementById('word-bank-camera-video');
@@ -9942,6 +9944,7 @@ async function finalizeWordBankCameraRewardAfterClose() {
     }
 }
 window.closeWordBankCameraModal = async function closeWordBankCameraModal() {
+    wordBankCameraRevision += 1;
     const afterSave = pendingWordBankCameraAfterSave;
     const roundStart = afterSave === 'curricular-writing' && pendingCurricularWritingRoundStart?.ready
         ? { ...pendingCurricularWritingRoundStart, words: [...(pendingCurricularWritingRoundStart.words || [])] }
@@ -9979,6 +9982,10 @@ function renderWordBankCameraResult(words, duplicateCount = 0) {
 }
 
 async function processWordBankCameraPhoto(file, previewDataUrl = '') {
+    const revision = ++wordBankCameraRevision;
+    const afterSave = pendingWordBankCameraAfterSave;
+    const isCurrent = () => revision === wordBankCameraRevision;
+    pendingCurricularWritingRoundStart = null;
     const loadingToken = aieduLoading.start('에이두가 사진을 살펴보고 노트에 단어를 적고 있어요', 'dictation');
     let loadingSucceeded = false;
     const capture = document.getElementById('word-bank-camera-capture-btn');
@@ -9995,22 +10002,25 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         setWordBankCameraStatus('로딩중~', true);
         const normalized = await normalizeDictationPhotoFile(file, previewDataUrl);
         const dataUrl = normalized.dataUrl || previewDataUrl || await readImageFileAsDataUrl(normalized.file || file);
+        if (!isCurrent()) return;
         const analysisFile = normalized.file || file;
         if (preview && dataUrl) { preview.src = dataUrl; preview.classList.remove('hidden'); }
         if (video) video.classList.add('hidden');
         setWordBankCameraStatus('OCR+AI 분석중~~', true);
-        const useLegacyCurricularPhotoAnalysis = pendingWordBankCameraAfterSave === 'curricular-writing';
+        const useLegacyCurricularPhotoAnalysis = afterSave === 'curricular-writing';
         const [ocrText, aiText] = await Promise.all([
             runDictationOcr(analysisFile),
             analyzeDictationImageWithAi(dataUrl, { useLegacyImageModel: useLegacyCurricularPhotoAnalysis })
         ]);
+        if (!isCurrent()) return;
         const combined = ['[OCR]', ocrText, '[AI 사진 분석]', aiText].filter(Boolean).join('\n');
         const aiExtracted = await extractDictationWordsWithAi(combined, {
             limit: useLegacyCurricularPhotoAnalysis ? 10 : 40,
             useLegacyTextModel: useLegacyCurricularPhotoAnalysis
         });
+        if (!isCurrent()) return;
         const targetWordLimit = useLegacyCurricularPhotoAnalysis ? 10 : 40;
-        const sourceWords = pendingWordBankCameraAfterSave === 'curricular-writing'
+        const sourceWords = afterSave === 'curricular-writing'
             ? [...(aiExtracted.words || []), ...(aiExtracted.visibleCandidates || [])]
             : (aiExtracted.words || []);
         const candidateWords = Array.from(new Set(sourceWords.map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, targetWordLimit);
@@ -10020,19 +10030,11 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         if (!candidateWords.length) throw new Error('사진에서 저장할 단어를 찾지 못했어요. 글자가 잘 보이게 다시 찍어주세요.');
         mergeKoreanBank({ words: candidateWords });
         let curricularRound = null;
-        if (pendingWordBankCameraAfterSave === 'curricular-writing') {
+        if (afterSave === 'curricular-writing') {
             curricularRound = prepareCurricularWritingRound(candidateWords, newWords);
-            pendingCurricularWritingRoundStart = {
-                ready: true,
-                roundId: curricularRound.activeRoundId,
-                photoCapturedAt: curricularRound.photoCapturedAt,
-                words: curricularRound.activeWords || [],
-                photoWords: curricularRound.photoWords || [],
-                reviewWords: curricularRound.reviewWords || []
-            };
         }
         dictationPortfolio.captures = [sanitizeDictationCaptureRecord({
-            source: pendingWordBankCameraAfterSave === 'curricular-writing' ? 'curricular-writing-photo' : 'today-note-photo',
+            source: afterSave === 'curricular-writing' ? 'curricular-writing-photo' : 'today-note-photo',
             ocrText,
             aiAnalysis: aiText,
             words: candidateWords,
@@ -10044,28 +10046,41 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         }), ...(dictationPortfolio.captures || [])].slice(0, 5);
         dictationPortfolio.dictationLocked = false;
         await persistDictationData();
+        if (!isCurrent()) return;
+        if (curricularRound) {
+            pendingCurricularWritingRoundStart = {
+                ready: true,
+                roundId: curricularRound.activeRoundId,
+                photoCapturedAt: curricularRound.photoCapturedAt,
+                words: [...(curricularRound.activeWords || [])],
+                photoWords: [...(curricularRound.photoWords || [])],
+                reviewWords: [...(curricularRound.reviewWords || [])]
+            };
+        }
         updateDictationDashboardPreview();
         pendingWordBankCameraReward = { ready: true };
-        if (pendingWordBankCameraAfterSave === 'curricular-writing') {
+        if (afterSave === 'curricular-writing') {
             setWordBankCameraStatus('AI 2차 선별 완료! 2스텝으로 이동합니다.');
         } else {
             setWordBankCameraStatus('AI 2차 선별이 끝났어요!');
         }
-        renderWordBankCameraResult(pendingWordBankCameraAfterSave === 'curricular-writing' ? (dictationPortfolio.curricularWriting?.activeWords || candidateWords) : newWords, duplicateCount);
+        renderWordBankCameraResult(afterSave === 'curricular-writing' ? (curricularRound?.activeWords || candidateWords) : newWords, duplicateCount);
         loadingSucceeded = true;
-        if (pendingWordBankCameraAfterSave === 'curricular-writing') {
+        if (afterSave === 'curricular-writing') {
             setTimeout(() => {
                 const modal = document.getElementById('word-bank-camera-modal');
-                if (!modal?.classList.contains('hidden') && pendingCurricularWritingRoundStart?.ready) window.closeWordBankCameraModal();
-            }, 1400);
+                if (isCurrent() && !modal?.classList.contains('hidden') && pendingCurricularWritingRoundStart?.ready) window.closeWordBankCameraModal();
+            }, 0);
         }
     } catch (error) {
+        if (!isCurrent()) return;
+        pendingCurricularWritingRoundStart = null;
         console.error('word bank camera photo failed', error);
         setWordBankCameraStatus(error.message || '사진 분석에 실패했어요. 다시 찍어주세요.');
         retry?.classList.remove('hidden');
     } finally {
         aieduLoading.finish(loadingToken, loadingSucceeded);
-        if (capture) capture.disabled = false;
+        if (isCurrent() && capture) capture.disabled = false;
     }
 }
 
@@ -10089,7 +10104,7 @@ window.captureWordBankCameraPhoto = function captureWordBankCameraPhoto() {
 }
 
 window.retryWordBankCamera = function retryWordBankCamera() {
-    resetWordBankCameraModal();
+    resetWordBankCameraModal({ preserveContext: true });
     window.startWordBankCamera();
 }
 
@@ -10704,7 +10719,11 @@ async function normalizeDictationPhotoFile(file, preferredDataUrl = '') {
 
 window.triggerLessonPhotoCapture = function triggerLessonPhotoCapture() {
     if (typeof window.openDictationBankCamera === 'function') {
-        window.openDictationBankCamera();
+        const isCurricularWriting = ['dictation-activities-section', 'dictation-workspace-section'].some((id) => {
+            const section = document.getElementById(id);
+            return section && !section.classList.contains('hidden');
+        });
+        window.openDictationBankCamera({ afterSave: isCurricularWriting ? 'curricular-writing' : null });
         return;
     }
     const input = document.getElementById('lesson-photo-input');
