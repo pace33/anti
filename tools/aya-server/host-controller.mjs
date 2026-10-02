@@ -13,13 +13,26 @@ const key = fs
     "utf8",
   )
   .trim();
-const map = path.resolve(process.env.AYA_MAP_PATH || "test-park.rbxlx");
-const h = await (await fetch(origin + "/health")).json();
+const configReply=await fetch(origin+'/host-config',{headers:{'x-aya-host-key':key}});
+if(!configReply.ok)throw Error('Private map configuration unavailable');
+const {map: selectedMap}=await configReply.json();
+const map=path.resolve(selectedMap.path);
+const h=await(await fetch(origin+'/health')).json();
+if(h.switching && process.env.AYA_FORCE_RESTART!=='1'){console.log('Teacher map switch in progress');process.exit(0);}
 if (h.ready && h.hostConnected && process.env.AYA_FORCE_RESTART !== "1") {
   console.log("Existing 에이두 로블 host ready");
   process.exit(0);
 }
 if (h.players > 0) throw Error("Refusing to restart an occupied game");
+const lock=path.join(path.dirname(process.env.AYA_HOST_KEY_FILE||'/home/aiedue/aya-private-preview/host-key'),'.host-start.lock');
+if(fs.existsSync(lock)){
+  const pid=Number(fs.readFileSync(lock,'utf8'));
+  let alive=true;try{process.kill(pid,0);}catch(e){alive=e.code!=='ESRCH';}
+  if(alive)throw Error('Host startup already in progress');
+  fs.unlinkSync(lock);
+}
+const fd=fs.openSync(lock,'wx',0o600);fs.writeFileSync(fd,String(process.pid));fs.closeSync(fd);
+try {
 let info;
 for (let i = 0; i < 40; i++) {
   try {
@@ -130,20 +143,21 @@ try {
     state = await evaluate(
       "({code:document.getElementById('srv-connect-code')?.textContent?.trim(),log:document.getElementById('srv-log')?.textContent,error:document.getElementById('srv-error')?.textContent})",
     );
-    if (state.code && state.log?.includes("Server ready. Keep this tab open."))
+    if (state.code && state.log?.includes("Server ready. Keep this tab open.") && state.log.includes('ROBL_MAP_READY '+selectedMap.id))
       break;
     if (
       state.error ||
-      /Aborted\(|Failed to start|RuntimeError/.test(state.log || "")
+      /Aborted\(|Failed to start|RuntimeError|TextXmlParser::parse - Unknown tag/.test(state.log || "")
     )
       throw Error("Native host startup failed: " + (state.error || ""));
     await new Promise((r) => setTimeout(r, 2000));
   }
-  if (!state?.code || !state.log?.includes("Server ready. Keep this tab open."))
+  if (!state?.code || !state.log?.includes("Server ready. Keep this tab open.") || !state.log.includes('ROBL_MAP_READY '+selectedMap.id))
     throw Error("Native host readiness timeout");
   const ready = await fetch(origin + "/host-ready", {
     method: "POST",
-    headers: { "x-aya-host-key": key },
+    headers: { "x-aya-host-key": key, 'Content-Type':'application/json' },
+    body:JSON.stringify({mapId:selectedMap.id}),
   });
   if (!ready.ok) throw Error("Readiness publication failed");
   console.log(
@@ -156,4 +170,7 @@ try {
   );
 } finally {
   ws.close();
+}
+} finally {
+  if(fs.existsSync(lock) && fs.readFileSync(lock,'utf8')===String(process.pid))fs.unlinkSync(lock);
 }

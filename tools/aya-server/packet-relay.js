@@ -79,6 +79,10 @@
               peers.delete(m.connectionId);
               dispatch("close", m.connectionId);
             }
+            if (m.type === 'map-changing') {
+              if(typeof window!=='undefined')window.parent.postMessage({type:'robl-map-changing'},location.origin);
+              socket.close();
+            }
             if (m.type === "host-left") socket.close();
             return;
           }

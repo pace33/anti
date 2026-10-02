@@ -5,6 +5,8 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, WebSocket } from "ws";
 import { createAccountVerifier } from "./account.mjs";
+import { createGameConfig, AVATARS, avatarNativeSettings } from "./game-config.mjs";
+import { execFile } from "node:child_process";
 export function joinSettings(url, origin, identity) {
   const p = url.searchParams,
     userId = identity?.userId ?? Number(p.get("userId")),
@@ -42,14 +44,7 @@ export function joinSettings(url, origin, identity) {
     BrowserTrackerId: "",
     FollowUserId: 0,
     CookieStoreEnabled: false,
-    AyaWasmForceR15: false,
-    AyaWasmAvatarAssets: "",
-    AyaWasmHeadColor: 16763955,
-    AyaWasmTorsoColor: 5025616,
-    AyaWasmLeftArmColor: 16763955,
-    AyaWasmRightArmColor: 16763955,
-    AyaWasmLeftLegColor: 3368652,
-    AyaWasmRightLegColor: 3368652,
+    ...avatarNativeSettings(identity?.avatarId),
   };
 }
 export function makeServer({
@@ -60,12 +55,23 @@ export function makeServer({
   requireAuth = false,
   verifyAccount,
   relay = false,
+  gameStateFile,
+  switchMap,
 } = {}) {
   const root = path.dirname(fileURLToPath(import.meta.url)),
     runtime = path.resolve(runtimeDir || path.join(root, "private-runtime")),
     prefix = publicOrigin
       ? new URL(publicOrigin).pathname.replace(/\/$/, "")
       : "";
+  const config = createGameConfig({stateFile:gameStateFile, root});
+  const restartMap = switchMap || (() => new Promise((resolve,reject) => {
+    execFile(process.execPath,[path.join(root,'host-controller.mjs')],{
+      cwd:root, timeout:300000, maxBuffer:256*1024,
+      env:{...process.env, AYA_FORCE_RESTART:'1'},
+    }, error => error ? reject(error) : resolve());
+  }));
+  let switching = false, mapError = '', activeMapId = null;
+  const mapState = () => ({maps:config.catalog(),selectedId:config.map().id,activeId:activeMapId,switching,error:mapError,ready});
   let room = null,
     ready = false,
     nextConnection = 1,
@@ -220,6 +226,11 @@ export function makeServer({
             : "private-technical-preview",
           transport: relay ? "native-wss-relay" : "webrtc",
           relayedBytes,
+          mapId: config.map().id,
+          mapTitle: config.map().title,
+          activeMapId,
+          switching,
+          mapError,
         });
       if (u.pathname === "/launch" && req.method === "POST") {
         if (source && !allowedOrigins.has(source))
@@ -296,6 +307,51 @@ export function makeServer({
         return json(res, 401, {
           detail: "에이두 한글 상점에서 로그인 후 입장해 주세요.",
         });
+      if(u.pathname.startsWith('/host-avatar/')){
+        if(!isInternal)return json(res,403,{detail:'Host access denied'});
+        const id=Number(u.pathname.slice('/host-avatar/'.length));
+        const peer=[...peers.values()].find(p=>p.account?.userId===id);
+        if(!peer)return json(res,404,{detail:'Verified player not connected'});
+        const a=config.avatar(peer.account.uid),rgb=hex=>{const n=parseInt(hex.slice(1),16);return [(n>>16)&255,(n>>8)&255,n&255].map(x=>x/255);};
+        return json(res,200,{head:rgb(a.skin),torso:rgb(a.torso),legs:rgb(a.legs)});
+      }
+      if (u.pathname === '/host-config') {
+        if (!isInternal || !hostKey || req.headers['x-aya-host-key'] !== hostKey)
+          return json(res,403,{detail:'Host access denied'});
+        return json(res,200,{map:config.map()});
+      }
+      if (u.pathname === '/maps' && req.method === 'GET')
+        return json(res,200,mapState());
+      if (u.pathname === '/avatar') {
+        if (!account) return json(res,401,{detail:'로그인이 필요합니다.'});
+        if (req.method === 'GET') return json(res,200,{selected:config.avatar(account.uid),avatars:AVATARS});
+        if (req.method === 'POST') {
+          if(source && !allowedOrigins.has(source)) return json(res,403,{detail:'허용되지 않은 출처입니다.'});
+          const b=await body(req);
+          return json(res,200,{selected:config.setAvatar(account.uid,b.id),appliesOn:'next-join'});
+        }
+      }
+      if (u.pathname === '/maps/select' && req.method === 'POST') {
+        if (account?.role !== 'teacher') return json(res,403,{detail:'교사만 맵을 선택할 수 있습니다.'});
+        if(source && !allowedOrigins.has(source)) return json(res,403,{detail:'허용되지 않은 출처입니다.'});
+        if(switching) return json(res,409,{detail:'맵 변경이 진행 중입니다.'});
+        const b=await body(req), target=config.map(b.id);
+        if(!fs.existsSync(target.path)) return json(res,400,{detail:'아직 준비되지 않은 맵입니다.'});
+        const previous=config.map();
+        if(target.id===previous.id && ready) return json(res,200,mapState());
+        const occupied=[...peers.values()].filter(p=>p.role==='guest').length;
+        if(occupied && b.confirmRestart!==true) return json(res,409,{detail:`현재 ${occupied}명이 접속 중입니다. 모두 재입장해야 하므로 확인이 필요합니다.`,players:occupied,needsConfirmation:true});
+        config.setMap(target.id);
+        switching=true;ready=false;mapError='';
+        for(const [id,t] of tickets)if(t.role==='guest')tickets.delete(id);
+        for(const [id,p] of peers)if(p.role==='guest'){send(p,{type:'map-changing',mapId:target.id});peers.delete(id);p.ws.close(1012,'Teacher changed map');}
+        Promise.resolve().then(()=>restartMap(target)).catch(async()=>{
+          ready=false;config.setMap(previous.id);
+          mapError='새 맵을 열지 못해 이전 맵으로 복구했습니다.';
+          try{await restartMap(previous);}catch{mapError='맵을 열지 못했습니다. 이전 맵을 선택한 상태로 서버 복구 중입니다.';}
+        }).finally(()=>{switching=false;});
+        return json(res,202,mapState());
+      }
       if (u.pathname === "/game-host/create" && req.method === "POST") {
         if (
           !isInternal ||
@@ -339,6 +395,9 @@ export function makeServer({
           !peers.has("host")
         )
           return json(res, 403, { detail: "Host access denied" });
+        const b=await body(req);
+        if(b.mapId && b.mapId!==config.map().id) return json(res,409,{detail:'Stale host map'});
+        activeMapId=config.map().id;
         ready = true;
         return json(res, 200, { ok: true });
       }
@@ -348,7 +407,7 @@ export function makeServer({
           "Content-Type": "text/plain; charset=utf-8",
           "Cache-Control": "no-store",
         });
-        res.end("\r\n" + JSON.stringify(joinSettings(u, origin, account)));
+        res.end("\r\n" + JSON.stringify(joinSettings(u, origin, account ? {...account,avatarId:config.avatar(account.uid).id} : null)));
         return;
       }
       if (u.pathname === "/streaming/token")
@@ -356,7 +415,7 @@ export function makeServer({
       if (u.pathname === "/runtime" || u.pathname === "/runtime/") {
         if (!isInternal && u.searchParams.get("apptype") !== "player")
           return json(res, 403, { detail: "플레이어 입장만 가능합니다." });
-        let html = fs.readFileSync(path.join(runtime, "index.html"), "utf8");
+        let html = fs.readFileSync(path.join(runtime, "index.html"), "utf8").replaceAll('Aya.GameWebRtc.js','Aya.GameWebRtc.js?v=maps-avatar-1');
         if (prefix && !isInternal) {
           html = html
             .replaceAll("/runtime/", prefix + "/runtime/")
@@ -586,6 +645,7 @@ if (
     requireAuth: process.env.AYA_REQUIRE_AUTH === "1",
     verifyAccount,
     relay: process.env.AYA_RELAY === "1",
+    gameStateFile: process.env.AYA_GAME_STATE_FILE || path.join(process.env.HOME || '.', '.config/aiedue/robl-game.json'),
   });
   server.listen(Number(process.env.PORT) || 3074, "127.0.0.1", () =>
     console.log("Aiedue Robl account gateway listening on loopback"),
