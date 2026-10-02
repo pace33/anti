@@ -10366,7 +10366,7 @@ async function claimSharedWordCard(word) {
 }
 
 async function requestSharedWordExplanation(word, signal) {
-    const prompt = `도구나 명령을 사용하지 말고 일반 지식으로 바로 답하세요. 한국어 단어 “${word}”의 뜻을 쉽고 정확한 한국어 한 문장으로만 설명하세요. 설명 문장 외에는 아무것도 출력하지 마세요.`;
+    const prompt = `도구나 명령을 사용하지 말고 일반 지식으로 바로 답하세요. 한국어 단어 “${word}” 자체의 뜻을 쉽고 정확한 한국어 한 문장으로 설명하세요. 반드시 JSON만 출력하세요: {"explanation":"단어의 실제 뜻 한 문장"}. explanation에는 실제 정의 문장 자체만 넣으세요. 작업을 완료했다거나 뜻을 제공했다는 보고는 답이 아닙니다.`;
     const response = await fetch('/korean-ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
