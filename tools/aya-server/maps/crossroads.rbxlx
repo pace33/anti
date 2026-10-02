@@ -9043,7 +9043,7 @@ end
       <Item class="Script" referent="RBX180">
         <Properties>
           <bool name="Archivable">true</bool>
-          <bool name="Disabled">false</bool>
+          <bool name="Disabled">true</bool>
           <Content name="LinkedSource">
             <null></null>
           </Content>
@@ -10306,7 +10306,7 @@ end
         <Item class="Script" referent="RBX214">
           <Properties>
             <bool name="Archivable">true</bool>
-            <bool name="Disabled">false</bool>
+            <bool name="Disabled">true</bool>
             <Content name="LinkedSource">
               <null></null>
             </Content>
@@ -15451,7 +15451,7 @@ end
       <Item class="Script" referent="RBX318">
         <Properties>
           <bool name="Archivable">true</bool>
-          <bool name="Disabled">false</bool>
+          <bool name="Disabled">true</bool>
           <Content name="LinkedSource">
             <null></null>
           </Content>
