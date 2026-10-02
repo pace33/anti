@@ -1,0 +1,12 @@
+{
+  "name": "aiedue-aya-private-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test server.test.mjs account.test.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

@@ -1,0 +1,13 @@
+[Unit]
+Description=Aiedue Robl private native host startup
+After=aiedue-aya-preview-http.service aiedue-robl-engine-browser.service
+Wants=aiedue-aya-preview-http.service aiedue-robl-engine-browser.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/aiedue/aya-private-preview
+ExecStart=/usr/bin/node /home/aiedue/aya-private-preview/host-controller.mjs
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

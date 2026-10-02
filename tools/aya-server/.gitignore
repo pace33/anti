@@ -1,0 +1,10 @@
+node_modules/
+private.env
+host-key
+private-runtime/
+chromium-*/
+network-*.json
+*-report.json
+__pycache__/
+!download-private-runtime.py
+!generate-park.py

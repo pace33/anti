@@ -1,0 +1,15 @@
+[Unit]
+Description=Aiedue Robl private engine browser
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/chromium/chromium --headless=new --password-store=basic --no-proxy-server --disable-background-networking --no-first-run --no-default-browser-check --remote-debugging-port=9234 --remote-debugging-address=127.0.0.1 --user-data-dir=/home/aiedue/aya-private-preview/chromium-robl --disable-gpu about:blank
+Restart=on-failure
+RestartSec=5
+MemoryMax=2G
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target

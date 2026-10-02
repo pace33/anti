@@ -1,0 +1,12 @@
+[Unit]
+Description=Aiedue Aya private technical preview HTTP/signaling
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/aiedue/aya-private-preview
+EnvironmentFile=/home/aiedue/aya-private-preview/private.env
+ExecStart=/usr/bin/node /home/aiedue/aya-private-preview/server.mjs
+Restart=on-failure
+RestartSec=5
+MemoryMax=256M

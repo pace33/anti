@@ -1,0 +1,10 @@
+[Unit]
+Description=Check and recover the private Aiedue Robl host
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+Unit=aiedue-robl-host-start.service
+
+[Install]
+WantedBy=timers.target

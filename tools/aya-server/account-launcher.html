@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>에이두 로블</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        background: #101923;
+        color: #f4f7ff;
+        font:
+          17px system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 800px;
+        margin: 7vh auto;
+        padding: 24px;
+      }
+      h1 {
+        font-size: clamp(30px, 6vw, 48px);
+      }
+      .panel {
+        background: #1c2a39;
+        border: 1px solid #38536a;
+        border-radius: 22px;
+        padding: 24px;
+        margin: 20px 0;
+      }
+      p {
+        line-height: 1.7;
+        color: #c5d0df;
+      }
+      button,
+      a {
+        font: inherit;
+      }
+      button {
+        background: #94e8bb;
+        border: 0;
+        border-radius: 12px;
+        padding: 15px 25px;
+        cursor: pointer;
+        color: #12251b;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      a {
+        color: #94e8bb;
+      }
+      .name {
+        font-size: 26px;
+        font-weight: 900;
+        overflow-wrap: anywhere;
+      }
+      iframe {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        z-index: 10;
+      }
+      #leave {
+        position: fixed;
+        bottom: 14px;
+        right: 14px;
+        z-index: 20;
+        padding: 10px 16px;
+        background: #102334d9;
+        color: white;
+        border: 1px solid #72899b;
+      }
+      .note {
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>에이두 로블</h1>
+      <p>
+        같은 공원에 모여 함께 뛰고 이야기해요. 에이두 계정의 캐릭터 이름으로
+        입장해요.
+      </p>
+      <section class="panel">
+        <div>내 캐릭터 이름</div>
+        <div id="name" class="name">로그인 확인 중</div>
+        <p>이동 W·A·S·D / 방향키 · 점프 Space · 시점 마우스</p>
+        <button id="join" disabled>공원에 입장</button>
+        <p id="status" role="status">계정과 서버 상태를 확인하고 있어요.</p>
+      </section>
+      <p class="note">
+        에이두 학생·교사 계정 전용 학급 공간 · 최대 8명 · 공식 Roblox 계정 및
+        현재 Roblox 게임과는 연결되지 않습니다.
+      </p>
+      <a href="/korean/">에이두 한글로 돌아가기</a>
+    </main>
+    <iframe
+      id="game"
+      title="에이두 로블 플레이어"
+      allow="fullscreen; autoplay"
+      hidden
+    ></iframe
+    ><button id="leave" hidden>공원 나가기</button>
+    <script>
+      const base = "/robl",
+        statusEl = document.querySelector("#status"),
+        join = document.querySelector("#join"),
+        frame = document.querySelector("#game");
+      let account;
+      async function api(p, o) {
+        const r = await fetch(base + p, o),
+          v = await r.json();
+        if (!r.ok) throw Error(v.detail || "서버에 연결하지 못했어요.");
+        return v;
+      }
+      (async () => {
+        try {
+          const token = new URLSearchParams(location.hash.slice(1)).get(
+            "ticket",
+          );
+          history.replaceState(null, "", location.pathname);
+          account = token
+            ? await api("/session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticket: token }),
+              })
+            : await api("/me");
+          document.querySelector("#name").textContent = account.name;
+          const h = await api("/health");
+          statusEl.textContent = h.ready
+            ? "친구들과 만날 공원이 준비됐어요."
+            : "공원이 준비 중이에요. 잠시 뒤 새로고침해 주세요.";
+          join.disabled = !h.ready;
+        } catch (e) {
+          document.querySelector("#name").textContent = "로그인 필요";
+          statusEl.textContent = e.message + " 한글 상점에서 입장해 주세요.";
+        }
+      })();
+      join.onclick = async () => {
+        join.disabled = true;
+        try {
+          const h = await api("/health");
+          if (!h.ready) throw Error("공원이 준비 중이에요.");
+          const p = new URLSearchParams({
+            apptype: "player",
+            embedded: "1",
+            u: account.name,
+            uid: String(account.userId),
+            join: "100000001",
+            t: "webrtc",
+            display: "render",
+          });
+          frame.src = base + "/runtime/?" + p;
+          frame.hidden = false;
+          document.querySelector("#leave").hidden = false;
+        } catch (e) {
+          statusEl.textContent = e.message;
+          join.disabled = false;
+        }
+      };
+      document.querySelector("#leave").onclick = () => {
+        frame.src = "about:blank";
+        frame.hidden = true;
+        document.querySelector("#leave").hidden = true;
+        join.disabled = false;
+      };
+    </script>
+  </body>
+</html>
