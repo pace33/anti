@@ -116,7 +116,7 @@ jobs:
           grep -q 'src="app.js' /tmp/korean-index.html
           grep -q 'href="app.css' /tmp/korean-index.html
           grep -q 'aiedue-korean-build" content="20260923-workshop-launcher-v2' /tmp/korean-index.html
-          grep -q 'app.js?v=20260923-student-code-v1' /tmp/korean-index.html
+          grep -Eq 'src="app\.js\?v=[A-Za-z0-9._-]+"' /tmp/korean-index.html
           grep -q 'dashboard-warning-tokens-header' /tmp/korean-index.html
           grep -q 'reading-custom-maker' /tmp/korean-index.html
           grep -q 'syllable-slow-reader.js' /tmp/korean-index.html
@@ -126,6 +126,9 @@ jobs:
           grep -q 'aiedueKoreanDrawingsV2' /tmp/korean-app.js
           grep -q 'adjustStudentKoreanWallet' /tmp/korean-app.js
           grep -q 'warningTokens' /tmp/korean-app.js
+          grep -q 'AIEDUE_KOREAN_AI_DEFAULT_MODEL.*Flash (Low)' /tmp/korean-app.js
+          grep -q "profile: 'korean-note-photo'" /tmp/korean-app.js
+          grep -q "profile: 'korean-handwriting-grade'" /tmp/korean-app.js
           grep -q 'workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1' /tmp/korean-app.js
           ! grep -q 'korean-db/db-api' /tmp/korean-app.js
           ! grep -Eq 'from ["'"'"']https://www\.gstatic\.com/firebasejs/[^"'"'"']+/firebase-(firestore|storage)\.js' /tmp/korean-app.js
