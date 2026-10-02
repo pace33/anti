@@ -9445,7 +9445,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
         const expectedText = getCurricularExpectedTextForAi(item, difficulty);
         const target = { index: index + 1, difficulty, expected: expectedText, answer: item.answer || item.sentence || item.word, sentence: item.sentence || '', word: item.word || '' };
         const prompt = `초등학생이 태블릿 캔버스 빈 칸에 손글씨로 받아쓴 이미지를 채점합니다. 먼저 이미지에 실제로 보이는 학생 손글씨만 최대한 그대로 전사한 뒤 정답과 비교하세요. 정답을 보고 추측해서 written을 채우면 안 됩니다.\n\n채점 규칙:\n- 캔버스 밖 UI, 버튼, 예시 문구는 무시하고 진한 손글씨 획만 봅니다.\n- 흐리거나 삐뚤어진 초등학생 손글씨는 허용하지만, 다른 글자/누락/추가 글자가 있으면 오답입니다.\n- 1단/2단은 expected 단어와 철자가 같아야 correct=true입니다.\n- 3단은 expected 문장 전체의 철자가 같아야 correct=true입니다. 의미만 비슷하면 오답입니다.\n- 읽기 어렵거나 확신이 낮으면 correct=false로 두고 written에는 보이는 글자를 적으세요.\n\n문제(JSON): ${JSON.stringify(target)}\n반드시 JSON만 출력하세요. 형식: {"written":"학생 손글씨 전사","correct":false,"confidence":0.0,"analysis":"판단 근거 1문장"}`;
-        const raw = await callKoreanAiGenerate(prompt, { model: 'aiedue-gemma-vision', imageBase64: base64, imageMime: 'image/png', printTimeout: '4m' });
+        const raw = await callKoreanAiGenerate(prompt, { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s' });
         const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
         const isRetryAttempt = item.retryMode === true;
         const rawCorrect = parsed.correct === true && decideCurricularAiCorrect(parsed, item, difficulty);
@@ -10115,15 +10115,16 @@ function parseAiJsonObject(rawText, fallback = {}) {
     }
 }
 
-const AIEDUE_KOREAN_FAST_VISION_MODEL = 'aiedue-gemma-vision';
-const AIEDUE_KOREAN_FAST_TEXT_MODEL = 'aiedue-gemma';
+const AIEDUE_KOREAN_FAST_VISION_MODEL = 'Gemini 3.8 Flash (Low)';
+const AIEDUE_KOREAN_FAST_TEXT_MODEL = AIEDUE_KOREAN_FAST_VISION_MODEL;
 
 async function callKoreanAiGenerate(prompt, options = {}) {
     const hasExplicitModel = Object.prototype.hasOwnProperty.call(options, 'model');
     const body = {
         prompt,
-        model: hasExplicitModel ? options.model : (options.imageBase64 ? AIEDUE_KOREAN_FAST_VISION_MODEL : ''),
-        printTimeout: options.printTimeout || '2m'
+        model: hasExplicitModel ? options.model : (options.imageBase64 ? AIEDUE_KOREAN_FAST_VISION_MODEL : AIEDUE_KOREAN_FAST_TEXT_MODEL),
+        printTimeout: options.printTimeout || '2m',
+        ...(options.profile ? { profile: options.profile } : {})
     };
     if (options.imageBase64) {
         body.imageBase64 = options.imageBase64;
@@ -10150,11 +10151,12 @@ async function analyzeDictationImageWithAi(dataUrl, options = {}) {
     if (!dataUrl || !dataUrl.startsWith('data:image/')) return '';
     const [header, base64] = dataUrl.split(',');
     const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
-    const prompt = '이 이미지는 초등학생의 오늘의 노트 사진입니다. OCR처럼 글자만 읽지 말고, 이미지 자체를 보고 노트/교과서/칠판/그림에 보이는 한국어 문구, 낱말, 사물 이름, 학습 주제어를 최대한 많이 추출해 주세요. 설명하지 말고 단어와 짧은 문구를 줄바꿈으로만 출력하세요.';
-    const requestOptions = { imageBase64: base64, imageMime: mime, printTimeout: '4m' };
+    const prompt = '이 이미지는 오늘의 노트 학습 사진입니다. 이미지에 실제로 보이는 한국어 문구, 낱말, 사물 이름, 학습 주제어만 추출하세요. 이름이나 개인정보는 제외하고, 보이지 않는 글자는 정답이나 맥락으로 추측하지 마세요. 그림은 생성하지 마세요. 반드시 JSON만 출력하세요: {"words":["단어 또는 짧은 문구"]}';
+    const requestOptions = { profile: 'korean-note-photo', imageBase64: base64, imageMime: mime, printTimeout: '75s' };
     if (options.useLegacyImageModel) requestOptions.model = '';
     const text = await callKoreanAiGenerate(prompt, requestOptions);
-    return text || '';
+    const parsed = parseAiJsonObject(text, { words: [] });
+    return (Array.isArray(parsed.words) ? parsed.words : []).filter(word => typeof word === 'string').join('\n');
 }
 
 function splitDictationCandidateWords(text) {
@@ -10190,7 +10192,8 @@ ${text}
 
 반드시 JSON만 출력: {"words":["명사"]}`;
     const raw = await callKoreanAiGenerate(prompt, {
-        printTimeout: '3m',
+        profile: 'korean-word-extract',
+        printTimeout: '60s',
         model: options.useLegacyTextModel ? '' : AIEDUE_KOREAN_FAST_TEXT_MODEL
     }) || '{}';
     const parsed = parseAiJsonObject(raw, { words: [] });
@@ -10370,15 +10373,17 @@ async function requestSharedWordExplanation(word, signal) {
         body: JSON.stringify({
             word,
             prompt,
-            model: 'Gemini 3.6 Flash (High)',
-            printTimeout: '2m'
+            model: AIEDUE_KOREAN_FAST_TEXT_MODEL,
+            profile: 'korean-word-explanation',
+            printTimeout: '60s'
         }),
         signal
     });
     let data = null;
     try { data = await response.json(); } catch { /* handled below */ }
     if (!response.ok) throw new Error(data?.error || `단어 설명 요청 실패 (${response.status})`);
-    return validateWordCardText({ word, explanation: data?.explanation || data?.text });
+    const explanation = data?.structuredOutput?.explanation || data?.explanation || parseAiJsonObject(data?.text, {}).explanation || data?.text;
+    return validateWordCardText({ word, explanation });
 }
 
 async function loadWordCardCharacterReference(signal) {
@@ -10848,7 +10853,7 @@ async function gradeDictationSessionWithAi() {
 ${JSON.stringify(targets, null, 2)}
 
 반드시 JSON만 출력하세요. 형식: {"results":[{"index":1,"sentence":"정답 문장","written":"학생이 쓴 답","correct":true,"analysis":"사진에서 어떻게 보였는지"}]}`;
-    const raw = await callKoreanAiGenerate(prompt, { imageBase64: base64, imageMime: mime, printTimeout: '4m' });
+    const raw = await callKoreanAiGenerate(prompt, { profile: 'korean-dictation-grade', imageBase64: base64, imageMime: mime, printTimeout: '75s' });
     activeDictationImageAnalysis = raw || '';
     const parsed = parseAiJsonObject(raw, { results: [] });
     const byIndex = new Map((Array.isArray(parsed.results) ? parsed.results : []).map((item) => [Number(item.index), item]));

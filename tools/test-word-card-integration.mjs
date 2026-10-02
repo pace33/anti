@@ -64,8 +64,10 @@ test('단어 설명은 지원되는 생성 라우트에 실제 prompt를 보내�
     const request = section(app, 'async function requestSharedWordExplanation', 'async function loadWordCardCharacterReference');
     assert.ok(request.includes("fetch('/korean-ai/generate'"));
     assert.ok(request.includes('prompt,'));
-    assert.ok(request.includes("model: 'Gemini 3.6 Flash (High)'"));
-    assert.ok(request.includes('data?.explanation || data?.text'));
+    assert.ok(request.includes('model: AIEDUE_KOREAN_FAST_TEXT_MODEL'));
+        assert.ok(request.includes("profile: 'korean-word-explanation'"));
+        assert.ok(request.includes('data?.structuredOutput?.explanation'));
+        assert.ok(request.includes('|| data?.text'));
     assert.equal(request.includes("fetch('/korean-ai/word-explanation'"), false);
     assert.equal(request.includes('JSON.stringify({ word })'), false);
 });
