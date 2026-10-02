@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 export const MAPS = Object.freeze([
   {id:'park', title:'에이두 공원', file:'test-park.rbxlx', description:'함께 걷고 점프하는 가벼운 기본 맵', source:'에이두 자체 제작', mode:'탐험'},
-  {id:'crossroads', title:'Crossroads', file:'maps/crossroads.rbxlx', description:'성·탑·다리가 있는 Roblox 대표 고전 맵', source:'Roblox 공식 공개 원본 · MIT', mode:'탐험 + 검'},
-  {id:'rocket-arena', title:'Rocket Arena', file:'maps/rocket-arena.rbxlx', description:'고전 로켓 아레나의 높이 쌓인 발판', source:'Roblox 공식 공개 원본 · MIT', mode:'탐험 + 검'},
+  {id:'crossroads', title:'Crossroads', file:'maps/crossroads.rbxlx', description:'성·탑·다리가 있는 Roblox 대표 고전 맵', source:'Roblox 공식 공개 원본 · MIT', mode:'탐험'},
+  {id:'rocket-arena', title:'Rocket Arena', file:'maps/rocket-arena.rbxlx', description:'고전 로켓 아레나의 높이 쌓인 발판', source:'Roblox 공식 공개 원본 · MIT', mode:'탐험'},
 ]);
 export const AVATARS = Object.freeze([
   {id:'classic', title:'클래식', skin:'#ffcc33', torso:'#4caf50', legs:'#3366cc'},

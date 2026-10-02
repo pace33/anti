@@ -121511,64 +121511,6 @@ end
     <Properties>
       <string name="Name">StarterPack</string>
     </Properties>
-    <Item class="Tool" referent="RBX_Aiedue_Sword">
-      <Properties>
-        <string name="Name">에이두 검</string>
-        <bool name="RequiresHandle">true</bool>
-        <bool name="CanBeDropped">false</bool>
-      </Properties>
-      <Item class="Part" referent="RBX_Aiedue_SwordHandle">
-        <Properties>
-          <string name="Name">Handle</string>
-          <bool name="Anchored">false</bool>
-          <bool name="CanCollide">false</bool>
-          <int name="BrickColor">194</int>
-          <Vector3 name="size">
-            <X>0.5</X>
-            <Y>4</Y>
-            <Z>0.8</Z>
-          </Vector3>
-        </Properties>
-      </Item>
-      <Item class="Script" referent="RBX_Aiedue_AiedueOfflineSword">
-        <Properties>
-          <string name="Name">AiedueOfflineSword</string>
-          <bool name="Disabled">false</bool>
-          <ProtectedString name="Source">-- Self-contained Aiedue classic sword; no LinkedSource or Roblox HTTP assets.
-local tool = script.Parent
-local handle = tool:WaitForChild('Handle')
-local busy = false
-local attacking = false
-local hits = {}
-tool.Activated:connect(function()
- if busy then return end
- local owner = game.Players:GetPlayerFromCharacter(tool.Parent)
- if not owner then return end
- busy = true
- attacking = true
- hits = {}
- print('ROBL_SWORD_SWING '..owner.Name)
- local animation = Instance.new('StringValue')
- animation.Name = 'toolanim'
- animation.Value = 'Slash'
- animation.Parent = tool
- wait(0.35)
- attacking = false
- wait(0.25)
- busy = false
-end)
-handle.Touched:connect(function(part)
- if not attacking or not part.Parent or part.Parent == tool.Parent then return end
- local humanoid = part.Parent:FindFirstChild('Humanoid')
- if not humanoid or hits[humanoid] then return end
- hits[humanoid] = true
- humanoid:TakeDamage(16)
- print('ROBL_SWORD_HIT '..part.Parent.Name)
-end)
-</ProtectedString>
-        </Properties>
-      </Item>
-    </Item>
   </Item>
   <Item class="Lighting" referent="1991">
     <Properties>
