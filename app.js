@@ -4112,6 +4112,34 @@ function renderAieduePorandyShopCard() {
     </div>`;
 }
 
+function renderAiedueRoblShopCard() {
+    const name = currentUserRole === 'teacher' ? String(auth.currentUser?.email || '').split('@')[0] : `aiedue${getAiedueCraftStudentCode()}`;
+    return `<div class="aiedu-robl-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col" style="grid-column:1/-1">
+        <div class="aiedu-craft-card-hero"><div class="aiedu-craft-card-icon" aria-hidden="true">🧱</div><div class="min-w-0"><div class="text-xs font-black text-sky-100 tracking-widest">PLAY TOGETHER</div><div class="text-2xl font-black">에이두 로블</div><div class="text-sm text-white/80 mt-1">친구들과 같은 3D 공원에서 함께 뛰고 만나요.</div></div></div>
+        <div class="flex flex-wrap items-center justify-between gap-3 mt-4"><div><div class="text-xs font-bold text-gray-500">무료 · 내 계정으로 연결</div><div class="font-black text-sky-700 break-all">${escapeKoreanShopHtml(name || '로그인 후 입장')}</div></div><button type="button" class="btn-primary px-5 py-2 text-sm" onclick="openAiedueRobl(this)">로블 입장</button></div>
+    </div>`;
+}
+
+window.openAiedueRobl = async function openAiedueRobl(button) {
+    const user = auth.currentUser;
+    if (!loginSuccess || !currentUserId || !user) return showModal('에이두 학생 또는 교사 계정으로 로그인해 주세요.');
+    const uid = user.uid;
+    if (button) button.disabled = true;
+    try {
+        const token = await user.getIdToken();
+        if (auth.currentUser?.uid !== uid || currentUserId !== uid) return;
+        const response = await fetch('https://aiedue.ddns.net/robl/launch', {method:'POST', headers:{Authorization:`Bearer ${token}`}});
+        const result = await response.json();
+        if (auth.currentUser?.uid !== uid || currentUserId !== uid) return;
+        if (!response.ok) throw new Error(result.detail || '로블 접속 준비에 실패했어요.');
+        const url = new URL(result.launchUrl);
+        if (url.origin !== 'https://aiedue.ddns.net' || url.pathname !== '/robl/' || !/^#ticket=[a-f0-9]{64}$/.test(url.hash)) throw new Error('올바르지 않은 입장 주소입니다.');
+        window.location.assign(url.href);
+    } catch (error) {
+        if (auth.currentUser?.uid === uid) showModal(`에이두 로블 접속 준비 실패: ${escapeKoreanShopHtml(error.message || '잠시 후 다시 시도해 주세요.')}`);
+    } finally { if (button?.isConnected) button.disabled = false; }
+};
+
 window.openAieduePorandy = function openAieduePorandy() {
     window.location.href = AIEDUE_PORANDY_URL;
 };
@@ -4248,6 +4276,7 @@ function renderAiedueKoreanShopItems(displayItems = []) {
             </div>
         </div>
         ${renderAieduePorandyShopCard()}
+        ${renderAiedueRoblShopCard()}
         </div>
         ${displayItems.map(({ assignment, item }) => {
             const pricing = calculateKoreanShopPrice(item);
@@ -4344,7 +4373,7 @@ function renderAiedueKoreanTeacherShop(items = []) {
     return `<div class="aiedue-shop-game-pair mb-5"><div class="aiedu-craft-shop-card korean-embed-card p-5 rounded-3xl shadow-sm">
         <div class="aiedu-craft-card-hero"><div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div><div><div class="text-xs font-black text-amber-200 tracking-widest">TEACHER CRAFT</div><div class="text-2xl font-black">에이두 크래프트</div><div class="text-sm text-white/80 mt-1">교사 계정으로 크래프트에 접속하고 상점을 이용할 수 있어요.</div></div></div>
         <div class="flex flex-wrap justify-end gap-2 mt-4"><button type="button" class="btn-outline px-4 py-2" onclick="enterAiedueCraftAsTeacher()">크래프트 접속</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueCraftShop()">크래프트 상점 이용</button></div>
-    </div>${renderAieduePorandyShopCard()}</div>${renderAiedueKoreanTeacherShopManager(items)}`;
+    </div>${renderAieduePorandyShopCard()}${renderAiedueRoblShopCard()}</div>${renderAiedueKoreanTeacherShopManager(items)}`;
 }
 
 async function openAiedueKoreanTeacherShop() {
