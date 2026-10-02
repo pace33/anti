@@ -8,3 +8,5 @@ network-*.json
 __pycache__/
 !download-private-runtime.py
 !generate-park.py
+!generate-brick-colors.py
+qa-output/

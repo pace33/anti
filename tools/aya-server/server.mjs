@@ -7,8 +7,9 @@ import { WebSocketServer, WebSocket } from "ws";
 import { createAccountVerifier } from "./account.mjs";
 import { createGameConfig, AVATARS, avatarNativeSettings } from "./game-config.mjs";
 import { execFile } from "node:child_process";
-import { createCreatorStore } from './creator.mjs';
+import { createCreatorStore,normalizeScene } from './creator.mjs';
 import { resolveLocalAsset, assetReferenceReport } from './asset-compat.mjs';
+import {listNovetus,novetusEntry,novetusReference,createNovetusDelivery,parseLegacyMesh,rightsNotice} from './novetus.mjs';
 export function joinSettings(url, origin, identity) {
   const p = url.searchParams,
     userId = identity?.userId ?? Number(p.get("userId")),
@@ -67,6 +68,12 @@ export function makeServer({
       ? new URL(publicOrigin).pathname.replace(/\/$/, "")
       : "";
   const creator=createCreatorStore({dir:creatorDir || (gameStateFile ? path.join(path.dirname(gameStateFile),'robl-maps') : undefined),root});
+  const delivery=createNovetusDelivery({dir:gameStateFile?path.join(path.dirname(gameStateFile),'robl-novetus-cache'):creatorDir&&path.join(creatorDir,'asset-cache')});
+  let importsRunning=0;
+  async function importLegacy(data,title,map=true,inspect=false){
+    if(importsRunning>=2)throw Error('다른 맵을 변환 중입니다. 잠시 뒤 다시 열어 주세요.');importsRunning++;
+    try{return await new Promise((resolve,reject)=>{const child=execFile(process.platform==='win32'?'python':'python3',[path.join(root,'import-legacy-map.py')],{timeout:15000,maxBuffer:2*1024*1024},(err,stdout)=>{try{const value=JSON.parse(stdout);if(err||value.error)reject(Error(value.error||'맵 가져오기 실패'));else resolve(value);}catch{reject(Error('맵 변환 결과를 읽지 못했습니다.'));}});child.stdin.on('error',()=>{});child.stdin.end(JSON.stringify({data,title,map,inspect}));});}finally{importsRunning--;}
+  }
   const config = createGameConfig({stateFile:gameStateFile, creator, root});
   const restartMap = switchMap || (() => new Promise((resolve,reject) => {
     execFile(process.execPath,[path.join(root,'host-controller.mjs')],{
@@ -317,16 +324,36 @@ export function makeServer({
         if(u.searchParams.get('mode')==='map'&&account.role!=='teacher')return json(res,403,{detail:'교사 전용 맵 에디터입니다.'});
         return file(req,res,path.join(root,'editor.html'));
       }
-      if(u.pathname==='/editor.js')return file(req,res,path.join(root,'editor.js'));
+      if(['/editor.js','/editor-novetus.js'].includes(u.pathname))return file(req,res,path.join(root,u.pathname.slice(1)));
       if(u.pathname.startsWith('/editor-assets/')){
         const rel=u.pathname.slice('/editor-assets/'.length);
         if(!/^(three\.(module|core)\.min\.js|OrbitControls\.js|materials\/(checker|brick|wood)\.png)$/.test(rel))return json(res,404,{detail:'Not found'});
         return file(req,res,path.join(root,'editor-assets',rel));
       }
       if(['/Asset/','/asset/','/Asset','/asset','/Asset.ashx','/asset.ashx'].includes(u.pathname)){
-        const asset=resolveLocalAsset(u.searchParams.get('id')||u.searchParams.get('path'),root);
+        const reference=u.searchParams.get('id')||u.searchParams.get('path');
+        const asset=resolveLocalAsset(reference,root);
         if(asset)return file(req,res,asset.path);
+        const upstream=novetusReference(reference);
+        if(upstream&&['image','mesh','audio','asset'].includes(upstream.kind)){
+          const original=await delivery.get(upstream.key);
+          if(!['image','mesh','audio'].includes(original.kind))return json(res,415,{detail:'이 원본 파일은 이미지·메시·오디오가 아닙니다. 자료실에서 구조를 열어 주세요.'});
+          return file(req,res,original.path);
+        }
         if(!assetProxy)return json(res,404,{detail:'등록되지 않은 에셋입니다. 권리·호환성을 확인한 에셋만 제공됩니다.'});
+      }
+      if(u.pathname==='/assets/novetus')return json(res,200,listNovetus({q:u.searchParams.get('q'),kind:u.searchParams.get('kind'),offset:u.searchParams.get('offset')}));
+      if(u.pathname==='/assets/novetus/open'&&req.method==='GET'){
+        const e=novetusEntry(u.searchParams.get('key'));if(!e)return json(res,404,{detail:'목록에 없는 파일입니다.'});
+        const original=await delivery.get(e.key),v={entry:e,notice:rightsNotice};
+        if(original.kind==='image'||original.kind==='audio')return json(res,200,{...v,kind:original.kind,url:prefix+'/Asset/?id='+e.key});
+        if(original.kind==='mesh')return json(res,200,{...v,kind:'mesh',mesh:parseLegacyMesh(original.data)});
+        if(['map','model','animation'].includes(e.kind)||original.data.subarray(0,100).toString().trimStart().startsWith('<roblox')){
+          const imported=await importLegacy(original.data.toString('base64'),e.path.split('/').at(-1).replace(/\.rbxlx?(\.bz2)?$/i,''),e.kind==='map',true);
+          if(imported.scene)imported.scene.provenance={key:e.key,repo:e.repo,path:e.path,revision:e.revision};
+          return json(res,200,{...v,...imported,kind:imported.scene?'scene':'inspector'});
+        }
+        return json(res,200,{...v,kind:'inspector',bytes:original.data.length,text:original.data.subarray(0,12000).toString('utf8'),notice:'원본 내용 보기입니다. 실행·장착하지 않습니다. '+rightsNotice});
       }
       if(u.pathname==='/assets/library')return json(res,200,assetReferenceReport(root));
       if(u.pathname.startsWith('/creator/')||u.pathname==='/avatar/custom'){
@@ -338,7 +365,11 @@ export function makeServer({
         if(u.pathname==='/creator/map'&&req.method==='GET')return json(res,200,creator.read(account,u.searchParams.get('id')));
         if(u.pathname==='/creator/map'&&req.method==='POST'){
           const b=await body(req,512*1024);if(switching)return json(res,409,{detail:'맵 변경 중에는 저장할 수 없습니다.'});
-          return json(res,200,creator.write(account,b.scene,b.id,b.revision));
+          const scene=normalizeScene(b.scene);
+          const unknownImages=[...new Set(scene.objects.flatMap(o=>[o.texture,o.mesh?.texture]).filter(k=>novetusEntry(k)?.kind==='asset'))];
+          if(unknownImages.length>16)throw Error('미분류 ID 이미지는 한 맵에서 최대 16개까지 형식을 확인합니다.');
+          for(const key of unknownImages){const v=await delivery.get(key);if(v.kind!=='image')throw Error('이미지가 아닌 ID 에셋입니다. 자료실에서 원본 구조를 열어 주세요.');}
+          return json(res,200,creator.write(account,scene,b.id,b.revision));
         }
         if(u.pathname==='/creator/import'&&req.method==='POST'){
           const b=await body(req,1500*1024);if(typeof b.data!=='string'||b.data.length>1400000||!/^[A-Za-z0-9+/=]+$/.test(b.data))return json(res,400,{detail:'파일 형식·크기를 확인해 주세요.'});
