@@ -3935,6 +3935,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'openAiedueLabTimeQuiz',
     'openAiedueWorkshop',
     'openAieduePorandy',
+    'openAiedueRobl',
     'openKoreanStudentReport',
     'printClassShop',
     'openClassCurrency',
