@@ -1,0 +1,380 @@
+[
+  {
+    "repo": "Novetus/Novetus-Map-Pack",
+    "url": "https://github.com/Novetus/Novetus-Map-Pack",
+    "treeRevision": "6d7c962e3afe81d61a868b301771767d06471426",
+    "licenseNotice": "맵 소유자별 권리",
+    "files": 348,
+    "samples": [
+      {
+        "path": "legacy/Maps released by year/2006/2006 - Angel Of Truth.rbxl.bz2",
+        "bytes": 174889,
+        "sha": "7b96a0e93d09ad8f84b0acd68c0eb79ad04ccf6f",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2006/2006 - Lava Rush.rbxl.bz2",
+        "bytes": 7266,
+        "sha": "46779592647f4de3b926514da7d250fb793b0274",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2006/2006 - Mountain.rbxl.bz2",
+        "bytes": 21810,
+        "sha": "e457e3788a3a5ac4b9e565acd3932a18fbc5496f",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2006/2006 - Pirate Ship.rbxl.bz2",
+        "bytes": 15783,
+        "sha": "ea8fb5b8007639d4804ad00e092124ef439ca881",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2006/2006 - Rocket Mayhem.rbxl.bz2",
+        "bytes": 31201,
+        "sha": "01059adb1d53b123f4489ee2c3581bbb02ea714a",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2006/2006 - SharkRock Island.rbxl.bz2",
+        "bytes": 16445,
+        "sha": "b3ed3492cf0c2a1e5f1cc41106ea1a6ac2f9bdd9",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2006/2006 - Sunset Plains.rbxl.bz2",
+        "bytes": 28370,
+        "sha": "b35604dd2f4b84157c6d65da31f895ba14dc7b88",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Bastion of Horsey.rbxl.bz2",
+        "bytes": 35112,
+        "sha": "277db6fd757834954db44e2b5dd7735646ce8ca7",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Climb The Tallest Ladder In The Roblox World.rbxl.bz2",
+        "bytes": 659668,
+        "sha": "cd6ccac45cef5151dcded74e0046b0ebc1f79e50",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Climb the Tallest Ladder in Roblox.rbxl.bz2",
+        "bytes": 29725,
+        "sha": "bc99d59f416a267734bd5245488dbb87abca80f4",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Destroy The Giant Marios.rbxl.bz2",
+        "bytes": 227055,
+        "sha": "92993b2f842d8b4fff4b6c38b1a02d841ff28773",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Elemental Lake.rbxl.bz2",
+        "bytes": 114137,
+        "sha": "e9f7f6fe2f59b3c11d76fec3506a3269f77eb238",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Emerald Forest.rbxl.bz2",
+        "bytes": 44313,
+        "sha": "f0b54b68e4f3c9a2293f19460c53ab643e4e94ff",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Flaming JAD.rbxl.bz2",
+        "bytes": 56782,
+        "sha": "23c5d047795f2ffe5c33657a9fb7587d0787facd",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Haunted Hill.rbxl.bz2",
+        "bytes": 74778,
+        "sha": "f9819d0254e461118cbed5bb9966afdd09dba1a7",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Haunted Mansion.rbxl.bz2",
+        "bytes": 61538,
+        "sha": "cd9b62631594aa329b739057134bdbc6626dbf5c",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Humanoid Harvester Horror.rbxl.bz2",
+        "bytes": 6407,
+        "sha": "44adcce41f538cab7062eadca52ef11211f2c829",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - I has a camera testgrounds.rbxl.bz2",
+        "bytes": 54301,
+        "sha": "ba3592a05671562d5ae22548649c7ccf461710b4",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - King of the Hill.rbxl.bz2",
+        "bytes": 149138,
+        "sha": "5019e4ac3e900aacf9c8bae283a064456145e774",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Nevermoors Blight.rbxl.bz2",
+        "bytes": 46862,
+        "sha": "5ad025fec2ec9d63e23376c838282641d4fc32dd",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - OH NOES! The moon is falling!.rbxl.bz2",
+        "bytes": 12507,
+        "sha": "860ee0bd7781398e7216a996cfd854b202afd860",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - PONG.rbxl.bz2",
+        "bytes": 99687,
+        "sha": "ec44a430afe863740f295250ddd57ddede573c3e",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Pinball Wizards!.rbxl.bz2",
+        "bytes": 10769,
+        "sha": "3d1754b6d8b35d83db855309668ed96ebb1d720c",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Rocket Car Rally.rbxl.bz2",
+        "bytes": 19866,
+        "sha": "66ac1e58b9b24d92ffbe18bdc12a1ea1b0e597f5",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - The Front Lines.rbxl.bz2",
+        "bytes": 55076,
+        "sha": "156a1ec6ebf47a31ea928538225a352a8fe8b1a9",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - The Pit.rbxl.bz2",
+        "bytes": 35572,
+        "sha": "c9d54e6417512330d7b10de03140c93167ccc602",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Train2.rbxl.bz2",
+        "bytes": 6386,
+        "sha": "a9f77b2cf09cd08de09e22318e5cc993894edc3b",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Trampoline Sword Fight.rbxl.bz2",
+        "bytes": 3967,
+        "sha": "693b27e769060550bf1271ba77b688d5021ba510",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - Travelers Tale.rbxl.bz2",
+        "bytes": 47966,
+        "sha": "0b950e4e4661d777b2513cf221622cb8e40d65b6",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "legacy/Maps released by year/2007/2007 - bboy.rbxl.bz2",
+        "bytes": 4874,
+        "sha": "7695fbfd0f4eff8e97528e08846a6975726b3bd2",
+        "status": "권리·호환 개별 확인 필요"
+      }
+    ]
+  },
+  {
+    "repo": "Novetus/novetus-assetdelivery",
+    "url": "https://github.com/Novetus/novetus-assetdelivery",
+    "treeRevision": "37acb7cf97788ad00c4859f6c2c06853d68d238a",
+    "licenseNotice": "여러 라이선스 혼재. README Legal Disclaimer",
+    "files": 2110,
+    "samples": [
+      {
+        "path": "animations/BoardKick.rbxm",
+        "bytes": 28938,
+        "sha": "81bcd91bb33b4eb7c2dc13f4fe0f8a7fe9a94de5",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "animations/CoastingPose.rbxm",
+        "bytes": 5104,
+        "sha": "1d328e6c09caafd622dbf5704878f67d8d5e30c1",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "animations/LeftTurn.rbxm",
+        "bytes": 5214,
+        "sha": "3c447a7d5538dd268e9b8c49640756f32d7e7e8e",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "animations/Ollie.rbxm",
+        "bytes": 19177,
+        "sha": "e314dcd5320f119389c7aae720e9945b5314401c",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "animations/RightTurn.rbxm",
+        "bytes": 5214,
+        "sha": "76eed4659609762c7e9ba44c49f6a68ee0ac6802",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1028713.mesh",
+        "bytes": 108858,
+        "sha": "b60e79c520d0b114f39bd190674acab3a2b45344",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1029586.mesh",
+        "bytes": 137480,
+        "sha": "5d4a94b5b182a1f86321a4265e2ee0c975e8cce0",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1029622.mesh",
+        "bytes": 10535,
+        "sha": "2cd5bbcceffd30e99320d1c1fc95869b1d09cc29",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1031341.mesh",
+        "bytes": 39059,
+        "sha": "a313f54827fce2042c8f34b1d6cc5451c7e3595b",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1033714.mesh",
+        "bytes": 18567,
+        "sha": "7db5d0df420f35ea902e263c106cf07a373f319c",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1038492.mesh",
+        "bytes": 13149,
+        "sha": "6cab06d69f62b69bcdb532a2640c25a2b80ab031",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10467539.mesh",
+        "bytes": 163801,
+        "sha": "cdd887344e1a02d0edfe8c24e67f1f16ea126477",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10469496.mesh",
+        "bytes": 66511,
+        "sha": "8c6d6c1f39e7b9efe874ebc9dec51d288e3639bc",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10470609.mesh",
+        "bytes": 31740,
+        "sha": "445753a21d077463499ca892c6491d3e7b7d47a6",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1047997.mesh",
+        "bytes": 121352,
+        "sha": "a2e048ee8db76837f9b3740444d180242c62a0dd",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10547612.mesh",
+        "bytes": 35956,
+        "sha": "e2b9d6579df0b9ee599a62320b74c6bd3ef2b7f5",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10604848.mesh",
+        "bytes": 468504,
+        "sha": "314c8e64c89292a8d5c0e2d71fe7a0bbd59f2d99",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10681506.mesh",
+        "bytes": 18353,
+        "sha": "de572debd423a30e6688a9fd2439128972c4f632",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1072759.mesh",
+        "bytes": 112102,
+        "sha": "d2bb2ea50e484a77840efe03aa34522860f2e0de",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10730036.mesh",
+        "bytes": 223132,
+        "sha": "9c4b2120101754e8a26d3ac5199ac55d640bb8e8",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1073659.mesh",
+        "bytes": 78590,
+        "sha": "56ae18953f2d4c509f48066834fefbcb5cffe677",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10757531.mesh",
+        "bytes": 56372,
+        "sha": "8580a9031b51fdcf9c4cb6e8a107723214750a9e",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1081088.mesh",
+        "bytes": 33746,
+        "sha": "b7ee9f1602d0804902ae56dd74c26c31b12d1083",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1082816.mesh",
+        "bytes": 80576,
+        "sha": "25799ab5a980dec8667b8a33cac8f7b61db6f837",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1088207.mesh",
+        "bytes": 30309,
+        "sha": "7f4ad553c8fb17eaaef9e17f21378d5b4c3e6307",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10884779.mesh",
+        "bytes": 302275,
+        "sha": "aae8b4b384378cc70b5dc2588b340cbb887dd030",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/1090398.mesh",
+        "bytes": 230871,
+        "sha": "c7d56c41498e1c7aac520e7176123503c7d9866a",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10908449.mesh",
+        "bytes": 92830,
+        "sha": "2e6890ab03ca002231f5ba9596db372997bb1ef1",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10909387.mesh",
+        "bytes": 192835,
+        "sha": "b0f1cfcfb509df33a968d91e88dec5eda4b24b0b",
+        "status": "권리·호환 개별 확인 필요"
+      },
+      {
+        "path": "fonts/10913794.mesh",
+        "bytes": 508553,
+        "sha": "38e047c2de351ae6dca650836c731f36551194b7",
+        "status": "권리·호환 개별 확인 필요"
+      }
+    ]
+  }
+]

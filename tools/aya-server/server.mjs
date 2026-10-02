@@ -7,6 +7,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { createAccountVerifier } from "./account.mjs";
 import { createGameConfig, AVATARS, avatarNativeSettings } from "./game-config.mjs";
 import { execFile } from "node:child_process";
+import { createCreatorStore } from './creator.mjs';
+import { resolveLocalAsset, assetReferenceReport } from './asset-compat.mjs';
 export function joinSettings(url, origin, identity) {
   const p = url.searchParams,
     userId = identity?.userId ?? Number(p.get("userId")),
@@ -44,7 +46,7 @@ export function joinSettings(url, origin, identity) {
     BrowserTrackerId: "",
     FollowUserId: 0,
     CookieStoreEnabled: false,
-    ...avatarNativeSettings(identity?.avatarId),
+    ...avatarNativeSettings(identity?.avatar || identity?.avatarId),
   };
 }
 export function makeServer({
@@ -56,6 +58,7 @@ export function makeServer({
   verifyAccount,
   relay = false,
   gameStateFile,
+  creatorDir,
   switchMap,
 } = {}) {
   const root = path.dirname(fileURLToPath(import.meta.url)),
@@ -63,7 +66,8 @@ export function makeServer({
     prefix = publicOrigin
       ? new URL(publicOrigin).pathname.replace(/\/$/, "")
       : "";
-  const config = createGameConfig({stateFile:gameStateFile, root});
+  const creator=createCreatorStore({dir:creatorDir || (gameStateFile ? path.join(path.dirname(gameStateFile),'robl-maps') : undefined),root});
+  const config = createGameConfig({stateFile:gameStateFile, creator, root});
   const restartMap = switchMap || (() => new Promise((resolve,reject) => {
     execFile(process.execPath,[path.join(root,'host-controller.mjs')],{
       cwd:root, timeout:300000, maxBuffer:256*1024,
@@ -135,12 +139,12 @@ export function makeServer({
       iceServers: [],
     };
   }
-  async function body(req) {
+  async function body(req,limit=16384) {
     let n = 0,
       parts = [];
     for await (const b of req) {
       n += b.length;
-      if (n > 16384) throw Error("Body too large");
+      if (n > limit) throw Error("Body too large");
       parts.push(b);
     }
     return JSON.parse(Buffer.concat(parts).toString() || "{}");
@@ -161,6 +165,7 @@ export function makeServer({
             ".wasm": "application/wasm",
             ".data": "application/octet-stream",
             ".rbxlx": "application/xml",
+            ".png": "image/png",
           }[ext] || "application/octet-stream",
         "Accept-Ranges": "bytes",
         "Cache-Control": requireAuth
@@ -307,6 +312,40 @@ export function makeServer({
         return json(res, 401, {
           detail: "에이두 한글 상점에서 로그인 후 입장해 주세요.",
         });
+      if(u.pathname==='/editor'){
+        if(!account)return json(res,401,{detail:'로그인이 필요합니다.'});
+        if(u.searchParams.get('mode')==='map'&&account.role!=='teacher')return json(res,403,{detail:'교사 전용 맵 에디터입니다.'});
+        return file(req,res,path.join(root,'editor.html'));
+      }
+      if(u.pathname==='/editor.js')return file(req,res,path.join(root,'editor.js'));
+      if(u.pathname.startsWith('/editor-assets/')){
+        const rel=u.pathname.slice('/editor-assets/'.length);
+        if(!/^(three\.(module|core)\.min\.js|OrbitControls\.js|materials\/(checker|brick|wood)\.png)$/.test(rel))return json(res,404,{detail:'Not found'});
+        return file(req,res,path.join(root,'editor-assets',rel));
+      }
+      if(['/Asset/','/asset/','/Asset','/asset','/Asset.ashx','/asset.ashx'].includes(u.pathname)){
+        const asset=resolveLocalAsset(u.searchParams.get('id')||u.searchParams.get('path'),root);
+        if(asset)return file(req,res,asset.path);
+        if(!assetProxy)return json(res,404,{detail:'등록되지 않은 에셋입니다. 권리·호환성을 확인한 에셋만 제공됩니다.'});
+      }
+      if(u.pathname==='/assets/library')return json(res,200,assetReferenceReport(root));
+      if(u.pathname.startsWith('/creator/')||u.pathname==='/avatar/custom'){
+        if(!account)return json(res,401,{detail:'로그인이 필요합니다.'});
+        if(req.method==='POST'&&source&&!allowedOrigins.has(source))return json(res,403,{detail:'허용되지 않은 출처입니다.'});
+        if(u.pathname==='/avatar/custom'&&req.method==='POST')return json(res,200,{selected:config.customize(account.uid,await body(req)),appliesOn:'next-join'});
+        if(account.role!=='teacher')return json(res,403,{detail:'교사만 맵을 만들고 편집할 수 있습니다.'});
+        if(u.pathname==='/creator/maps'&&req.method==='GET')return json(res,200,{maps:creator.list(account)});
+        if(u.pathname==='/creator/map'&&req.method==='GET')return json(res,200,creator.read(account,u.searchParams.get('id')));
+        if(u.pathname==='/creator/map'&&req.method==='POST'){
+          const b=await body(req,512*1024);if(switching)return json(res,409,{detail:'맵 변경 중에는 저장할 수 없습니다.'});
+          return json(res,200,creator.write(account,b.scene,b.id,b.revision));
+        }
+        if(u.pathname==='/creator/import'&&req.method==='POST'){
+          const b=await body(req,1500*1024);if(typeof b.data!=='string'||b.data.length>1400000||!/^[A-Za-z0-9+/=]+$/.test(b.data))return json(res,400,{detail:'파일 형식·크기를 확인해 주세요.'});
+          const imported=await new Promise((resolve,reject)=>{const child=execFile(process.platform==='win32'?'python':'python3',[path.join(root,'import-legacy-map.py')],{timeout:10000,maxBuffer:1024*1024},(err,stdout)=>{try{const value=JSON.parse(stdout);if(err||value.error)reject(Error(value.error||'맵 가져오기 실패'));else resolve(value);}catch{reject(Error('맵 변환 결과를 읽지 못했습니다.'));}});child.stdin.end(JSON.stringify({data:b.data,title:b.title}));});
+          return json(res,200,imported);
+        }
+      }
       if(u.pathname.startsWith('/host-avatar/')){
         if(!isInternal)return json(res,403,{detail:'Host access denied'});
         const id=Number(u.pathname.slice('/host-avatar/'.length));
@@ -338,14 +377,15 @@ export function makeServer({
         const b=await body(req), target=config.map(b.id);
         if(!fs.existsSync(target.path)) return json(res,400,{detail:'아직 준비되지 않은 맵입니다.'});
         const previous=config.map();
-        if(target.id===previous.id && ready) return json(res,200,mapState());
+        if(target.id===previous.id && ready && b.forceRestart!==true) return json(res,200,mapState());
         const occupied=[...peers.values()].filter(p=>p.role==='guest').length;
         if(occupied && b.confirmRestart!==true) return json(res,409,{detail:`현재 ${occupied}명이 접속 중입니다. 모두 재입장해야 하므로 확인이 필요합니다.`,players:occupied,needsConfirmation:true});
         config.setMap(target.id);
         switching=true;ready=false;mapError='';
         for(const [id,t] of tickets)if(t.role==='guest')tickets.delete(id);
         for(const [id,p] of peers)if(p.role==='guest'){send(p,{type:'map-changing',mapId:target.id});peers.delete(id);p.ws.close(1012,'Teacher changed map');}
-        Promise.resolve().then(()=>restartMap(target)).catch(async()=>{
+        Promise.resolve().then(()=>restartMap(target)).catch(async(error)=>{
+          if(gameStateFile)fs.writeFileSync(path.join(path.dirname(gameStateFile),'robl-last-map-error.log'),String(error?.stack||error)+'\n'+String(error?.stdout||'')+'\n'+String(error?.stderr||''),{mode:0o600});
           ready=false;config.setMap(previous.id);
           mapError='새 맵을 열지 못해 이전 맵으로 복구했습니다.';
           try{await restartMap(previous);}catch{mapError='맵을 열지 못했습니다. 이전 맵을 선택한 상태로 서버 복구 중입니다.';}
@@ -407,7 +447,7 @@ export function makeServer({
           "Content-Type": "text/plain; charset=utf-8",
           "Cache-Control": "no-store",
         });
-        res.end("\r\n" + JSON.stringify(joinSettings(u, origin, account ? {...account,avatarId:config.avatar(account.uid).id} : null)));
+        res.end("\r\n" + JSON.stringify(joinSettings(u, origin, account ? {...account,avatarId:config.avatar(account.uid).id,avatar:config.avatar(account.uid)} : null)));
         return;
       }
       if (u.pathname === "/streaming/token")
@@ -475,7 +515,7 @@ export function makeServer({
       }
       return json(res, 404, { detail: "Not found" });
     } catch (e) {
-      if (!res.headersSent) json(res, 400, { detail: e.message });
+      if (!res.headersSent) json(res, [403,409].includes(e.status)?e.status:400, { detail: e.message });
       else res.destroy();
     }
   });
