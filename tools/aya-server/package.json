@@ -4,9 +4,13 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test server.test.mjs account.test.mjs"
+    "test": "node --test *.test.mjs",
+    "test:original": "node qa/original-browser.mjs"
   },
   "dependencies": {
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
   }
 }
