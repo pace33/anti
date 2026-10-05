@@ -17,8 +17,8 @@ import {
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
-import { installStageTutorial } from './stage-tutorial.js?v=20261001-stage-tour-no-library-v1';
-import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=20261001-stage-tour-no-library-v1';
+import { installStageTutorial } from './stage-tutorial.js?v=record-bank-tabs-v1';
+import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.mjs?v=record-bank-tabs-v1';
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1';
@@ -3943,6 +3943,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'purchaseAiedueKoreanShopItem',
     'saveAiedueKoreanShopItem',
     'selectDrawingTemplate',
+    'setMyLiteracyRecordTab',
     'startLimitBreakChallenge',
     'startTodayLiteracyMission',
     'triggerAiedueKoreanShopImageUpload'
@@ -9679,7 +9680,23 @@ function renderMyDictationSection() {
         return `<div class="korean-embed-card p-5 bg-red-50 border-red-100"><div class="text-sm font-black text-red-500">${record.mode === 'curricular' ? `3스텝 ${record.difficulty || 1}단계` : '미션'} ${missions.length - index}</div><div class="text-xl font-black text-[#2c3e50]">${Number(record.correctCount || 0)}/${Number(record.total || 0)}개 정답</div><p class="text-sm text-gray-500 mt-1">${escapeHtml(String(record.savedAt || '').slice(0, 10))} · 오답 ${Number(record.wrongCount || 0)}개</p>${preview ? `<ul class="mt-3 text-xs text-gray-600 font-bold space-y-1">${preview}</ul>` : ''}${photo ? `<img src="${escapeHtml(photo)}" alt="교과 맞춤쓰기 기록" class="w-full h-36 object-contain bg-white rounded-2xl border mt-4">` : ''}</div>`;
     }).join('') : '<div class="text-center text-gray-400 font-bold py-10 md:col-span-2">아직 미션 기록이 없어요.</div>';
 }
-window.openMyDictationFromDashboard = function() { renderMyDictationSection(); showTopLevelSection('my-dictation-section'); }
+window.setMyDictationRecordTab = function(tab = 'records') {
+    const selected = tab === 'bank' ? 'bank' : 'records';
+    for (const key of ['records', 'bank']) {
+        const button = document.getElementById(`my-dictation-tab-${key}`);
+        const panel = document.getElementById(`my-dictation-${key}-panel`);
+        button?.setAttribute('aria-selected', String(key === selected));
+        button?.classList.toggle('is-active', key === selected);
+        if (panel) panel.hidden = key !== selected;
+    }
+    const bankPanel = document.getElementById('my-dictation-bank-panel');
+    if (selected === 'bank' && bankPanel) bankPanel.innerHTML = renderDictationBankContent();
+};
+window.openMyDictationFromDashboard = function() {
+    renderMyDictationSection();
+    window.setMyDictationRecordTab('records');
+    showTopLevelSection('my-dictation-section');
+}
 window.startCurricularTraceStep = function startCurricularTraceStep(roundStart = null) {
     const state = getCurricularWritingState();
     const prepared = roundStart || (pendingCurricularWritingRoundStart?.ready ? pendingCurricularWritingRoundStart : null);
@@ -11098,7 +11115,25 @@ window.completeDictationItem = async function() {
     }
     showModal('미션 채점 결과는 채점 직후 자동으로 오답/완료 은행에 저장됩니다.');
 }
-window.openDictationBankModal = function() { const bank = dictationPortfolio.koreanBank || { words: [], syllableStats: {} }; const syllableCount = Object.keys(bank.syllableStats || {}).length; showModal(`<div class="text-left relative pr-8 dictation-bank-modal-shell"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button><h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어·음절 은행</h3><div class="mb-6"><div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div><div class="dictation-bank-word-grid">${renderCurricularWordBankStats()}</div></div><div class="mb-4"><div class="font-black text-amber-600 mb-2">음절 은행 ${syllableCount}개</div><div class="dictation-bank-word-grid">${renderCurricularSyllableBankStats()}</div><p class="text-xs text-gray-400 font-bold mt-4">3스텝 받아쓰기에서 정답 대비 틀린 음절을 기록하고, 2단계 듣기 게임은 10회 이하 음절을 1순위, 10회 초과·정답률 80% 이하 음절을 2순위로 먼저 냅니다.</p></div></div>`, { hideConfirm: true, hideIcon: true, plainClose: true }); }
+function renderDictationBankContent() {
+    const bank = dictationPortfolio.koreanBank || { words: [], syllableStats: {} };
+    const syllableCount = Object.keys(bank.syllableStats || {}).length;
+    return `<div class="text-left dictation-bank-content">
+        <h3 class="text-2xl font-black text-[#2c3e50] mb-4">단어·음절 은행</h3>
+        <div class="mb-6">
+            <div class="font-black text-red-500 mb-2">단어 은행 ${bank.words.length}개</div>
+            <div class="dictation-bank-word-grid">${renderCurricularWordBankStats()}</div>
+        </div>
+        <div class="mb-4">
+            <div class="font-black text-amber-600 mb-2">음절 은행 ${syllableCount}개</div>
+            <div class="dictation-bank-word-grid">${renderCurricularSyllableBankStats()}</div>
+            <p class="text-xs text-gray-400 font-bold mt-4">3스텝 받아쓰기에서 정답 대비 틀린 음절을 기록하고, 2단계 듣기 게임은 10회 이하 음절을 1순위, 10회 초과·정답률 80% 이하 음절을 2순위로 먼저 냅니다.</p>
+        </div>
+    </div>`;
+}
+window.openDictationBankModal = function() {
+    showModal(`<div class="text-left relative pr-8 dictation-bank-modal-shell"><button type="button" class="absolute -top-2 right-0 w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black text-xl" onclick="handleModalConfirm()" aria-label="닫기">×</button>${renderDictationBankContent()}</div>`, { hideConfirm: true, hideIcon: true, plainClose: true });
+}
 
 window.openFindMistakesActivity = function() { showTopLevelSection('spelling-quiz-section'); generateSpellingQuestion(); }
 window.generateSpellingQuestion = async function() { activeSpellingQuestion = await createSpellingQuestion(); const root = document.getElementById('spelling-quiz-options'); document.getElementById('spelling-quiz-feedback').classList.add('hidden'); root.innerHTML = activeSpellingQuestion.options.map((text, index) => `<button type="button" class="btn-choice text-left" onclick="checkSpellingAnswer(${index})">${index + 1}. ${escapeHtml(text)}</button>`).join(''); }
@@ -12520,9 +12555,13 @@ window.openMyLiteracyRecord = function() {
     }).join('') || '<div class="text-gray-400 text-center py-8">아직 푼 문해력 문제가 없어요.</div>';
 
     const msg = `
-        <div class="text-left p-2 max-h-[70vh] overflow-y-auto custom-scrollbar font-sans">
+        <div class="text-left p-2 max-h-[70vh] overflow-y-auto custom-scrollbar font-sans my-literacy-record-shell">
             <h3 class="text-3xl font-black text-[#2c3e50] mb-4">📚 나의 문해력 기록</h3>
-
+            <div id="my-literacy-record-tabs" class="my-record-tabs" role="tablist" aria-label="4단계 나의 기록">
+                <button type="button" id="my-literacy-tab-records" class="my-record-tab is-active" role="tab" aria-selected="true" aria-controls="my-literacy-records-panel" onclick="setMyLiteracyRecordTab('records')">📚 학습 기록</button>
+                <button type="button" id="my-literacy-tab-bank" class="my-record-tab" role="tab" aria-selected="false" aria-controls="my-literacy-bank-panel" onclick="setMyLiteracyRecordTab('bank')">🏦 단어 은행</button>
+            </div>
+            <div id="my-literacy-records-panel" role="tabpanel" aria-labelledby="my-literacy-tab-records">
             <div class="mb-6">
                 <h4 class="font-black text-gray-700 mb-2">유형/난이도별 통계</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -12536,9 +12575,24 @@ window.openMyLiteracyRecord = function() {
                     ${historyHtml}
                 </div>
             </div>
+            </div>
+            <div id="my-literacy-bank-panel" class="my-record-bank-panel" role="tabpanel" aria-labelledby="my-literacy-tab-bank" hidden></div>
         </div>
     `;
     showModal(msg);
+    window.setMyLiteracyRecordTab('records');
+};
+window.setMyLiteracyRecordTab = function(tab = 'records') {
+    const selected = tab === 'bank' ? 'bank' : 'records';
+    for (const key of ['records', 'bank']) {
+        const button = document.getElementById(`my-literacy-tab-${key}`);
+        const panel = document.getElementById(`my-literacy-${key}-panel`);
+        button?.setAttribute('aria-selected', String(key === selected));
+        button?.classList.toggle('is-active', key === selected);
+        if (panel) panel.hidden = key !== selected;
+    }
+    const bankPanel = document.getElementById('my-literacy-bank-panel');
+    if (selected === 'bank' && bankPanel) bankPanel.innerHTML = renderDictationBankContent();
 };
 
 window.closeEmbeddedActivity = function closeEmbeddedActivity() {
@@ -24137,6 +24191,10 @@ window.openStageTutorial = function(level) {
             assertCurrent();
             await openView(step.view);
             if (step.id.endsWith('-practice-view')) step.targets = [document.getElementById('result-modal').classList.contains('hidden') ? '#dictation-session-list' : '#modal-message'];
+            // Each record view owns its tabs. Restore the correct panel on back/forward.
+            const recordTab = /-(bank-view|record-return-tab)$/.test(step.id) ? 'bank' : 'records';
+            if (step.view === 'dictation-record') window.setMyDictationRecordTab(recordTab);
+            if (step.view === 'literacy-record') window.setMyLiteracyRecordTab(recordTab);
             // Tabs stay where the preceding actual button moved them. Restore a
             // tab when going backwards so targets never point at hidden panels.
             if (/(read-card|slow|slow-card)$/.test(step.id) && activeReadingCategory !== 'basic') document.getElementById('reading-tab-basic').click();

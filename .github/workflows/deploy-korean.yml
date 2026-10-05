@@ -23,7 +23,7 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
-          node --check app.js
+          node --input-type=module --check < app.js
           node --check workshop-launcher.mjs
           node --check workshop-service.mjs
           node --check experience-gauge.mjs
@@ -52,7 +52,7 @@ jobs:
           node --test tools/test-experience-gauge.mjs
           node --test tools/test-literacy-companion.mjs
           node --test tools/test-teacher-tutorial.mjs
-          node --test tools/test-stage-tutorial.mjs
+          node --test tools/test-stage-tutorial.mjs tools/test-record-bank-tabs.mjs
           node --test tools/test-classroom-tools.mjs tools/test-student-diagnostic-retake.mjs
           node --test tools/test-dictation-asteroid-game.mjs tools/test-asteroid-persistence.mjs
           node --test tools/test-shape-zoo-core.mjs tools/test-shape-zoo-game.mjs

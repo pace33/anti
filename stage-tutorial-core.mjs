@@ -72,8 +72,7 @@ export function buildStageTutorial(level, role) {
     } else {
         enter('photo', '오늘의 노트 사진 찍기', `#${info.section} .lesson-photo-button`, 'photo', '먼저 ‘오늘의 노트 사진 찍기’를 눌러 단어를 모으는 화면을 보자.', '오늘의 노트 사진 찍기를 열어 어휘 수집 화면을 확인합니다. 3·4단계에서 같은 단어 은행을 사용합니다.');
         explore('photo-view', 'photo', ['#word-bank-camera-modal .word-bank-camera-body'], '실제로는 촬영 버튼이나 사진 파일 선택으로 노트를 넣어. 이번에는 사진 없이 이 화면의 위치부터 살펴보자.', '촬영 또는 사진 파일 선택으로 노트를 넣는 화면입니다. 글자가 또렷한 자료를 사용하고 추출 결과를 확인합니다. 안내에서는 카메라와 업로드를 실행하지 않습니다.');
-        enter('bank', '단어 은행', 'openDictationBankModal()', 'bank', '‘단어 은행’을 눌러 모아 둔 낱말을 보자.', '단어 은행을 열어 수집된 어휘와 학습 통계를 확인해 보세요.');
-        explore('bank-view', 'bank', ['.dictation-bank-modal-shell'], '모은 낱말과 학습한 결과를 여기서 볼 수 있어. 아직 비어 있으면 실제 노트 사진을 넣은 뒤 확인하자.', '단어별 정답률·오답률을 확인하는 화면입니다. 단어가 없다면 실제 노트 사진에서 어휘를 모은 뒤 표시됩니다.');
+
         if (level === 3) {
             enter('mission', '교과 맞춤쓰기', '#dictation-mission-card', 'mission-photo', '큰 ‘교과 맞춤쓰기’ 버튼을 눌러 보자. 노트 사진으로 이번에 공부할 단어를 정하는 곳부터 시작해.', '교과 맞춤쓰기는 노트 사진으로 이번 학습의 어휘를 정하는 흐름입니다. 큰 버튼을 눌러 시작 화면을 확인해 주세요.');
             explore('mission-photo-view', 'mission-photo', ['#word-bank-camera-modal .word-bank-camera-body'], '사진에서 단어를 확인한 뒤 쓰기 공부로 이어져. 다음 화면은 사용 방법을 알아보려고 ‘나무’ 한 단어를 넣은 체험이야.', '사진 확인 후 실제 쓰기 화면으로 이어집니다. 촬영 자료가 없어도 탐색할 수 있도록 다음 화면은 ‘나무’ 한 단어를 넣은 체험으로 엽니다.');
@@ -87,7 +86,11 @@ export function buildStageTutorial(level, role) {
             enter('practice', '교과 맞춤 다시 쓰기', 'openDictationPracticeActivity()', 'review', '‘교과 맞춤 다시 쓰기’를 눌러 보자. 이전에 틀린 단어와 문장을 다시 연습하는 버튼이야.', '다시 쓰기를 열어 실제 오답 복습 화면을 확인합니다. 오답이 없으면 아직 연습할 내용이 없다는 안내가 표시됩니다.');
             explore('practice-view', 'review', [], '오답이 있으면 따라쓰기와 받아쓰기로 이어져. 없다면 잘못된 게 아니야. 실제 미션 기록이 생긴 뒤 사용할 수 있어.', '저장된 오답이 있으면 2스텝 따라쓰기와 3스텝 받아쓰기를 진행합니다. 오답이 없는 계정은 빈 상태 안내를 확인해 주세요.');
             enter('record', '나의 기록', 'openMyDictationFromDashboard()', 'dictation-record', '‘나의 기록’을 열어 보자. 오답과 완료한 내용을 모아 보는 곳이야.', '나의 기록에서 오답·완료 목록과 단어별 학습 통계를 확인해 주세요.');
-            explore('record-view', 'dictation-record', ['#dictation-wrong-bank-list'], '이전에 어떤 내용을 공부했는지 확인하고 다시 연습할 수 있어. 이번 체험 글씨는 이 기록에 들어가지 않아.', '이전 수행을 확인하고 오답 연습으로 연결할 수 있습니다. 이번 안내의 예시 글씨는 개인 기록에 포함되지 않습니다.');
+            explore('record-view', 'dictation-record', ['#dictation-wrong-bank-list'], '‘학습 기록’ 탭에는 오답과 완료한 내용, 단어별 정답률과 미션 기록이 있어. 이번 체험 글씨는 이 기록에 들어가지 않아.', '3단계 학습 기록은 오답·완료 은행, 단어별 정답률, 미션 기록을 그대로 제공합니다. 안내 예시 글씨는 저장되지 않습니다.');
+            press('bank-tab', 'dictation-record', '#my-dictation-tab-bank', '단어 은행', '나의 기록 안에서 ‘단어 은행’ 탭을 눌러 보자.', '3단계 나의 기록의 단어 은행 탭을 눌러 수집한 단어와 음절 통계를 확인합니다.');
+            explore('bank-view', 'dictation-record', ['#my-dictation-bank-panel'], '사진에서 모은 단어 은행과 받아쓰기에서 쌓인 음절 은행이 함께 보여. 비어 있으면 실제 공부를 한 뒤 확인하자.', '기존 단어 은행의 1·2·3단계 정답률과 음절 은행의 횟수·정답률·출제 우선순위를 그대로 확인합니다.');
+            press('record-return-tab', 'dictation-record', '#my-dictation-tab-records', '학습 기록', '‘학습 기록’ 탭을 눌러 오답과 미션 기록으로 돌아가 보자.', '학습 기록 탭으로 돌아와 기존 교과 맞춤쓰기 기록이 그대로 유지되는지 확인합니다.');
+            explore('record-return-view', 'dictation-record', ['#my-dictation-records-panel'], '단어 은행을 보고도 나의 학습 기록은 그대로 남아 있어.', '은행 조회와 학습 기록은 같은 기록 화면의 별도 탭이며 기존 기록을 변경하지 않습니다.');
         } else {
             enter('mission', '문해력 문제', '#literacy-mission-card', 'literacy', '‘문해력 문제’를 눌러 보자. 실제 문제 화면을 예시 지문 한 개로 체험할 거야.', '문해력 문제의 실제 풀이 화면을 엽니다. 안내 중에는 예시 문제를 사용하며 본 학습은 학생의 문해력 단증에 맞춰 생성됩니다.');
             explore('passage', 'literacy', ['#literacy-passage-content'], '먼저 읽기 지문을 읽어 보자. 민수가 무엇을 했는지 생각해 봐. 다음으로 문제와 보기를 볼 거야.', '왼쪽 실제 지문 상자를 먼저 확인합니다. 예시 글에서 인물의 행동을 읽은 뒤 질문으로 이동해 주세요.');
@@ -96,7 +99,11 @@ export function buildStageTutorial(level, role) {
             enter('limit', '문해력 탐정단 한계돌파', '#stage-4-game-literacy', 'limit', '이제 한계 돌파 문제는 문해력 탐정단 안에서 이어서 나와. 탐정단 버튼을 눌러 보자.', '문해력 탐정단이 공용 한계돌파 오답 은행 지문을 사건처럼 이어서 제시합니다.');
             explore('limit-view', 'limit', ['#literacy-adventure-loading'], '미해결된 사건 기록을 읽고 문제를 풀어 보자.', '문해력 탐정단의 사건 지문과 추리 답변 화면을 안내합니다.');
             enter('record', '나의 기록', 'openMyLiteracyRecord()', 'literacy-record', '‘나의 기록’을 눌러 이전 문제의 결과를 보자.', '나의 기록을 열어 정답·오답과 풀이 이력을 확인해 주세요.');
-            explore('record-view', 'literacy-record', ['#modal-message'], '풀었던 문제를 여기서 다시 확인해. 아직 기록이 없으면 실제 문제를 푼 뒤 볼 수 있어.', '결과와 실제 풀이 과정을 함께 해석해 주세요. 기록이 없는 학생은 첫 문제 풀이 후 확인할 수 있습니다.');
+            explore('record-view', 'literacy-record', ['#my-literacy-records-panel'], '‘학습 기록’ 탭에서 유형별 정답률과 전에 읽은 지문, 문제와 답안을 확인할 수 있어.', '4단계 기록 팝업의 유형·난이도별 통계와 지문·문제·입력한 답안을 그대로 확인합니다. 3단계 쓰기 기록과 합치지 않습니다.');
+            press('bank-tab', 'literacy-record', '#my-literacy-tab-bank', '단어 은행', '문해력 기록 안에서 ‘단어 은행’ 탭도 눌러 보자.', '4단계 나의 기록 팝업의 단어 은행 탭을 눌러 지문 소재로 사용하는 기존 단어·음절 은행을 확인합니다.');
+            explore('bank-view', 'literacy-record', ['#my-literacy-bank-panel'], '지문에 사용할 단어 은행과 함께 공부한 음절 은행이 보여. 아직 없으면 노트 사진으로 단어를 모아 보자.', '3·4단계가 사용하던 동일한 단어·음절 은행을 조회합니다. 문해력 기록, 탐정단 사건 기록과 은행 데이터는 서로 바꾸거나 합치지 않습니다.');
+            press('record-return-tab', 'literacy-record', '#my-literacy-tab-records', '학습 기록', '‘학습 기록’을 눌러 문해력 통계와 풀이 이력으로 돌아가자.', '학습 기록 탭을 눌러 문해력 통계·지문·문제·답안 이력이 그대로 유지되는지 확인합니다.');
+            explore('record-return-view', 'literacy-record', ['#my-literacy-records-panel'], '읽었던 지문과 내 답을 다시 볼 수 있어. 탭을 바꿔도 기록은 사라지지 않아.', '은행 조회 후에도 문해력 통계와 풀이 이력은 같은 팝업 안에 그대로 유지됩니다.');
         }
         enter('repository', '단어 카드 저장소', `openSharedWordCardRepository('${info.route}')`, 'repository', '‘단어 카드 저장소’를 열어 보자. 낱말의 뜻과 그림이 담긴 카드를 모아 보는 곳이야.', '단어 카드 저장소를 열어 공유된 단어·설명·그림 카드를 확인해 보세요.');
         explore('repository-view', 'repository', ['#shared-word-card-content'], '카드가 보이면 하나를 눌러 안쪽을 살펴봐도 좋아. 카드가 없으면 아직 만들어진 공용 카드가 없는 거야.', '게시된 카드가 있으면 눌러 상세 내용을 탐색할 수 있습니다. 아직 카드가 없다면 빈 목록을 확인한 뒤 계속 진행하세요.');

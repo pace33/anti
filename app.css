@@ -8403,6 +8403,54 @@ body.modal-open { overflow: hidden; }
     font-weight: 1000;
 }
 
+/* Each stage keeps its own record view; these styles only present the tabs. */
+.my-record-tabs {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+.my-record-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 1.05rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+.my-record-tab.is-active {
+    background: #ecfdf5;
+    border-color: #34d399;
+    color: #047857;
+}
+.my-record-tab:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.my-record-bank-panel[hidden],
+#my-dictation-records-panel[hidden],
+#my-literacy-records-panel[hidden] { display: none !important; }
+.my-record-bank-panel { min-width: 0; }
+.my-literacy-record-shell .my-record-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding-block: 4px;
+    background: white;
+}
+.modal-content:has(.my-literacy-record-shell) {
+    width: min(96vw, 1040px);
+    max-width: 1040px;
+}
+.my-record-bank-panel .dictation-bank-word-grid { max-height: min(48vh, 420px); }
+@media (max-width: 520px) {
+    .my-record-tabs { gap: 8px; margin-bottom: 18px; }
+    .my-record-tab { padding: 10px 8px; font-size: .95rem; }
+    .my-literacy-record-shell { padding-inline: 0; }
+}
+
 .dictation-bank-modal-shell {
     width: min(92vw, 980px);
     margin-inline: auto;

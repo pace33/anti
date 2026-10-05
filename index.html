@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20260930-syllable-reset-v1">
+    <link rel="stylesheet" href="app.css?v=record-bank-tabs-v1">
     <link rel="stylesheet" href="shape-zoo.css?v=20260921-stage-card-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260915-time-quiz-readability-v3">
@@ -359,7 +359,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
                     <button type="button" id="stage-3-game-word-card" data-stage-game-entry="3" class="grid-item p-6 text-center flex flex-col items-center bg-gradient-to-br from-violet-50 to-fuchsia-50" onclick="openAiedueLabWordCardGame()" aria-label="3단계 어휘 게임 열기">
                         <div class="text-5xl mb-3" aria-hidden="true">🃏</div>
                         <div class="text-xl font-bold">어휘 게임</div>
@@ -380,11 +380,7 @@
                         <div class="text-xl font-bold">나의 기록</div>
                         <p id="dictation-bank-summary" class="text-sm text-red-500 font-black mt-2">오답 0개 · 완료 0개</p>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col" onclick="openDictationBankModal()">
-                        <div class="text-5xl mb-3">🏦</div>
-                        <div class="text-xl font-bold">단어 은행</div>
-                        <p class="text-sm text-emerald-600 font-black mt-2">오늘의 노트 사진에서 모은 단어를 확인해요</p>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -431,7 +427,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-4">
                     <button type="button" id="stage-4-game-literacy" data-stage-game-entry="4" class="grid-item p-6 text-center flex flex-col items-center bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 hover:scale-[1.02] transition-transform cursor-pointer" onclick="openLiteracyAdventureGame()" aria-label="4단계 게임 문해력 탐정단 열기">
                         <div class="text-5xl mb-3" aria-hidden="true">🔎</div>
                         <div class="text-xl font-bold">문해력 탐정단</div>
@@ -448,11 +444,7 @@
                         <div class="text-xl font-bold">나의 기록</div>
                         <p id="literacy-record-summary" class="text-sm text-blue-600 font-black mt-2">정답 0개 · 오답 0개</p>
                     </div>
-                    <div class="grid-item p-6 text-center flex flex-col hover:scale-[1.02] transition-transform cursor-pointer" onclick="openDictationBankModal()">
-                        <div class="text-5xl mb-3">🏦</div>
-                        <div class="text-xl font-bold">단어 은행</div>
-                        <p class="text-sm text-emerald-600 font-black mt-2">문해력 지문에 반영할 단어를 확인해요</p>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -702,6 +694,11 @@
                 </div>
             </div>
 
+            <div id="my-dictation-record-tabs" class="my-record-tabs" role="tablist" aria-label="3단계 나의 기록">
+                <button type="button" id="my-dictation-tab-records" class="my-record-tab is-active" role="tab" aria-selected="true" aria-controls="my-dictation-records-panel" onclick="setMyDictationRecordTab('records')">📚 학습 기록</button>
+                <button type="button" id="my-dictation-tab-bank" class="my-record-tab" role="tab" aria-selected="false" aria-controls="my-dictation-bank-panel" onclick="setMyDictationRecordTab('bank')">🏦 단어 은행</button>
+            </div>
+            <div id="my-dictation-records-panel" role="tabpanel" aria-labelledby="my-dictation-tab-records">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="stitched p-6 bg-white">
                     <div class="flex items-center justify-between mb-5">
@@ -722,7 +719,7 @@
             <div class="stitched p-6 bg-white mb-6">
                 <div class="flex items-center justify-between mb-5">
                     <h3 class="text-2xl font-black text-[#2c3e50]">단어별 1·2·3단계 정답률</h3>
-                    <button type="button" class="btn-outline px-5 py-2 text-sm" onclick="openDictationBankModal()">단어 은행 전체 보기</button>
+                    <button type="button" class="btn-outline px-5 py-2 text-sm" onclick="setMyDictationRecordTab('bank')">단어 은행 탭 보기</button>
                 </div>
                 <div id="dictation-word-stat-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[260px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
@@ -734,6 +731,8 @@
                 </div>
                 <div id="my-dictation-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
+            </div>
+            <div id="my-dictation-bank-panel" class="my-record-bank-panel stitched p-6 bg-white" role="tabpanel" aria-labelledby="my-dictation-tab-bank" hidden></div>
         </div>
 
         <!-- [교과 맞춤쓰기 시리즈: 공용 작업실] -->
@@ -1835,7 +1834,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261002-robl-account-shop-v2"></script>
+    <script type="module" src="app.js?v=record-bank-tabs-v1"></script>
     <script type="module" src="syllable-slow-reader.js?v=20260929-hangul-card-clean-v1"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260921-stage-card-v1"></script>

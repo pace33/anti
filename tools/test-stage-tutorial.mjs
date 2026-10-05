@@ -82,7 +82,7 @@ function fixture(role='student',level=1){
         setupLiteracyWorkspace:q=>calls.push(['literacy',q]),configureDictationWorkspace:s=>calls.push(['dictation',s]),
         requireStageAccess:n=>context.currentUserRole==='teacher'||context.unlockedLevels.includes(n),
         installStageTutorial:a=>{installed++;actions=a;return{start(){},destroy(){},state:()=>({active:true,step})};},
-        window:{clearTimeout(){},closeAiedueKoreanModal:()=>calls.push('close-modal'),openDictationBankModal:()=>calls.push('bank'),openCurrentDrawingMission:()=>calls.push('actual-drawing'),openTodayDrawingActivity:()=>calls.push('actual-shape'),openSketchbookActivity:()=>calls.push('actual-sketch')}
+        window:{clearTimeout(){},closeAiedueKoreanModal:()=>calls.push('close-modal'),openDictationBankModal:()=>calls.push('bank'),openMyDictationFromDashboard:()=>calls.push('dictation-record'),openMyLiteracyRecord:()=>calls.push('literacy-record'),setMyDictationRecordTab:tab=>calls.push(['dictation-tab',tab]),setMyLiteracyRecordTab:tab=>calls.push(['literacy-tab',tab]),openCurrentDrawingMission:()=>calls.push('actual-drawing'),openTodayDrawingActivity:()=>calls.push('actual-shape'),openSketchbookActivity:()=>calls.push('actual-sketch')}
     };
     vm.createContext(context);vm.runInContext(adapterSource,context);context.window.openStageTutorial(level);
     return{context,calls,get actions(){return actions;},get installed(){return installed;},setStep(s){step=s;}};
@@ -132,6 +132,17 @@ test('automatic letter completion during tutorial stops before record/reward wri
     const context={stageTutorial:{state:()=>({active:true})},isTraceWritingComplete:()=>true};vm.createContext(context);
     vm.runInContext(app.slice(start,end)+'\n}',context);const feedback={};
     assert.equal(await context.gradeCompletedWriting({targetCanvas:{},feedback}),false);assert.match(feedback.textContent,/기록을 저장하지/);
+});
+
+for (const level of [3, 4]) test(`stage ${level} adapter restores its own bank and record tabs going backwards`, async()=>{
+    const f=fixture('student',level),steps=buildStageTutorial(level,'student');
+    const bank=steps.find(step=>step.id===`stage-${level}-bank-view`);
+    const returned=steps.find(step=>step.id===`stage-${level}-record-return-view`);
+    await f.actions.prepare(bank); await f.actions.prepare(returned); await f.actions.prepare(bank);
+    const kind=level===3?'dictation-tab':'literacy-tab';
+    assert.deepEqual(f.calls.filter(call=>Array.isArray(call)&&call[0]===kind).map(call=>call[1]),['bank','records','bank']);
+    assert.equal(f.calls.filter(call=>call===(level===3?'dictation-record':'literacy-record')).length,1);
+    assert.equal(f.calls.includes('bank'),false);
 });
 
 test('tutorial adapter excludes uploads, purchases, grading and persistent mutations',()=>{
