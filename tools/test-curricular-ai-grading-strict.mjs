@@ -58,10 +58,15 @@ test('production scoring rejects a generous verdict for extra letters and low co
   ]) {
     assert.equal((await runGrade(parsed)).recorded.score, 0);
   }
-  const correct = await runGrade({ written: '학교', correct: true, confidence: 0.99 });
+  const correct = await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 0.99 });
   assert.equal(correct.recorded.score, 1);
   assert.ok(!correct.suppliedPrompt.includes('학교'));
-  assert.equal((await runGrade({ written: '학교', correct: true, confidence: 0.99 }, { retry: true })).recorded.score, 0.5);
+  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 0.99 }, { retry: true })).recorded.score, 0.5);
+  assert.equal(correct.recorded.written, '학교');
+  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅗ,_', correct: true, confidence: 0.99 })).recorded.score, 0);
+  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_|ㅋ', correct: true, confidence: 0.99 })).recorded.score, 0);
+  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 0.5 })).recorded.score, 0);
+  assert.equal((await runGrade({ written: '학교', correct: true, confidence: 0.99 })).recorded.score, 0);
 });
 
 test('blank ink never calls AI and never creates a grading record', async () => {
@@ -74,4 +79,19 @@ test('NFC and spacing are tolerated but visible extra letters are never stripped
   assert.equal(context.decideCurricularAiCorrect({ written: ' 학교 ' }, { answer: '학교' }, 1), true);
   assert.equal(context.decideCurricularAiCorrect({ written: '학교'.normalize('NFD') }, { answer: '학교' }, 1), true);
   assert.equal(context.decideCurricularAiCorrect({ written: '학교ㅋ' }, { answer: '학교' }, 1), false);
+});
+
+test('jamo transcription composes observed vowels, rejects word autocorrection and malformed syllables', () => {
+  assert.equal(context.composeCurricularTranscription('ㅎ,ㅏ,ㄱ|ㄱ,ㅗ,_'), '학고');
+  assert.equal(context.composeCurricularTranscription('ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_'), '학교');
+  assert.equal(context.composeCurricularTranscription('ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_|ㅋ'), '학교ㅋ');
+  assert.equal(context.composeCurricularTranscription('ㄱ,ㅜ,_|ㄱ,ㅠ,_'), '구규');
+  for (const invalid of ['', '학교', 'ㄱ,ㅗ', 'ㄱ,ㅗ,_|', 'ㄱ,?,_', 'ㄱ,ㅗ,ㅏ', 'ㄱ,ㅗ,__']) assert.equal(context.composeCurricularTranscription(invalid), '', invalid);
+  const initials = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+  const vowels = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+  const finals = '_ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ';
+  for (let i=0;i<19;i++) for(let v=0;v<21;v++) for(let f=0;f<28;f++) {
+    const expected = String.fromCharCode(0xac00+(i*21+v)*28+f);
+    assert.equal(context.composeCurricularTranscription(`${initials[i]},${vowels[v]},${finals[f]}`),expected);
+  }
 });

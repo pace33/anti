@@ -9456,17 +9456,43 @@ function decideCurricularAiCorrect(parsed = {}, item = {}, difficulty = 1) {
     return normalizedWritten === normalizedExpected;
 }
 
+function composeCurricularTranscription(jamoText = '') {
+    // Read the observed letter parts, not an AI-autocorrected whole word.
+    const initials = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+    const vowels = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+    const finals = '_ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ';
+    const tokens = String(jamoText || '').trim().split('|');
+    if (!tokens.length || tokens.length > 120) return '';
+    let text = '';
+    for (const raw of tokens) {
+        const token = raw.trim();
+        if (/^[0-9A-Za-z]$/.test(token)) { text += token; continue; }
+        if (/^[ㄱ-ㅎㅏ-ㅣ]$/.test(token)) { text += token; continue; }
+        const parts = token.split(',').map(part => part.trim());
+        if (parts.length !== 3) return '';
+        const initial = initials.indexOf(parts[0]);
+        const vowel = vowels.indexOf(parts[1]);
+        const final = finals.indexOf(parts[2]);
+        if (parts.some(part => part.length !== 1) || initial < 0 || vowel < 0 || final < 0) return '';
+        text += String.fromCharCode(0xac00 + (initial * 21 + vowel) * 28 + final);
+    }
+    return text;
+}
+
 function buildCurricularHandwritingTranscriptionPrompt() {
     // Never send the answer, sentence hint, or word to the vision model.
     // The legacy schema's correct field means "confident transcription" here;
     // the actual answer check remains deterministic and local.
-    return `이 작업은 채점이 아니라 손글씨 이미지의 엄격한 전사입니다. 정답과 문제 문장은 제공하지 않습니다. 이미지 안에 실제로 그어진 진한 글씨만 written에 그대로 적으세요.
+    return `이 작업은 채점이 아니라 손글씨 이미지의 엄격한 전사입니다. 정답과 문제 문장은 제공하지 않습니다. 이미지 안에 실제로 그어진 진한 글씨의 자모를 written에 그대로 적으세요.
+- written에는 완성된 한글 음절이나 자연스러운 단어를 쓰지 말고, 각 음절을 초성,중성,종성 형식으로 적고 음절 사이는 |로 구분하세요. 받침이 없으면 종성은 _입니다. 예: ㄴ,ㅏ,_|ㅁ,ㅜ,_ . 띄어쓰기와 문장부호는 생략합니다. 독립 자모·숫자·영문은 한 글자짜리 토큰으로 | 사이에 그대로 적습니다. 판독 불가는 빈 문자열과 correct=false입니다.
 - 일반적으로 자연스러운 단어나 문장으로 교정하거나 자동완성하지 마세요. 철자가 틀린 낱말도 틀린 모습 그대로 전사합니다.
 - 글자를 한 음절씩 관찰하고 초성·중성·종성의 실제 획을 확인하세요. 특히 모음 획의 개수와 위치를 구별하고 없는 획을 보충하지 마세요.
+- ㅗ/ㅛ는 가로선 위의 짧은 세로획이 하나인지 둘인지, ㅜ/ㅠ는 가로선 아래의 짧은 세로획이 하나인지 둘인지 실제로 세어 구별하세요. 하나면 ㅗ/ㅜ이고 둘이면 ㅛ/ㅠ입니다. 글씨가 자연스러운 단어가 되도록 없는 세로획을 만들어 내면 안 됩니다.
+- analysis에는 전사한 각 음절의 초성·중성·종성과 혼동 가능한 모음의 실제 짧은 획 개수를 적으세요. 획 개수가 확인되지 않으면 confidence를 0.9 미만으로 두고 correct=false로 반환하세요.
 - 덧붙인 글자, 반복 글자, 독립 자모도 빠짐없이 전사하세요. 캔버스 밖 UI와 흐린 예시 글자는 무시하세요.
 - 읽을 수 없는 낙서나 애매한 글자는 정답을 추측하지 말고 confidence를 낮추세요.
 - correct는 전사를 자신 있게 읽었는지를 뜻합니다. confidence가 0.9 미만이거나 애매하면 correct=false입니다. 실제 정오 판정은 프로그램이 별도로 수행합니다.
-반드시 JSON만 출력하세요: {"written":"실제로 보이는 글씨 그대로","correct":true,"confidence":0.0,"analysis":"획을 보고 판단한 전사 근거 1문장"}`;
+반드시 JSON만 출력하세요: {"written":"관찰한 초성,중성,종성|초성,중성,종성","correct":true,"confidence":0.0,"analysis":"각 음절의 실제 자모와 획 개수"}`;
 }
 
 async function gradeCurricularCanvasItemWithAi(index) {
@@ -9487,8 +9513,10 @@ async function gradeCurricularCanvasItemWithAi(index) {
         const prompt = buildCurricularHandwritingTranscriptionPrompt();
         const raw = await callKoreanAiGenerate(prompt, { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s' });
         const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
+        const observedText = composeCurricularTranscription(parsed.written);
+        const observed = { ...parsed, written: observedText, studentAnswer: '' };
         const isRetryAttempt = item.retryMode === true;
-        const rawCorrect = parsed.correct === true && decideCurricularAiCorrect(parsed, item, difficulty)
+        const rawCorrect = parsed.correct === true && decideCurricularAiCorrect(observed, item, difficulty)
             && Number.isFinite(parsed.confidence) && parsed.confidence >= 0.9;
         const result = {
             sentence: item.sentence || item.answer || item.word,
@@ -9496,7 +9524,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
             word: item.word || cleanKoreanWord(item.answer || item.sentence),
             difficulty,
             source: item.source || 'curricular-ai-canvas',
-            written: cleanKoreanSentence(parsed.written || parsed.studentAnswer || ''),
+            written: cleanKoreanSentence(observedText),
             correct: !isRetryAttempt && rawCorrect,
             retryCorrect: isRetryAttempt && rawCorrect,
             retryAttempted: isRetryAttempt,
