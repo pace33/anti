@@ -9439,7 +9439,7 @@ function normalizeCurricularAiText(text) {
         .normalize('NFC')
         .replace(/[\s\u00a0]+/g, '')
         .replace(/[\u200b-\u200d\ufeff]/g, '')
-        .replace(/[^가-힣0-9A-Za-z]/g, '')
+        .replace(/[^\p{L}\p{N}]/gu, '')
         .toLowerCase();
 }
 
@@ -9453,9 +9453,6 @@ function decideCurricularAiCorrect(parsed = {}, item = {}, difficulty = 1) {
     const normalizedExpected = normalizeCurricularAiText(expected);
     const normalizedWritten = normalizeCurricularAiText(parsed.written || parsed.studentAnswer || '');
     if (!normalizedExpected || !normalizedWritten) return false;
-    if (Number(difficulty) === 2) {
-        return normalizedWritten === normalizedExpected || normalizedWritten.includes(normalizedExpected);
-    }
     return normalizedWritten === normalizedExpected;
 }
 
