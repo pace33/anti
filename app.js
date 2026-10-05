@@ -10231,7 +10231,8 @@ function splitDictationCandidateWords(text) {
 async function extractDictationWordsWithAi(text, options = {}) {
     const limit = Math.max(1, Math.min(40, Number(options.limit || 10)));
     const existingWords = (dictationPortfolio.koreanBank?.words || []).join(', ');
-    const visibleCandidates = splitDictationCandidateWords(text).join(', ') || '없음';
+    const candidateText = String(text || '').replace(/^[\t ]*\[(?:OCR|AI 사진 분석)\][\t ]*$/gm, '').trim();
+    const visibleCandidates = splitDictationCandidateWords(candidateText).join(', ') || '없음';
     const prompt = `다음은 오늘의 노트 사진에서 얻은 전체 후보입니다.
 - OCR로 읽은 글자
 - AI가 사진을 보고 분석한 글자/사물/학습 주제어
@@ -10245,12 +10246,13 @@ async function extractDictationWordsWithAi(text, options = {}) {
 5. 중복은 제거합니다.
 6. 이미 단어 은행에 있는 단어라도 이번 사진의 교과 맞춤쓰기 단어로 필요하면 후보에 유지합니다.
 7. 최종 단어는 가장 유용한 순서로 최대 ${limit}개만 고릅니다.
+8. OCR/AI 분석 구획의 제목과 처리 설명은 후보가 아닙니다. 실제로 읽힌 글자나 보이는 사물에 근거한 단어만 고르세요. 기존 은행 목록에서 이번 사진에 없는 단어를 가져오지 마세요.
 
 기존 단어 은행: ${existingWords || '없음'}
 화면 후보 단어: ${visibleCandidates}
 
 전체 분석 텍스트:
-${text}
+${candidateText}
 
 반드시 JSON만 출력: {"words":["명사"]}`;
     const raw = await callKoreanAiGenerate(prompt, {
@@ -10262,7 +10264,7 @@ ${text}
     return {
         words: Array.from(new Set((Array.isArray(parsed.words) ? parsed.words : []).map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, limit),
         raw,
-        visibleCandidates: splitDictationCandidateWords(text).slice(0, limit)
+        visibleCandidates: splitDictationCandidateWords(candidateText).slice(0, limit)
     };
 }
 

@@ -51,6 +51,19 @@ test('a genuinely selected photo word stays legal; empty final selection never s
  assert.ok(empty.messages.some(message=>message.includes('단어를 찾지 못')));
 });
 
+test('extraction prompt removes OCR/AI section labels without banning legitimate photo words', async () => {
+ const prompts=[];
+ const context={dictationPortfolio:{koreanBank:{words:[]}},splitDictationCandidateWords:text=>text.match(/[가-힣]+/g)||[],
+  cleanKoreanWord:word=>word,isLikelyKoreanNounBankWord:()=>true,AIEDUE_KOREAN_FAST_TEXT_MODEL:'test',
+  callKoreanAiGenerate:async prompt=>{prompts.push(prompt);return '{"words":["사진"]}'},parseAiJsonObject:raw=>JSON.parse(raw)};
+ vm.createContext(context);vm.runInContext(section('async function extractDictationWordsWithAi(', 'const SHARED_WORD_CARD_COLLECTION'),context);
+ const result=await context.extractDictationWordsWithAi('[OCR]\n학교 나무\n\n[AI 사진 분석]\n바다');
+ assert.deepEqual([...result.visibleCandidates],['학교','나무','바다']);
+ assert.ok(prompts[0].includes('화면 후보 단어: 학교, 나무, 바다'));
+ assert.ok(!prompts[0].includes('[AI 사진 분석]'));
+ assert.deepEqual([...result.words],['사진']);
+});
+
 test('stage 3 photo header selects curricular writing, other-stage photo header remains bank-only', () => {
  const h=harness();h.element('dictation-activities-section').classList.remove('hidden');
  h.context.window.triggerLessonPhotoCapture();assert.equal(h.context.pendingWordBankCameraAfterSave,'curricular-writing');
