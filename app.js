@@ -9456,6 +9456,19 @@ function decideCurricularAiCorrect(parsed = {}, item = {}, difficulty = 1) {
     return normalizedWritten === normalizedExpected;
 }
 
+function buildCurricularHandwritingTranscriptionPrompt() {
+    // Never send the answer, sentence hint, or word to the vision model.
+    // The legacy schema's correct field means "confident transcription" here;
+    // the actual answer check remains deterministic and local.
+    return `이 작업은 채점이 아니라 손글씨 이미지의 엄격한 전사입니다. 정답과 문제 문장은 제공하지 않습니다. 이미지 안에 실제로 그어진 진한 글씨만 written에 그대로 적으세요.
+- 일반적으로 자연스러운 단어나 문장으로 교정하거나 자동완성하지 마세요. 철자가 틀린 낱말도 틀린 모습 그대로 전사합니다.
+- 글자를 한 음절씩 관찰하고 초성·중성·종성의 실제 획을 확인하세요. 특히 모음 획의 개수와 위치를 구별하고 없는 획을 보충하지 마세요.
+- 덧붙인 글자, 반복 글자, 독립 자모도 빠짐없이 전사하세요. 캔버스 밖 UI와 흐린 예시 글자는 무시하세요.
+- 읽을 수 없는 낙서나 애매한 글자는 정답을 추측하지 말고 confidence를 낮추세요.
+- correct는 전사를 자신 있게 읽었는지를 뜻합니다. confidence가 0.9 미만이거나 애매하면 correct=false입니다. 실제 정오 판정은 프로그램이 별도로 수행합니다.
+반드시 JSON만 출력하세요: {"written":"실제로 보이는 글씨 그대로","correct":true,"confidence":0.0,"analysis":"획을 보고 판단한 전사 근거 1문장"}`;
+}
+
 async function gradeCurricularCanvasItemWithAi(index) {
     const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
     const item = activeDictationSession?.items?.[index];
@@ -9471,13 +9484,12 @@ async function gradeCurricularCanvasItemWithAi(index) {
         const dataUrl = canvas.toDataURL('image/png');
         const base64 = dataUrl.split(',')[1] || '';
         const difficulty = Number(item.difficulty || activeDictationSession?.difficulty || 1);
-        const expectedText = getCurricularExpectedTextForAi(item, difficulty);
-        const target = { index: index + 1, difficulty, expected: expectedText, answer: item.answer || item.sentence || item.word, sentence: item.sentence || '', word: item.word || '' };
-        const prompt = `초등학생이 태블릿 캔버스 빈 칸에 손글씨로 받아쓴 이미지를 채점합니다. 먼저 이미지에 실제로 보이는 학생 손글씨만 최대한 그대로 전사한 뒤 정답과 비교하세요. 정답을 보고 추측해서 written을 채우면 안 됩니다.\n\n채점 규칙:\n- 캔버스 밖 UI, 버튼, 예시 문구는 무시하고 진한 손글씨 획만 봅니다.\n- 흐리거나 삐뚤어진 초등학생 손글씨는 허용하지만, 다른 글자/누락/추가 글자가 있으면 오답입니다.\n- 1단/2단은 expected 단어와 철자가 같아야 correct=true입니다.\n- 3단은 expected 문장 전체의 철자가 같아야 correct=true입니다. 의미만 비슷하면 오답입니다.\n- 읽기 어렵거나 확신이 낮으면 correct=false로 두고 written에는 보이는 글자를 적으세요.\n\n문제(JSON): ${JSON.stringify(target)}\n반드시 JSON만 출력하세요. 형식: {"written":"학생 손글씨 전사","correct":false,"confidence":0.0,"analysis":"판단 근거 1문장"}`;
+        const prompt = buildCurricularHandwritingTranscriptionPrompt();
         const raw = await callKoreanAiGenerate(prompt, { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s' });
         const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
         const isRetryAttempt = item.retryMode === true;
-        const rawCorrect = parsed.correct === true && decideCurricularAiCorrect(parsed, item, difficulty);
+        const rawCorrect = parsed.correct === true && decideCurricularAiCorrect(parsed, item, difficulty)
+            && Number.isFinite(parsed.confidence) && parsed.confidence >= 0.9;
         const result = {
             sentence: item.sentence || item.answer || item.word,
             answer: item.answer || item.sentence || item.word,

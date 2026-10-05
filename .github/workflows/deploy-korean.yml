@@ -59,7 +59,7 @@ jobs:
           node --test tools/test-word-card-table-core.mjs tools/test-word-card-table-game.mjs tools/test-word-card-table-source.mjs
           node --test tools/test-syllable-slow-reader-core.mjs tools/test-syllable-slow-reader-game.mjs
           node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs
-          node --test tools/test-curricular-photo-transition.mjs tools/test-trace-syllable-reset.mjs tools/test-trace-syllable-reset-async.mjs
+          node --test tools/test-curricular-photo-transition.mjs tools/test-trace-syllable-reset.mjs tools/test-trace-syllable-reset-async.mjs tools/test-curricular-ai-grading-strict.mjs
           node --test tools/test-robl-shop.mjs
           npm ci --prefix tools/aya-server
           npm test --prefix tools/aya-server
