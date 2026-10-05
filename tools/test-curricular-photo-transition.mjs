@@ -64,6 +64,18 @@ test('extraction prompt removes OCR/AI section labels without banning legitimate
  assert.deepEqual([...result.words],['사진']);
 });
 
+test('stage 3 writing controls reserve scroll space above the HUD without moving the HUD', () => {
+ const css=readFileSync(new URL('../app.css',import.meta.url),'utf8');
+ const marker='/* Stage 3 writing: keep controls reachable above the profile HUD. */';
+ const start=css.indexOf(marker);assert(start>=0);const block=css.slice(start,css.indexOf('.class-timetable-frame',start));
+ assert.match(block,/body\.rpg-hud-active #dictation-workspace-section/);
+ assert.match(block,/padding-bottom: calc\(190px \+ env/);
+ assert.match(block,/scroll-padding-bottom: 190px/);
+ assert.match(block,/#dictation-workspace-section > \.learning-pane/);
+ assert.match(block,/#dictation-question-panel/);
+ assert.ok(!block.includes('display: none'));
+});
+
 test('stage 3 photo header selects curricular writing, other-stage photo header remains bank-only', () => {
  const h=harness();h.element('dictation-activities-section').classList.remove('hidden');
  h.context.window.triggerLessonPhotoCapture();assert.equal(h.context.pendingWordBankCameraAfterSave,'curricular-writing');
