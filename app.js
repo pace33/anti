@@ -9479,26 +9479,80 @@ function composeCurricularTranscription(jamoText = '') {
     return text;
 }
 
+function prepareCurricularHandwritingImage(canvas) {
+    const original = () => canvas.toDataURL('image/png');
+    const strokes = canvas?._curricularStrokes;
+    if (!Array.isArray(strokes) || !strokes.length) return original();
+    const dpr = typeof window !== 'undefined' ? (Number(window.devicePixelRatio) || 1) : 1;
+    const width = Number(canvas.width) / dpr;
+    const height = Number(canvas.height) / dpr;
+    if (!Number.isFinite(width) || !Number.isFinite(height) || !(width > 0 && height > 0)) return original();
+    let left = width, top = height, right = 0, bottom = 0, count = 0;
+    for (const stroke of strokes) {
+        if (!Array.isArray(stroke) || !stroke.length) return original();
+        for (const point of stroke) {
+            if (!Number.isFinite(point?.x) || !Number.isFinite(point?.y)
+                || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1) return original();
+            left = Math.min(left, point.x * width); right = Math.max(right, point.x * width);
+            top = Math.min(top, point.y * height); bottom = Math.max(bottom, point.y * height);
+            count++;
+        }
+    }
+    if (!count) return original();
+    // Preserve every stored pen path, including extra letters. Normalize only
+    // presentation width: the screen's 9px marker can merge adjacent jamo.
+    // No answer, glyph template, OCR correction, or stroke removal is used.
+    const ink = document.createElement('canvas');
+    // Bound intermediate allocation too, not only the final uploaded image.
+    const rasterScale = Math.min(1, 1024 / width, 1024 / height);
+    ink.width = Math.max(1, Math.ceil(width * rasterScale));
+    ink.height = Math.max(1, Math.ceil(height * rasterScale));
+    const ctx = ink.getContext('2d');
+    if (!ctx) return original();
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, ink.width, ink.height);
+    ctx.strokeStyle = '#25323d'; ctx.fillStyle = '#25323d';
+    ctx.lineWidth = 5 * rasterScale; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const stroke of strokes) {
+        ctx.beginPath();
+        stroke.forEach((point, index) => {
+            const x = point.x * width * rasterScale, y = point.y * height * rasterScale;
+            if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        if (stroke.length === 1) {
+            ctx.arc(stroke[0].x * width * rasterScale, stroke[0].y * height * rasterScale, 2.5 * rasterScale, 0, Math.PI * 2);
+            ctx.fill();
+        } else ctx.stroke();
+    }
+    // Rasterize at logical canvas resolution first. Magnifying the original
+    // pen vectors directly can introduce new antialiasing joins in tight vowels.
+    const padding = 16 * rasterScale;
+    left = Math.max(0, Math.floor(left * rasterScale) - padding); top = Math.max(0, Math.floor(top * rasterScale) - padding);
+    right = Math.min(ink.width, Math.ceil(right * rasterScale) + padding); bottom = Math.min(ink.height, Math.ceil(bottom * rasterScale) + padding);
+    const imageWidth = Math.max(1, right - left), imageHeight = Math.max(1, bottom - top);
+    const scale = Math.min(3, 1024 / imageWidth, 1024 / imageHeight);
+    const image = document.createElement('canvas');
+    image.width = Math.min(1024, Math.max(1, Math.ceil(imageWidth * scale)));
+    image.height = Math.min(1024, Math.max(1, Math.ceil(imageHeight * scale)));
+    const output = image.getContext('2d');
+    if (!output) return original();
+    output.imageSmoothingEnabled = false;
+    output.drawImage(ink, left, top, imageWidth, imageHeight, 0, 0, image.width, image.height);
+    return image.toDataURL('image/png');
+}
+
 function buildCurricularHandwritingTranscriptionPrompt() {
-    // Never send the answer, sentence hint, or word to the vision model.
-    // The legacy schema's correct field means "confident transcription" here;
-    // the actual answer check remains deterministic and local.
-    return `이 작업은 채점이 아니라 손글씨 이미지의 엄격한 전사입니다. 정답과 문제 문장은 제공하지 않습니다. 이미지 안에 실제로 그어진 진한 글씨의 자모를 written에 그대로 적으세요.
-- written에는 완성된 한글 음절이나 자연스러운 단어를 쓰지 말고, 각 음절을 초성,중성,종성 형식으로 적고 음절 사이는 |로 구분하세요. 받침이 없으면 종성은 _입니다. 예: ㄴ,ㅏ,_|ㅁ,ㅜ,_ . 띄어쓰기와 문장부호는 생략합니다. 독립 자모·숫자·영문은 한 글자짜리 토큰으로 | 사이에 그대로 적습니다. 판독 불가는 빈 문자열과 correct=false입니다.
-- 일반적으로 자연스러운 단어나 문장으로 교정하거나 자동완성하지 마세요. 철자가 틀린 낱말도 틀린 모습 그대로 전사합니다.
-- 글자를 한 음절씩 관찰하고 초성·중성·종성의 실제 획을 확인하세요. 특히 모음 획의 개수와 위치를 구별하고 없는 획을 보충하지 마세요.
-- ㅗ/ㅛ는 가로선 위의 짧은 세로획이 하나인지 둘인지, ㅜ/ㅠ는 가로선 아래의 짧은 세로획이 하나인지 둘인지 실제로 세어 구별하세요. 하나면 ㅗ/ㅜ이고 둘이면 ㅛ/ㅠ입니다. 글씨가 자연스러운 단어가 되도록 없는 세로획을 만들어 내면 안 됩니다.
-- analysis에는 전사한 각 음절의 초성·중성·종성과 혼동 가능한 모음의 실제 짧은 획 개수를 적으세요. 획 개수가 확인되지 않으면 confidence를 0.9 미만으로 두고 correct=false로 반환하세요.
-- 덧붙인 글자, 반복 글자, 독립 자모도 빠짐없이 전사하세요. 캔버스 밖 UI와 흐린 예시 글자는 무시하세요.
-- 읽을 수 없는 낙서나 애매한 글자는 정답을 추측하지 말고 confidence를 낮추세요.
-- correct는 전사를 자신 있게 읽었는지를 뜻합니다. confidence가 0.9 미만이거나 애매하면 correct=false입니다. 실제 정오 판정은 프로그램이 별도로 수행합니다.
-반드시 JSON만 출력하세요: {"written":"관찰한 초성,중성,종성|초성,중성,종성","correct":true,"confidence":0.0,"analysis":"각 음절의 실제 자모와 획 개수"}`;
+    // Never send an answer or hint. correct means confident transcription;
+    // actual grading remains an exact local comparison of observed jamo.
+    return `손글씨를 자모로 전사하세요. 정답과 문제 문장은 제공하지 않습니다. 자연스러운 단어로 교정하지 않습니다.
+written은 초성,중성,종성 토큰을 |로 연결합니다. 받침 없음=_; 독립 자모·숫자·영문은 단일 토큰. 추가/반복 글자도 모두 포함. 불명확하면 written="", correct=false, confidence<0.9.
+초성·중성·종성 영역을 먼저 분리하고 모음만 관찰하세요: ㅏ/ㅑ 오른쪽 짧은 획 1/2, ㅓ/ㅕ 왼쪽 짧은 획 1/2. ㅗ/ㅛ는 가로 기준선 위 세로획 1/2, ㅜ/ㅠ는 아래 세로획 1/2. 두 짧은 세로획이 하단 가로선에 닿으면 ㅛ, 상단 가로선에서 아래로 뻗으면 ㅠ입니다. ㅐ/ㅒ는 두 세로선 사이 가로획 1/2, ㅔ/ㅖ는 왼쪽 세로선의 바깥 왼쪽 가로획 1/2입니다. 초성이나 받침의 가로선은 중성 영역 밖이므로 세지 마세요. 없는 획을 보충하지 마세요.
+correct는 전사 확신이며 실제 정오 판정은 프로그램이 합니다. JSON만: {"written":"ㄴ,ㅏ,_|ㅁ,ㅜ,_","correct":true,"confidence":0.99,"analysis":"혼동 모음과 짧은 획수만 간결히(40자 이내)"}`;
 }
 
 async function gradeCurricularCanvasItemWithAi(index) {
     const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
     const item = activeDictationSession?.items?.[index];
-    if (!canvas || !item) return;
+    if (!canvas || !item || item.aiGrading) return;
     if (!hasCurricularCanvasInk(canvas)) { showModal('빈 칸에 먼저 받아쓴 뒤 확인을 눌러주세요.'); return; }
     const button = document.getElementById(`curricular-confirm-btn-${index}`);
     const status = document.getElementById(`curricular-trace-status-${index}`);
@@ -9507,7 +9561,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
     if (button) { button.disabled = true; button.innerText = 'AI 채점 중'; }
     if (status) { status.innerText = 'AI가 손글씨 이미지를 채점하고 있어요...'; status.className = 'text-red-500'; }
     try {
-        const dataUrl = canvas.toDataURL('image/png');
+        const dataUrl = prepareCurricularHandwritingImage(canvas);
         const base64 = dataUrl.split(',')[1] || '';
         const difficulty = Number(item.difficulty || activeDictationSession?.difficulty || 1);
         const prompt = buildCurricularHandwritingTranscriptionPrompt();
