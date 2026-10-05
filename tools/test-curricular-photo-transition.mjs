@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../app.js',import.meta.url),'utf8');
 function section(start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert(a>=0&&b>a);return source.slice(a,b);}
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return{promise,resolve,reject};}
-function harness(){
+function harness(options={}){
  const elements=new Map(),timers=[],starts=[],messages=[],opened=[];let saved=0,rewards=0;
  function element(id){if(!elements.has(id)){const classes=new Set(['hidden']);elements.set(id,{id,innerHTML:'',innerText:'',value:'',src:'',disabled:false,classList:{add:c=>classes.add(c),remove:c=>classes.delete(c),contains:c=>classes.has(c),toggle(c,on){if(on)classes.add(c);else classes.delete(c)}},setAttribute(){},querySelector(){return {innerText:''}}});}return elements.get(id);}
  const context={window:{},console:{warn(){},error(){}},document:{getElementById:element,body:{classList:{add(){},remove(){}}}},
@@ -16,7 +16,7 @@ function harness(){
  setWordBankCameraStatus:message=>messages.push(message),stopWordBankCamera(){},
  aieduLoading:{start:()=>1,finish(){}},normalizeDictationPhotoFile:async file=>({file,dataUrl:'data:image/jpeg;base64,AA=='}),
  readImageFileAsDataUrl:async()=> 'data:image/jpeg;base64,AA==',runDictationOcr:async()=> '학교 나무',
- analyzeDictationImageWithAi:async()=> '학교 나무',extractDictationWordsWithAi:async()=>({words:['학교','나무'],visibleCandidates:[]}),
+ analyzeDictationImageWithAi:async()=> '학교 나무',extractDictationWordsWithAi:async()=>({words:options.extractedWords??['학교','나무'],visibleCandidates:options.visibleCandidates??['학교','나무','사진','분석']}),
  cleanKoreanWord:w=>w,isLikelyKoreanNounBankWord:w=>Boolean(w),mergeKoreanBank({words}){context.dictationPortfolio.koreanBank.words=words;},
  prepareCurricularWritingRound(words){return context.dictationPortfolio.curricularWriting={activeRoundId:'photo-round',photoCapturedAt:'now',activeWords:words,photoWords:words,reviewWords:[]};},
  sanitizeDictationCaptureRecord:record=>record,persistDictationData:async()=>{saved++;},updateDictationDashboardPreview(){},
@@ -34,7 +34,24 @@ function harness(){
  return{context,element,starts,messages,opened,timers,get saved(){return saved},get rewards(){return rewards},flush(){const pending=timers.splice(0);pending.forEach(t=>t.fn());}};
 }
 
-test('stage 3 photo header selects curricular writing, other-stage photo header remains bank-only',()=>{
+test('photo rounds keep only final AI words, never raw OCR/analysis metadata candidates', async () => {
+ const h=harness();h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();
+ await h.context.processWordBankCameraPhoto({}, 'data:image/jpeg;base64,PHOTO');
+ assert.deepEqual([...h.context.dictationPortfolio.captures[0].words],['학교','나무']);
+ assert.deepEqual([...h.context.pendingCurricularWritingRoundStart.words],['학교','나무']);
+});
+
+test('a genuinely selected photo word stays legal; empty final selection never saves raw candidates', async () => {
+ const selected=harness({extractedWords:['사진']});selected.context.window.openDictationBankCamera({afterSave:'curricular-writing'});selected.flush();
+ await selected.context.processWordBankCameraPhoto({}, 'data:image/jpeg;base64,PHOTO');
+ assert.deepEqual([...selected.context.dictationPortfolio.captures[0].words],['사진']);
+ const empty=harness({extractedWords:[]});empty.context.window.openDictationBankCamera({afterSave:'curricular-writing'});empty.flush();
+ await empty.context.processWordBankCameraPhoto({}, 'data:image/jpeg;base64,PHOTO');
+ assert.equal(empty.saved,0);assert.equal(empty.context.pendingCurricularWritingRoundStart,null);
+ assert.ok(empty.messages.some(message=>message.includes('단어를 찾지 못')));
+});
+
+test('stage 3 photo header selects curricular writing, other-stage photo header remains bank-only', () => {
  const h=harness();h.element('dictation-activities-section').classList.remove('hidden');
  h.context.window.triggerLessonPhotoCapture();assert.equal(h.context.pendingWordBankCameraAfterSave,'curricular-writing');
  h.element('dictation-activities-section').classList.add('hidden');h.context.window.triggerLessonPhotoCapture();

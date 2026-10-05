@@ -10067,9 +10067,9 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         });
         if (!isCurrent()) return;
         const targetWordLimit = useLegacyCurricularPhotoAnalysis ? 10 : 40;
-        const sourceWords = afterSave === 'curricular-writing'
-            ? [...(aiExtracted.words || []), ...(aiExtracted.visibleCandidates || [])]
-            : (aiExtracted.words || []);
+        // Use only the final AI-selected words. Raw OCR/analysis candidates may contain
+                // processing labels (for example 사진/분석) and must never bypass the second pass.
+                const sourceWords = aiExtracted.words || [];
         const candidateWords = Array.from(new Set(sourceWords.map(cleanKoreanWord).filter(isLikelyKoreanNounBankWord))).slice(0, targetWordLimit);
         const existing = new Set(dictationPortfolio.koreanBank?.words || []);
         const newWords = candidateWords.filter((word) => !existing.has(word));
