@@ -6329,6 +6329,11 @@ body.korean-learning-view-open .premium-card { max-height: calc(100dvh - 24px); 
     max-width: none;
     margin: 0;
 }
+#my-drawing-section > .drawing-brand-header .drawing-logo-button,
+#drawing-workspace-section > .drawing-brand-header .drawing-logo-button {
+    position: relative;
+    top: -10px;
+}
 .drawing-logo-button {
     display: inline-flex;
     align-items: center;
