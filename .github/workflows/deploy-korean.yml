@@ -34,7 +34,6 @@ jobs:
           node --check classroom-tools.js
           node --check classroom-service.js
           node --check aiedu-loading.js
-          node --check aiedue-opening.js
           node --check dictation-asteroid-game.js
           node --check dictation-asteroid-core.mjs
           node --check shape-zoo-game.js
