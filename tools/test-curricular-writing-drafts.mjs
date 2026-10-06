@@ -73,6 +73,16 @@ test('account change blocks stale ink from being saved to another user', async (
     const h=harness(); h.context.currentUserId='student-b';
     await h.context.checkpointCurricularWritingSession(); assert.equal(h.writes.length,0);
 });
+test('an older queued success cannot mark a newly drawn unsaved stroke as saved', async () => {
+  const h = harness(), draft = buildCurricularDraft(sample());
+  const oldWrite = h.context.queueCurricularDraftWrite('student-a', draft);
+  h.context.scheduleCurricularWritingCheckpoint();
+  clearTimeout(vm.runInContext('curricularDraftSaveTimer', h.context));
+  await oldWrite;
+  assert.equal(h.status.textContent, '중간 기록 저장 중…');
+  await h.context.queueCurricularDraftWrite('student-a', draft);
+  assert.match(h.status.textContent, /중간 기록 저장됨/);
+});
 test('failed write gives honest visible feedback and the next retry recovers', async () => {
     const h=harness(), good=h.context.runTransaction;
     h.context.runTransaction=async()=>{throw new Error('offline')};

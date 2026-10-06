@@ -9861,6 +9861,8 @@ function checkpointCurricularWritingSession() {
 }
 function scheduleCurricularWritingCheckpoint() {
     clearTimeout(curricularDraftSaveTimer);
+    ++curricularDraftSaveRevision;
+    setCurricularDraftSaveStatus('중간 기록 저장 중…');
     curricularDraftSaveTimer = setTimeout(() => checkpointCurricularWritingSession(), 500);
 }
 document.addEventListener('visibilitychange', () => {
