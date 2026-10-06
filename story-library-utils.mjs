@@ -68,6 +68,16 @@ export function buildStoryImagePrompt({ title, spread, spreadIndex, spreadCount,
 등장인물은 앞뒤 장면에서도 알아볼 수 있도록 같은 외형, 옷, 색상, 비율을 정확히 유지하세요. 선택한 화풍과 이야기 분위기를 일관되게 유지하고, 명확한 표정과 읽기 좋은 장면 구도, 인쇄 가능한 고품질 삽화로 만드세요. 그림 안에는 글자, 자막, 말풍선, 로고, 워터마크를 절대 넣지 마세요.`;
 }
 
+export function imageJobErrorMessage(data, fallback = '그림 작업에 실패했습니다.') {
+  const candidates = [data?.error, data?.error?.message, data?.message];
+  for (const value of candidates) {
+    if (typeof value !== 'string') continue;
+    const message = value.trim().replace(/\u0000/g, '').slice(0, 500);
+    if (message && message !== '[object Object]') return message;
+  }
+  return fallback;
+}
+
 export function normalizeImageJobStatusUrl(url, expectedJobId) {
   const value = clean(url, 1000);
   const path = value.startsWith('/korean-ai/') ? value : (value.startsWith('/api/image-jobs/') ? `/korean-ai${value}` : '');

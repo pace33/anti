@@ -81,10 +81,11 @@ import {
     buildStoryGenerationPrompt,
     buildStoryImagePrompt,
     normalizeStoryPlan,
+    imageJobErrorMessage,
     normalizeImageJobStatusUrl,
     normalizeImageJobUrl,
     validateStoryCharacter
-} from "./story-library-utils.mjs?v=20260902-aiedue-library-v2";
+} from "./story-library-utils.mjs?v=20261006-image-job-error-v1";
 import {
     ASSIGNMENT_DIALOGUE,
     DIAGNOSTIC_BANK,
@@ -10573,7 +10574,7 @@ async function requestSharedWordExplanation(word, signal) {
     });
     let data = null;
     try { data = await response.json(); } catch { /* handled below */ }
-    if (!response.ok) throw new Error(data?.error || `단어 설명 요청 실패 (${response.status})`);
+    if (!response.ok) throw new Error(imageJobErrorMessage(data, `단어 설명 요청 실패 (${response.status})`));
     const explanation = data?.structuredOutput?.explanation || data?.explanation || parseAiJsonObject(data?.text, {}).explanation || data?.text;
     return validateWordCardText({ word, explanation });
 }
@@ -23033,7 +23034,7 @@ function settingsImageApiError(response, data, action) {
     if ([404, 405, 501].includes(response.status)) {
         return new Error(`이미지 편집 서버 기능이 아직 배포되지 않아 ${action}할 수 없습니다. 관리자에게 서버 배포 상태를 확인해 주세요.`);
     }
-    return new Error(data.error || data.message || `${action}에 실패했습니다. (${response.status})`);
+    return new Error(imageJobErrorMessage(data, `${action}에 실패했습니다. (${response.status})`));
 }
 
 function normalizeSettingsImageJob(data) {
@@ -23799,7 +23800,7 @@ async function createStoryImageJob(prompt, signal, aspectRatio = STORY_LIBRARY_I
         signal
     }, 120000);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || data.message || `그림 작업 생성 실패 (${response.status})`);
+    if (!response.ok) throw new Error(imageJobErrorMessage(data, `그림 작업 생성 실패 (${response.status})`));
     const token = data.jobToken || data.token || data.capabilityToken;
     if (!data.id || !token) throw new Error('그림 작업 ID 또는 임시 토큰을 받지 못했습니다.');
     return { id: data.id, token };
@@ -23828,7 +23829,7 @@ async function waitForStoryImageJob(job, signal) {
         if (retryableHttpStatus) {
             consecutiveStatusFailures += 1;
             if (consecutiveStatusFailures >= 5) {
-                throw new Error(data.error || data.message || 'AntiAI 상태 서버 연결이 불안정합니다. 잠시 뒤 다시 시도해 주세요.');
+                throw new Error(imageJobErrorMessage(data, 'AntiAI 상태 서버 연결이 불안정합니다. 잠시 뒤 다시 시도해 주세요.'));
             }
             const retryAfterSeconds = Math.min(15, Math.max(3, Number(response.headers.get('Retry-After')) || 3));
             await waitForStoryDelay(retryAfterSeconds * 1000, signal);
@@ -23836,7 +23837,7 @@ async function waitForStoryImageJob(job, signal) {
         }
         consecutiveStatusFailures = 0;
         if (!response.ok) {
-            const error = new Error(data.error || data.message || `그림 상태 확인 실패 (${response.status})`);
+            const error = new Error(imageJobErrorMessage(data, `그림 상태 확인 실패 (${response.status})`));
             if ([404, 410].includes(response.status)) error.retryWithNewJob = true;
             throw error;
         }
@@ -23846,7 +23847,7 @@ async function waitForStoryImageJob(job, signal) {
             return image;
         }
         if (data.status === 'failed' || data.status === 'expired' || data.status === 'cancelled') {
-            const error = new Error(data.error || data.message || 'AntiAI 그림 생성에 실패했습니다.');
+            const error = new Error(imageJobErrorMessage(data, 'AntiAI 그림 생성에 실패했습니다.'));
             error.retryWithNewJob = true;
             throw error;
         }
@@ -23859,7 +23860,7 @@ async function downloadStoryImage(job, image, signal) {
     const response = await fetchStoryResource(normalizeImageJobUrl(image.url, job.id), { headers: { 'X-Image-Job-Token': job.token }, cache: 'no-store', signal }, 120000);
     if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || data.message || `그림 다운로드 실패 (${response.status})`);
+        throw new Error(imageJobErrorMessage(data, `그림 다운로드 실패 (${response.status})`));
     }
     const blob = await response.blob();
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(blob.type)) throw new Error('지원하지 않는 그림 형식입니다.');

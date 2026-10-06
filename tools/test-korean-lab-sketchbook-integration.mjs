@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
+import { imageJobErrorMessage } from '../story-library-utils.mjs';
 
 const [app, html, css, koreanLabTime] = await Promise.all([
     readFile(new URL('../app.js', import.meta.url), 'utf8'),
@@ -324,11 +325,13 @@ test('AntiAI 상태 조회의 일시적 시간 초과와 게이트웨이 오류�
         'normalizeImageJobStatusUrl',
         'fetchStoryResource',
         'waitForStoryDelay',
+        'imageJobErrorMessage',
         `${polling}; return waitForStoryImageJob;`
     )(
         (url) => url,
         fetchImpl,
-        delayImpl
+        delayImpl,
+        imageJobErrorMessage
     );
     const completed = {
         ok: true,
