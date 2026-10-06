@@ -76,6 +76,8 @@ assert.match(refreshCss, /body\.rpg-hud-active \.aiedue-rpg-hud \.rpg-action-tra
 assert.match(refreshCss, /body\.rpg-hud-active \.aiedue-rpg-hud\.actions-open \.rpg-action-tray\s*\{\s*width:\s*min\(540px, calc\(100vw - 36px\)\);/, 'desktop menu must reserve enough room for complete labels');
 assert.match(refreshCss, /@media \(max-width: 760px\)[\s\S]*?body\.rpg-hud-active \.aiedue-rpg-hud \.rpg-action-tray\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/, 'mobile menu must use two readable columns');
 assert.match(refreshCss, /\.rpg-action-button > span:last-child\s*\{[\s\S]*?text-overflow:\s*clip;/, 'expanded menu labels must not be replaced with ellipses');
+assert.match(refreshCss, /@media \(min-width: 761px\)[\s\S]*?#aiedue-rpg-hud \.rpg-profile-copy\s*\{\s*grid-template-columns:\s*124px auto;/, 'desktop profile summary must keep the identity and value columns close together');
+assert.match(refreshCss, /#aiedue-rpg-hud \.rpg-wallet-line > span\s*\{[\s\S]*?grid-template-columns:\s*124px auto;[\s\S]*?justify-content:\s*start;/, 'desktop wallet values must align with the compact profile column');
 assert.match(css, /\.drawing-branded-section\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{[\s\S]*?margin-top:\s*0;/);

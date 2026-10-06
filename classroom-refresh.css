@@ -264,6 +264,12 @@ body.rpg-hud-active #main-container > .aiedue-rpg-hud { width: min(800px, calc(1
 .rpg-warnings { color: #c52632; }
 .rpg-wallet-line b { font-size: 18px; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .rpg-wallet-line small { font-size: 11px; }
+@media (min-width: 761px) {
+    #aiedue-rpg-hud .rpg-profile-copy { grid-template-columns: 124px auto; }
+    #aiedue-rpg-hud .rpg-wallet-line > span {
+        display: grid; grid-template-columns: 124px auto; justify-content: start; gap: 8px;
+    }
+}
 #aiedue-rpg-hud .rpg-profile-tools { margin-left: 0; transform: none; gap: 6px; }
 #aiedue-rpg-hud .rpg-tool-button { min-width: 48px; width: 48px; height: 54px; font-size: 11px; gap: 2px; border-radius: 16px; }
 #aiedue-rpg-hud .rpg-tool-button > span:first-child { font-size: 22px; }
