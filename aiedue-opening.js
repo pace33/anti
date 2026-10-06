@@ -1,7 +1,7 @@
 (() => {
     const start = document.getElementById('start-screen');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const seenKey = 'aiedue-star-opening-v1';
+    const seenKey = 'aiedue-star-opening-gemini-v2';
     if (!start || start.classList.contains('hidden') || reducedMotion.matches) return;
     try { if (sessionStorage.getItem(seenKey)) return; } catch (_) { /* Playback works without storage. */ }
 
@@ -9,7 +9,7 @@
     overlay.className = 'aiedue-opening';
     overlay.setAttribute('aria-label', '에이두가 별을 따라가며 한글을 만나는 오프닝');
     const video = document.createElement('video');
-    video.src = 'assets/opening/aiedue-star-opening.mp4';
+    video.src = 'assets/opening/aiedue-star-opening.mp4?v=20261006-gemini-v2';
     video.muted = true;
     video.playsInline = true;
     video.preload = 'auto';
