@@ -81,7 +81,7 @@ assert.match(refreshCss, /#aiedue-rpg-hud \.rpg-wallet-line > span\s*\{[\s\S]*?g
 assert.match(css, /\.drawing-branded-section\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{/);
 assert.match(css, /\.drawing-logo-button\s+\.login-mini-logo\s*\{[\s\S]*?margin-top:\s*0;/);
-assert.match(css, /#my-drawing-section > \.drawing-brand-header \.drawing-logo-button,[\s\S]*?#drawing-workspace-section > \.drawing-brand-header \.drawing-logo-button\s*\{[\s\S]*?top:\s*-10px;/, 'drawing subpage logos must clear the mission card border');
+assert.match(css, /#drawing-activities-section > \.drawing-brand-header \.drawing-logo-button,[\s\S]*?#my-drawing-section > \.drawing-brand-header \.drawing-logo-button,[\s\S]*?#drawing-workspace-section > \.drawing-brand-header \.drawing-logo-button\s*\{[\s\S]*?top:\s*-10px;/, 'drawing logos must clear the mission card border');
 assert.match(css, /#my-drawing-section,\s*#drawing-workspace-section\s*\{[\s\S]*?justify-content:\s*flex-start\s*!important;[\s\S]*?overflow-y:\s*auto\s*!important;/);
 assert.match(css, /@media \(min-width: 577px\) and \(max-height: 900px\)[\s\S]*?#drawing-workspace-section \{ padding-top: 124px !important; \}/);
 assert.match(css, /@media \(max-width: 520px\)[\s\S]*?\.drawing-logo-button \.login-mini-logo \{ width: 104px; \}/);
