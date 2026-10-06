@@ -62,6 +62,7 @@ jobs:
           node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs
           node --test tools/test-curricular-photo-transition.mjs tools/test-trace-syllable-reset.mjs tools/test-trace-syllable-reset-async.mjs tools/test-curricular-ai-grading-strict.mjs
           node --test tools/test-robl-shop.mjs
+          node --test tools/test-student-activity-log-labels.mjs tools/test-student-activity-status.mjs
           npm ci --prefix tools/aya-server
           npm test --prefix tools/aya-server
           node --test tools/test-korean-ai-low-default.mjs tools/test-word-card-utils.mjs tools/test-word-card-integration.mjs tools/test-image-job-errors.mjs tools/test-ai-error-codes.mjs

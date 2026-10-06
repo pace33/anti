@@ -16,6 +16,7 @@ import {
     inMemoryPersistence
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
+import { buildActivityStatusSnapshot, formatActivityStatusChange } from './student-activity-status.mjs?v=student-status-after-v1';
 import { installClassroomTools } from './classroom-tools.js?v=20260915-tutorial-v2';
 import { installTeacherTutorial } from './teacher-tutorial.js?v=20260916-polite-skip-v1';
 import { installStageTutorial } from './stage-tutorial.js?v=record-bank-tabs-v1';
@@ -2975,6 +2976,7 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
 
     const beforeLevel = Math.max(1, asNumber(currentUserAeduLevel, 1));
     const beforeWarningTokens = Math.max(0, Math.floor(asNumber(currentUserWarningTokens, 0)));
+    const beforeStatus = { aeduLevel: beforeLevel, aeduExperience: asNumber(currentUserAeduExperience, 0), balance: asNumber(currentUserBalance ?? currentUserCoins, 0), warningTokens: beforeWarningTokens };
     let newExp = asNumber(currentUserAeduExperience, 0) + addedExp;
     let levelUpCount = 0;
     let removedWarningTokens = 0;
@@ -3015,6 +3017,7 @@ function applyAiedueExperienceReward(percent = 0, meta = {}) {
         baseExperience: baseReward,
         multiplier: stageMultiplier,
         grantedExperience: addedExp,
+        ...buildActivityStatusSnapshot(beforeStatus, { aeduLevel: currentUserAeduLevel, aeduExperience: currentUserAeduExperience, balance: currentUserBalance, warningTokens: currentUserWarningTokens }),
         levelBefore: beforeLevel,
         levelAfter: currentUserAeduLevel,
         levelUpPoints,
@@ -3302,6 +3305,7 @@ async function commitKoreanLabTimeQuizAttempt(attemptId, expAmount) {
             baseExperience: reward,
             multiplier: 1,
             grantedExperience: reward,
+            ...buildActivityStatusSnapshot({ aeduLevel: normalizedLevel.aeduLevel, aeduExperience: normalizedLevel.aeduExperience, balance: walletBefore, warningTokens: warningTokensBefore }, { aeduLevel, aeduExperience, balance, warningTokens }),
             levelBefore: normalizedLevel.aeduLevel,
             levelAfter: aeduLevel,
             levelUpPoints,
@@ -7635,6 +7639,7 @@ async function persistDrawingRecord(record, operation = {}) {
             const beforeLevel = Math.max(1, asNumber(userData.aeduLevel, startedState.aeduLevel || 1));
             let nextLevel = beforeLevel;
             let nextWarningTokens = Math.max(0, Math.floor(asNumber(userData.warningTokens, startedState.warningTokens)));
+            const beforeDrawingStatus = { aeduLevel: beforeLevel, aeduExperience: nextExperience, warningTokens: nextWarningTokens, balance: asNumber(userData.balance, startedState.balance) };
             let levelUpCount = 0;
             const shouldGrantExperience = isNewRecord && (!missionStepKey || !existingMission);
             if (shouldGrantExperience) {
@@ -7657,8 +7662,8 @@ async function persistDrawingRecord(record, operation = {}) {
             const baseExperience = Math.max(0, Number(operation.baseExperience ?? grantedExperience));
             const experienceMultiplier = Math.max(0, Number(operation.experienceMultiplier ?? 1));
             const activityMessage = `${String(userData.name || startedState.userName || '학생').slice(0, 40)}이 ${String(operation.experienceSource || '그리기 활동').slice(0, 80)}을 통해 기본 경험치 ${baseExperience.toFixed(1)}%의 ${Math.round(experienceMultiplier * 100)}%인 ${grantedExperience.toFixed(1)}%를 받았다.${levelUpCount > 0 ? ` 레벨 ${beforeLevel}에서 ${nextLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${removedWarningTokens}개가 감소되었다.` : ''}`;
-            const koreanActivityLog = grantedExperience > 0
-                ? [{ id: `drawing_${recordRef.id}`, type: 'experience', source: operation.experienceSource || '그리기 활동', baseExperience, multiplier: experienceMultiplier, grantedExperience, levelBefore: beforeLevel, levelAfter: nextLevel, levelUpPoints, warningTokensReduced: removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...(Array.isArray(userData.koreanActivityLog) ? userData.koreanActivityLog : [])].slice(0, 200)
+            const koreanActivityLog = grantedExperience > 0 || totalPointReward > 0
+                ? [{ id: `drawing_${recordRef.id}`, type: 'experience', source: operation.experienceSource || '그리기 활동', baseExperience, multiplier: experienceMultiplier, grantedExperience, ...buildActivityStatusSnapshot(beforeDrawingStatus, { aeduLevel: nextLevel, aeduExperience: nextExperience, warningTokens: nextWarningTokens, balance: serverBalance + totalPointReward }), levelBefore: beforeLevel, levelAfter: nextLevel, levelUpPoints, warningTokensReduced: removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...(Array.isArray(userData.koreanActivityLog) ? userData.koreanActivityLog : [])].slice(0, 200)
                 : (Array.isArray(userData.koreanActivityLog) ? userData.koreanActivityLog : []);
             const committedState = {
                 drawingPortfolio: nextPortfolio,
@@ -12380,8 +12385,8 @@ function mergeLiteracyAttemptWithServer(serverData, attempt) {
     const literacyActivityLabel = formatLiteracyActivityLabel(attempt.difficulty, attempt.type);
     const activityTimeMs = Number.isFinite(Date.parse(attempt.solvedAt)) ? Date.parse(attempt.solvedAt) : Date.now();
     const activityMessage = `${base.studentName}이 ${literacyActivityLabel} 활동을 통해 기본 경험치 ${asNumber(attempt.baseExperience, 0).toFixed(1)}%의 ${Math.round(asNumber(attempt.stageMultiplier, 1) * 100)}%인 ${asNumber(attempt.experienceReward, 0).toFixed(1)}%를 받았다.${rewarded.levelUpCount > 0 ? ` 레벨 ${base.aeduLevel}에서 ${rewarded.aeduLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${rewarded.removedWarningTokens}개가 감소되었다.` : ''}`;
-    const koreanActivityLog = attempt.experienceReward > 0
-        ? [{ id: `literacy_${attempt.attemptId}`, type: 'experience', source: literacyActivityLabel, difficulty: attempt.difficulty, questionType: attempt.type, baseExperience: attempt.baseExperience, multiplier: attempt.stageMultiplier, grantedExperience: attempt.experienceReward, levelBefore: base.aeduLevel, levelAfter: rewarded.aeduLevel, levelUpPoints, warningTokensReduced: rewarded.removedWarningTokens, createdAtMs: activityTimeMs, solvedAt: attempt.solvedAt, message: activityMessage }, ...base.koreanActivityLog].slice(0, 200)
+    const koreanActivityLog = attempt.experienceReward > 0 || rewarded.balance !== base.balance
+        ? [{ id: `literacy_${attempt.attemptId}`, type: 'experience', source: literacyActivityLabel, difficulty: attempt.difficulty, questionType: attempt.type, baseExperience: attempt.baseExperience, multiplier: attempt.stageMultiplier, grantedExperience: attempt.experienceReward, ...buildActivityStatusSnapshot(base, rewarded), levelBefore: base.aeduLevel, levelAfter: rewarded.aeduLevel, levelUpPoints, warningTokensReduced: rewarded.removedWarningTokens, createdAtMs: activityTimeMs, solvedAt: attempt.solvedAt, message: activityMessage }, ...base.koreanActivityLog].slice(0, 200)
         : base.koreanActivityLog;
     return {
         ...rewarded,
@@ -12470,7 +12475,7 @@ async function persistLiteracyReviewRewardAtomic({ claimId, userId, experienceRe
         const committed = applyLiteracyWalletReward(base, 0, experienceReward);
         const levelUpPoints = Math.max(0, committed.aeduLevel - base.aeduLevel) * AIEDUE_LEVEL_UP_POINT_REWARD;
         const activityMessage = `${base.studentName}이 문해력 오답 복습을 통해 기본 경험치 ${asNumber(baseExperience, 0).toFixed(1)}%의 ${Math.round(asNumber(stageMultiplier, 1) * 100)}%인 ${asNumber(experienceReward, 0).toFixed(1)}%를 받았다.${committed.levelUpCount > 0 ? ` 레벨 ${base.aeduLevel}에서 ${committed.aeduLevel}으로 레벨업하며 돈 ${levelUpPoints.toLocaleString()}점이 지급되고 주의토큰 ${committed.removedWarningTokens}개가 감소되었다.` : ''}`;
-        committed.koreanActivityLog = [{ id: `literacy_review_${claimId}`, type: 'experience', source: '문해력 오답 복습', baseExperience, multiplier: stageMultiplier, grantedExperience: experienceReward, levelBefore: base.aeduLevel, levelAfter: committed.aeduLevel, levelUpPoints, warningTokensReduced: committed.removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...base.koreanActivityLog].slice(0, 200);
+        committed.koreanActivityLog = [{ id: `literacy_review_${claimId}`, type: 'experience', source: '문해력 오답 복습', baseExperience, multiplier: stageMultiplier, grantedExperience: experienceReward, ...buildActivityStatusSnapshot(base, committed), levelBefore: base.aeduLevel, levelAfter: committed.aeduLevel, levelUpPoints, warningTokensReduced: committed.removedWarningTokens, createdAtMs: Date.now(), message: activityMessage }, ...base.koreanActivityLog].slice(0, 200);
         transaction.set(userRef, {
             coins: committed.coins,
             balance: committed.balance,
@@ -22457,10 +22462,10 @@ function formatClassActivityTime(log = {}) {
 
 function getClassActivityMessage(log = {}) {
     const message = humanizeLiteracyActivityText(log.message || '');
-    if (message.trim()) return message;
     const source = humanizeLiteracyActivityText(log.source || '');
-    if (source.trim()) return `${source} 활동이 기록되었습니다.`;
-    return '활동이 기록되었습니다.';
+    const baseMessage = message.trim() ? message : source.trim() ? `${source} 활동이 기록되었습니다.` : '활동이 기록되었습니다.';
+    const change = formatActivityStatusChange(log);
+    return change ? `${baseMessage}\n변화: ${change}` : baseMessage;
 }
 
 function renderTeacherClassActivity() {
@@ -22472,7 +22477,7 @@ function renderTeacherClassActivity() {
         const logHtml = logs.length ? logs.map((log) => {
             const timeText = formatClassActivityTime(log);
             const timeClass = timeText === '시간 정보 없음' ? 'text-rose-400' : 'text-gray-500';
-            return `<li class="border-l-4 ${log.type === 'teacher-wallet' ? 'border-amber-400' : 'border-teal-400'} bg-gray-50 rounded-r-2xl px-4 py-3"><div class="text-sm font-bold text-[#2c3e50]">${escapeHtml(getClassActivityMessage(log))}</div><div class="text-[11px] ${timeClass} font-bold mt-1">🕒 ${escapeHtml(timeText)}</div></li>`;
+            return `<li class="border-l-4 ${log.type === 'teacher-wallet' ? 'border-amber-400' : 'border-teal-400'} bg-gray-50 rounded-r-2xl px-4 py-3"><div class="text-sm font-bold text-[#2c3e50] whitespace-pre-line break-words">${escapeHtml(getClassActivityMessage(log))}</div><div class="text-[11px] ${timeClass} font-bold mt-1">🕒 ${escapeHtml(timeText)}</div></li>`;
         }).join('') : '<li class="text-sm text-gray-400 font-bold py-4">새로 지급되는 경험치와 교사 지급·차감부터 여기에 기록됩니다.</li>';
         return `<article class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><h4 class="text-xl font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</h4><p class="text-xs text-teal-600 font-bold">${escapeHtml(student.userCode || student.code || '-')}</p></div><div class="text-xs font-black text-gray-500">Lv.${Math.max(1, asNumber(student.aeduLevel, 1))} · 경험치 ${asNumber(student.aeduExperience, 0).toFixed(1)}%</div></div><ol class="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">${logHtml}</ol></article>`;
     }).join('') : '<p class="text-center py-10 text-gray-400 font-bold">학급에 등록된 학생이 없어요.</p>';
@@ -22544,8 +22549,9 @@ window.adjustStudentKoreanWallet = async function(sid, kind, direction) {
                 source: 'class-management',
                 kind,
                 delta: appliedDelta,
+                ...buildActivityStatusSnapshot(kind === 'warning' ? { warningTokens: currentValue } : { balance: currentValue }, kind === 'warning' ? { warningTokens: nextValue } : { balance: nextValue }),
                 createdAtMs: Date.now(),
-                message: `교사 ${teacherName}가 ${studentName}에게 ${itemName} ${Math.abs(appliedDelta).toLocaleString()}${unit}을 ${action}`
+                message: `교사 ${teacherName}가 ${studentName}에게 ${itemName} ${Math.abs(appliedDelta).toLocaleString()}${unit}${kind === 'warning' ? '를' : '을'} ${action}`
             };
             const logs = [activity, ...(Array.isArray(data.koreanActivityLog) ? data.koreanActivityLog : [])].slice(0, 200);
             const update = kind === 'warning'
