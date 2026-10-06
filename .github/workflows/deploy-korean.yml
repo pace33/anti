@@ -41,6 +41,7 @@ jobs:
           node --check drawing-shape-catalog.mjs
           node --check word-card-table-game.js
           node --check word-card-table-core.mjs
+          node --check ai-error-utils.mjs
           node --check syllable-slow-reader.js
           node --check syllable-slow-reader-core.mjs
 
@@ -63,7 +64,7 @@ jobs:
           node --test tools/test-robl-shop.mjs
           npm ci --prefix tools/aya-server
           npm test --prefix tools/aya-server
-          node --test tools/test-korean-ai-low-default.mjs tools/test-word-card-utils.mjs tools/test-word-card-integration.mjs tools/test-image-job-errors.mjs
+          node --test tools/test-korean-ai-low-default.mjs tools/test-word-card-utils.mjs tools/test-word-card-integration.mjs tools/test-image-job-errors.mjs tools/test-ai-error-codes.mjs
 
       - name: Verify modular structure and repository hygiene
         shell: bash

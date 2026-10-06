@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {aiErrorMessage} from '../ai-error-utils.mjs';
 const source=readFileSync(new URL('../app.js',import.meta.url),'utf8');
 function section(start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert(a>=0&&b>a);return source.slice(a,b);}
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return{promise,resolve,reject};}
 function harness(options={}){
  const elements=new Map(),timers=[],starts=[],messages=[],opened=[];let saved=0,rewards=0;
  function element(id){if(!elements.has(id)){const classes=new Set(['hidden']);elements.set(id,{id,innerHTML:'',innerText:'',value:'',src:'',disabled:false,classList:{add:c=>classes.add(c),remove:c=>classes.delete(c),contains:c=>classes.has(c),toggle(c,on){if(on)classes.add(c);else classes.delete(c)}},setAttribute(){},querySelector(){return {innerText:''}}});}return elements.get(id);}
- const context={window:{},console:{warn(){},error(){}},document:{getElementById:element,body:{classList:{add(){},remove(){}}}},
+ const context={aiErrorMessage,window:{},console:{warn(){},error(){}},document:{getElementById:element,body:{classList:{add(){},remove(){}}}},
  pendingWordBankCameraReward:null,pendingWordBankCameraAfterSave:null,pendingCurricularWritingRoundStart:null,wordBankCameraRevision:0,
  activeWordBankCameraStream:null,activeDictationSession:null,activeDictationItem:null,activeDictationImageAnalysis:'',
  dictationPortfolio:{koreanBank:{words:[]},captures:[],curricularWriting:{}},
@@ -48,7 +49,7 @@ test('a genuinely selected photo word stays legal; empty final selection never s
  const empty=harness({extractedWords:[]});empty.context.window.openDictationBankCamera({afterSave:'curricular-writing'});empty.flush();
  await empty.context.processWordBankCameraPhoto({}, 'data:image/jpeg;base64,PHOTO');
  assert.equal(empty.saved,0);assert.equal(empty.context.pendingCurricularWritingRoundStart,null);
- assert.ok(empty.messages.some(message=>message.includes('단어를 찾지 못')));
+ assert.ok(empty.messages.some(message=>message.startsWith('AI 생성에 실패했습니다. 오류 코드: AI-')));
 });
 
 test('extraction prompt removes OCR/AI section labels without banning legitimate photo words', async () => {
@@ -110,5 +111,5 @@ test('save failure shows a recoverable error and never marks an unsaved round re
  const h=harness();h.context.persistDictationData=async()=>{throw new Error('저장 연결 실패')};
  h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();await h.context.processWordBankCameraPhoto({});
  h.context.window.closeWordBankCameraModal();h.flush();assert.equal(h.starts.length,0);assert.equal(h.context.pendingCurricularWritingRoundStart,null);
- assert(h.messages.includes('저장 연결 실패'));
+ assert(h.messages.includes('AI 생성에 실패했습니다. 오류 코드: AI-1008'));
 });

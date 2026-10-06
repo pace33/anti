@@ -3,6 +3,7 @@
 // Firebase Auth만 임시 유지하고 Firestore/Storage 데이터는 에이두 데이터 서버를 사용합니다.
 // =========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { aiErrorMessage, createAiError } from "./ai-error-utils.mjs?v=20261006-ai-error-codes-v1";
 import {
     getAuth,
     createUserWithEmailAndPassword,
@@ -85,7 +86,7 @@ import {
     normalizeImageJobStatusUrl,
     normalizeImageJobUrl,
     validateStoryCharacter
-} from "./story-library-utils.mjs?v=20261006-image-job-error-v1";
+} from "./story-library-utils.mjs?v=20261006-ai-error-codes-v1";
 import {
     ASSIGNMENT_DIALOGUE,
     DIAGNOSTIC_BANK,
@@ -7280,9 +7281,9 @@ window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
     } catch (error) {
         if (error?.name !== 'AbortError' && isCurrentAiSketchbookOperation(revision, controller, startedUserId)) {
             console.error('AI sketchbook generation failed:', error);
-            failureMessage = `AI 생성 실패: ${error?.message || '잠시 뒤 다시 시도해 주세요.'}`;
+            failureMessage = aiErrorMessage(error);
             updateAiSketchbookControls(failureMessage);
-            showModal(`AI 그림을 만들지 못했어요.<br><span class="text-sm text-gray-500">${escapeHtml(error?.message || '잠시 뒤 다시 시도해 주세요.')}</span>`);
+            showModal(aiErrorMessage(error));
         }
     } finally {
         aieduLoading.finish(loadingToken, drawingAiSketchbookGenerated && !controller.signal.aborted);
@@ -9644,8 +9645,8 @@ async function gradeCurricularCanvasItemWithAi(index) {
         showAiedueAutoToast(getCurricularItemScore(result) > 0 ? (result.retryCorrect ? '재도전 성공! 0.5점' : '정답이에요!') : '오답으로 기록돼요', result.analysis || `${index + 1}번 채점이 끝났어요.`, 2600);
     } catch (error) {
         console.error('curricular canvas AI grading failed', error);
-        if (status) { status.innerText = 'AI 채점에 실패했어요. 다시 확인을 눌러주세요.'; status.className = 'text-red-500'; }
-        showModal(`AI 채점에 실패했어요: ${escapeHtml(error.message || error)}`);
+        if (status) { status.innerText = aiErrorMessage(error); status.className = 'text-red-500'; }
+        showModal(aiErrorMessage(error));
     } finally {
         item.aiGrading = false;
         if (button) { button.disabled = false; button.innerText = '확인'; }
@@ -10252,7 +10253,7 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         if (!isCurrent()) return;
         pendingCurricularWritingRoundStart = null;
         console.error('word bank camera photo failed', error);
-        setWordBankCameraStatus(error.message || '사진 분석에 실패했어요. 다시 찍어주세요.');
+        setWordBankCameraStatus(aiErrorMessage(error));
         retry?.classList.remove('hidden');
     } finally {
         aieduLoading.finish(loadingToken, loadingSucceeded);
@@ -10334,7 +10335,7 @@ async function callKoreanAiGenerate(prompt, options = {}) {
         ? await fetchStoryResource(endpoint, requestOptions, Number(options.requestTimeoutMs) || 6 * 60 * 1000)
         : await fetch(endpoint, requestOptions);
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `AI ${res.status}`);
+    if (!res.ok) throw createAiError(data, res.status);
     return getAiTextFromResponse(data);
 }
 
@@ -10436,6 +10437,7 @@ function setSharedWordCardBusy(busy, title = '단어를 설명하기 위해 생�
 }
 
 function sharedWordCardError(message) {
+    message = aiErrorMessage(message);
     const content = sharedWordCardElement('shared-word-card-content');
     if (!content) return;
     content.innerHTML = `<div class="shared-word-card-empty"><span>⚠️</span><strong>단어 카드를 준비하지 못했어요.</strong><p>${escapeHtml(message)}</p><button type="button" class="btn-outline" data-word-card-repository>저장소 보기</button></div>`;
@@ -10960,7 +10962,7 @@ window.handleLessonPhotoCapture = async function handleLessonPhotoCapture(input)
     } catch (error) {
         console.error('lesson photo capture failed', error);
         hideActivityLoading();
-        showModal(`오늘의 노트 사진을 처리하지 못했어요. AI 사진 분석이 정상 동작하는지 확인해주세요.<br><span class="text-sm text-gray-400">${escapeHtml(error.message || String(error))}</span>`);
+        showModal(aiErrorMessage(error));
     } finally {
         if (input) input.value = '';
     }
@@ -11149,8 +11151,8 @@ window.revealDictationAnswer = async function() {
         document.getElementById('dictation-photo-hint').innerText = `채점과 나의 기록/단어 은행 통계 저장이 끝났어요. 새 미션을 누르면 ${getCurricularGateText()}`;
     } catch (error) {
         console.error('dictation AI grading failed', error);
-        showModal(`채점에 실패했어요: ${escapeHtml(error.message || error)}`);
-        document.getElementById('dictation-photo-hint').innerText = '채점에 실패했어요. 다시 확인해주세요.';
+        showModal(aiErrorMessage(error));
+        document.getElementById('dictation-photo-hint').innerText = aiErrorMessage(error);
     } finally {
         gradeBtn.disabled = false;
         gradeBtn.innerText = originalText;
@@ -11237,7 +11239,7 @@ window.completeDictationItem = async function() {
             preparationSucceeded = true;
         } catch (error) {
             console.error('curricular trace next failed', error);
-            showModal(`3스텝 준비에 실패했어요: ${escapeHtml(error.message || error)}`);
+            showModal(aiErrorMessage(error));
             if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = '다음'; }
         } finally {
             aieduLoading.finish(preparationToken, preparationSucceeded);
@@ -11742,7 +11744,7 @@ window.startTodayLiteracyMission = async function(diff, type) {
     } catch (e) {
         hideActivityLoading();
         console.error(e);
-        showModal(`문제 생성에 실패했습니다: ${escapeHtml(e.message || e)}. 다시 시도해 주세요.`);
+        showModal(aiErrorMessage(e));
         return null;
     }
 };
@@ -12219,7 +12221,7 @@ window.submitLiteracyEssayAnswer = async function() {
         userLiteracyAnswerChecked = false;
         hideActivityLoading();
         console.error(e);
-        showModal(`서술형 채점 또는 결과 저장 중 오류가 발생했습니다: ${escapeHtml(e.message || e)}. 다시 시도해 주세요.`);
+        showModal(aiErrorMessage(e));
     }
 };
 
@@ -23026,7 +23028,7 @@ function setSettingsImageBusy(busy, adjusting = false) {
 function showSettingsImageError(message) {
     const errorBox = document.getElementById('settings-image-error');
     if (!errorBox) return;
-    errorBox.textContent = message;
+    errorBox.textContent = aiErrorMessage(message);
     errorBox.classList.remove('hidden');
 }
 
@@ -23535,7 +23537,7 @@ async function fetchStoryResource(url, options = {}, timeoutMs = 120000) {
     try {
         return await fetch(url, { ...options, signal: controller.signal });
     } catch (error) {
-        if (timedOut) throw new Error('AntiAI 요청 시간이 초과되었습니다. 실패한 항목만 다시 시도해 주세요.');
+        if (timedOut) throw createAiError({ code: 'AI-1002' }, 504);
         if (externalSignal?.aborted || error?.name === 'AbortError') throw storyAbortError();
         throw error;
     } finally {
@@ -23877,8 +23879,8 @@ async function renderStoryImageRecovery(error) {
     setStoryLibraryHeader({ title: '삽화 생성 이어하기', subtitle: '완료된 그림은 그대로 두고 실패하거나 취소된 그림만 다시 만들 수 있어요.' });
     content.innerHTML = `<section class="aiedue-form-card">
         <h3>${completed}장은 완료 · ${failed}장은 남음</h3>
-        <p>${escapeHtml(error?.message || '일부 삽화가 아직 완성되지 않았습니다.')}</p>
-        <div class="aiedue-maker-character-list">${draft.pages.map((page, index) => `<article class="aiedue-character-card"><h4>${index + 1}번째 삽화 ${page.imageBlob ? '✅' : '⏳'}</h4><p>${page.imageBlob ? '완료된 그림을 보존했습니다.' : escapeHtml(page.imageError || '다시 생성할 수 있습니다.')}</p></article>`).join('')}</div>
+        <p>${error?.name === 'AbortError' ? '생성을 취소했습니다.' : escapeHtml(aiErrorMessage(error))}</p>
+        <div class="aiedue-maker-character-list">${draft.pages.map((page, index) => `<article class="aiedue-character-card"><h4>${index + 1}번째 삽화 ${page.imageBlob ? '✅' : '⏳'}</h4><p>${page.imageBlob ? '완료된 그림을 보존했습니다.' : page.imageError ? escapeHtml(aiErrorMessage(page.imageError)) : '다시 생성할 수 있습니다.'}</p></article>`).join('')}</div>
         <div class="aiedue-form-actions"><button type="button" class="aiedue-library-ghost" onclick="discardStoryBookDraft()">초안 버리기</button><button type="button" class="aiedue-library-primary" onclick="retryStoryBookImages()">실패한 ${failed}장만 다시 생성</button></div>
     </section>`;
 }
@@ -23923,7 +23925,7 @@ async function generateMissingStoryImages(controller) {
             } catch (error) {
                 if (error?.retryWithNewJob) page.imageJob = null;
                 if (error?.name === 'AbortError' || signal.aborted) throw storyAbortError();
-                page.imageError = error?.message || '삽화 생성 실패';
+                page.imageError = aiErrorMessage(error);
             }
         }
     });
@@ -24001,7 +24003,7 @@ window.generateStoryBook = async function generateStoryBook(event) {
         console.error('Story book generation failed', error);
         setStoryLibraryBusy(false);
         if (activeStoryDraft) await renderStoryImageRecovery(error);
-        else if (error?.name !== 'AbortError') alert(error.message || '동화책을 만들지 못했습니다.');
+        else if (error?.name !== 'AbortError') alert(aiErrorMessage(error));
     } finally {
         if (activeStoryGenerationController === controller) activeStoryGenerationController = null;
     }

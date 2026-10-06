@@ -1,3 +1,4 @@
+import { aiErrorMessage } from './ai-error-utils.mjs?v=20261006-ai-error-codes-v1';
 const clean = (value, max = 2000) => String(value ?? '').replace(/\u0000/g, '').trim().slice(0, max);
 
 function extractJson(text) {
@@ -69,6 +70,7 @@ export function buildStoryImagePrompt({ title, spread, spreadIndex, spreadCount,
 }
 
 export function imageJobErrorMessage(data, fallback = '그림 작업에 실패했습니다.') {
+  if (data?.errorCode || data?.error?.code || /^AI-\d+$/.test(data?.code || '')) return aiErrorMessage(data);
   const candidates = [data?.error, data?.error?.message, data?.message];
   for (const value of candidates) {
     if (typeof value !== 'string') continue;
