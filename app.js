@@ -4,6 +4,7 @@
 // =========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { aiErrorMessage, createAiError } from "./ai-error-utils.mjs?v=20261006-ai-error-codes-v1";
+import { buildCurricularDraft, normalizeCurricularDrafts, upsertCurricularDraft, resumeCurricularDraft } from './curricular-writing-drafts.mjs?v=partial-replay-v1';
 import {
     getAuth,
     createUserWithEmailAndPassword,
@@ -5697,6 +5698,7 @@ function stopAiedueBackgroundMusic() {
 }
 
 function showTopLevelSection(sectionId) {
+    if (sectionId !== 'dictation-workspace-section' && !document.getElementById('dictation-workspace-section')?.classList.contains('hidden')) checkpointCurricularWritingSession();
     if (sectionId !== 'literacy-workspace-section') setLiteracyCompanionState();
     if (sectionId !== 'reading-practice-section' && (readingSlowTimer || readingActiveCard)) clearReadingSpeechState();
     clearCombineTtsQueue();
@@ -8854,6 +8856,7 @@ function normalizeCurricularWriting(raw = {}) {
         syllableBank: { stats: syllableStats },
         history: Array.isArray(raw?.history) ? raw.history.map(sanitizeDictationMissionRecord).slice(0, 80) : [],
         rewardedSessions: Array.isArray(raw?.rewardedSessions) ? raw.rewardedSessions.slice(0, 120) : [],
+        drafts: normalizeCurricularDrafts(raw?.drafts),
         activeRoundId: String(raw?.activeRoundId || ''),
         photoCapturedAt: String(raw?.photoCapturedAt || ''),
         roundReadyFromPhoto: raw?.roundReadyFromPhoto === true
@@ -9349,6 +9352,7 @@ function initializeCurricularWritingCanvases() {
             if (stroke.length > 1) {
                 item.strokes = [...(item.strokes || []), stroke];
                 canvas._curricularStrokes = item.strokes;
+                if (activeDictationSession?.items?.[index] === item) scheduleCurricularWritingCheckpoint();
             }
             stroke = [];
         };
@@ -9656,6 +9660,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
         item.aiGrading = false;
         if (button) { button.disabled = false; button.innerText = '확인'; }
         updateCurricularWritingActionButtons();
+        await checkpointCurricularWritingSession().catch(() => {});
     }
 }
 window.confirmCurricularCanvasItem = function(index) {
@@ -9682,6 +9687,7 @@ window.confirmCurricularCanvasItem = function(index) {
     }
     updateCurricularWritingActionButtons();
     if (ok) showAiedueAutoToast('잘했어요!', `${index + 1}번을 충분히 따라 썼어요.`, 1800);
+    checkpointCurricularWritingSession();
 }
 window.clearCurricularCanvasItem = function(index) {
     const item = activeDictationSession?.items?.[index];
@@ -9703,6 +9709,7 @@ window.clearCurricularCanvasItem = function(index) {
     const status = document.getElementById(`curricular-trace-status-${index}`);
     if (status) { status.innerText = item.retryMode ? '다시 적어서 확인 버튼을 눌러요' : '다시 연습해요.'; status.className = item.retryMode ? 'text-orange-600' : 'text-gray-400'; }
     updateCurricularWritingActionButtons();
+    checkpointCurricularWritingSession();
 }
 function gradeCurricularCanvasSession() {
     const items = activeDictationSession?.items || [];
@@ -9710,6 +9717,10 @@ function gradeCurricularCanvasSession() {
 }
 function configureDictationWorkspace(session, options = {}) {
     if (!session) { openDictationBankCamera({ afterSave: 'curricular-writing' }); return; }
+    curricularDraftSessionOwner = currentUserId;
+    if (activeDictationSession?.kind === 'trace' && session.kind === 'mission' && session.mode === 'curricular' && !session.draftId) {
+        session.draftId = activeDictationSession.draftId;
+    }
     activeDictationSession = session; activeDictationItem = session?.items?.[0] ? { prompt: session.items[0].audioText || session.items[0].sentence, step: options.step || null } : null;
     if (session.kind === 'practice' || session.kind === 'trace' || (session.kind === 'mission' && session.mode === 'curricular')) stopDictationCamera();
 
@@ -9773,6 +9784,8 @@ function configureDictationWorkspace(session, options = {}) {
     }
     const input = document.getElementById('dictation-photo-input'), preview = document.getElementById('dictation-photo-preview'), ocr = document.getElementById('dictation-ocr-text'); input.value = ''; preview.src = ''; preview.classList.add('hidden'); ocr.value = '';
     renderDictationSessionList(); showTopLevelSection('dictation-workspace-section'); if (isPhotoSession) setTimeout(() => window.startDictationCamera(), 120); if (!isCurricularCanvasMission) setTimeout(() => window.playDictationPrompt(), 300);
+    setCurricularDraftSaveStatus('');
+    checkpointCurricularWritingSession();
 }
 function renderBankList(rootId, items, emptyText) { const root = document.getElementById(rootId); if (!root) return; root.innerHTML = items.length ? items.map((item) => `<div class="rounded-2xl border-2 border-red-100 bg-red-50/40 p-4"><div class="text-lg font-black text-[#2c3e50]">${escapeHtml(item.sentence)}</div><div class="text-xs text-gray-500 font-bold mt-1">오답 ${Number(item.wrongCount || 0)}회 · 정답 ${Number(item.correctCount || 0)}회</div></div>`).join('') : `<div class="text-gray-400 font-bold text-center py-8">${escapeHtml(emptyText)}</div>`; }
 function renderCurricularWordBankStats() {
@@ -9803,7 +9816,74 @@ function renderCurricularSyllableBankStats() {
         return `<div class="rounded-2xl bg-amber-50/70 border border-amber-100 p-3"><div class="flex items-center justify-between gap-2"><div class="text-2xl font-black text-[#2c3e50]">${escapeHtml(item.syllable)}</div><span class="text-xs font-black text-amber-600 bg-white border border-amber-100 rounded-full px-2 py-1">${badge}</span></div><div class="text-xs font-bold text-gray-500 mt-2">${item.corrects}/${item.attempts} 정답 · 오답 ${item.wrongs}회 · 정답률 ${rate}%</div></div>`;
     }).join('') || '<div class="text-gray-400 font-bold">아직 음절 은행 기록이 없어요.</div>';
 }
+// Account checkpoints do not change completion counts, grades or wallets.
+let curricularDraftSaveTimer = null;
+let curricularDraftSaveQueue = Promise.resolve();
+let curricularDraftSessionOwner = null;
+let curricularDraftSaveRevision = 0;
+function setCurricularDraftSaveStatus(text) {
+    const el = document.getElementById('curricular-draft-save-status');
+    if (el) el.textContent = text;
+}
+function queueCurricularDraftWrite(uid, draft, removeId = '') {
+    const revision = ++curricularDraftSaveRevision;
+    setCurricularDraftSaveStatus('중간 기록 저장 중…');
+    const write = curricularDraftSaveQueue.catch(() => {}).then(async () => {
+        if (!uid || currentUserId !== uid) return;
+        await runTransaction(db, async (tx) => {
+            const ref = doc(db, 'users', uid);
+            const snap = await tx.get(ref);
+            if (!snap.exists() || currentUserId !== uid) throw new Error('Checkpoint account is unavailable');
+            const portfolio = snap.data().dictationPortfolio || {};
+            const curricular = portfolio.curricularWriting || {};
+            let drafts = normalizeCurricularDrafts(curricular.drafts);
+            drafts = removeId ? drafts.filter((entry) => entry.id !== removeId) : upsertCurricularDraft(drafts, draft);
+            tx.set(ref, { dictationPortfolio: { ...portfolio, curricularWriting: { ...curricular, drafts } }, updatedAt: serverTimestamp() }, { merge: true });
+        });
+        if (currentUserId === uid && revision === curricularDraftSaveRevision) setCurricularDraftSaveStatus(removeId ? '학습 기록 저장됨' : '중간 기록 저장됨 · 나가도 다시 열 수 있어요');
+    });
+    curricularDraftSaveQueue = write;
+    write.catch((error) => {
+        console.error('curricular checkpoint save failed', error);
+        if (currentUserId === uid && revision === curricularDraftSaveRevision) setCurricularDraftSaveStatus('중간 기록을 저장하지 못했어요. 인터넷 연결 후 다시 시도해주세요.');
+    });
+    return write;
+}
+function checkpointCurricularWritingSession() {
+    clearTimeout(curricularDraftSaveTimer);
+    if (!currentUserId || curricularDraftSessionOwner !== currentUserId) return Promise.resolve();
+    const draft = buildCurricularDraft(activeDictationSession);
+    if (!draft) return Promise.resolve();
+    activeDictationSession.draftId = draft.id;
+    dictationPortfolio.curricularWriting = dictationPortfolio.curricularWriting || {};
+    dictationPortfolio.curricularWriting.drafts = upsertCurricularDraft(dictationPortfolio.curricularWriting.drafts, draft);
+    return queueCurricularDraftWrite(currentUserId, draft);
+}
+function scheduleCurricularWritingCheckpoint() {
+    clearTimeout(curricularDraftSaveTimer);
+    curricularDraftSaveTimer = setTimeout(() => checkpointCurricularWritingSession(), 500);
+}
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') checkpointCurricularWritingSession();
+});
+window.addEventListener('pagehide', () => checkpointCurricularWritingSession());
+function renderCurricularDraftList() {
+    const root = document.getElementById('curricular-draft-list');
+    const drafts = normalizeCurricularDrafts(dictationPortfolio.curricularWriting?.drafts);
+    if (!root) return;
+    root.innerHTML = drafts.length ? drafts.map((draft) => `<article class="rounded-2xl border border-green-200 bg-green-50 p-4"><div class="font-black text-green-700">중간 저장 · ${draft.session.kind === 'trace' ? '2스텝 따라쓰기' : '3스텝 받아쓰기'}</div><p class="text-sm text-gray-500 mt-1">${escapeHtml(draft.updatedAt.slice(0, 10))} · ${draft.checkedCount}/${draft.session.items.length}개 확인</p><p class="font-bold text-[#2c3e50] mt-2 break-words">${escapeHtml(draft.words.join(', '))}</p><button type="button" class="btn-outline mt-3 px-4 py-2" onclick="continueCurricularDraft('${draft.id}')">이어서 쓰기</button></article>`).join('') : '<p class="text-gray-400 font-bold">중간에 저장한 학습이 없어요.</p>';
+}
+window.continueCurricularDraft = function(id) {
+    const draft = normalizeCurricularDrafts(dictationPortfolio.curricularWriting?.drafts).find((entry) => entry.id === id);
+    const session = resumeCurricularDraft(draft);
+    if (!session) { showModal('중간 기록을 찾지 못했어요. 다시 로그인해 주세요.'); return; }
+    const state = getCurricularWritingState();
+    dictationPortfolio.curricularWriting = { ...state, activeWords: draft.words, activeRoundId: session.curricularRoundId || id,
+        photoCapturedAt: session.photoCapturedAt || draft.updatedAt, photoWords: session.photoWords, reviewWords: session.reviewWords, roundReadyFromPhoto: true };
+    configureDictationWorkspace(session, { badge: '교과 맞춤 다시 쓰기', title: '중간 저장한 학습 이어 쓰기', desc: '전에 쓰던 글씨와 확인 결과를 이어서 연습해요. 완료하기 전에는 완료 횟수나 보상이 늘지 않아요.' });
+};
 function renderMyDictationSection() {
+    renderCurricularDraftList();
     const label = document.getElementById('my-dictation-progress-label'); if (label) label.innerText = currentUserDictationStep < 0 ? '교과 맞춤쓰기 새싹' : `교과 맞춤쓰기 ${currentUserDictationStep}회 완료 · ${getCurricularGateText()}`;
     renderBankList('dictation-wrong-bank-list', dictationPortfolio.wrongBank || [], '아직 오답 문장이 없어요.'); renderBankList('dictation-completed-bank-list', dictationPortfolio.completedBank || [], '아직 완료 문장이 없어요.');
     const statRoot = document.getElementById('dictation-word-stat-list'); if (statRoot) statRoot.innerHTML = renderCurricularWordBankStats();
@@ -9954,6 +10034,11 @@ function createCurricularPracticeTraceSession(reviewItems = []) {
     };
 }
 window.openDictationPracticeActivity = function(filter = 'all') {
+    checkpointCurricularWritingSession();
+    if (filter === 'all' && normalizeCurricularDrafts(dictationPortfolio.curricularWriting?.drafts).length) {
+        window.openMyDictationFromDashboard();
+        return;
+    }
     const reviewItems = getCurricularPracticeReviewItems(10, filter);
     if (!reviewItems.length) { showModal('아직 다시 연습할 오답 단어/문장이 없어요. 교과 맞춤쓰기 미션을 먼저 풀어 오답 기록을 만들어요.'); return; }
     const session = createCurricularPracticeTraceSession(reviewItems);
@@ -11126,6 +11211,12 @@ async function saveMissionGradingResult() {
     }
     activeDictationSession.autoSaved = true;
     await persistDictationData();
+    clearTimeout(curricularDraftSaveTimer);
+    const draftId = activeDictationSession.draftId;
+    if (draftId) {
+        dictationPortfolio.curricularWriting.drafts = normalizeCurricularDrafts(dictationPortfolio.curricularWriting.drafts).filter((entry) => entry.id !== draftId);
+        await queueCurricularDraftWrite(currentUserId, null, draftId);
+    }
     updateDictationDashboardPreview();
 }
 window.revealDictationAnswer = async function() {
@@ -11178,6 +11269,7 @@ window.startNextDictationMission = function() {
         if (!currentItem?.aiGraded) { showModal(currentItem?.retryMode ? '다시 채점을 먼저 해주세요.' : '확인 버튼으로 이 문제를 먼저 채점해주세요.'); return; }
         if (current < activeDictationSession.items.length - 1) {
             activeDictationSession.currentIndex = current + 1;
+            checkpointCurricularWritingSession();
             activeDictationItem = { prompt: activeDictationSession.items[activeDictationSession.currentIndex].audioText || activeDictationSession.items[activeDictationSession.currentIndex].sentence, step: 'curricular' };
             renderDictationSessionList();
             return;
@@ -11190,6 +11282,7 @@ window.previousDictationMissionProblem = function() {
     const current = Number(activeDictationSession.currentIndex || 0);
     if (current <= 0) return;
     activeDictationSession.currentIndex = current - 1;
+    checkpointCurricularWritingSession();
     activeDictationItem = { prompt: activeDictationSession.items[activeDictationSession.currentIndex].audioText || activeDictationSession.items[activeDictationSession.currentIndex].sentence, step: 'curricular' };
     renderDictationSessionList();
 }

@@ -41,6 +41,7 @@ async function runGrade(parsed, options = {}) {
     recordCurricularWritingResultSyllables: async result => { recorded = result; },
     startCurricularRetryMode: () => {}, showAiedueAutoToast: () => {}, showModal: () => {},
     updateCurricularWritingActionButtons: () => {}, getCurricularItemScore: r => r.score,
+    checkpointCurricularWritingSession: async () => {}, // isolated grading unit; checkpoint persistence has separate tests
     formatCurricularScore: String, escapeHtml: String, console
   });
   vm.runInContext(source.slice(source.indexOf('function normalizeCurricularAiText('), source.indexOf('window.confirmCurricularCanvasItem')), c);
