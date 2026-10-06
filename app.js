@@ -5910,6 +5910,41 @@ window.toggleMute = function() {
     }
 }
 
+const TEACHER_TEST_LOGIN_GUIDE_DELAY_MS = 2000;
+let teacherTestLoginGuideTimer = null;
+
+function hideTeacherTestLoginGuide() {
+    window.clearTimeout(teacherTestLoginGuideTimer);
+    teacherTestLoginGuideTimer = null;
+    document.getElementById('teacher-test-login-guide')?.classList.add('hidden');
+}
+
+function teacherLoginFieldsAreEmpty() {
+    const email = document.getElementById('teacher-email')?.value.trim() || '';
+    const password = document.getElementById('teacher-pw')?.value || '';
+    return !email && !password;
+}
+
+function scheduleTeacherTestLoginGuide() {
+    hideTeacherTestLoginGuide();
+    const loginSection = document.getElementById('login-section');
+    if (currentView !== 'teacher' || loginSection?.classList.contains('hidden') || !teacherLoginFieldsAreEmpty()) return;
+    teacherTestLoginGuideTimer = window.setTimeout(() => {
+        teacherTestLoginGuideTimer = null;
+        if (currentView !== 'teacher' || loginSection?.classList.contains('hidden') || !teacherLoginFieldsAreEmpty()) return;
+        document.getElementById('teacher-test-login-guide')?.classList.remove('hidden');
+    }, TEACHER_TEST_LOGIN_GUIDE_DELAY_MS);
+}
+
+function handleTeacherLoginInput() {
+    hideTeacherTestLoginGuide();
+    if (teacherLoginFieldsAreEmpty()) scheduleTeacherTestLoginGuide();
+}
+
+['teacher-email', 'teacher-pw'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('input', handleTeacherLoginInput);
+});
+
 window.switchLoginView = function(role) {
     currentView = role;
     const studentBtn = document.getElementById('student-tab-btn');
@@ -5918,6 +5953,7 @@ window.switchLoginView = function(role) {
     const teacherView = document.getElementById('teacher-login-view');
 
     if (role === 'student') {
+        hideTeacherTestLoginGuide();
         studentBtn.classList.add('active');
         teacherBtn.classList.remove('active');
         studentView.classList.remove('hidden');
@@ -5927,6 +5963,7 @@ window.switchLoginView = function(role) {
         teacherBtn.classList.add('active');
         studentView.classList.add('hidden');
         teacherView.classList.remove('hidden');
+        scheduleTeacherTestLoginGuide();
     }
 }
 
@@ -22011,6 +22048,7 @@ window.testLoginStudent = async function testLoginStudent() {
 }
 
 window.testLoginTeacher = async function testLoginTeacher() {
+    hideTeacherTestLoginGuide();
     try {
         const { credential, profile } = await signInOrCreateTestAccount(TEST_LOGIN_ACCOUNTS.teacher);
         await ensureTeacherProfile(credential.user, profile.name);

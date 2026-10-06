@@ -1060,6 +1060,25 @@ body.korean-learning-view-open .premium-card { max-height: calc(100dvh - 24px); 
     line-height: 1.35;
     text-align: center;
 }
+.teacher-test-login-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+}
+.teacher-test-login-guide {
+    max-width: 210px;
+    color: #2c3e50;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.35;
+    text-align: center;
+    animation: teacherTestLoginGuideReveal .24s ease-out;
+}
+@keyframes teacherTestLoginGuideReveal {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 .learning-pane {
     background: var(--mint-light);
     border: 2px solid var(--mint-pale);
