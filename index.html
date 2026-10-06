@@ -23,11 +23,11 @@
     <link rel="stylesheet" href="korean-lab-shell.css?v=20260915-time-quiz-readability-v3">
     <link rel="stylesheet" href="syllable-slow-reader.css?v=20260929-hangul-card-clean-v1">
     <link rel="stylesheet" href="literacy-adventure.css?v=20260921-limitbreak-merge-v1">
-    <link rel="stylesheet" href="classroom-refresh.css?v=20261006-profile-gap-v1">
+    <link rel="stylesheet" href="classroom-refresh.css?v=20261006-intro-replay-v4">
     <link rel="stylesheet" href="teacher-tutorial.css?v=20260916-polite-skip-v1">
     <link rel="stylesheet" href="stage-tutorial.css?v=20260915-real-tour-v3">
-    <link rel="stylesheet" href="aiedue-opening.css?v=20261006-intro-skip-v3">
-    <script src="aiedue-opening.js?v=20261006-intro-skip-v3" defer></script>
+    <link rel="stylesheet" href="aiedue-opening.css?v=20261006-intro-replay-v4">
+    <script src="aiedue-opening.js?v=20261006-intro-replay-v4" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-container">본문 바로가기</a>
@@ -177,6 +177,10 @@
                     <div id="dashboard-user-icon-header" class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center text-2xl shadow-md">🐻</div>
                 </div>
                 <div class="dashboard-quick-actions pointer-events-auto" role="group" aria-label="대시보드 빠른 메뉴">
+                    <button type="button" id="dashboard-intro-button" class="aiedue-library-button" aria-label="인트로 보기">
+                        <span class="aiedue-library-button-icon" aria-hidden="true">▶</span>
+                        <span><strong>인트로 보기</strong><small>별을 따라 떠나요</small></span>
+                    </button>
                     <button type="button" id="dashboard-tutorial-button" class="aiedue-library-button dashboard-tutorial-button hidden" onclick="openRoleTutorial()" aria-label="에이두 학생 튜토리얼 시작">
                         <span class="aiedue-library-button-icon" aria-hidden="true">💬</span>
                         <span><strong>튜토리얼</strong><small>에이두와 처음부터 시작해요</small></span>
