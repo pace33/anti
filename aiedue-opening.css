@@ -1,0 +1,40 @@
+#start-screen > .aiedue-opening {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: url('aiedu_korean_nature_bg.webp') center / cover;
+    opacity: 1;
+    transition: opacity .65s ease;
+}
+.aiedue-opening video { display: block; width: 100%; height: 100%; object-fit: contain; }
+#start-screen > .aiedue-opening.is-ending { opacity: 0; pointer-events: none; }
+#start-screen.is-opening > .logo-wrapper,
+#start-screen.is-opening > .btn-start { visibility: hidden; }
+#start-screen.is-opening > .mute-control-btn { z-index: 4; left: 24px; right: auto; }
+.aiedue-opening-skip {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 2px solid #fff;
+    border-radius: 24px;
+    background: #f8fff4ee;
+    color: #284b36;
+    font: 700 16px 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 3px 15px #285f3822;
+}
+.aiedue-opening-skip:focus-visible { outline: 3px solid #174e8c; outline-offset: 3px; }
+@media (max-width: 480px) {
+    .aiedue-opening-skip { top: 16px; right: 16px; padding: 10px 14px; font-size: 14px; }
+    #start-screen.is-opening > .mute-control-btn { top: 16px; left: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #start-screen > .aiedue-opening { display: none; transition: none; }
+    #start-screen.is-opening > .logo-wrapper,
+    #start-screen.is-opening > .btn-start { visibility: visible; }
+}
