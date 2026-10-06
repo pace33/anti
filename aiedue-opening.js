@@ -17,7 +17,7 @@
     const skip = document.createElement('button');
     skip.type = 'button';
     skip.className = 'aiedue-opening-skip';
-    skip.textContent = '건너뛰기';
+    skip.textContent = '인트로 건너뛰기';
     overlay.append(video, skip);
 
     let finished = false;
