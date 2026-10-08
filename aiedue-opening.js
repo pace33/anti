@@ -4,6 +4,19 @@
     const seenKey = 'aiedue-star-opening-gemini-v2';
     let activeFinish;
 
+    // The start screen must work while the main app's module dependencies load.
+    if (typeof window.showLoginFromStart !== 'function') {
+        window.showLoginFromStart = () => {
+            const login = document.getElementById('login-section');
+            if (!start || !login) return;
+            activeFinish?.();
+            start.classList.add('hidden');
+            start.style.display = 'none';
+            login.classList.remove('hidden');
+            login.style.display = 'flex';
+        };
+    }
+
     const playIntro = (manual = false) => {
         if (activeFinish || (!manual && (!start || start.classList.contains('hidden') || reducedMotion.matches))) return;
         const trigger = document.activeElement;
@@ -71,7 +84,8 @@
         video.addEventListener('error', finish, { once: true });
         video.addEventListener('ended', finish, { once: true });
         video.addEventListener('timeupdate', () => {
-            if (!manual && video.duration && video.currentTime >= video.duration - .65) finish();
+            // The MP4's drawn start button appears at 9.35s; hand over to the real button.
+            if (!manual && video.duration && video.currentTime >= Math.min(9.35, video.duration - .65)) finish();
         });
         video.addEventListener('playing', () => {
             if (finished) return;

@@ -34,6 +34,7 @@ jobs:
           node --check classroom-tools.js
           node --check classroom-service.js
           node --check aiedu-loading.js
+          node --check aiedue-opening.js
           node --check dictation-asteroid-game.js
           node --check dictation-asteroid-core.mjs
           node --check shape-zoo-game.js
@@ -49,6 +50,7 @@ jobs:
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
+          node --test tools/test-aiedue-opening.mjs
           node --test tools/test-workshop-service.mjs
           node --test tools/test-korean-learning-navigation.mjs tools/test-korean-review-questions.mjs
           node --test tools/test-experience-gauge.mjs
