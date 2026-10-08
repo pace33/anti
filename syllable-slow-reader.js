@@ -427,6 +427,16 @@ function bind() {
         if (state.isPlaying) stopReader('입력이 바뀌어 읽기를 멈췄습니다.');
         render();
     });
+    elements.input.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
+        event.preventDefault();
+    });
+    elements.input.addEventListener('keyup', (event) => {
+        if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
+        // Read after the key is released so the final Korean syllable is committed.
+        startReader();
+        elements.input.focus({ preventScroll: true });
+    });
     elements.range.addEventListener('input', () => {
         const gap = getSyllableReaderGap(elements.range.value);
         elements.gapDisplay.textContent = gap.label;
