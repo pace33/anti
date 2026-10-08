@@ -3942,6 +3942,7 @@ const SAFE_MODAL_ACTIONS = new Set([
     'openAiedueLabTimeQuiz',
     'openAiedueWorkshop',
     'openAieduePorandy',
+    'openAieduePokemon',
     'openAiedueRobl',
     'openKoreanStudentReport',
     'printClassShop',
@@ -4121,6 +4122,75 @@ function renderAieduePorandyShopCard() {
     </div>`;
 }
 
+function renderAieduePokemonShopCard() {
+    const isTeacher = currentUserRole === 'teacher';
+    return `<div class="aiedu-pokemon-shop-card aiedu-porandy-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col" style="grid-column:1/-1">
+        <div class="aiedu-craft-card-hero">
+            <div class="aiedu-craft-card-icon" aria-hidden="true">⚡</div>
+            <div class="min-w-0">
+                <div class="text-xs font-black text-sky-100 tracking-widest">POKEMON</div>
+                <div class="text-2xl font-black">에이두 포켓몬</div>
+                <div class="text-sm text-white/80 mt-1">포켓몬과 함께하는 모험</div>
+            </div>
+        </div>
+        <div class="flex items-center justify-between gap-3 mt-4">
+            <div><div class="text-xs font-bold text-gray-500">${isTeacher ? '교사 이용 가격' : '입장 1회'}</div><div class="text-xl font-black text-sky-600">${isTeacher ? '무료' : '1,000원'}</div></div>
+            <button id="school-enter-pokemon-btn" type="button" class="btn-primary px-5 py-2 text-sm" onclick="openAieduePokemon(this)">${isTeacher ? '입장' : '구매 후 입장'}</button>
+        </div>
+    </div>`;
+}
+
+let aieduePokemonEntryPromise = null;
+
+window.openAieduePokemon = async function openAieduePokemon(button) {
+    const user = auth.currentUser;
+    const role = currentUserRole;
+    if (!loginSuccess || !currentUserId || !user || user.uid !== currentUserId || !['student', 'teacher'].includes(role)) {
+        return showModal('에이두 학생 또는 교사 계정으로 로그인해 주세요.');
+    }
+    const uid = user.uid;
+    if (button) button.disabled = true;
+    try {
+        aieduePokemonEntryPromise ||= import('https://aiedue.ddns.net/school-game-entry.js?v=20261007-pokemon-entry-v2')
+            .then(({ createSchoolGameEntry }) => createSchoolGameEntry({
+                getContext: () => ({
+                    authUser: auth.currentUser,
+                    user: loginSuccess && currentUserId ? { id: currentUserId, role: currentUserRole } : null,
+                    db
+                }),
+                notify: (title, message) => showModal(escapeKoreanShopHtml(message || title)),
+                onBalanceChanged: (nextBalance, { uid: buyerId }) => {
+                    if (!loginSuccess || auth.currentUser?.uid !== buyerId || currentUserId !== buyerId) return;
+                    currentUserBalance = nextBalance;
+                    currentUserCoins = nextBalance;
+                    currentUserProfileSnapshot = { ...currentUserProfileSnapshot, balance: nextBalance, coins: nextBalance };
+                    updateSyncedActivityHeaders({ name: currentUserName, coins: nextBalance, icon: currentUserIcon });
+                    for (const id of ['dashboard-coins', 'dashboard-coins-header']) {
+                        const balanceElement = document.getElementById(id);
+                        if (balanceElement) balanceElement.innerText = nextBalance;
+                    }
+                }
+            }))
+            .catch(error => { aieduePokemonEntryPromise = null; throw error; });
+        const entry = await aieduePokemonEntryPromise;
+        if (!loginSuccess || auth.currentUser !== user || currentUserId !== uid || currentUserRole !== role) return;
+        await entry.enter('pokemon');
+    } catch (error) {
+        if (loginSuccess && auth.currentUser === user && currentUserId === uid && currentUserRole === role) {
+            showModal('에이두 포켓몬 접속 준비에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        }
+    } finally {
+        if (button?.isConnected) button.disabled = false;
+    }
+};
+
+window.addEventListener('pageshow', event => {
+    if (!event.persisted) return;
+    const previousEntry = aieduePokemonEntryPromise;
+    aieduePokemonEntryPromise = null;
+    previousEntry?.then(entry => entry.destroy()).catch(() => {});
+});
+
 function renderAiedueRoblShopCard() {
     const name = currentUserRole === 'teacher' ? String(auth.currentUser?.email || '').split('@')[0] : `aiedue${getAiedueCraftStudentCode()}`;
     return `<div class="aiedu-robl-shop-card korean-embed-card p-4 rounded-3xl shadow-sm flex flex-col" style="grid-column:1/-1">
@@ -4285,6 +4355,7 @@ function renderAiedueKoreanShopItems(displayItems = []) {
             </div>
         </div>
         ${renderAieduePorandyShopCard()}
+        ${renderAieduePokemonShopCard()}
         ${renderAiedueRoblShopCard()}
         </div>
         ${displayItems.map(({ assignment, item }) => {
@@ -4382,7 +4453,7 @@ function renderAiedueKoreanTeacherShop(items = []) {
     return `<div class="aiedue-shop-game-pair mb-5"><div class="aiedu-craft-shop-card korean-embed-card p-5 rounded-3xl shadow-sm">
         <div class="aiedu-craft-card-hero"><div class="aiedu-craft-card-icon" aria-hidden="true">⛏️</div><div><div class="text-xs font-black text-amber-200 tracking-widest">TEACHER CRAFT</div><div class="text-2xl font-black">에이두 크래프트</div><div class="text-sm text-white/80 mt-1">교사 계정으로 크래프트에 접속하고 상점을 이용할 수 있어요.</div></div></div>
         <div class="flex flex-wrap justify-end gap-2 mt-4"><button type="button" class="btn-outline px-4 py-2" onclick="enterAiedueCraftAsTeacher()">크래프트 접속</button><button type="button" class="btn-primary px-4 py-2" onclick="openAiedueCraftShop()">크래프트 상점 이용</button></div>
-    </div>${renderAieduePorandyShopCard()}${renderAiedueRoblShopCard()}</div>${renderAiedueKoreanTeacherShopManager(items)}`;
+    </div>${renderAieduePorandyShopCard()}${renderAieduePokemonShopCard()}${renderAiedueRoblShopCard()}</div>${renderAiedueKoreanTeacherShopManager(items)}`;
 }
 
 async function openAiedueKoreanTeacherShop() {
