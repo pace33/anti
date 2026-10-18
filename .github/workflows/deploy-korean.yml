@@ -46,10 +46,12 @@ jobs:
           node --check curricular-writing-drafts.mjs
           node --check syllable-slow-reader.js
           node --check syllable-slow-reader-core.mjs
+          node --check research-prep/app.mjs
 
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
+          node --test tools/test-research-prep.mjs
           node --test tools/test-aiedue-opening.mjs
           node --test tools/test-workshop-service.mjs
           node --test tools/test-korean-learning-navigation.mjs tools/test-korean-review-questions.mjs
@@ -155,3 +157,19 @@ jobs:
           curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$base/korean-data-adapter.js?v=$stamp" -o /tmp/korean-data-adapter.js
           grep -q "DEFAULT_ENDPOINT = '/db-api/korean/v2'" /tmp/korean-data-adapter.js
           echo 'Smoke test passed: public /korean and workshop cache-busting markers are reachable.'
+
+      - name: Checkout canonical preparation-site assets
+        uses: actions/checkout@v4
+
+      - name: Verify preparation site Git blobs on public origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in index.html app.mjs style.css mobile.css content.json research-library.md; do
+            path="research-prep/$file"
+            expected="$(git rev-parse "HEAD:$path")"
+            curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "https://aiedue.ddns.net/korean/$path?verify=$GITHUB_SHA" -o /tmp/interview-prep-asset
+            actual="$(git hash-object /tmp/interview-prep-asset)"
+            test "$actual" = "$expected"
+            echo "$path matches canonical Git blob"
+          done

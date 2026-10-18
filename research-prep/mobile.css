@@ -1,0 +1,2 @@
+/* Keep the mobile title independent of the character illustration. */
+@media(max-width:760px){.hero .hero-art{width:72px;height:72px;float:none;position:absolute;top:22px;right:20px;margin:0}.hero .eyebrow{padding-right:80px;min-height:68px;display:flex;align-items:center}.hero h1{word-break:keep-all;font-size:30px}#toast{width:max-content;max-width:calc(100vw - 36px);text-align:center}}
