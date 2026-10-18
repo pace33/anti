@@ -1,5 +1,5 @@
-import {groups,pastSources,pastQuestions,pastAnswerIds,rubric,officialSource} from './simple-data.mjs?v=answers1';
-import {answerMarkup} from './answer-view.mjs?v=answers1';
+import {groups,pastSources,pastQuestions,pastAnswerIds,rubric,officialSource} from './simple-data.mjs?v=spoken1';
+import {answerMarkup} from './answer-view.mjs?v=spoken1';
 const KEY='aiedue-korean-research-prep-v1';
 const main=document.querySelector('main'),status=document.querySelector('#status');
 const esc=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,4 +21,4 @@ main.addEventListener('input',e=>{if(e.target.id==='search'){search=e.target.val
 main.addEventListener('change',e=>{if(e.target.dataset.ready){state.ready[e.target.dataset.ready]=e.target.checked;save();}});
 main.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return;if(el.dataset.division&&rubric[el.dataset.division]){division=el.dataset.division;render();document.querySelector(`[data-division="${division}"]`).focus();}if(el.dataset.star){const id=el.dataset.star;state.stars[id]=!state.stars[id];el.textContent=state.stars[id]?'★ 중요':'☆ 중요';el.setAttribute('aria-pressed',String(state.stars[id]));save();}});
 window.addEventListener('hashchange',()=>{if(!data)return;render();window.scrollTo(0,0);main.focus({preventScroll:true});});
-try{const res=await fetch('content.json?v=answers1');if(!res.ok)throw Error('자료 요청 실패');data=await res.json();try{const raw=JSON.parse(localStorage.getItem(KEY)||'{}');if(raw&&typeof raw==='object'&&!Array.isArray(raw))state=raw;}catch{inform('기존 메모를 읽지 못했어요.');}for(const k of ['notes','stars','ready'])if(!state[k]||typeof state[k]!=='object'||Array.isArray(state[k]))state[k]={};render();document.documentElement.dataset.ready='true';}catch(error){main.innerHTML='<h1>자료를 열지 못했어요</h1><p>새로고침해 주세요. <a href="research-library.md">자료집 내려받기</a></p>';console.error(error);}
+try{const res=await fetch('content.json?v=spoken1');if(!res.ok)throw Error('자료 요청 실패');data=await res.json();try{const raw=JSON.parse(localStorage.getItem(KEY)||'{}');if(raw&&typeof raw==='object'&&!Array.isArray(raw))state=raw;}catch{inform('기존 메모를 읽지 못했어요.');}for(const k of ['notes','stars','ready'])if(!state[k]||typeof state[k]!=='object'||Array.isArray(state[k]))state[k]={};render();document.documentElement.dataset.ready='true';}catch(error){main.innerHTML='<h1>자료를 열지 못했어요</h1><p>새로고침해 주세요. <a href="research-library.md">자료집 내려받기</a></p>';console.error(error);}

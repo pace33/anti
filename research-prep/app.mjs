@@ -1,4 +1,4 @@
-import {answerMarkup} from './answer-view.mjs?v=answers1';
+import {answerMarkup} from './answer-view.mjs?v=spoken1';
 const KEY='aiedue-korean-research-prep-v1';
 const main=document.querySelector('#main');
 const esc=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -78,4 +78,4 @@ $('#import-file').addEventListener('change',async e=>{const input=e.target,file=
 $('#print').addEventListener('click',printCurrent);
 window.addEventListener('hashchange',()=>{if(D){render();window.scrollTo(0,0);main.focus({preventScroll:true});}});
 window.addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('focus-mode');if(route!=='talk'||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(e.key==='ArrowRight'){slide=Math.min(7,slide+1);e.preventDefault();render();}if(e.key==='ArrowLeft'){slide=Math.max(0,slide-1);e.preventDefault();render();}});
-try{const res=await fetch('content.json?v=answers1');if(!res.ok)throw Error('자료 요청 실패');D=await res.json();try{const raw=localStorage.getItem(KEY);if(raw)S=cleanState(JSON.parse(raw));}catch{$('#save-status').textContent='저장 데이터 읽기 실패 · 백업을 확인하세요';}render();setInterval(paintTimer,250);document.documentElement.dataset.ready='true';}catch(error){main.innerHTML='<h1>준비실을 열지 못했어요</h1><p>인터넷 연결을 확인하고 새로고침해 주세요.</p><a href="research-library.md">조사 자료집 내려받기</a>';console.error(error);}
+try{const res=await fetch('content.json?v=spoken1');if(!res.ok)throw Error('자료 요청 실패');D=await res.json();try{const raw=localStorage.getItem(KEY);if(raw)S=cleanState(JSON.parse(raw));}catch{$('#save-status').textContent='저장 데이터 읽기 실패 · 백업을 확인하세요';}render();setInterval(paintTimer,250);document.documentElement.dataset.ready='true';}catch(error){main.innerHTML='<h1>준비실을 열지 못했어요</h1><p>인터넷 연결을 확인하고 새로고침해 주세요.</p><a href="research-library.md">조사 자료집 내려받기</a>';console.error(error);}

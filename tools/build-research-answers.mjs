@@ -23,7 +23,8 @@ for(const q of data.questions){
 }
 data.answerDraft={
  version:'program-draft-v1',
- status:'프로그램 기반 답변 초안 · 보고서 대조 전',
+ register:'spoken-honorific-v1',
+ status:'프로그램 기반 답변 초안 · 존댓말 구어체 · 보고서 대조 전',
  scope:'현재 에이두 한글의 기능·설계에 근거한 연습 답변입니다. 연구 당시 적용 기능·대상·기간·검증 방법·성과는 제출 보고서 확인 후 보강합니다. 제안과 조건부 설명을 실제 실행 성과로 인용하지 마세요.',
  basis:['README.md','docs/curricular-writing-checkpoints.md','docs/shared-word-card-troubleshooting.md','app.js','research-prep/content.json의 기존 질문·준비 근거'],
  privateData:'출품 보고서·학생 원자료·개인 메모는 포함하지 않습니다.'

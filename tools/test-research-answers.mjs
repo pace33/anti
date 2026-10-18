@@ -49,9 +49,9 @@ test('same answers appear in simple, full and mock-interview views with searchab
  assert(full.includes('${revealed?`${answerMarkup(q,esc)}'));
  for(const app of [simple,full]){
   assert(app.includes('q.sample,q.reportNeeds'));
-  assert(app.includes('content.json?v=answers1'));
+  assert(app.includes('content.json?v=spoken1'));
  }
- for(const page of ['index.html','full.html'])assert(read(page).includes('answers.css?v=answers1'));
+ for(const page of ['index.html','full.html'])assert(read(page).includes('answers.css?v=spoken1'));
 });
 test('Markdown download contains all 90 answers and no private local notes',()=>{
  const md=read('answer-drafts.md');
@@ -61,13 +61,22 @@ test('Markdown download contains all 90 answers and no private local notes',()=>
  assert(md.includes('프로그램 기반 답변 초안'));
  assert(!md.includes('이전 답변 메모'));
 });
+test('all answers use spoken honorific phrasing without authoring instructions',()=>{
+ assert.equal(data.answerDraft.register,'spoken-honorific-v1');
+ for(const q of data.questions){
+  assert(/(?:해요|예요|거죠|잖아요|거든요|고요|겠죠|니까요)[.!?]/.test(q.sample),q.id+' needs actual spoken phrasing');
+  assert(!/보고서(?:를|가)\s*(?:받|오)|최종 답변에서는|답변(?:을|의)\s*(?:작성|보강|구성)|자료로 바꾸겠습니다/.test(q.sample),q.id+' contains authoring instructions');
+  assert(!/한다\.|있다\.|것이다\./.test(q.sample),q.id+' contains report-style narration');
+ }
+});
 test('high-risk claims distinguish product behavior, evaluation and historic scope',()=>{
  const q=id=>data.questions.find(x=>x.id===id).sample;
  assert(q('Q34').includes('정답을 AI에 알려'));
  assert(q('Q36').includes('Firebase는 인증'));
  assert(q('Q36').includes('자체 서버'));
  assert(q('Q57').includes('강제 종료'));
- assert(q('Q76').includes('출품 이후 추가'));
+ assert(q('Q76').includes('연구기간과 출품 시점'));
+ assert(q('Q76').includes('연구에 쓴 것, 그때 있었지만 쓰지 않은 것, 이후에 추가한 것'));
  assert(q('Q15').includes('하나의 효과라고 단정하기는 어렵습니다'));
  assert(q('Q15').includes('비교 조건과 반복 측정'));
  assert(q('Q60').includes('글자만 있는 네 개'));
