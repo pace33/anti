@@ -49,11 +49,13 @@ jobs:
           node --check research-prep/app.mjs
           node --check research-prep/simple.mjs
           node --check research-prep/simple-data.mjs
+          node --check research-prep/answer-view.mjs
+          node tools/build-research-answers.mjs --check
 
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
-          node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs
+          node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs tools/test-research-answers.mjs
           node --test tools/test-aiedue-opening.mjs
           node --test tools/test-workshop-service.mjs
           node --test tools/test-korean-learning-navigation.mjs tools/test-korean-review-questions.mjs

@@ -28,11 +28,21 @@ JSON 불러오기는 앱 ID/버전을 확인하고 알려진 ID·필드만 복�
 
 정적 공개 경로로 링크를 아는 누구나 접근할 수 있다. noindex는 검색 차단 요청일 뿐 접근 제어가 아니다. 출품 원보고서·학생 원자료·인증정보는 배포하지 않는다. 기존 한글 학습 서비스는 변경하지 않는다.
 
+## 상세 답변 초안과 보고서 반영
+
+- `tools/research-answers/{foundation,technology,application}.mjs`에 90문항의 개별 구술 답변과 보고서 보강 항목을 작성한다. 각 답변은 결론·구체 설명·해석 범위의 세 문단이며 작성 지시문을 복제한 틀이 아니다.
+- `node tools/build-research-answers.mjs`는 질문 ID·기존 자료를 유지하고 `content.json`의 `sample`/`reportNeeds`와 공개 다운로드 `answer-drafts.md`를 생성한다. `--check`는 원문과 생성물의 일치를 확인한다.
+- 현재 상태는 프로그램 기반 초안이다. 수치·사례·연구 설계·동의·외부 적용은 확인 없이 생성하지 않는다. 현재 기능과 연구 당시 사용 기능도 구분한다.
+- 보고서 수령 후 먼저 당시 기능과 적용 범위를 확정하고, 각 문항의 `reportNeeds`를 실제 근거에 연결한다. 연구 결과에 관한 조건부·준비형 답변을 실제 사실 중심으로 바꾸되, 부족한 검증은 한계로 남긴다. 공개 파일에 학생 실명·원자료·동의서 원문을 넣지 않는다.
+- 기본 화면은 질문을 열자마자 답변 전문과 보고서 보강 항목을 보여 준다. 답변 포인트·후속 질문은 별도 펼침, 기존 개인 메모·중요·준비 표시는 기존 키/ID 그대로 유지한다. 검색은 상세 답변 본문과 보강 항목도 포함한다.
+- 이전 질문 10주제에도 대응 답변을 연결한다. 이것은 새로 작성한 연습 답변이며 후기 참가자의 실제 답변이 아님을 명시한다. 전체 질문·모의면접도 같은 답변 렌더러를 사용한다.
+
 ## 검증·배포
 
 ```
 node --check research-prep/app.mjs
-node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs
+node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs tools/test-research-answers.mjs
+node tools/build-research-answers.mjs --check
 node --check research-prep/simple.mjs
 node --check research-prep/simple-data.mjs
 node tools/validate-site.mjs

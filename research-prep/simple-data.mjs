@@ -8,6 +8,7 @@ export const groups=[
  {id:'spread',title:'일반화·확산',categories:['일반화·확산','일반화·운영']},
  {id:'pressure',title:'발표·압박 질문',categories:['발표·압박']}
 ];
+export const pastAnswerIds={'선행연구':'Q03','연구 검증':'Q11','학생 변화':'Q18','개념적 렌즈':'Q05','검증 도구':'Q12','공동연구':'Q46','연구 방향':'Q02','연구방법 설계':'Q15','데이터 분석의 의미':'Q19','현장 적용':'Q41'};
 export const pastSources=[
  {id:'hjs',label:'hjsmat · 2025.11.2. 게시',url:'https://m.blog.naver.com/hjsmat/224062374115',note:'게시글에서 ‘작년 문항’으로 회고. 문항 원문 없이 기억나는 6개 주제를 공개했습니다.'},
  {id:'ay',label:'ay_did · 2026.1.31. 게시',url:'https://m.blog.naver.com/ay_did/224166755170',note:'이전 대회 공동연구 참가 회고. 공개된 질문 주제만 정리했습니다.'}
