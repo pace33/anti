@@ -11,8 +11,8 @@ test('research preparation keeps all 7 documents and all 90 complete unique ques
  for(const q of data.questions)for(const key of ['id','title','category','core','evidence','follow','caution','connection','sample'])assert(q[key]?.trim(),q.id+' '+key);
  for(let i=0;i<7;i++)assert(data.documents[i].text.length>1000);
 });
-test('10 minute presentation is exactly 600 seconds with 8 fully specified scenes',()=>{
- assert.equal(data.slides.length,8);assert.equal(data.slides.reduce((n,s)=>n+s.seconds,0),600);
+test('10 minute presentation is exactly 600 seconds with 12 report-grounded scenes',()=>{
+ assert.equal(data.slides.length,12);assert.equal(data.slides.reduce((n,s)=>n+s.seconds,0),600);
  assert.equal(data.baseline,'발표 10분 + 질의응답 10분');
  for(const s of data.slides)for(const k of ['title','message','show','say','avoid'])assert(s[k]?.trim());
 });
@@ -27,7 +27,7 @@ test('local-only scoped notes, export/import boundaries and no fabricated findin
  assert(app.includes('cleanState'));assert(app.includes('raw.version!==1'));
  assert(html.includes('계정·기기 간 자동 동기화는 하지 않습니다'));
  assert(html.includes('noindex,nofollow'));
- assert(app.includes('실제 제출 보고서·분과·학생 수·평가 결과는 아직 제공되지 않았습니다'));
+ assert(app.includes('제출 연구보고서(제20회 교육용SW·AI분과)를 대조했습니다'));
  assert(app.includes('현재 앱의 모든 기능을 연구에 사용했다고 소급하지 마세요'));
  for(const s of ['실제 기출 원문','AI가 답변을 자동 평가하지 않습니다'])assert(app.includes(s));
 });

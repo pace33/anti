@@ -1,0 +1,139 @@
+{
+  "title": "교과는 함께, 문해 수준은 맞춤으로",
+  "version": "real-screen-story-v1",
+  "mainSlides": 12,
+  "totalSlides": 15,
+  "seconds": 600,
+  "screenSlides": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    12
+  ],
+  "screens": [
+    "home.png",
+    "hangul-lesson.png",
+    "word-reading.png",
+    "letter-writing.png",
+    "photo-import.png",
+    "curricular-hub.png",
+    "curricular-trace.png",
+    "literacy-feedback.png",
+    "drawing.png",
+    "hangul-path.png"
+  ],
+  "scope": "결과·수업 사례는 제출 연구보고서에 근거합니다. 실화면은 현재 공개 앱의 학생 테스트 계정과 기본 사용법 체험을 직접 캡처한 기능 설명 자료이며, 연구 당시 학생 수행 화면이나 성과 증거가 아닙니다. 원본 HWP·학생 원자료는 포함하지 않았습니다.",
+  "slides": [
+    {
+      "title": "같은 수업에 함께 들어갈 수 있도록",
+      "seconds": 25,
+      "image": "slides/slide-01.jpg",
+      "source": "표지·요약서·Ⅰ 연구의 필요성",
+      "appendix": false
+    },
+    {
+      "title": "한글을 배워도, 교과서 앞에서 다시 막힌다면?",
+      "seconds": 55,
+      "image": "slides/slide-02.jpg",
+      "source": "Ⅰ 연구의 필요성·Ⅲ 사회·과학 수업 사례",
+      "appendix": false
+    },
+    {
+      "title": "지금 필요한 곳에서 시작합니다",
+      "seconds": 45,
+      "image": "slides/slide-03.jpg",
+      "source": "Ⅱ 단계별 구성·Ⅲ 맞춤–이음–자람",
+      "appendix": false
+    },
+    {
+      "title": "‘고기’를 ‘거기’로 읽던 학생에게",
+      "seconds": 60,
+      "image": "slides/slide-04.jpg",
+      "source": "Ⅲ 국어 수업 사례 S1",
+      "appendix": false
+    },
+    {
+      "title": "오늘의 교과자료가, 오늘 배울 말로",
+      "seconds": 60,
+      "image": "slides/slide-05.jpg",
+      "source": "Ⅱ 교과 맞춤쓰기·Ⅲ 사회 교과 수업 사례",
+      "appendix": false
+    },
+    {
+      "title": "눈으로 보고, 소리로 듣고, 손으로 쓰고",
+      "seconds": 60,
+      "image": "slides/slide-06.jpg",
+      "source": "Ⅱ 교과 맞춤쓰기·Ⅲ 사회·과학 수업 사례",
+      "appendix": false
+    },
+    {
+      "title": "낱말을 익혔다면, 뜻을 써 볼 차례",
+      "seconds": 65,
+      "image": "slides/slide-07.jpg",
+      "source": "Ⅱ 문해력·Ⅲ 과학 수업 사례",
+      "appendix": false
+    },
+    {
+      "title": "한글 해득, 네 학생 모두 점수가 올랐습니다",
+      "seconds": 65,
+      "image": "slides/slide-08.jpg",
+      "source": "Ⅲ 연구 대상·기간·Ⅳ 한글 해득 수행의 변화",
+      "appendix": false
+    },
+    {
+      "title": "점수와 함께, 수업에 참여하는 모습도 봤습니다",
+      "seconds": 65,
+      "image": "slides/slide-09.jpg",
+      "source": "Ⅳ 통합학급 학습 참여 변화",
+      "appendix": false
+    },
+    {
+      "title": "틀린 말을, 다음 수업의 출발점으로",
+      "seconds": 40,
+      "image": "slides/slide-10.jpg",
+      "source": "Ⅲ 맞춤–이음–자람·국어 사례·Ⅴ 결론",
+      "appendix": false
+    },
+    {
+      "title": "네 학생과 확인한 가능성, 더 확인해야 할 변화",
+      "seconds": 35,
+      "image": "slides/slide-11.jpg",
+      "source": "Ⅲ 연구 설계·Ⅳ 결과·Ⅴ 결론 및 후속 과제",
+      "appendix": false
+    },
+    {
+      "title": "더 쉬운 다른 수업보다, 같은 수업에 들어갈 발판을",
+      "seconds": 25,
+      "image": "slides/slide-12.jpg",
+      "source": "Ⅰ 연구의 필요성·Ⅴ 결론",
+      "appendix": false
+    },
+    {
+      "title": "학생별 결과를 해석할 때",
+      "seconds": 0,
+      "image": "slides/slide-13.jpg",
+      "source": "Ⅳ 학생별 수준·점수·새 도달 영역",
+      "appendix": true
+    },
+    {
+      "title": "연구 범위와 현재 화면을 구분합니다",
+      "seconds": 0,
+      "image": "slides/slide-14.jpg",
+      "source": "Ⅱ 기능 구성·Ⅲ 적용 사례·붙임 1·2·3",
+      "appendix": true
+    },
+    {
+      "title": "역할 분담과 근거 찾기",
+      "seconds": 0,
+      "image": "slides/slide-15.jpg",
+      "source": "붙임 1 업무분장·Ⅰ~Ⅴ 및 붙임 2·3",
+      "appendix": true
+    }
+  ]
+}
