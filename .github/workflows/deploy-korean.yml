@@ -47,11 +47,13 @@ jobs:
           node --check syllable-slow-reader.js
           node --check syllable-slow-reader-core.mjs
           node --check research-prep/app.mjs
+          node --check research-prep/simple.mjs
+          node --check research-prep/simple-data.mjs
 
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
-          node --test tools/test-research-prep.mjs
+          node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs
           node --test tools/test-aiedue-opening.mjs
           node --test tools/test-workshop-service.mjs
           node --test tools/test-korean-learning-navigation.mjs tools/test-korean-review-questions.mjs
@@ -165,7 +167,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in index.html app.mjs style.css mobile.css content.json research-library.md; do
+          for file in index.html full.html app.mjs style.css mobile.css simple.mjs simple-data.mjs simple.css content.json research-library.md; do
             path="research-prep/$file"
             expected="$(git rev-parse "HEAD:$path")"
             curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "https://aiedue.ddns.net/korean/$path?verify=$GITHUB_SHA" -o /tmp/interview-prep-asset

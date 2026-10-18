@@ -11,6 +11,15 @@
 - 공식 요강·결과, 개인 후기, 작성된 예상 질문은 구분한다. 2026 확보 요강의 해당 회차·분과 일치 여부는 개별 안내가 우선이다.
 - 원문 50질문의 제목·답변 중심·준비 근거·후속·주의를 유지하고 문항별 에이두 한글 연결을 별도로 추가했다.
 
+## 단순한 기본 화면
+
+기본 진입은 `index.html` + `simple.mjs`/`simple.css`/`simple-data.mjs`의 세 탭이다.
+- 유형별 질문: 기존 90문항을 중복 없이 8유형으로 묶고 검색·펼치기로 읽는다.
+- 이전 질문: 두 참가 후기에서 확인한 10개 주제. 문항 원문이 아닌 재구성 연습 질문임을 명시하고 원문을 연결한다.
+- 평가기준: 교수·학습/SW·AI 분과 배점과 최종 서류60/발표40 비율을 구분한다. 질문 포인트·준비 근거는 편집 해설이다.
+
+이전 대시보드는 `full.html`에 보존하고 하단의 ‘발표 도구·전체 자료’로 접근한다. localStorage 키와 질문 ID를 유지하며 기존 대본·체크·근거 데이터를 덮어 없애지 않는다.
+
 ## 기능과 개인정보 경계
 
 체크·별표·준비 완료·답변·대본·근거 노트는 전용 localStorage 키 `aiedue-korean-research-prep-v1`에만 저장한다. 서버 저장·계정 연동·AI 답변 평가는 없다. 민감정보를 기록하지 않는 안내, JSON 백업/검증된 불러오기, 인쇄·대본 다운로드를 제공한다. 메모는 공개 자산에 포함하지 않는다.
@@ -23,7 +32,9 @@ JSON 불러오기는 앱 ID/버전을 확인하고 알려진 ID·필드만 복�
 
 ```
 node --check research-prep/app.mjs
-node --test tools/test-research-prep.mjs
+node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs
+node --check research-prep/simple.mjs
+node --check research-prep/simple-data.mjs
 node tools/validate-site.mjs
 git diff --check
 ```
