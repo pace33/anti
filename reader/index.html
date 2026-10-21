@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f8fa"><title>발표 원고 읽기</title>
+<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<main class="workspace">
+<section class="paper" aria-label="발표 원고">
+<div class="paper-heading"><label for="editor">발표 원고</label><span id="save-status">이 기기에 자동 저장</span></div>
+<div id="scroll-area" class="scroll-area">
+<div id="sheet" class="sheet">
+<div id="active-line" class="active-line" hidden></div>
+<div id="editor" role="textbox" aria-label="발표 원고 입력" aria-multiline="true" contenteditable="true" spellcheck="false" data-placeholder="발표할 원고를 여기에 붙여 넣으세요."></div>
+<div id="bookmark" class="bookmark"><div class="bookmark-rule"></div><button id="bookmark-handle" type="button" aria-label="읽기 시작 줄 책갈피. 위아래로 드래그하거나 방향키로 이동" title="위아래로 끌어서 이 선 아래부터 읽기" aria-describedby="bookmark-help">↕</button></div>
+</div>
+</div>
+</section>
+<aside class="sidebar" aria-label="재생과 발표 시간">
+<section class="controls">
+<h1>원고 읽기</h1>
+<p id="bookmark-help" class="help">원고 오른쪽 ↕를 옮기면<br>그 줄부터 끝까지 읽어요.</p>
+<div class="play-row"><button id="play" class="primary" type="button">▶ 재생</button><button id="reset" class="secondary" type="button" title="읽기를 멈추고 책갈피를 처음으로">↺ 초기화</button></div>
+<p id="play-status" class="status" role="status" aria-live="polite">책갈피 아래부터 읽을 준비가 됐어요.</p>
+<label class="field" for="voice">목소리<select id="voice" aria-label="읽기 목소리"><option value="">한국어 기본 목소리</option></select></label>
+<label class="field" for="rate"><span>읽기 속도 <output id="rate-value">1.0×</output></span><input id="rate" type="range" min="0.5" max="1.6" step="0.1" value="1"></label>
+<label class="field" for="font-size"><span>글자 크기 <output id="font-value">22</output></span><input id="font-size" type="range" min="16" max="36" step="1" value="22"></label>
+</section>
+<section class="stopwatch" aria-label="발표 스톱워치">
+<h2>발표 시간</h2><div id="time" role="timer" aria-label="경과 시간">00:00.0</div>
+<div class="timer-buttons"><button id="timer-toggle" class="secondary" type="button">시작</button><button id="timer-reset" class="quiet" type="button">초기화</button></div>
+<p class="help">재생과 별도로 시간을 측정해요.</p>
+</section>
+</aside>
+</main>
+<script type="module" src="app.js?v=1"></script>
+</body>
+</html>
