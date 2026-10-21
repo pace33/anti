@@ -1,0 +1,24 @@
+[
+  {
+    "file": "grading-happy.webp",
+    "source": "word-card-character-reference.jpg",
+    "sourceSha256": "88a517e51e3bf4646afe972142ee519c4dd47229bc17962fd3a640bc72801b08",
+    "method": "AntiAI source-image edit session",
+    "size": [
+      597,
+      800
+    ],
+    "bytes": 46680
+  },
+  {
+    "file": "grading-retry.webp",
+    "source": "word-card-character-reference.jpg",
+    "sourceSha256": "88a517e51e3bf4646afe972142ee519c4dd47229bc17962fd3a640bc72801b08",
+    "method": "AntiAI source-image edit session",
+    "size": [
+      597,
+      800
+    ],
+    "bytes": 40106
+  }
+]

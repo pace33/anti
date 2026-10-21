@@ -95,8 +95,13 @@ test('새 카드는 고정 에이두 캐릭터 원본만 이미지 편집에 사
     assert.equal(characterReference[1], 0xd8);
 });
 
-test('모달에 정확한 로딩 문구와 문장 클릭·별도 TTS 버튼이 있다', () => {
+test('단어 뜻은 캐릭터·퍼센트 공통 로딩을 사용하고 TTS를 유지한다', () => {
     assert.ok(html.includes('단어를 설명하기 위해 생각하고 있어요..'));
+    const busy = section(app, 'function setSharedWordCardBusy', 'function sharedWordCardError');
+    assert.ok(busy.includes("aieduLoading.start(message, 'drawing')"));
+    assert.ok(busy.includes('aieduLoading.update(sharedWordCardLoadingToken, message)'));
+    assert.ok(busy.includes('aieduLoading.finish(token, success)'));
+    assert.ok(busy.includes("classList.add('hidden')"));
     assert.ok(app.includes("setSharedWordCardBusy(true, '단어를 설명하는 그림을 그리고 있어요…'"));
     assert.ok(app.includes("content.querySelector('.shared-word-card-sentence')?.addEventListener('click'"));
     assert.ok(app.includes("content.querySelector('.shared-word-card-tts')?.addEventListener('click'"));

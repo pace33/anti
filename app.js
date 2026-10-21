@@ -25,7 +25,8 @@ import { STAGE_TUTORIALS, STAGE_TUTORIAL_QUESTION } from './stage-tutorial-core.
 import { TEACHER_TUTORIAL_VERSION } from './teacher-tutorial-core.mjs?v=20260916-polite-skip-v1';
 import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1';
-import { createAieduLoading } from './aiedu-loading.js';
+import { createAieduLoading } from './aiedu-loading.js?v=grading-comic-v1';
+import { createGradingFeedback } from './grading-feedback.mjs?v=grading-comic-v1';
 import { firebaseConfig } from "./firebase-config.js";
 import {
     buildTeacherShopImagePath,
@@ -195,6 +196,8 @@ function getKoreanStudentViewFromLocation() {
 }
 
 const aieduLoading = createAieduLoading(document);
+const gradingFeedback = createGradingFeedback(document);
+let sharedWordCardLoadingToken;
 let activityLoadingToken;
 function showActivityLoading(message = '로딩중...', kind = getVisibleActivityRoute() || getActivityRouteFromLocation() || 'literacy') {
     if (activityLoadingToken && aieduLoading.isActive(activityLoadingToken)) {
@@ -9550,7 +9553,6 @@ function startCurricularRetryMode(item, index, firstResult = {}) {
     item.traceComplete = false;
     item.aiResult = { ...firstResult, correct: false, retryPending: true, score: 0 };
     clearCurricularCanvasStrokesOnly(index);
-    showAiedueAutoToast('한 번 더 써봐요', '다시 적어서 확인 버튼을 눌러요.', 4200);
     renderDictationSessionList();
 }
 function normalizeCurricularAiText(text) {
@@ -9673,9 +9675,13 @@ async function gradeCurricularCanvasItemWithAi(index) {
     const item = activeDictationSession?.items?.[index];
     if (!canvas || !item || item.aiGrading) return;
     if (!hasCurricularCanvasInk(canvas)) { showModal('빈 칸에 먼저 받아쓴 뒤 확인을 눌러주세요.'); return; }
+    const session = activeDictationSession;
+    const ownerUid = currentUserId;
+    const isCurrent = () => activeDictationSession === session && currentUserId === ownerUid && session.items[index] === item;
     const button = document.getElementById(`curricular-confirm-btn-${index}`);
     const status = document.getElementById(`curricular-trace-status-${index}`);
-    const original = button?.innerText || '확인';
+    gradingFeedback.close();
+    const loadingToken = aieduLoading.start('에이두가 쓴 글씨를 꼼꼼히 확인하고 있어요', 'dictation');
     item.aiGrading = true;
     if (button) { button.disabled = true; button.innerText = 'AI 채점 중'; }
     if (status) { status.innerText = 'AI가 손글씨 이미지를 채점하고 있어요...'; status.className = 'text-red-500'; }
@@ -9685,6 +9691,7 @@ async function gradeCurricularCanvasItemWithAi(index) {
         const difficulty = Number(item.difficulty || activeDictationSession?.difficulty || 1);
         const prompt = buildCurricularHandwritingTranscriptionPrompt();
         const raw = await callKoreanAiGenerate(prompt, { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s' });
+        if (!isCurrent()) return;
         const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
         const observedText = composeCurricularTranscription(parsed.written);
         const observed = { ...parsed, written: observedText, studentAnswer: '' };
@@ -9705,9 +9712,11 @@ async function gradeCurricularCanvasItemWithAi(index) {
             analysis: String(parsed.analysis || parsed.reason || '').trim() || 'AI가 캔버스 손글씨를 확인했어요.'
         };
         await recordCurricularWritingResultSyllables(result, { source: isRetryAttempt ? 'curricular-writing-retry' : 'curricular-writing-ai', persist: true });
+        if (!isCurrent()) return;
         if (!isRetryAttempt && !rawCorrect) {
-            item.aiGrading = false;
             startCurricularRetryMode(item, index, result);
+            await aieduLoading.finish(loadingToken, true);
+            if (isCurrent()) gradingFeedback.show(false, { returnFocus: document.getElementById(`curricular-confirm-btn-${index}`) });
             return;
         }
         item.aiResult = result;
@@ -9722,16 +9731,22 @@ async function gradeCurricularCanvasItemWithAi(index) {
             status.innerText = score > 0 ? `✅ ${formatCurricularScore(score)}점 · ${result.written || '손글씨 확인'}` : `🟡 오답 · ${result.written || '읽기 어려움'} · ${result.analysis}`;
             status.className = score > 0 ? 'text-green-600' : 'text-yellow-600';
         }
-        showAiedueAutoToast(getCurricularItemScore(result) > 0 ? (result.retryCorrect ? '재도전 성공! 0.5점' : '정답이에요!') : '오답으로 기록돼요', result.analysis || `${index + 1}번 채점이 끝났어요.`, 2600);
+        await aieduLoading.finish(loadingToken, true);
+        if (isCurrent()) gradingFeedback.show(rawCorrect, { retry: isRetryAttempt, finalAttempt: isRetryAttempt && !rawCorrect, returnFocus: button });
     } catch (error) {
+        await aieduLoading.finish(loadingToken);
+        if (!isCurrent()) return;
         console.error('curricular canvas AI grading failed', error);
         if (status) { status.innerText = aiErrorMessage(error); status.className = 'text-red-500'; }
         showModal(aiErrorMessage(error));
     } finally {
+        aieduLoading.finish(loadingToken);
         item.aiGrading = false;
         if (button) { button.disabled = false; button.innerText = '확인'; }
-        updateCurricularWritingActionButtons();
-        await checkpointCurricularWritingSession().catch(() => {});
+        if (isCurrent()) {
+            updateCurricularWritingActionButtons();
+            await checkpointCurricularWritingSession().catch(() => {});
+        }
     }
 }
 window.confirmCurricularCanvasItem = function(index) {
@@ -10576,6 +10591,7 @@ function assertSharedWordCardRequestActive(requestId, signal) {
 }
 
 function beginSharedWordCardRequest() {
+    setSharedWordCardBusy(false);
     activeSharedWordCardController?.abort();
     activeSharedWordCardController = new AbortController();
     activeSharedWordCardRequestId += 1;
@@ -10590,13 +10606,18 @@ function setSharedWordCardModalOpen(open) {
     document.body.classList.toggle('modal-open', open);
 }
 
-function setSharedWordCardBusy(busy, title = '단어를 설명하기 위해 생각하고 있어요..', detail = '뜻과 그림을 준비하고 있어요.') {
-    const layer = sharedWordCardElement('shared-word-card-busy');
-    layer?.classList.toggle('hidden', !busy);
-    const titleEl = sharedWordCardElement('shared-word-card-busy-title');
-    const detailEl = sharedWordCardElement('shared-word-card-busy-detail');
-    if (titleEl) titleEl.textContent = title;
-    if (detailEl) detailEl.textContent = detail;
+function setSharedWordCardBusy(busy, title = '에이두가 단어의 뜻과 그림을 준비하고 있어요', detail = '뜻과 그림을 준비하고 있어요.', success = false) {
+    // Use the common character + estimated percentage instead of a second spinner.
+    sharedWordCardElement('shared-word-card-busy')?.classList.add('hidden');
+    if (!busy) {
+        const token = sharedWordCardLoadingToken;
+        sharedWordCardLoadingToken = null;
+        return aieduLoading.finish(token, success);
+    }
+    const message = `${title} ${detail}`;
+    if (sharedWordCardLoadingToken && aieduLoading.isActive(sharedWordCardLoadingToken)) {
+        aieduLoading.update(sharedWordCardLoadingToken, message);
+    } else sharedWordCardLoadingToken = aieduLoading.start(message, 'drawing');
 }
 
 function sharedWordCardError(message) {
@@ -10865,8 +10886,9 @@ window.openCurricularWordMeaning = async function openCurricularWordMeaning(inde
     try {
         const card = await ensureSharedWordCard(word, signal, requestId);
         assertSharedWordCardRequestActive(requestId, signal);
-        setSharedWordCardBusy(false);
         await renderSharedWordCardDetail(card, requestId, signal);
+        assertSharedWordCardRequestActive(requestId, signal);
+        setSharedWordCardBusy(false, null, null, true);
     } catch (error) {
         if (error?.name === 'AbortError' || requestId !== activeSharedWordCardRequestId) return;
         console.error('shared word card failed', error);
@@ -10913,7 +10935,7 @@ window.openSharedWordCardRepository = async function openSharedWordCardRepositor
         const cards = sortPublishedWordCards(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() })));
         sharedWordCardsById.clear();
         cards.forEach((card) => sharedWordCardsById.set(card.id, card));
-        setSharedWordCardBusy(false);
+        setSharedWordCardBusy(false, null, null, true);
         if (!content) return;
         if (!cards.length) {
             content.innerHTML = '<div class="shared-word-card-empty"><span>🗂️</span><strong>아직 저장된 단어 카드가 없어요.</strong><p>교과 맞춤쓰기 2스텝에서 ‘단어의 뜻’을 누르면 첫 카드가 만들어져요.</p></div>';

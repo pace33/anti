@@ -30,13 +30,18 @@ test('blind transcription prompt cannot leak a target or sentence hint', () => {
 
 async function runGrade(parsed, options = {}) {
   let recorded = null, calls = 0, suppliedPrompt = '';
+  const events = [];
   const node = { disabled: false, innerText: '' };
   const c = vm.createContext({
     activeDictationSession: { difficulty: 2, items: [{ answer: '학교', word: '학교', sentence: '학교에 가요', difficulty: 2, retryMode: Boolean(options.retry), aiGrading: Boolean(options.busy) }] },
     activeDictationImageAnalysis: '',
+    currentUserId: 'isolated-qa',
+    aieduLoading: { start: () => { events.push('loading:start'); return 1; }, finish: async (token, success) => { events.push(success ? 'loading:100' : 'loading:release'); } },
+    gradingFeedback: { close: () => {}, show: (correct, config) => events.push({ correct, ...config }) },
+    aiErrorMessage: () => 'AI 생성에 실패했습니다. 오류 코드: AI-1099',
     document: { getElementById: id => id.startsWith('curricular-writing-canvas') ? { toDataURL: () => 'data:image/png;base64,aW5r' } : node },
     hasCurricularCanvasInk: () => options.ink !== false,
-    callKoreanAiGenerate: async prompt => { calls++; suppliedPrompt = prompt; return JSON.stringify(parsed); },
+    callKoreanAiGenerate: async prompt => { calls++; suppliedPrompt = prompt; if (options.fail) throw new Error('controlled failure'); if (options.changeSession) c.activeDictationSession = { items: [] }; return JSON.stringify(parsed); },
     parseAiJsonObject: JSON.parse, cleanKoreanSentence: String, cleanKoreanWord: String,
     recordCurricularWritingResultSyllables: async result => { recorded = result; },
     startCurricularRetryMode: () => {}, showAiedueAutoToast: () => {}, showModal: () => {},
@@ -50,8 +55,36 @@ async function runGrade(parsed, options = {}) {
   } else {
     await c.gradeCurricularCanvasItemWithAi(0);
   }
-  return { recorded, calls, suppliedPrompt };
+  return { recorded, calls, suppliedPrompt, events, item: c.activeDictationSession.items[0], node };
 }
+
+test('grading completes 100% before the correct/retry comic without changing scores', async () => {
+  for (const [written, retry, correct, score] of [['ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', false, true, 1], ['ㅎ,ㅏ,ㄱ|ㄱ,ㅗ,_', false, false, 0], ['ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', true, true, 0.5], ['ㅎ,ㅏ,ㄱ|ㄱ,ㅗ,_', true, false, 0]]) {
+    const r = await runGrade({ written, correct: true, confidence: 1 }, { retry });
+    assert.equal(r.recorded.score, score);
+    const shown = r.events.findIndex(e => typeof e === 'object');
+    assert(shown > r.events.indexOf('loading:100'));
+    assert.equal(r.events[shown].correct, correct);
+    if (retry && !correct) assert.equal(r.events[shown].finalAttempt, true);
+    assert.equal(r.node.disabled, false);
+  }
+});
+
+test('AI failure releases loading, restores confirm and never shows a wrong-answer comic', async () => {
+  const r = await runGrade({}, { fail: true });
+  assert.equal(r.recorded, null);
+  assert(r.events.includes('loading:release'));
+  assert(!r.events.includes('loading:100'));
+  assert(!r.events.some(e => typeof e === 'object'));
+  assert.equal(r.node.disabled, false);
+});
+
+test('an obsolete grading response cannot save or show feedback in a new session', async () => {
+  const r = await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 1 }, { changeSession: true });
+  assert.equal(r.recorded, null);
+  assert(!r.events.some(e => typeof e === 'object'));
+  assert(r.events.includes('loading:release'));
+});
 
 test('production scoring rejects a generous verdict for extra letters and low confidence', async () => {
   for (const parsed of [
