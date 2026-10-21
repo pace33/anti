@@ -1,5 +1,5 @@
 export function createAieduLoading(document, clock = window) {
-    let active = null, serial = 0, interval, closing;
+    let active = null, serial = 0, interval, closing, resolveClosing;
     let previousFocus, inertSiblings = [];
     const overlay = document.getElementById('activity-loading-overlay');
     const scene = overlay.querySelector('.aiedu-loading-scene');
@@ -23,6 +23,7 @@ export function createAieduLoading(document, clock = window) {
     }
     function start(message, kind = 'literacy') {
         clock.clearInterval(interval); clock.clearTimeout(closing);
+        resolveClosing?.(); resolveClosing = null;
         if (active === null) {
             previousFocus = document.activeElement;
             inertSiblings = [...document.body.children].filter(node => node !== overlay && !['SCRIPT', 'STYLE', 'LINK'].includes(node.tagName)).map(node => [node, node.inert]);
@@ -41,18 +42,24 @@ export function createAieduLoading(document, clock = window) {
     }
     function update(token, message) { if (active === token) text.textContent = message; }
     function finish(token, success = false) {
-        if (active !== token) return;
-        clock.clearInterval(interval);
+        if (active !== token) return Promise.resolve();
+        clock.clearInterval(interval); clock.clearTimeout(closing);
+        resolveClosing?.(); resolveClosing = null;
         if (success) progress(100, true);
-        const hide = () => {
-            if (active !== token) return;
-            active = null; overlay.classList.remove('show');
-            overlay.setAttribute('aria-hidden', 'true'); overlay.setAttribute('aria-busy', 'false');
-            inertSiblings.forEach(([node, inert]) => { node.inert = inert; }); inertSiblings = [];
-            if (previousFocus?.isConnected && previousFocus.getClientRects().length) previousFocus.focus({ preventScroll: true });
-            else document.getElementById('main-container')?.focus({ preventScroll: true });
-        };
-        if (success) closing = clock.setTimeout(hide, 550); else hide();
+        return new Promise(resolve => {
+            resolveClosing = resolve;
+            const hide = () => {
+                if (active === token) {
+                    active = null; overlay.classList.remove('show');
+                    overlay.setAttribute('aria-hidden', 'true'); overlay.setAttribute('aria-busy', 'false');
+                    inertSiblings.forEach(([node, inert]) => { node.inert = inert; }); inertSiblings = [];
+                    if (previousFocus?.isConnected && previousFocus.getClientRects().length) previousFocus.focus({ preventScroll: true });
+                    else document.getElementById('main-container')?.focus({ preventScroll: true });
+                }
+                resolveClosing = null; resolve();
+            };
+            if (success) closing = clock.setTimeout(hide, 550); else hide();
+        });
     }
     return { start, update, finish, isActive: token => active === token };
 }

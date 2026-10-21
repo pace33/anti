@@ -35,6 +35,8 @@ const requiredFiles = [
     'classroom-service.js',
     'classroom-print.html',
     'aiedu-loading.js',
+    'grading-feedback.mjs',
+    ...['happy', 'retry'].map(pose => `assets/classroom/grading-${pose}.webp`),
     ...['stage-1', 'stage-2', 'stage-3', 'stage-4', 'loading-painter', 'loading-writer', 'loading-reader'].map(name => `assets/classroom/${name}.webp`),
     'assets/classroom/stage-select.png',
     ...[100, 500, 1000, 5000, 10000, 50000].map(value => `assets/classroom/currency-${value}.png`),

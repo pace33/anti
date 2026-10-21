@@ -527,6 +527,40 @@ body.dashboard-view-active .aiedue-rpg-hud .rpg-action-tray {
     outline-offset: 4px !important;
 }
 
+/* Comic grading feedback uses official source-edited mascot poses. */
+.grading-comic-overlay {
+    position: fixed; inset: 0; z-index: 5100; display: grid; place-items: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    background: rgba(35, 49, 35, .3); backdrop-filter: blur(5px);
+    --comic-color: #398046; --comic-accent: #effadf;
+}
+.grading-comic-overlay.is-retry { --comic-color: #b96d2b; --comic-accent: #fff3df; }
+.grading-comic-panel {
+    position: relative; width: min(480px, 100%); max-height: calc(100dvh - 40px); overflow: auto;
+    display: flex; flex-direction: column; align-items: center; padding: 24px 26px 20px;
+    border: 3px solid #354527; border-radius: 30px; background: #fff;
+    box-shadow: 7px 8px 0 rgba(35, 49, 35, .22); animation: gradingComicPop .28s ease-out;
+}
+.grading-comic-bubble {
+    position: relative; z-index: 2; width: 100%; padding: 18px 16px;
+    border: 3px solid var(--comic-color); border-radius: 45% 45% 38% 38% / 24% 24% 30% 30%;
+    background: var(--comic-accent); text-align: center; transform: rotate(-2deg);
+}
+.grading-comic-bubble::after {
+    content: ''; position: absolute; bottom: -14px; left: 58%; width: 24px; height: 24px;
+    background: var(--comic-accent); border-right: 3px solid var(--comic-color);
+    border-bottom: 3px solid var(--comic-color); transform: skew(-22deg) rotate(40deg);
+}
+.grading-comic-bubble strong { display: block; font-size: clamp(1.7rem, 7vw, 2.65rem); font-weight: 1000; line-height: 1.3; color: var(--comic-color); }
+.grading-comic-bubble p { position: relative; z-index: 1; margin: 10px 0 0; font-size: 1rem; font-weight: 800; line-height: 1.6; color: #49503c; word-break: keep-all; }
+.grading-comic-character { width: min(250px, 65vw); height: min(310px, 38dvh); object-fit: contain; margin-top: 16px; }
+.grading-comic-burst { position: absolute; z-index: 3; right: 8px; top: 5px; font-size: 2rem; font-weight: 1000; color: var(--comic-color); transform: rotate(14deg); }
+.grading-comic-continue { margin-top: 8px; min-height: 48px; width: min(280px, 100%); padding: 12px 20px; border: 2px solid #354527; border-radius: 18px; background: var(--comic-color); color: #fff; font: inherit; font-weight: 900; cursor: pointer; }
+.grading-comic-continue:focus-visible { outline: 4px solid #edb63d; outline-offset: 4px; }
+@keyframes gradingComicPop { from { opacity: 0; transform: translateY(24px) scale(.92); } to { opacity: 1; transform: none; } }
+@media (max-width: 560px) { .grading-comic-panel { padding: 22px 16px 16px; border-radius: 24px; } }
+@media (prefers-reduced-motion: reduce) { .grading-comic-panel { animation: none; } }
+
 .activity-loading-overlay {
     position: fixed;
     inset: 0;
