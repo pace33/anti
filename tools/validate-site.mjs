@@ -36,6 +36,8 @@ const requiredFiles = [
     'classroom-print.html',
     'aiedu-loading.js',
     'grading-feedback.mjs',
+    'teacher-progress-controls.mjs',
+    'detective-cooldown.mjs',
     ...['happy', 'retry'].map(pose => `assets/classroom/grading-${pose}.webp`),
     ...['stage-1', 'stage-2', 'stage-3', 'stage-4', 'loading-painter', 'loading-writer', 'loading-reader'].map(name => `assets/classroom/${name}.webp`),
     'assets/classroom/stage-select.png',
@@ -336,7 +338,7 @@ assert(!app.includes("return hasListenChoiceQuiz ? [quizListenButton] : controls
 const modalSafety = section(app, 'const SAFE_MODAL_ACTIONS', 'function sanitizeModalHtml');
 const modalSafetyApi = new Function(`${modalSafety}\nreturn { isSafeModalAction };`)();
 assert(modalSafetyApi.isSafeModalAction('enterAiedueCraftAsTeacher()'), '교사 상점의 크래프트 접속 동작이 팝업 안전 처리 과정에서 제거됩니다.');
-const teacherLiteracyProgress = section(app, 'function buildTeacherLiteracyProgressBody', 'window.openStudentProgressDetail');
+const teacherLiteracyProgress = section(app, 'function buildTeacherLiteracyProgressBody', 'const teacherProgressControls =');
 ['easy', 'normal', 'hard', 'expert', 'multipleChoice', 'shortAnswer', 'essay', '현재 문해력 단'].forEach((marker) => {
     assert(teacherLiteracyProgress.includes(marker), `교사용 문해력 진도 표에 필수 항목이 없습니다: ${marker}`);
 });
