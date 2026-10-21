@@ -57,6 +57,7 @@ jobs:
         run: |
           node tools/validate-site.mjs
           node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs tools/test-research-answers.mjs tools/test-research-presentation.mjs
+          node --test tools/test-presentation-reader.mjs
           node --test tools/test-aiedue-opening.mjs
           node --test tools/test-workshop-service.mjs
           node --test tools/test-korean-learning-navigation.mjs tools/test-korean-review-questions.mjs
