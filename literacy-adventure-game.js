@@ -5,10 +5,37 @@ const state = {
     initialized: false,
     selectedAnswer: null,
     submitted: false,
-    runId: ''
+    runId: '',
+    cooldownUntil: 0,
+    cooldownTimer: null,
+    checkingCooldown: false,
+    generation: 0
 };
 
 const $ = (id) => document.getElementById(id);
+
+function updateCooldownButtons() {
+    const seconds = Math.max(0, Math.ceil((state.cooldownUntil - Date.now()) / 1000));
+    const waiting = seconds > 0;
+    for (const id of ['literacy-adventure-start', 'literacy-adventure-restart']) {
+        const button = $(id); if (!button) continue;
+        if (waiting || state.checkingCooldown) {
+            button.dataset.detectiveWait = 'true'; button.disabled = true;
+            button.textContent = waiting ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2,'0')} 뒤 다시 도전` : '대기 시간 확인 중…';
+        } else if (button.dataset.detectiveWait) {
+            delete button.dataset.detectiveWait; button.disabled = state.busy;
+            button.textContent = id.endsWith('restart') ? '다음 사건 수사' : '첫 사건 수사 시작';
+        }
+    }
+    if (!waiting && state.cooldownTimer) { clearInterval(state.cooldownTimer);state.cooldownTimer=null; }
+    return waiting || state.checkingCooldown;
+}
+function keepCooldownAlive(until) {
+    state.cooldownUntil = Number(until) || 0;
+    if (state.cooldownTimer) clearInterval(state.cooldownTimer);
+    state.cooldownTimer = state.cooldownUntil > Date.now() ? setInterval(updateProgress, 1000) : null;
+    updateProgress();
+}
 
 const TYPE_LABELS = Object.freeze({
     multipleChoice: '객관식 · 4지선다',
@@ -54,7 +81,8 @@ function updateProgress() {
     });
     $('literacy-adventure-game-section')?.classList.toggle('has-response', hasAnswer);
     const submit = $('literacy-adventure-submit');
-    if (submit) submit.disabled = state.busy || state.submitted || !hasAnswer;
+    const waiting = updateCooldownButtons();
+    if (submit) submit.disabled = state.busy || state.submitted || !hasAnswer || waiting;
 }
 
 function renderPassage() {
@@ -140,7 +168,7 @@ function resetDesk() {
 }
 
 async function startRound() {
-    if (state.busy) return;
+    if (state.busy || updateCooldownButtons()) return;
     const isNextRound = state.submitted;
     const start = $('literacy-adventure-start');
     const restart = $('literacy-adventure-restart');
@@ -166,6 +194,7 @@ async function startRound() {
         $('literacy-adventure-loading').classList.add('hidden');
         if (isGameVisible()) $('literacy-adventure-passage')?.focus({ preventScroll: true });
     } catch (error) {
+        if (error?.cooldownUntil) keepCooldownAlive(error.cooldownUntil);
         if (isNextRound) {
             restart.disabled = false;
             restart.textContent = '다음 사건 다시 수사';
@@ -183,7 +212,7 @@ async function startRound() {
 }
 
 async function submit() {
-    if (state.busy || !state.round || state.submitted) return;
+    if (state.busy || !state.round || state.submitted || updateCooldownButtons()) return;
     const value = state.round.type === 'multipleChoice'
         ? state.selectedAnswer
         : $('literacy-adventure-input').value;
@@ -206,6 +235,7 @@ async function submit() {
         : '사건 기록의 단서와 추리를 대조하고 있어요…';
     try {
         const result = await window.aiedueLiteracyAdventureData.submitAnswer(value);
+        if (!result.isCorrect) keepCooldownAlive(result.cooldownUntil || Date.now() + 120000);
         state.submitted = true;
         window.recordKoreanStageGameResult?.({
             gameId: 'literacy-detective',
@@ -236,6 +266,7 @@ async function submit() {
         updateProgress();
         if (isGameVisible()) $('literacy-adventure-restart').focus();
     } catch (error) {
+        if (error?.cooldownUntil) keepCooldownAlive(error.cooldownUntil);
         setWorkspaceDisabled(false);
         $('literacy-adventure-feedback').className = 'revision';
         $('literacy-adventure-feedback').textContent = error?.message || '수사 기록을 저장하지 못했어요. 같은 답으로 다시 시도해 주세요.';
@@ -247,6 +278,13 @@ async function submit() {
 }
 
 window.initLiteracyAdventureGame = function initLiteracyAdventureGame() {
+    const generation = ++state.generation;
+    state.checkingCooldown = true;
+    Promise.resolve().then(() => window.aiedueLiteracyAdventureData.getCooldownUntil()).then(until => {
+        if (generation === state.generation) keepCooldownAlive(until);
+    }).catch(() => {}).finally(() => {
+        if (generation === state.generation) {state.checkingCooldown=false;updateProgress();}
+    });
     state.runId = globalThis.crypto?.randomUUID?.() || `literacy-detective-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     if (!state.initialized) {
         $('literacy-adventure-start')?.addEventListener('click', startRound);
@@ -261,4 +299,5 @@ window.initLiteracyAdventureGame = function initLiteracyAdventureGame() {
         start.disabled = state.busy;
         start.textContent = state.busy ? '수사를 준비하는 중…' : '첫 사건 수사 시작';
     }
+    updateProgress();
 };

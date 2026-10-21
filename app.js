@@ -27,6 +27,8 @@ import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1';
 import { createAieduLoading } from './aiedu-loading.js?v=grading-comic-v1';
 import { createGradingFeedback } from './grading-feedback.mjs?v=grading-comic-v1';
+import { createTeacherProgressControls, buildTeacherProgressPatch, PROGRESS_ACTIONS } from './teacher-progress-controls.mjs';
+import { detectiveCooldownUntil, requireDetectiveReady } from './detective-cooldown.mjs';
 import { firebaseConfig } from "./firebase-config.js";
 import {
     buildTeacherShopImagePath,
@@ -11989,8 +11991,17 @@ async function pickLiteracyDetectiveLimitBreakQuestion(plan) {
     return null;
 }
 
+async function readDetectiveCooldown() {
+    const uid = currentUserId;
+    if (!uid) throw new Error('로그인 후 도전해 주세요.');
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (currentUserId !== uid) throw new Error('로그인 정보가 변경되었습니다.');
+    return snap.data() || {};
+}
 window.aiedueLiteracyAdventureData = Object.freeze({
+    async getCooldownUntil() { return detectiveCooldownUntil(await readDetectiveCooldown()); },
     async createRound() {
+        requireDetectiveReady(await readDetectiveCooldown());
         const plan = getLiteracyDanPlan();
         const limitBreakQuestion = await pickLiteracyDetectiveLimitBreakQuestion(plan);
         const question = limitBreakQuestion || await createLiteracyMissionQuestion(plan.difficulty, plan.type, { detective: true });
@@ -12006,6 +12017,7 @@ window.aiedueLiteracyAdventureData = Object.freeze({
         };
     },
     async submitAnswer(answer) {
+        requireDetectiveReady(await readDetectiveCooldown());
         if (!activeLiteracyDetectiveQuestion) throw new Error('먼저 사건 기록을 불러와 주세요.');
         const question = activeLiteracyDetectiveQuestion;
         activeLiteracyQuestion = question;
@@ -12045,7 +12057,7 @@ window.aiedueLiteracyAdventureData = Object.freeze({
             correctAnswerText,
             userAnswerText
         });
-        const attempt = createLiteracyAttemptPayload(isCorrect, displayDetails);
+        const attempt = { ...createLiteracyAttemptPayload(isCorrect, displayDetails), detective: true };
         const committed = await persistLiteracyAttemptAtomic(attempt);
         question.pendingLiteracyAttemptId = null;
         applyCommittedLiteracyAttempt(committed);
@@ -12055,6 +12067,7 @@ window.aiedueLiteracyAdventureData = Object.freeze({
             : (renderedAttempt.isCorrect ? '' : ' 이 오답은 한계돌파 은행에 들어가 다음 탐정단 도전에 이어져요.');
         return {
             isCorrect: renderedAttempt.isCorrect,
+            cooldownUntil: renderedAttempt.isCorrect ? 0 : Date.now() + 120000,
             detail: detail || (renderedAttempt.isCorrect ? '정확한 답을 찾았어요.' : `모범 답: ${correctAnswerText}`),
             score: renderedAttempt.score,
             correctAnswer: correctAnswerText,
@@ -12614,6 +12627,7 @@ async function persistLiteracyAttemptAtomic(attempt) {
             });
             return { ...base, promotion: null, levelUpCount: 0, removedWarningTokens: 0, duplicate: true, canonicalAttempt };
         }
+        if (attempt.detective) requireDetectiveReady(userSnap.data() || {});
         const committed = mergeLiteracyAttemptWithServer(userSnap.exists() ? userSnap.data() : {}, attempt);
 
         if (!attempt.isCorrect) {
@@ -12623,6 +12637,7 @@ async function persistLiteracyAttemptAtomic(attempt) {
         }
         transaction.set(userRef, {
             literacyPortfolio: committed.literacyPortfolio,
+            ...(attempt.detective && !attempt.isCorrect ? { literacyDetectiveLastWrongAt: serverTimestamp() } : {}),
             coins: committed.coins,
             balance: committed.balance,
             aeduTokens: committed.aeduTokens,
@@ -22600,7 +22615,7 @@ function renderTeacherClassProgressRows() {
         }).join('');
         return `<tr class="border-b border-gray-100 align-top">
             <td class="py-4 px-3"><div class="font-black text-[#2c3e50]">${escapeHtml(student.name || '이름 없음')}</div><div class="text-xs text-teal-600 font-bold">${escapeHtml(student.userCode || student.code || '-')}</div></td>
-            <td class="py-4 px-3"><div class="flex flex-wrap gap-2"><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','drawing')">1단계 그리기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','hangul')">2단계 한글 해득</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','dictation')">3단계 교과 맞춤쓰기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','literacy')">4단계 문해력</button></div><div class="flex flex-wrap gap-1 mt-2" aria-label="단계별 게임 성공률">${gameRates}</div></td>
+            <td class="py-4 px-3"><div class="flex flex-wrap gap-2"><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','drawing')">1단계 그리기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','hangul')">2단계 한글 해득</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','dictation')">3단계 교과 맞춤쓰기</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openStudentProgressDetail('${escapeInlineJsString(sid)}','literacy')">4단계 문해력</button><button type="button" class="btn-outline px-3 py-2 text-xs" onclick="openTeacherStudentWordBank('${escapeInlineJsString(sid)}')">단어은행</button></div><div class="flex flex-wrap gap-1 mt-2" aria-label="단계별 게임 성공률">${gameRates}</div></td>
             <td class="py-4 px-3"><div class="flex flex-wrap gap-2">${toggles}</div></td>
         </tr>`;
     }).join('') : classEmptyRow(3);
@@ -22869,7 +22884,39 @@ function buildTeacherLiteracyProgressBody(student) {
     return `<div class="p-4 rounded-3xl bg-blue-50 text-center mb-4"><div class="text-sm font-black text-blue-600">현재 문해력 단</div><div class="text-4xl font-black text-[#2c3e50] mt-1">${dan}단</div></div><div class="overflow-x-auto rounded-2xl border border-blue-100 mb-4"><table class="w-full min-w-[620px] bg-white text-sm"><thead class="bg-blue-50 text-blue-800"><tr><th class="p-3 text-left">난이도</th>${types.map((type) => `<th class="p-3 text-center">${type.label}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div><div><h4 class="font-black text-gray-700 mb-2">최근 문해력 기록</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${historyHtml}</div></div>`;
 }
 
+const teacherProgressControls = createTeacherProgressControls({
+    document, window, escapeHtml, getStudent: sid => currentUserRole === 'teacher' ? teacherClassStudents.get(sid) : undefined,
+    showModal: (...args) => showModal(...args),
+    async mutate(sid, action, args) {
+        const teacherId = currentUserId;
+        if (currentUserRole !== 'teacher' || !teacherId || !teacherClassStudents.has(sid)) throw new Error('우리 반 학생만 관리할 수 있습니다.');
+        const ref = doc(db, 'users', sid);
+        await runTransaction(db, async tx => {
+            const [studentSnap, classSnap, teacherSnap] = await Promise.all([
+                tx.get(ref), tx.get(doc(db, 'classes', teacherId)), tx.get(doc(db, 'users', teacherId))
+            ]);
+            const data = studentSnap.data();
+            if (!studentSnap.exists() || data.role !== 'student' || teacherSnap.data()?.role !== 'teacher'
+                || data.teacherId && data.teacherId !== teacherId
+                || !(data.teacherId === teacherId || (classSnap.data()?.students || []).includes(sid))) throw new Error('우리 반 학생만 관리할 수 있습니다.');
+            if (currentUserId !== teacherId) throw new Error('로그인 정보가 변경되었습니다.');
+            const patch = buildTeacherProgressPatch(data, action, args);
+            tx.update(ref, { ...patch, updatedAt: serverTimestamp(), koreanActivityLog:[{
+                id:`teacher_progress_${Date.now()}_${Math.random().toString(36).slice(2)}`, type:'teacher-progress',
+                source:'class-management', createdAtMs:Date.now(), message:`교사가 ${PROGRESS_ACTIONS[action][0]}${args.word ? `: ${args.word}` : ''}${action === 'hangul-set' ? `: ${args.step === '34' ? '전체 완료' : `배움 ${args.step}`}` : ''}을(를) 실행했습니다.`
+            }, ...(Array.isArray(data.koreanActivityLog) ? data.koreanActivityLog : [])].slice(0,200) });
+        });
+        const fresh = await getDoc(ref);
+        if (currentUserId !== teacherId) return;
+        teacherClassStudents.set(sid, {id:sid,...fresh.data()}); renderTeacherClassManagement();
+    }
+});
+window.openTeacherStudentWordBank = function(sid) {
+    if (currentUserRole !== 'teacher' || !teacherClassStudents.has(sid)) return showModal('우리 반 학생만 관리할 수 있습니다.');
+    teacherProgressControls.bank(sid);
+};
 window.openStudentProgressDetail = function openStudentProgressDetail(sid, type) {
+    if (currentUserRole !== 'teacher') return showModal('교사만 학생 진도를 관리할 수 있습니다.');
     const student = teacherClassStudents.get(sid);
     if (!student) return showModal('학생 정보를 찾지 못했습니다.');
     let title = '';
@@ -22889,8 +22936,8 @@ window.openStudentProgressDetail = function openStudentProgressDetail(sid, type)
         stage = 2;
         title = '한글 해득 · 현재 진도';
         const completedStep = Math.max(-1, Math.floor(asNumber(student.currentLearningStep, -1)));
-        const nextStep = Math.min(35, completedStep + 2);
-        body = `<div class="p-6 rounded-3xl bg-green-50 text-center"><div class="text-sm font-black text-green-600">현재 할 차례</div><div class="text-3xl font-black text-[#2c3e50] mt-2">배움 ${nextStep} 활동 차례</div><div class="text-sm text-gray-500 mt-2">완료한 배움 ${Math.max(0, completedStep + 1)}개</div></div>`;
+        const nextStep = Math.min(33, Math.max(1, completedStep + 1));
+        body = `<div class="p-6 rounded-3xl bg-green-50 text-center"><div class="text-sm font-black text-green-600">현재 할 차례</div><div class="text-3xl font-black text-[#2c3e50] mt-2">${completedStep >= 33 ? '전체 33배움 완료' : `배움 ${nextStep} 활동 차례`}</div><div class="text-sm text-gray-500 mt-2">완료한 배움 ${Math.min(33,Math.max(0,completedStep))}개</div></div>`;
     } else if (type === 'dictation') {
         stage = 3;
         title = '교과 맞춤쓰기 · 나의 기록';
@@ -22901,7 +22948,7 @@ window.openStudentProgressDetail = function openStudentProgressDetail(sid, type)
         body = buildTeacherLiteracyProgressBody(student);
     }
     const bodyClass = type === 'literacy' ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-3';
-    showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-1">${escapeHtml(student.name || '학생')}</h3><p class="font-black text-teal-600 mb-4">${escapeHtml(title)}</p>${renderKoreanStageGameReport(student, stage)}<div class="${bodyClass} max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">${body}</div></div>`);
+    showModal(`<div class="text-left"><h3 class="text-2xl font-black text-[#2c3e50] mb-1">${escapeHtml(student.name || '학생')}</h3><p class="font-black text-teal-600 mb-4">${escapeHtml(title)}</p>${teacherProgressControls.toolbar(sid,type)}${renderKoreanStageGameReport(student, stage)}<div class="${bodyClass} max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">${body}${type === 'dictation' ? teacherProgressControls.wrongCards(student) : ''}</div></div>`, {plainClose:true});
 }
 
 window.toggleLevelLock = async function(sid, level, currentActive) {

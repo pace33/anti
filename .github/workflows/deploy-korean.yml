@@ -74,7 +74,7 @@ jobs:
           node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs
           node --test tools/test-curricular-photo-transition.mjs tools/test-trace-syllable-reset.mjs tools/test-trace-syllable-reset-async.mjs tools/test-curricular-ai-grading-strict.mjs
           node --test tools/test-curricular-writing-drafts.mjs
-          node --test tools/test-grading-feedback.mjs
+          node --test tools/test-grading-feedback.mjs tools/test-teacher-progress-controls.mjs
           node --test tools/test-robl-shop.mjs
           node --test tools/test-pokemon-shop.mjs
           node --test tools/test-student-activity-log-labels.mjs tools/test-student-activity-status.mjs
