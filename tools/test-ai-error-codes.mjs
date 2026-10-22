@@ -27,6 +27,14 @@ test('safe errors are idempotent and unknown server-provided codes cannot expose
     assert.equal(aiErrorMessage(error.message), error.message);
     assert.equal(aiErrorMessage({errorCode:'Antigravity-SECRET'}), 'AI 생성에 실패했습니다. 오류 코드: AI-1099');
 });
+test('stage photo diagnostics preserve approved codes without exposing error payloads', () => {
+    for (let n=1101;n<=1109;n++) {
+        const code=`AI-${n}`, error=createAiError({code,detail:'private model trace'});
+        assert.equal(error.code,code);
+        assert.equal(aiErrorMessage(error.message),`AI 생성에 실패했습니다. 오류 코드: ${code}`);
+    }
+});
+
 test('the actual common generate function discards legacy provider details on HTTP failure', async () => {
     const source = app.slice(app.indexOf('async function callKoreanAiGenerate('),app.indexOf('\nasync function analyzeDictationImageWithAi'));
     const context = vm.createContext({createAiError,AIEDUE_KOREAN_FAST_VISION_MODEL:'test-model',AIEDUE_KOREAN_FAST_TEXT_MODEL:'test-model',fetch:async()=>({ok:false,status:503,json:async()=>({error:'Antigravity CLI failed / Gemini',stderr:'private',errorCode:'AI-1001'})})});

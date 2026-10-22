@@ -366,6 +366,8 @@
                         <p id="dictation-mission-desc" class="text-2xl text-red-500 font-bold">공부하고 싶은 내용을 사진 찍고 함께 공부해요.</p>
                         <p id="dictation-dan-summary" class="hidden mt-4 rounded-2xl bg-white px-5 py-3 text-base font-black text-red-600 shadow-sm"></p>
                     </div>
+                    <p id="word-bank-camera-error" role="alert" aria-live="assertive" class="hidden rounded-2xl bg-red-50 p-4 font-bold text-red-700"></p>
+                    <button id="word-bank-camera-resume-btn" type="button" class="hidden btn-primary" onclick="resumeWordBankCameraRound()">저장된 단어로 2스텝 다시 열기</button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-4">
@@ -1642,7 +1644,7 @@
                     </button>
                 </div>
                 <div class="word-bank-camera-side">
-                    <div id="word-bank-camera-status" class="word-bank-camera-status">카메라를 준비하고 있어요.</div>
+                    <div id="word-bank-camera-status" class="word-bank-camera-status" role="status" aria-live="polite">카메라를 준비하고 있어요.</div>
                     <div class="word-bank-camera-fallback">
                         <p>카메라가 자동으로 열리지 않을 때만 사용해요.</p>
                         <label for="word-bank-photo-input" class="word-bank-file-label">
@@ -1652,6 +1654,7 @@
                         <input id="word-bank-photo-input" type="file" accept="image/*" class="word-bank-file-input" aria-label="오늘의 노트 사진 파일 선택">
                     </div>
                     <div id="word-bank-camera-result" class="word-bank-camera-result hidden"></div>
+                    <button type="button" id="word-bank-camera-modal-resume-btn" class="hidden btn-primary w-full mt-4" onclick="closeWordBankCameraModal()">저장된 단어로 2스텝 다시 열기</button>
                     <button type="button" id="word-bank-camera-confirm-btn" class="btn-primary w-full mt-4 bg-red-500 shadow-red-200 hidden" onclick="confirmWordBankCameraResult()">확인</button>
                     <button type="button" id="word-bank-camera-retry-btn" class="btn-outline w-full mt-3 hidden" onclick="retryWordBankCamera()">다시 찍기</button>
                 </div>
@@ -1852,7 +1855,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261021-teacher-progress-v1"></script>
+    <script type="module" src="app.js?v=20261022-photo-diagnostics-v1"></script>
     <script type="module" src="syllable-slow-reader.js?v=20261008-hangul-card-enter-v1"></script>
     <script type="module" src="dictation-asteroid-game.js?v=20260914-stage-game-reports-v1"></script>
     <script type="module" src="shape-zoo-game.js?v=20260921-stage-card-v1"></script>
