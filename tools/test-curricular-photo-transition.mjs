@@ -2,14 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
-import {aiErrorMessage} from '../ai-error-utils.mjs';
+import {aiErrorMessage,aiErrorCode,createAiError} from '../ai-error-utils.mjs';
 const source=readFileSync(new URL('../app.js',import.meta.url),'utf8');
 function section(start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert(a>=0&&b>a);return source.slice(a,b);}
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return{promise,resolve,reject};}
 function harness(options={}){
  const elements=new Map(),timers=[],starts=[],messages=[],opened=[];let saved=0,rewards=0;
  function element(id){if(!elements.has(id)){const classes=new Set(['hidden']);elements.set(id,{id,innerHTML:'',innerText:'',value:'',src:'',disabled:false,classList:{add:c=>classes.add(c),remove:c=>classes.delete(c),contains:c=>classes.has(c),toggle(c,on){if(on)classes.add(c);else classes.delete(c)}},setAttribute(){},querySelector(){return {innerText:''}}});}return elements.get(id);}
- const context={aiErrorMessage,window:{},console:{warn(){},error(){}},document:{getElementById:element,body:{classList:{add(){},remove(){}}}},
+ const context={aiErrorMessage,aiErrorCode,createAiError,window:{},console:{warn(){},error(){},info(){}},document:{getElementById:element,body:{classList:{add(){},remove(){}}}},
+ wordBankCameraDiagnostic:null,wordBankCameraBusy:false,currentUserId:'qa-photo',
  pendingWordBankCameraReward:null,pendingWordBankCameraAfterSave:null,pendingCurricularWritingRoundStart:null,wordBankCameraRevision:0,
  activeWordBankCameraStream:null,activeDictationSession:null,activeDictationItem:null,activeDictationImageAnalysis:'',
  dictationPortfolio:{koreanBank:{words:[]},captures:[],curricularWriting:{}},
@@ -23,8 +24,9 @@ function harness(options={}){
  sanitizeDictationCaptureRecord:record=>record,persistDictationData:async()=>{saved++;},updateDictationDashboardPreview(){},
  renderWordBankCameraResult(){},awardLessonPhotoPoints:async()=>{rewards++;},showAiedueAutoToast(){}};
  context.window.startWordBankCamera=()=>{};context.window.goDictationDashboard=()=>{};
- context.window.startCurricularTraceStep=round=>starts.push(round);
+ context.window.startCurricularTraceStep=round=>{starts.push(round);element('dictation-workspace-section').classList.remove('hidden');};
  vm.createContext(context);
+ vm.runInContext(section('function setWordBankCameraDiagnostic(', 'function stopWordBankCamera('),context);
  vm.runInContext(section('function resetWordBankCameraModal(', 'window.startWordBankCamera ='),context);
  vm.runInContext(section('window.openDictationBankCamera =', 'function renderWordBankCameraResult('),context);
  vm.runInContext(section('async function processWordBankCameraPhoto(', 'window.captureWordBankCameraPhoto ='),context);
@@ -112,4 +114,67 @@ test('save failure shows a recoverable error and never marks an unsaved round re
  h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();await h.context.processWordBankCameraPhoto({});
  h.context.window.closeWordBankCameraModal();h.flush();assert.equal(h.starts.length,0);assert.equal(h.context.pendingCurricularWritingRoundStart,null);
  assert(h.messages.includes('AI 생성에 실패했습니다. 오류 코드: AI-1008'));
+});
+
+test('saved round survives a transition exception; error remains outside popup and retry does not save again', async()=>{
+ const h=harness();h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();
+ await h.context.processWordBankCameraPhoto({});
+ h.context.window.startCurricularTraceStep=()=>{throw new Error('private render failure')};
+ await h.context.window.closeWordBankCameraModal();
+ assert.equal(h.context.pendingCurricularWritingRoundStart?.ready,true);
+ assert.equal(h.element('word-bank-camera-error').innerText,'AI 생성에 실패했습니다. 오류 코드: AI-1105');
+ assert.equal(h.element('word-bank-camera-error').classList.contains('hidden'),false);
+ h.context.window.startCurricularTraceStep=round=>{h.starts.push(round);h.element('dictation-workspace-section').classList.remove('hidden');};
+ await h.context.window.resumeWordBankCameraRound();
+ assert.equal(h.starts.length,1);assert.equal(h.saved,1);
+ assert.equal(h.context.pendingCurricularWritingRoundStart,null);
+});
+
+test('silent transition failure is not reported as complete and an account change cannot resume another owner',async()=>{
+ const h=harness();h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();
+ await h.context.processWordBankCameraPhoto({});h.context.window.startCurricularTraceStep=()=>{};
+ await h.context.window.closeWordBankCameraModal();assert.equal(h.context.wordBankCameraDiagnostic.code,'AI-1105');
+ h.context.currentUserId='other';assert.equal(h.context.window.resumeWordBankCameraRound(),false);
+ assert.equal(h.context.pendingCurricularWritingRoundStart,null);assert.equal(h.starts.length,0);
+ assert.equal(h.context.wordBankCameraDiagnostic.code,'AI-1106');
+});
+
+test('account change while analyzing never saves the photo to the new account',async()=>{
+ const h=harness(),d=deferred();h.context.analyzeDictationImageWithAi=()=>d.promise;
+ h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();
+ const task=h.context.processWordBankCameraPhoto({});await new Promise(r=>setImmediate(r));
+ h.context.currentUserId='other';d.resolve('학교');await task;h.flush();
+ assert.equal(h.saved,0);assert.equal(h.starts.length,0);
+});
+
+test('overload code survives and remains visible on menu after popup closes; diagnostic contains no input',async()=>{
+ const h=harness();h.context.analyzeDictationImageWithAi=async()=>{throw createAiError({error:'private provider trace'},429)};
+ h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();
+ await h.context.processWordBankCameraPhoto({name:'private-photo.jpg'});
+ await h.context.window.closeWordBankCameraModal();
+ assert.equal(h.element('word-bank-camera-error').innerText,'AI 생성에 실패했습니다. 오류 코드: AI-1003');
+ const d=h.context.window.getWordBankCameraDiagnostics();assert.equal(d.stage,'analysis');assert.equal(d.code,'AI-1003');
+ assert(!JSON.stringify(d).includes('private'));assert.equal(h.saved,0);assert.equal(h.starts.length,0);
+});
+
+test('closing during analysis leaves interruption code and stale response cannot save',async()=>{
+ const h=harness(),d=deferred();h.context.analyzeDictationImageWithAi=()=>d.promise;
+ h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();
+ const task=h.context.processWordBankCameraPhoto({});await new Promise(r=>setImmediate(r));
+ await h.context.window.closeWordBankCameraModal();d.resolve('학교');await task;h.flush();
+ assert.equal(h.element('word-bank-camera-error').innerText,'AI 생성에 실패했습니다. 오류 코드: AI-1106');
+ assert.equal(h.saved,0);assert.equal(h.starts.length,0);
+});
+
+test('capture rejects null encoding and ignores a late blob from a closed popup',async()=>{
+ const h=harness();h.context.getDictationPhotoSize=()=>({width:100,height:100});h.context.DICTATION_PHOTO_JPEG_QUALITY=.8;
+ h.context.File=class{};let callback;
+ Object.assign(h.element('word-bank-camera-video'),{videoWidth:100,videoHeight:100,readyState:4});
+ Object.assign(h.element('word-bank-camera-canvas'),{getContext:()=>({drawImage(){}}),toDataURL:()=> 'data:image/jpeg;base64,PHOTO',toBlob:fn=>{callback=fn}});
+ vm.runInContext(section('window.captureWordBankCameraPhoto =','window.retryWordBankCamera ='),h.context);
+ h.context.window.openDictationBankCamera({afterSave:'curricular-writing'});h.flush();
+ h.context.window.captureWordBankCameraPhoto();callback(null);
+ assert.equal(h.element('word-bank-camera-error').innerText,'AI 생성에 실패했습니다. 오류 코드: AI-1102');
+ h.context.window.captureWordBankCameraPhoto();await h.context.window.closeWordBankCameraModal();callback({});h.flush();
+ assert.equal(h.saved,0);assert.equal(h.starts.length,0);
 });

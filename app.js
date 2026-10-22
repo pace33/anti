@@ -3,7 +3,7 @@
 // Firebase Auth만 임시 유지하고 Firestore/Storage 데이터는 에이두 데이터 서버를 사용합니다.
 // =========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { aiErrorMessage, createAiError } from "./ai-error-utils.mjs?v=20261006-ai-error-codes-v1";
+import { aiErrorCode, aiErrorMessage, createAiError } from "./ai-error-utils.mjs?v=20261022-photo-diagnostics-v1";
 import { buildCurricularDraft, normalizeCurricularDrafts, upsertCurricularDraft, resumeCurricularDraft } from './curricular-writing-drafts.mjs?v=partial-replay-v1';
 import {
     getAuth,
@@ -399,6 +399,8 @@ let pendingWordBankCameraReward = null;
 let pendingWordBankCameraAfterSave = null;
 let pendingCurricularWritingRoundStart = null;
 let wordBankCameraRevision = 0;
+let wordBankCameraDiagnostic = null;
+let wordBankCameraBusy = false;
 let activeDictationPhotoFile = null;
 let activeDictationPhotoDataUrl = '';
 let activeDictationImageAnalysis = '';
@@ -10030,7 +10032,10 @@ window.startCurricularTraceStep = function startCurricularTraceStep(roundStart =
         startedAt: new Date().toISOString()
     }, { badge: '2스텝 단어 따라쓰기', title: '화면 글자 따라 채우기', desc: `방금 찍은 사진에서 고른 단어 ${words.length}개를 회색 글자 위에 따라 채운 뒤 3스텝 받아쓰기로 넘어가요.` });
 }
-window.openTodayDictationActivity = function() { openDictationBankCamera({ afterSave: 'curricular-writing' }); }
+window.openTodayDictationActivity = function() {
+    if (pendingCurricularWritingRoundStart?.ready) { window.resumeWordBankCameraRound(); return; }
+    openDictationBankCamera({ afterSave: 'curricular-writing' });
+}
 window.openLevelDictationActivity = function() { window.openTodayDictationActivity(); }
 window.openDictationItem = function() { window.openTodayDictationActivity(); }
 window.openAiWordPracticeActivity = function() { window.openDictationPracticeActivity(); }
@@ -10198,6 +10203,35 @@ function setWordBankCameraStatus(message, isLoading = false) {
     status.classList.toggle('is-loading', Boolean(isLoading));
 }
 
+function setWordBankCameraDiagnostic(stage, code = null) {
+    // Only operational metadata: never retain photos, OCR, words, names or raw errors.
+    const startedAt = wordBankCameraDiagnostic?.startedAt || Date.now();
+    wordBankCameraDiagnostic = { stage, code, startedAt, elapsedMs: Date.now() - startedAt };
+}
+window.getWordBankCameraDiagnostics = () => wordBankCameraDiagnostic ? { ...wordBankCameraDiagnostic } : null;
+
+function clearWordBankCameraError() {
+    for (const id of ['word-bank-camera-error', 'word-bank-camera-resume-btn', 'word-bank-camera-modal-resume-btn']) {
+        document.getElementById(id)?.classList.add('hidden');
+    }
+}
+
+function showWordBankCameraError(error, fallbackCode = 'AI-1099') {
+    const knownCode = aiErrorCode(error);
+    const code = knownCode === 'AI-1099' ? fallbackCode : knownCode;
+    const message = aiErrorMessage({ code });
+    setWordBankCameraDiagnostic(wordBankCameraDiagnostic?.stage || 'capture', code);
+    setWordBankCameraStatus(message);
+    const panel = document.getElementById('word-bank-camera-error');
+    if (panel) { panel.innerText = message; panel.classList.remove('hidden'); }
+    const canResume = Boolean(pendingCurricularWritingRoundStart?.ready);
+    for (const id of ['word-bank-camera-resume-btn', 'word-bank-camera-modal-resume-btn']) {
+        document.getElementById(id)?.classList.toggle('hidden', !canResume);
+    }
+    document.getElementById('word-bank-camera-retry-btn')?.classList.remove('hidden');
+    console.warn('word-bank-camera', { ...wordBankCameraDiagnostic });
+}
+
 function stopWordBankCamera() {
     if (activeWordBankCameraStream) {
         activeWordBankCameraStream.getTracks().forEach((track) => track.stop());
@@ -10209,6 +10243,10 @@ function stopWordBankCamera() {
 
 function resetWordBankCameraModal({ preserveContext = false } = {}) {
     wordBankCameraRevision += 1;
+    wordBankCameraBusy = false;
+    wordBankCameraDiagnostic = null;
+    setWordBankCameraDiagnostic('camera');
+    clearWordBankCameraError();
     pendingWordBankCameraReward = null;
     if (!preserveContext) pendingWordBankCameraAfterSave = null;
     pendingCurricularWritingRoundStart = null;
@@ -10235,25 +10273,33 @@ function resetWordBankCameraModal({ preserveContext = false } = {}) {
 window.startWordBankCamera = async function startWordBankCamera() {
     const video = document.getElementById('word-bank-camera-video');
     if (!video) return;
+    const revision = wordBankCameraRevision;
     video.classList.remove('hidden');
     if (!navigator.mediaDevices?.getUserMedia) {
-        setWordBankCameraStatus('카메라가 자동으로 열리지 않으면 아래 사진 파일 선택으로 이어갈 수 있어요.');
+        showWordBankCameraError({ code: 'AI-1101' });
         return;
     }
     try {
         stopWordBankCamera();
-        activeWordBankCameraStream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280, max: 1920 }, height: { ideal: 960, max: 1440 } },
             audio: false
         });
-        video.srcObject = activeWordBankCameraStream;
+        if (revision !== wordBankCameraRevision || document.getElementById('word-bank-camera-modal')?.classList.contains('hidden')) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
+        }
+        activeWordBankCameraStream = stream;
+        video.srcObject = stream;
         video.setAttribute('playsinline', '');
         video.muted = true;
         await video.play();
+        if (revision !== wordBankCameraRevision) return;
         setWordBankCameraStatus('카메라가 켜졌어요. 노트가 잘 보이게 맞춘 뒤 오른쪽 위 📷 버튼을 누르세요.');
     } catch (error) {
-        console.warn('word bank camera failed', error);
-        setWordBankCameraStatus('카메라가 자동으로 열리지 않았어요. 아래 사진 파일 선택으로 오늘의 노트를 올릴 수 있어요.');
+        if (revision !== wordBankCameraRevision) return;
+        stopWordBankCamera();
+        showWordBankCameraError({ code: 'AI-1101' });
     }
 }
 
@@ -10285,7 +10331,8 @@ window.openDictationBankCamera = function openDictationBankCamera(options = {}) 
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
-    setTimeout(() => window.startWordBankCamera(), 80);
+    const revision = wordBankCameraRevision;
+    setTimeout(() => { if (revision === wordBankCameraRevision) window.startWordBankCamera(); }, 80);
 }
 
 async function finalizeWordBankCameraRewardAfterClose() {
@@ -10300,13 +10347,35 @@ async function finalizeWordBankCameraRewardAfterClose() {
         pendingWordBankCameraReward = null;
     }
 }
+window.resumeWordBankCameraRound = function resumeWordBankCameraRound() {
+    const prepared = pendingCurricularWritingRoundStart;
+    if (!prepared?.ready) return false;
+    if (prepared.ownerId !== currentUserId) {
+        pendingCurricularWritingRoundStart = null;
+        showWordBankCameraError({ code: 'AI-1106' });
+        return false;
+    }
+    setWordBankCameraDiagnostic('transition');
+    try {
+        window.startCurricularTraceStep({ ...prepared, words: [...prepared.words] });
+        if (document.getElementById('dictation-workspace-section')?.classList.contains('hidden')) throw createAiError({ code: 'AI-1105' });
+        pendingCurricularWritingRoundStart = null;
+        clearWordBankCameraError();
+        setWordBankCameraDiagnostic('complete');
+        return true;
+    } catch (error) {
+        // The photo round was already saved. Keep it for a no-AI/no-write retry.
+        pendingCurricularWritingRoundStart = prepared;
+        showWordBankCameraError({ code: 'AI-1105' });
+        if (typeof window.goDictationDashboard === 'function') window.goDictationDashboard();
+        return false;
+    }
+};
 window.closeWordBankCameraModal = async function closeWordBankCameraModal() {
     wordBankCameraRevision += 1;
-    const afterSave = pendingWordBankCameraAfterSave;
-    const roundStart = afterSave === 'curricular-writing' && pendingCurricularWritingRoundStart?.ready
-        ? { ...pendingCurricularWritingRoundStart, words: [...(pendingCurricularWritingRoundStart.words || [])] }
-        : null;
-    pendingCurricularWritingRoundStart = null;
+    const hasRound = Boolean(pendingCurricularWritingRoundStart?.ready);
+    if (wordBankCameraBusy && !hasRound) showWordBankCameraError({ code: 'AI-1106' });
+    wordBankCameraBusy = false;
     stopWordBankCamera();
     const modal = document.getElementById('word-bank-camera-modal');
     if (modal) {
@@ -10315,11 +10384,7 @@ window.closeWordBankCameraModal = async function closeWordBankCameraModal() {
     }
     document.body.classList.remove('modal-open');
     pendingWordBankCameraAfterSave = null;
-    if (roundStart) {
-        window.startCurricularTraceStep(roundStart);
-    } else if (afterSave === 'curricular-writing') {
-        pendingCurricularWritingRoundStart = null;
-    }
+    if (hasRound) await window.resumeWordBankCameraRound();
     finalizeWordBankCameraRewardAfterClose();
 }
 
@@ -10341,7 +10406,11 @@ function renderWordBankCameraResult(words, duplicateCount = 0) {
 async function processWordBankCameraPhoto(file, previewDataUrl = '') {
     const revision = ++wordBankCameraRevision;
     const afterSave = pendingWordBankCameraAfterSave;
-    const isCurrent = () => revision === wordBankCameraRevision;
+    const ownerId = currentUserId;
+    const isCurrent = () => revision === wordBankCameraRevision && ownerId === currentUserId;
+    wordBankCameraBusy = true;
+    clearWordBankCameraError();
+    setWordBankCameraDiagnostic('prepare');
     pendingCurricularWritingRoundStart = null;
     const loadingToken = aieduLoading.start('에이두가 사진을 살펴보고 노트에 단어를 적고 있어요', 'dictation');
     let loadingSucceeded = false;
@@ -10363,6 +10432,8 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         const analysisFile = normalized.file || file;
         if (preview && dataUrl) { preview.src = dataUrl; preview.classList.remove('hidden'); }
         if (video) video.classList.add('hidden');
+        stopWordBankCamera();
+        setWordBankCameraDiagnostic('analysis');
         setWordBankCameraStatus('OCR+AI 분석중~~', true);
         const useLegacyCurricularPhotoAnalysis = afterSave === 'curricular-writing';
         const [ocrText, aiText] = await Promise.all([
@@ -10371,6 +10442,7 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         ]);
         if (!isCurrent()) return;
         const combined = ['[OCR]', ocrText, '[AI 사진 분석]', aiText].filter(Boolean).join('\n');
+        setWordBankCameraDiagnostic('extract');
         const aiExtracted = await extractDictationWordsWithAi(combined, {
             limit: useLegacyCurricularPhotoAnalysis ? 10 : 40,
             useLegacyTextModel: useLegacyCurricularPhotoAnalysis
@@ -10384,7 +10456,7 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         const existing = new Set(dictationPortfolio.koreanBank?.words || []);
         const newWords = candidateWords.filter((word) => !existing.has(word));
         const duplicateCount = candidateWords.length - newWords.length;
-        if (!candidateWords.length) throw new Error('사진에서 저장할 단어를 찾지 못했어요. 글자가 잘 보이게 다시 찍어주세요.');
+        if (!candidateWords.length) throw createAiError({ code: 'AI-1103' });
         mergeKoreanBank({ words: candidateWords });
         let curricularRound = null;
         if (afterSave === 'curricular-writing') {
@@ -10402,11 +10474,13 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
             savedAt: new Date().toISOString()
         }), ...(dictationPortfolio.captures || [])].slice(0, 5);
         dictationPortfolio.dictationLocked = false;
+        setWordBankCameraDiagnostic('save');
         await persistDictationData();
         if (!isCurrent()) return;
         if (curricularRound) {
             pendingCurricularWritingRoundStart = {
                 ready: true,
+                ownerId: currentUserId,
                 roundId: curricularRound.activeRoundId,
                 photoCapturedAt: curricularRound.photoCapturedAt,
                 words: [...(curricularRound.activeWords || [])],
@@ -10414,6 +10488,7 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
                 reviewWords: [...(curricularRound.reviewWords || [])]
             };
         }
+        setWordBankCameraDiagnostic('result');
         updateDictationDashboardPreview();
         pendingWordBankCameraReward = { ready: true };
         if (afterSave === 'curricular-writing') {
@@ -10423,6 +10498,8 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         }
         renderWordBankCameraResult(afterSave === 'curricular-writing' ? (curricularRound?.activeWords || candidateWords) : newWords, duplicateCount);
         loadingSucceeded = true;
+        wordBankCameraBusy = false;
+        setWordBankCameraDiagnostic('saved');
         if (afterSave === 'curricular-writing') {
             setTimeout(() => {
                 const modal = document.getElementById('word-bank-camera-modal');
@@ -10431,33 +10508,55 @@ async function processWordBankCameraPhoto(file, previewDataUrl = '') {
         }
     } catch (error) {
         if (!isCurrent()) return;
-        pendingCurricularWritingRoundStart = null;
-        console.error('word bank camera photo failed', error);
-        setWordBankCameraStatus(aiErrorMessage(error));
+        const fallbackCode = { prepare: 'AI-1104', analysis: 'AI-1108', extract: 'AI-1109', save: 'AI-1107', result: 'AI-1105' }[wordBankCameraDiagnostic?.stage] || 'AI-1099';
+        showWordBankCameraError(error, fallbackCode);
         retry?.classList.remove('hidden');
     } finally {
         aieduLoading.finish(loadingToken, loadingSucceeded);
-        if (isCurrent() && capture) capture.disabled = false;
+        if (isCurrent()) {
+            wordBankCameraBusy = false;
+            if (capture) capture.disabled = false;
+        }
     }
 }
 
 window.captureWordBankCameraPhoto = function captureWordBankCameraPhoto() {
+    if (wordBankCameraBusy) return;
     const video = document.getElementById('word-bank-camera-video');
     const canvas = document.getElementById('word-bank-camera-canvas');
-    if (!video || !canvas || !video.videoWidth) {
-        setWordBankCameraStatus('카메라 화면이 아직 준비되지 않았어요. 잠시 후 다시 눌러주세요.');
+    const capture = document.getElementById('word-bank-camera-capture-btn');
+    clearWordBankCameraError();
+    setWordBankCameraDiagnostic('capture');
+    if (!video || !canvas || !video.videoWidth || !video.videoHeight || video.readyState < 2) {
+        showWordBankCameraError({ code: 'AI-1101' });
         return;
     }
-    const size = getDictationPhotoSize(video.videoWidth, video.videoHeight);
-    canvas.width = size.width;
-    canvas.height = size.height;
-    canvas.getContext('2d').drawImage(video, 0, 0, size.width, size.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', DICTATION_PHOTO_JPEG_QUALITY);
-    canvas.toBlob((blob) => {
-        if (!blob) return;
-        const file = new File([blob], `word-bank-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
-        processWordBankCameraPhoto(file, dataUrl);
-    }, 'image/jpeg', DICTATION_PHOTO_JPEG_QUALITY);
+    const revision = wordBankCameraRevision;
+    wordBankCameraBusy = true;
+    if (capture) capture.disabled = true;
+    const current = () => revision === wordBankCameraRevision;
+    const fail = () => {
+        if (!current()) return;
+        wordBankCameraBusy = false;
+        if (capture) capture.disabled = false;
+        showWordBankCameraError({ code: 'AI-1102' });
+    };
+    try {
+        const size = getDictationPhotoSize(video.videoWidth, video.videoHeight);
+        canvas.width = size.width;
+        canvas.height = size.height;
+        canvas.getContext('2d').drawImage(video, 0, 0, size.width, size.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', DICTATION_PHOTO_JPEG_QUALITY);
+        canvas.toBlob((blob) => {
+            // A delayed camera callback must not become a new bank-only request after close/retake.
+            if (!current()) return;
+            if (!blob) { fail(); return; }
+            try {
+                const file = new File([blob], `word-bank-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                processWordBankCameraPhoto(file, dataUrl);
+            } catch (error) { fail(); }
+        }, 'image/jpeg', DICTATION_PHOTO_JPEG_QUALITY);
+    } catch (error) { fail(); }
 }
 
 window.retryWordBankCamera = function retryWordBankCamera() {
@@ -10524,7 +10623,7 @@ async function analyzeDictationImageWithAi(dataUrl, options = {}) {
     const [header, base64] = dataUrl.split(',');
     const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
     const prompt = '이 이미지는 오늘의 노트 학습 사진입니다. 이미지에 실제로 보이는 한국어 문구, 낱말, 사물 이름, 학습 주제어만 추출하세요. 이름이나 개인정보는 제외하고, 보이지 않는 글자는 정답이나 맥락으로 추측하지 마세요. 그림은 생성하지 마세요. 반드시 JSON만 출력하세요: {"words":["단어 또는 짧은 문구"]}';
-    const requestOptions = { profile: 'korean-note-photo', imageBase64: base64, imageMime: mime, printTimeout: '75s' };
+    const requestOptions = { profile: 'korean-note-photo', imageBase64: base64, imageMime: mime, printTimeout: '75s', requestTimeoutMs: 120000 };
     if (options.useLegacyImageModel) requestOptions.model = '';
     const text = await callKoreanAiGenerate(prompt, requestOptions);
     const parsed = parseAiJsonObject(text, { words: [] });
@@ -10568,6 +10667,7 @@ ${candidateText}
     const raw = await callKoreanAiGenerate(prompt, {
         profile: 'korean-word-extract',
         printTimeout: '60s',
+        requestTimeoutMs: 120000,
         model: options.useLegacyTextModel ? '' : AIEDUE_KOREAN_FAST_TEXT_MODEL
     }) || '{}';
     const parsed = parseAiJsonObject(raw, { words: [] });

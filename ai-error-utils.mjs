@@ -1,9 +1,10 @@
-const CODES = new Set(['AI-1001','AI-1002','AI-1003','AI-1004','AI-1005','AI-1006','AI-1007','AI-1008','AI-1009','AI-1099']);
+const CODES = new Set(['AI-1001','AI-1002','AI-1003','AI-1004','AI-1005','AI-1006','AI-1007','AI-1008','AI-1009','AI-1099',
+    'AI-1101','AI-1102','AI-1103','AI-1104','AI-1105','AI-1106','AI-1107','AI-1108','AI-1109']);
 export function aiErrorCode(error, status) {
     const code = error?.errorCode || error?.code || error?.error?.code;
     if (CODES.has(code)) return code;
     const message = String(typeof error === 'string' ? error : error?.message || error?.error?.message || error?.error || '').toLowerCase();
-    const embedded = message.match(/\bAI-(?:100[1-9]|1099)\b/i)?.[0]?.toUpperCase();
+    const embedded = message.match(/\bAI-(?:100[1-9]|1099|110[1-9])\b/i)?.[0]?.toUpperCase();
     if (CODES.has(embedded)) return embedded;
     const http = Number(status || error?.statusCode || error?.status);
     if (http === 429 || /resource_exhausted|rate limit|quota/.test(message)) return 'AI-1003';
