@@ -4925,7 +4925,14 @@ function closeAiedueCraftShop() {
     craftShopLastTrigger = null;
 }
 
-window.openAiedueCraftShop = function openAiedueCraftShop() {
+window.openAiedueCraftShop = async function openAiedueCraftShop() {
+    try {
+        const { openCraftShop } = await import('/craft-shop.mjs?v=craft-shop-v2-20261023');
+        return await openCraftShop({getAuthUser: () => auth.currentUser, onWalletChanged: profile => syncAiedueCraftWallet(Number(profile.balance ?? profile.coins ?? 0))});
+    } catch (error) { showModal(error.message || '상점을 열지 못했습니다.'); }
+};
+
+function openLegacyAiedueCraftShop() {
     if (!loginSuccess || !currentUserId) return showModal('먼저 로그인하면 크래프트 상점을 볼 수 있어요.');
     if (!getAiedueCraftPlayerName()) return showModal('크래프트 계정으로 연결할 학생 코드 또는 교사 이메일을 찾지 못했어요.');
     craftShopLastTrigger = document.activeElement;
