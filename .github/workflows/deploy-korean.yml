@@ -21,6 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js for SQLite-backed notices tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Check JavaScript syntax
         run: |
           node --input-type=module --check < app.js
@@ -45,6 +50,9 @@ jobs:
           node --check word-card-table-core.mjs
           node --check ai-error-utils.mjs
           node --check curricular-writing-drafts.mjs
+          node --check korean-notices.mjs
+          node --check tools/data-server/korean-notices.mjs
+          node --check tools/data-server/publish-korean-notice.mjs
           node --check syllable-slow-reader.js
           node --check syllable-slow-reader-core.mjs
           node --check research-prep/app.mjs
@@ -57,6 +65,7 @@ jobs:
       - name: Validate static site structure
         run: |
           node tools/validate-site.mjs
+          node --test tools/test-korean-notices-api.mjs tools/test-korean-notices-source.mjs
           node --test tools/test-research-prep.mjs tools/test-research-prep-simple.mjs tools/test-research-answers.mjs tools/test-research-presentation.mjs
           node --test tools/test-presentation-reader.mjs
           node --test tools/test-aiedue-opening.mjs
