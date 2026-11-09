@@ -192,7 +192,7 @@ assert(app.includes("const AIEDUE_PORANDY_URL = 'https://aiedue.netlify.app/poke
 assert(index.includes('accept="image/jpeg,image/png,image/webp"') && index.includes('조정 요청'), '이미지 업로드 형식 또는 반복 조정 UI가 올바르지 않습니다.');
 assert(app.includes("const SETTINGS_IMAGE_MAX_BYTES = 20 * 1024 * 1024;") && app.includes("new Set(['image/jpeg', 'image/png', 'image/webp'])"), '이미지 업로드의 20MB/형식 제한이 없습니다.');
 assert(app.includes("fetchStoryResource('/korean-ai/api/image-edit-sessions'") && app.includes("'Content-Type': blob.type") && app.includes('body: blob'), '편집 원본을 raw 파일로 세션 API에 업로드하지 않습니다.');
-assert(app.includes('/turns`') && app.includes("'X-Image-Session-Token': session.token") && app.includes('JSON.stringify({ prompt, aspectRatio })'), '편집 turn API 계약이 올바르지 않습니다.');
+assert(app.includes('/turns`') && app.includes("'X-Image-Session-Token': session.token") && app.includes('JSON.stringify({ prompt, aspectRatio, processingMode: getKoreanAiProcessingMode() })'), '편집 turn API 계약이 올바르지 않습니다.');
 assert(app.includes('value.statusUrl ? normalizeImageJobStatusUrl(value.statusUrl, value.id)') && app.includes('return { id: value.id, token, statusUrl }'), '편집 turn 작업의 상태 URL 또는 capability token이 정규화 결과에 보존되지 않습니다.');
 assert(app.includes('job.statusUrl || `/korean-ai/api/image-jobs/${encodeURIComponent(job.id)}`') && app.includes("'X-Image-Job-Token': job.token"), '서버가 돌려준 검증된 상태 URL을 polling에 사용하거나 capability token을 전달하지 않습니다.');
 assert(app.includes('waitForStoryImageJob(job, controller.signal)') && app.includes('downloadStoryImage(job, image, controller.signal)'), '편집 결과가 기존 이미지 작업 polling/download helper를 사용하지 않습니다.');
