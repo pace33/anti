@@ -36,8 +36,8 @@ test('stage photo diagnostics preserve approved codes without exposing error pay
 });
 
 test('the actual common generate function discards legacy provider details on HTTP failure', async () => {
-    const source = app.slice(app.indexOf('async function callKoreanAiGenerate('),app.indexOf('\nasync function analyzeDictationImageWithAi'));
-    const context = vm.createContext({createAiError,AIEDUE_KOREAN_FAST_VISION_MODEL:'test-model',AIEDUE_KOREAN_FAST_TEXT_MODEL:'test-model',fetch:async()=>({ok:false,status:503,json:async()=>({error:'Antigravity CLI failed / Gemini',stderr:'private',errorCode:'AI-1001'})})});
+    const source = app.slice(app.indexOf('function getKoreanAiProcessingMode('),app.indexOf('\nasync function analyzeDictationImageWithAi'));
+    const context = vm.createContext({window:{location:{search:''}},URLSearchParams,createAiError,AIEDUE_KOREAN_FAST_VISION_MODEL:'test-model',AIEDUE_KOREAN_FAST_TEXT_MODEL:'test-model',fetch:async()=>({ok:false,status:503,json:async()=>({error:'Antigravity CLI failed / Gemini',stderr:'private',errorCode:'AI-1001'})})});
     vm.runInContext(source,context);
     await assert.rejects(context.callKoreanAiGenerate('test prompt'),error=>error.code==='AI-1001'&&error.message==='AI 생성에 실패했습니다. 오류 코드: AI-1001');
 });

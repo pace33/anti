@@ -21,7 +21,7 @@ const authObserver = section('onAuthStateChanged(auth', '// --- Dashboard UI Enh
 assert.doesNotMatch(studentSignup, /metadata['"],\s*['"]counters|runTransaction\s*\(/);
 assert.match(studentSignup, /createStudentAuthAccount\(\)/);
 assert.match(studentSignup, /createSignupProfile\(db,[\s\S]*role:\s*'student'[\s\S]*userCode:/);
-assert.match(teacherSignup, /createSignupProfile\(db,\s*\{\s*name,\s*email,\s*role:\s*'teacher'/);
+assert.match(teacherSignup, /createSignupProfile\(db,\s*\{\s*name,\s*email:userCredential\.user\.email,\s*role:\s*'teacher'/);
 assert.doesNotMatch(teacherSignup, /setDoc\(doc\(db,\s*['"]users['"]/);
 assert.match(teacherBootstrap, /createSignupProfile\(db,[\s\S]*name:\s*signupName/);
 assert.match(teacherBootstrap, /teacher-profile-missing/);

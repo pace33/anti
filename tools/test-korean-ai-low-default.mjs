@@ -7,7 +7,7 @@ const low = 'Gemini 3.8 Flash (Low)';
 const calls = [];
 let output = '{"words":["학교","나무"]}';
 const response = async (url, init) => { calls.push({ url, body: JSON.parse(init.body) }); return { ok: true, json: async () => ({ text: output, model: low }) }; };
-const context = vm.createContext({ fetch: response, fetchStoryResource: response, getAiTextFromResponse: data => data.text, parseAiJsonObject: JSON.parse, cleanKoreanWord: value => value, isLikelyKoreanNounBankWord: () => true, dictationPortfolio: { koreanBank: { words: [] } }, validateWordCardText: value => value, console });
+const context = vm.createContext({ window: { location: { search: '' } }, URLSearchParams, fetch: response, fetchStoryResource: response, getAiTextFromResponse: data => data.text, parseAiJsonObject: JSON.parse, cleanKoreanWord: value => value, isLikelyKoreanNounBankWord: () => true, dictationPortfolio: { koreanBank: { words: [] } }, validateWordCardText: value => value, console });
 vm.runInContext(source.slice(source.indexOf('const AIEDUE_KOREAN_FAST_'), source.indexOf('const SHARED_WORD_CARD_COLLECTION')), context);
 vm.runInContext(source.slice(source.indexOf('async function requestSharedWordExplanation('), source.indexOf('async function loadWordCardCharacterReference(')), context);
 test('text and image requests explicitly default to Flash Low, not local Gemma', async () => {

@@ -15,6 +15,7 @@ import {
     signInWithPopup,
     setPersistence,
     inMemoryPersistence
+    , signInAnonymously, EmailAuthProvider, linkWithCredential
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { createExperienceGauge } from './experience-gauge.mjs?v=20260915-readable-v3';
 import { buildActivityStatusSnapshot, formatActivityStatusChange } from './student-activity-status.mjs?v=student-status-after-v1';
@@ -10596,11 +10597,17 @@ function parseAiJsonObject(rawText, fallback = {}) {
 const AIEDUE_KOREAN_FAST_VISION_MODEL = 'Gemini 3.8 Flash (Low)';
 const AIEDUE_KOREAN_FAST_TEXT_MODEL = AIEDUE_KOREAN_FAST_VISION_MODEL;
 
+function getKoreanAiProcessingMode(options = {}) {
+    const urlMode = new URLSearchParams(window.location.search).get('ai');
+    return urlMode === 'local' || options.processingMode === 'local-only' ? 'local-only' : 'auto';
+}
+
 async function callKoreanAiGenerate(prompt, options = {}) {
     const hasExplicitModel = Object.prototype.hasOwnProperty.call(options, 'model');
     const body = {
         prompt,
         model: hasExplicitModel ? options.model : (options.imageBase64 ? AIEDUE_KOREAN_FAST_VISION_MODEL : AIEDUE_KOREAN_FAST_TEXT_MODEL),
+        processingMode: getKoreanAiProcessingMode(options),
         printTimeout: options.printTimeout || '2m',
         ...(options.profile ? { profile: options.profile } : {})
     };
@@ -22509,23 +22516,23 @@ async function reserveSequentialStudentLoginCode(minimumPreviousCode = 0) {
         const counterDoc = await transaction.get(counterRef);
         const lastCode = normalizeStudentLoginCode(counterDoc.exists() ? counterDoc.data().lastUserCode : 0);
         const nextCode = Math.max(lastCode, normalizeStudentLoginCode(minimumPreviousCode)) + 1;
-        transaction.set(counterRef, {
-            lastUserCode: nextCode,
-            lastStudentUserCode: nextCode,
-            updatedAt: serverTimestamp()
-        }, { merge: true });
+        transaction.set(counterRef, {lastUserCode:nextCode}, {merge:true});
         return nextCode;
     });
 }
 
 async function createStudentAuthAccount() {
+    if(auth.currentUser && !auth.currentUser.isAnonymous)await signOut(auth);
+    const anonymousUser=auth.currentUser || (await signInAnonymously(auth)).user;
+    await anonymousUser.getIdToken(true);
     let lastTriedCode = 0;
     for (let attempt = 0; attempt < 300; attempt += 1) {
         const userCode = await reserveSequentialStudentLoginCode(lastTriedCode);
         lastTriedCode = userCode;
         const email = `${userCode}@abc.com`;
         try {
-            const credential = await createUserWithEmailAndPassword(auth, email, `${userCode}qwerty`);
+            const credential = await linkWithCredential(anonymousUser,EmailAuthProvider.credential(email,`${userCode}qwerty`));
+            await credential.user.getIdToken(true);
             return { credential, email, userCode };
         } catch (error) {
             if (error.code !== 'auth/email-already-in-use') throw error;
@@ -22597,7 +22604,7 @@ window.createTeacherAccount = async function createTeacherAccount() {
                 : await createUserWithEmailAndPassword(auth, email, password);
             authAccountCreated = true;
             task.uid = userCredential.user.uid;
-            return createSignupProfile(db, { name, email, role: 'teacher' });
+            return createSignupProfile(db, { name, email:userCredential.user.email, role: 'teacher' });
         });
 
         await signOut(auth);
@@ -23428,7 +23435,7 @@ async function createSettingsImageEditTurn(session, prompt, aspectRatio, signal)
             'Content-Type': 'application/json',
             'X-Image-Session-Token': session.token
         },
-        body: JSON.stringify({ prompt, aspectRatio }),
+        body: JSON.stringify({ prompt, aspectRatio, processingMode: getKoreanAiProcessingMode() }),
         signal
     }, 120000);
     const data = await response.json().catch(() => ({}));
@@ -24146,7 +24153,7 @@ async function createStoryImageJob(prompt, signal, aspectRatio = STORY_LIBRARY_I
     const response = await fetchStoryResource('/korean-ai/api/image-jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, aspectRatio, count: 1 }),
+        body: JSON.stringify({ prompt, aspectRatio, count: 1, processingMode: getKoreanAiProcessingMode() }),
         signal
     }, 120000);
     const data = await response.json().catch(() => ({}));
