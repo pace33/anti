@@ -12059,36 +12059,24 @@ window.startTodayLiteracyMission = async function(diff, type) {
 };
 
 async function gradeLiteracyEssayQuestion(question, studentAnswer, { detective = false } = {}) {
-    const difficulty = String(question.difficulty || 'easy').toLowerCase();
-    const keywords = normalizeLiteracyKeywords(question);
-    const evaluationGuide = detective
-        ? '지문 내용과 부합하는지, 추리한 결론이 타당한지, 지문 속 근거와 결론을 논리적으로 연결했는지 평가하세요.'
-        : '지문 내용과 부합하는지, 그리고 핵심 의도를 파악하고 작성했는지 평가하세요.';
-    const lengthGuide = detective
-        ? (difficulty === 'easy' ? '한 문장 안에 추리 결론과 핵심 근거 하나가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : difficulty === 'normal' ? '한두 문장 안에 추리 결론과 지문 근거가 연결되어 있으면 충분합니다.' : '추리 결론과 두 가지 이상의 근거 사이의 논리적 연결을 충분히 갖추었는지 평가하세요.')
-        : (['easy', 'normal'].includes(difficulty) ? '이 문제는 한 문장 답변용입니다. 한 문장 안에 핵심 의미가 들어 있으면 충분하며, 답이 짧다는 이유만으로 감점하지 마세요.' : '근거와 논리적 연결을 충분히 갖추었는지 평가하세요.');
-    const prompt = `지문: ${question.passage}
-난이도: ${difficulty}
-질문: ${question.question}
-예시답안: ${question.sampleAnswer}
-학생에게 제공된 핵심어: ${keywords.join(', ')}
-학생답안: ${studentAnswer}
-
-위 학생답안을 예시답안을 기준으로 100점 만점으로 정밀하게 채점해 주세요.
-${evaluationGuide}
-핵심어는 문자 그대로 같지 않아도 동의어나 같은 뜻의 표현이면 인정하세요.
-${lengthGuide}
-반드시 백틱이나 다른 군더더기 없이 다음 JSON 형식만 반환하세요: {"score": 85, "feedback": "여기에 채점 총평 및 친절한 피드백을 적으세요."}`;
-    const responseText = await callKoreanAiGenerate(prompt, { printTimeout: '3m' });
-    const cleaned = String(responseText || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(match ? match[0] : cleaned);
-    const score = Number(parsed.score) || 0;
-    return {
-        score,
-        feedback: String(parsed.feedback || '채점을 완료했습니다.'),
-        isCorrect: score >= 80
-    };
+    const type = question.type === 'shortAnswer' ? 'shortAnswer' : 'essay';
+    const prompt = JSON.stringify({
+        version: 1, type,
+        passage: String(question.passage || ''),
+        question: String(question.question || ''),
+        answer: String((type === 'shortAnswer' ? question.answer : question.sampleAnswer) || question.answer || ''),
+        acceptableAnswers: (Array.isArray(question.acceptableAnswers) ? question.acceptableAnswers : []).map(String).slice(0, 20),
+        studentAnswer: String(studentAnswer || '').trim(),
+        difficulty: String(question.difficulty || 'easy').toLowerCase(),
+        detective: Boolean(detective),
+        keywords: normalizeLiteracyKeywords(question).map(String).slice(0, 20)
+    });
+    const responseText = await callKoreanAiGenerate(prompt, { profile: 'korean-literacy-grade', printTimeout: '75s', requestTimeoutMs: 120000 });
+    const parsed = JSON.parse(String(responseText || '').trim());
+    if (typeof parsed.score !== 'number' || !Number.isFinite(parsed.score) || parsed.score < 0 || parsed.score > 100 || typeof parsed.feedback !== 'string' || !parsed.feedback.trim()) {
+        throw createAiError({ code: 'AI-1001' }, 502);
+    }
+    return { score: parsed.score, feedback: parsed.feedback, isCorrect: parsed.score >= 80 };
 }
 
 async function pickLiteracyDetectiveLimitBreakQuestion(plan) {
@@ -12133,6 +12121,7 @@ window.aiedueLiteracyAdventureData = Object.freeze({
     async submitAnswer(answer) {
         requireDetectiveReady(await readDetectiveCooldown());
         if (!activeLiteracyDetectiveQuestion) throw new Error('먼저 사건 기록을 불러와 주세요.');
+        const uid = currentUserId;
         const question = activeLiteracyDetectiveQuestion;
         activeLiteracyQuestion = question;
         const value = String(answer ?? '').trim();
@@ -12150,12 +12139,10 @@ window.aiedueLiteracyAdventureData = Object.freeze({
             detail = isCorrect ? '정확한 답을 찾았어요.' : `정답은 ${Number(question.answerIndex) + 1}번이에요.`;
         } else if (question.type === 'shortAnswer') {
             if (!value) throw new Error('답을 먼저 적어 주세요.');
-            const normalize = (text) => String(text || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
-            const answers = [question.answer, ...(Array.isArray(question.acceptableAnswers) ? question.acceptableAnswers : [])]
-                .map(normalize).filter(Boolean);
-            const normalized = normalize(value);
-            isCorrect = answers.some((candidate) => candidate === normalized || candidate.includes(normalized) || normalized.includes(candidate));
-            detail = isCorrect ? '핵심 답을 정확히 썼어요.' : `모범 답: ${question.answer}`;
+            const evaluation = await gradeLiteracyEssayQuestion(question, value, { detective: true });
+            isCorrect = evaluation.isCorrect;
+            score = evaluation.score;
+            detail = evaluation.feedback;
         } else if (question.type === 'essay') {
             if (!value) throw new Error('답을 먼저 적어 주세요.');
             const evaluation = await gradeLiteracyEssayQuestion(question, value, { detective: true });
@@ -12165,9 +12152,10 @@ window.aiedueLiteracyAdventureData = Object.freeze({
         } else {
             throw new Error('지원하지 않는 문해력 문제 유형이에요.');
         }
+        if (currentUserId !== uid || activeLiteracyDetectiveQuestion !== question) throw createAiError({ code: 'AI-1001' }, 409);
         const displayDetails = Object.freeze({
             score,
-            feedback: question.type === 'essay' ? detail : '',
+            feedback: detail,
             correctAnswerText,
             userAnswerText
         });
@@ -12499,7 +12487,7 @@ window.selectLiteracyMultipleChoice = function(index) {
     });
 };
 
-window.submitLiteracyShortAnswer = function() {
+window.submitLiteracyShortAnswer = async function() {
     if (userLiteracyAnswerChecked) return;
     const input = document.getElementById('literacy-short-input').value.trim();
     if (!input) {
@@ -12507,13 +12495,26 @@ window.submitLiteracyShortAnswer = function() {
         return;
     }
     userLiteracyAnswerChecked = true;
-    const cleanAnswer = String(activeLiteracyQuestion.answer).replace(/\s+/g, '').toLowerCase();
-    const cleanUser = input.replace(/\s+/g, '').toLowerCase();
-    const isCorrect = cleanAnswer === cleanUser || cleanUser.includes(cleanAnswer) || cleanAnswer.includes(cleanUser);
-    showLiteracyResult(isCorrect, {
-        correctAnswerText: activeLiteracyQuestion.answer,
-        userAnswerText: input
-    });
+    const question = activeLiteracyQuestion;
+    const uid = currentUserId;
+    showActivityLoading();
+    try {
+        const evaluation = await gradeLiteracyEssayQuestion(question, input);
+        if (activeLiteracyQuestion !== question || currentUserId !== uid) return;
+        hideActivityLoading();
+        await showLiteracyResult(evaluation.isCorrect, {
+            score: evaluation.score,
+            feedback: evaluation.feedback,
+            correctAnswerText: question.answer,
+            userAnswerText: input
+        });
+    } catch (e) {
+        if (activeLiteracyQuestion !== question || currentUserId !== uid) return;
+        userLiteracyAnswerChecked = false;
+        hideActivityLoading();
+        console.error(e);
+        showModal(aiErrorMessage(e));
+    }
 };
 
 window.submitLiteracyEssayAnswer = async function() {
@@ -12526,7 +12527,10 @@ window.submitLiteracyEssayAnswer = async function() {
     userLiteracyAnswerChecked = true;
     showActivityLoading();
     try {
-        const evaluation = await gradeLiteracyEssayQuestion(activeLiteracyQuestion, input);
+        const question = activeLiteracyQuestion;
+        const uid = currentUserId;
+        const evaluation = await gradeLiteracyEssayQuestion(question, input);
+        if (activeLiteracyQuestion !== question || currentUserId !== uid) return;
         const score = evaluation.score;
         const feedback = evaluation.feedback;
         hideActivityLoading();
@@ -12534,7 +12538,7 @@ window.submitLiteracyEssayAnswer = async function() {
         await showLiteracyResult(isCorrect, {
             score: score,
             feedback: feedback,
-            correctAnswerText: activeLiteracyQuestion.sampleAnswer,
+            correctAnswerText: question.sampleAnswer,
             userAnswerText: input
         });
     } catch (e) {

@@ -431,7 +431,7 @@ assert(limitBreakFlow.includes('setupLiteracyWorkspace(randomQuestion, true)'), 
 const essaySubmit = section(app, 'window.submitLiteracyEssayAnswer', 'function cloneLiteracyValue');
 const essayGrader = section(app, 'async function gradeLiteracyEssayQuestion', 'window.aiedueLiteracyAdventureData');
 assert(essaySubmit.indexOf('userLiteracyAnswerChecked = true;') < essaySubmit.indexOf('gradeLiteracyEssayQuestion'), '서술형 AI 채점 요청 전에 중복 제출 잠금이 설정되지 않습니다.');
-assert(essayGrader.includes('callKoreanAiGenerate') && essayGrader.includes('학생에게 제공된 핵심어') && essayGrader.includes('답이 짧다는 이유만으로 감점하지 마세요'), '공용 서술형 채점이 AI 호출, 공개 핵심어 및 easy/normal 한 문장 기준을 사용하지 않습니다.');
+assert(essayGrader.includes("profile: 'korean-literacy-grade'") && essayGrader.includes('normalizeLiteracyKeywords(question)') && essayGrader.includes('difficulty:') && essayGrader.includes('detective: Boolean(detective)') && essayGrader.includes("Number.isFinite(parsed.score)"), '공용 문해력 채점이 전용 AI 프로필, 핵심어·난이도·탐정단 계약 또는 점수 검증을 사용하지 않습니다.');
 assert(essaySubmit.includes('await showLiteracyResult') && essaySubmit.includes('userLiteracyAnswerChecked = false;'), '서술형 결과 저장 대기 또는 채점 실패 시 제출 잠금 해제가 없습니다.');
 assert(!literacyPrompt.includes('추리형 독해 사건') && literacyPrompt.includes('흥미롭고 유익한 읽기 지문'), '일반 문해력 생성 프롬프트가 탐정단 추리 프롬프트와 분리되지 않았습니다.');
 assert(literacyDetectivePrompt.includes('추리 결론과 핵심 근거 하나를 쉬운 한 문장') && literacyDetectivePrompt.includes('결론과 근거를 한두 문장'), '탐정단 easy/normal 서술형이 저난도 추리 결론+근거 답변으로 제한되지 않습니다.');
