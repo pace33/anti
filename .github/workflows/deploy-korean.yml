@@ -72,7 +72,7 @@ jobs:
           node --test tools/test-workshop-service.mjs
           node --test tools/test-korean-learning-navigation.mjs tools/test-korean-review-questions.mjs
           node --test tools/test-experience-gauge.mjs
-          node --test tools/test-literacy-companion.mjs
+          node --test tools/test-literacy-companion.mjs tools/test-literacy-d1-grading.mjs
           node --test tools/test-teacher-tutorial.mjs
           node --test tools/test-stage-tutorial.mjs tools/test-record-bank-tabs.mjs
           node --test tools/test-classroom-tools.mjs tools/test-student-diagnostic-retake.mjs
