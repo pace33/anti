@@ -34,7 +34,7 @@ function harness(persist) {
         showModal: (message) => errors.push(message), console: { error() {} },
         window: { setInterval() {}, clearInterval() {} }
     });
-    vm.runInContext(setupSource + resultSource, context);
+    vm.runInContext(section('function literacyPassingAccuracy', 'async function gradeLiteracyEssayQuestion') + setupSource + resultSource, context);
     return { context, element, errors, state: () => element('literacy-reading-companion').dataset.state };
 }
 

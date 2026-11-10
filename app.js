@@ -12058,6 +12058,14 @@ window.startTodayLiteracyMission = async function(diff, type) {
     }
 };
 
+function literacyPassingAccuracy(type) {
+    return type === 'shortAnswer' ? 90 : 80;
+}
+
+function literacyExampleAnswer(question) {
+    return String((question.type === 'essay' ? question.sampleAnswer : question.answer) || question.answer || question.sampleAnswer || question.acceptableAnswers?.[0] || '').trim();
+}
+
 async function gradeLiteracyEssayQuestion(question, studentAnswer, { detective = false } = {}) {
     const type = question.type === 'shortAnswer' ? 'shortAnswer' : 'essay';
     const prompt = JSON.stringify({
@@ -12076,7 +12084,7 @@ async function gradeLiteracyEssayQuestion(question, studentAnswer, { detective =
     if (typeof parsed.score !== 'number' || !Number.isFinite(parsed.score) || parsed.score < 0 || parsed.score > 100 || typeof parsed.feedback !== 'string' || !parsed.feedback.trim()) {
         throw createAiError({ code: 'AI-1001' }, 502);
     }
-    return { score: parsed.score, feedback: parsed.feedback, isCorrect: parsed.score >= 80 };
+    return { score: parsed.score, feedback: parsed.feedback, isCorrect: parsed.score >= literacyPassingAccuracy(type) };
 }
 
 async function pickLiteracyDetectiveLimitBreakQuestion(plan) {
@@ -12129,7 +12137,7 @@ window.aiedueLiteracyAdventureData = Object.freeze({
         let detail = '';
         let score = null;
         let userAnswerText = value;
-        let correctAnswerText = String(question.answer || question.sampleAnswer || '');
+        let correctAnswerText = literacyExampleAnswer(question);
         if (question.type === 'multipleChoice') {
             const selected = Number(answer);
             if (!Number.isInteger(selected) || selected < 0 || selected >= (question.options || []).length) throw new Error('답을 먼저 골라 주세요.');
@@ -12439,7 +12447,9 @@ function setupLiteracyWorkspace(questionData, isLimitBreak = false) {
 
     const typeLabel = document.getElementById('literacy-question-type');
     const typeNames = { multipleChoice: '객관식 (4지선다)', shortAnswer: '단답형', essay: '서술형' };
-    typeLabel.innerText = typeNames[questionData.type] || '문제';
+    typeLabel.innerText = questionData.type === 'multipleChoice'
+        ? typeNames.multipleChoice
+        : `${typeNames[questionData.type] || '문제'} · 정확도 ${literacyPassingAccuracy(questionData.type)}% 이상 정답`;
 
     document.getElementById('literacy-options-container').classList.add('hidden');
     document.getElementById('literacy-short-answer-container').classList.add('hidden');
@@ -12505,7 +12515,7 @@ window.submitLiteracyShortAnswer = async function() {
         await showLiteracyResult(evaluation.isCorrect, {
             score: evaluation.score,
             feedback: evaluation.feedback,
-            correctAnswerText: question.answer,
+            correctAnswerText: literacyExampleAnswer(question),
             userAnswerText: input
         });
     } catch (e) {
@@ -12538,7 +12548,7 @@ window.submitLiteracyEssayAnswer = async function() {
         await showLiteracyResult(isCorrect, {
             score: score,
             feedback: feedback,
-            correctAnswerText: question.sampleAnswer,
+            correctAnswerText: literacyExampleAnswer(question),
             userAnswerText: input
         });
     } catch (e) {
@@ -12897,15 +12907,19 @@ async function showLiteracyResult(isCorrect, details) {
         const explanation = document.getElementById('literacy-feedback-explanation');
         feedbackContainer.classList.remove('hidden');
         if (renderedAttempt.isCorrect) {
-            title.innerText = hasScore ? `⭕ 정답 (AI 채점: ${renderedDetails.score}점)` : '⭕ 정답입니다!';
+            title.innerText = hasScore ? `⭕ 정답 (정확도 ${renderedDetails.score}%)` : '⭕ 정답입니다!';
             title.className = 'text-2xl font-black text-green-600';
             detail.innerText = renderedDetails.feedback || `답안: ${renderedDetails.userAnswerText}`;
         } else {
-            title.innerText = hasScore ? `❌ 아쉬워요 (AI 채점: ${renderedDetails.score}점)` : '❌ 아쉬워요';
+            title.innerText = hasScore ? `❌ 아쉬워요 (정확도 ${renderedDetails.score}%)` : '❌ 아쉬워요';
             title.className = 'text-2xl font-black text-red-500';
             detail.innerText = renderedDetails.feedback
                 ? `${renderedDetails.feedback}\n\n[모범 답안]: ${renderedDetails.correctAnswerText}`
                 : `작성 답안: ${renderedDetails.userAnswerText}\n[올바른 정답]: ${renderedDetails.correctAnswerText}`;
+        }
+        if (hasScore) {
+            const threshold = literacyPassingAccuracy(renderedAttempt.question.type);
+            detail.innerText = `${renderedDetails.feedback || `작성 답안: ${renderedDetails.userAnswerText}`}\n\n정답 기준: 정확도 ${threshold}% 이상\n예시 정답: ${renderedDetails.correctAnswerText || literacyExampleAnswer(renderedAttempt.question)}`;
         }
         feedbackContainer.style.borderColor = renderedAttempt.isCorrect ? '#bbf7d0' : '#fecaca';
         feedbackContainer.style.backgroundColor = renderedAttempt.isCorrect ? '#f0fdf4' : '#fef2f2';

@@ -259,7 +259,16 @@ async function submit() {
             : result.isCorrect
             ? '지문 속 여러 정보를 연결해 타당한 결론을 찾았어요.'
             : '인물의 행동, 시간, 장소, 원인 사이에 모순이 없는지 다시 살펴보세요.';
-        feedback.append(headline, detail, evidence);
+        feedback.append(headline, detail);
+        if (result.score !== null && result.score !== undefined && Number.isFinite(Number(result.score))) {
+            const accuracy = document.createElement('span');
+            const threshold = state.round?.type === 'shortAnswer' ? 90 : 80;
+            accuracy.textContent = `정확도 ${result.score}% · ${threshold}% 이상 정답`;
+            const example = document.createElement('span');
+            example.textContent = `예시 정답: ${result.correctAnswer || ''}`;
+            feedback.append(accuracy, example);
+        }
+        feedback.append(evidence);
         $('literacy-adventure-submit').classList.add('hidden');
         $('literacy-adventure-restart').classList.remove('hidden');
         setWorkspaceDisabled(true);
