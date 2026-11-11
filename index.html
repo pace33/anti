@@ -17,7 +17,7 @@
     <!-- Tailwind: defer로 렌더 블로킹 없이 비동기 로드 -->
     <script src="https://cdn.tailwindcss.com" defer></script>
     <link rel="stylesheet" href="style.css?v=20260826-listen-guide-only-v77">
-    <link rel="stylesheet" href="app.css?v=20261021-teacher-progress-v1">
+    <link rel="stylesheet" href="app.css?v=stage3-photo-privacy-v1">
     <link rel="stylesheet" href="korean-notices.css?v=public-notices-v1">
     <link rel="stylesheet" href="shape-zoo.css?v=20260921-stage-card-v1">
     <link rel="stylesheet" href="word-card-table.css?v=20260913-game-layout-fix-v3">
@@ -808,16 +808,20 @@
 
                     <div id="dictation-photo-card" class="korean-embed-card p-6">
                         <div id="dictation-photo-panel-title" class="font-black text-[#2c3e50] mb-4">공책/단어 은행 사진</div>
+                        <div id="dictation-photo-privacy-notice" class="photo-privacy-notice" role="note">
+                            <strong>얼굴이 나오지 않게 노트만 찍어 주세요.</strong>
+                            <span>이름·연락처·주소 등 개인정보나 건강·장애 등 민감정보는 사진에 담지 마세요. 사진 파일을 고를 때도 확인해 주세요.</span>
+                        </div>
                         <div id="dictation-camera-panel" class="hidden">
                             <video id="dictation-camera-video" class="w-full h-[560px] max-h-[70vh] object-cover bg-gray-900 rounded-2xl border" playsinline autoplay muted></video>
                             <canvas id="dictation-camera-canvas" class="hidden"></canvas>
                             <div class="grid grid-cols-2 gap-2 mt-3">
-                                <button type="button" id="dictation-camera-capture-btn" class="btn-primary bg-red-500 shadow-red-200 py-2 text-sm" onclick="captureDictationCameraPhoto()">카메라로 촬영</button>
+                                <button type="button" id="dictation-camera-capture-btn" class="btn-primary bg-red-500 shadow-red-200 py-2 text-sm" onclick="captureDictationCameraPhoto()" aria-describedby="dictation-photo-privacy-notice">카메라로 촬영</button>
                                 <button type="button" class="btn-outline py-2 text-sm" onclick="startDictationCamera()">카메라 다시 켜기</button>
                             </div>
                         </div>
                         <div class="text-xs text-gray-400 font-bold mt-4 mb-2">웹 카메라가 안 될 때만 사진 파일을 선택하세요.</div>
-                        <input id="dictation-photo-input" type="file" accept="image/*" class="premium-input bg-white text-sm" aria-label="교과 맞춤쓰기 사진 파일 선택">
+                        <input id="dictation-photo-input" type="file" accept="image/*" class="premium-input bg-white text-sm" aria-label="교과 맞춤쓰기 사진 파일 선택" aria-describedby="dictation-photo-privacy-notice">
                         <img id="dictation-photo-preview" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="사진 미리보기" class="hidden w-full h-48 object-contain bg-gray-50 rounded-2xl border mt-4">
                         <textarea id="dictation-ocr-text" class="premium-input bg-white text-sm mt-4 min-h-[120px]" placeholder="AI 사진 분석 결과가 여기에 들어와요. 단어 은행 촬영에서만 OCR 보조 결과를 함께 보여줘요."></textarea>
                         <div id="dictation-ai-word-preview" class="hidden mt-3 p-3 rounded-2xl bg-red-50 text-sm font-bold text-red-500"></div>
@@ -1639,6 +1643,10 @@
                     <div class="aiedu-badge bg-red-500 mb-2">오늘의 노트 사진</div>
                     <h3 id="word-bank-camera-title">단어 은행 사진 찍기</h3>
                     <p>화면 가운데에서 사진을 바로 찍고, AI가 단어만 깔끔하게 골라 저장해요.</p>
+                    <div id="word-bank-photo-privacy-notice" class="photo-privacy-notice" role="note">
+                        <strong>얼굴이 나오지 않게 노트만 찍어 주세요.</strong>
+                        <span>이름·연락처·주소 등 개인정보나 건강·장애 등 민감정보는 사진에 담지 마세요. 사진 파일을 고를 때도 확인해 주세요.</span>
+                    </div>
                 </div>
                 <button type="button" class="word-bank-camera-close" onclick="closeWordBankCameraModal()" aria-label="오늘의 노트 사진 팝업 닫기">×</button>
             </div>
@@ -1647,7 +1655,7 @@
                     <video id="word-bank-camera-video" playsinline autoplay muted></video>
                     <canvas id="word-bank-camera-canvas" class="hidden"></canvas>
                     <img id="word-bank-camera-preview" class="hidden" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="촬영한 오늘의 노트 사진 미리보기">
-                    <button type="button" id="word-bank-camera-capture-btn" class="word-bank-camera-capture" onclick="captureWordBankCameraPhoto()" aria-label="사진 촬영하기">
+                    <button type="button" id="word-bank-camera-capture-btn" class="word-bank-camera-capture" onclick="captureWordBankCameraPhoto()" aria-label="사진 촬영하기" aria-describedby="word-bank-photo-privacy-notice">
                         <span aria-hidden="true">📷</span>
                     </button>
                 </div>
@@ -1659,7 +1667,7 @@
                             <span aria-hidden="true">🖼️</span>
                             사진 파일 선택
                         </label>
-                        <input id="word-bank-photo-input" type="file" accept="image/*" class="word-bank-file-input" aria-label="오늘의 노트 사진 파일 선택">
+                        <input id="word-bank-photo-input" type="file" accept="image/*" class="word-bank-file-input" aria-label="오늘의 노트 사진 파일 선택" aria-describedby="word-bank-photo-privacy-notice">
                     </div>
                     <div id="word-bank-camera-result" class="word-bank-camera-result hidden"></div>
                     <button type="button" id="word-bank-camera-modal-resume-btn" class="hidden btn-primary w-full mt-4" onclick="closeWordBankCameraModal()">저장된 단어로 2스텝 다시 열기</button>
