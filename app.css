@@ -8265,6 +8265,21 @@ body {
 
 
 /* 오늘의 노트 사진 단어 은행 팝업 */
+.photo-privacy-notice {
+    margin: 12px 0 16px;
+    padding: 12px 14px;
+    border: 1px solid #fed7aa;
+    border-radius: 14px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+}
+.photo-privacy-notice strong,
+.photo-privacy-notice span { display: block; }
+.photo-privacy-notice strong { margin-bottom: 3px; font-weight: 900; }
 body.modal-open { overflow: hidden; }
 .word-bank-camera-modal {
     position: fixed !important;
