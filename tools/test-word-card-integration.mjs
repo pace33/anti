@@ -64,7 +64,8 @@ test('단어 설명은 지원되는 생성 라우트에 실제 prompt를 보내�
     const request = section(app, 'async function requestSharedWordExplanation', 'async function loadWordCardCharacterReference');
     assert.ok(request.includes("fetch('/korean-ai/generate'"));
     assert.ok(request.includes('prompt,'));
-    assert.ok(request.includes('model: AIEDUE_KOREAN_FAST_TEXT_MODEL'));
+    assert.ok(request.includes("model: 'desktop-gemma'"));
+    assert.ok(request.includes("processingMode: 'local-only'"));
         assert.ok(request.includes("profile: 'korean-word-explanation'"));
         assert.ok(request.includes('data?.structuredOutput?.explanation'));
         assert.ok(request.includes('|| data?.text'));
@@ -136,7 +137,8 @@ test('카드 상태 전이는 완전 교체하며 문서 ID와 이전 상태 필
 
 test('공개 저장소는 비공개 카드를 조회하지 않고 문서 ID를 인라인 HTML에 삽입하지 않는다', () => {
     const repository = section(app, 'window.openSharedWordCardRepository', 'window.closeSharedWordCardModal');
-    assert.ok(repository.includes("where('isPublic', '==', true)"));
+    assert.ok(repository.includes("wordCardAccountApi('/word-cards', { signal })"));
+    assert.ok(repository.includes('buildWordCardRepository(data)'));
     assert.ok(repository.includes("tile.addEventListener('click', () => openSharedWordCardDetail(card.id))"));
     assert.equal(repository.includes("onclick=\"openSharedWordCardDetail('${card.id}')\""), false);
     assert.equal(repository.includes('data-word-card-image="${card.id}"'), false);
