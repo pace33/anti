@@ -9266,9 +9266,12 @@ function getCurricularMissionGradeResult(item = {}, index = 0) {
 }
 function renderCurricularWritingCanvasCard(item, index, { compact = false } = {}) {
     const isMission = activeDictationSession?.kind === 'mission' && activeDictationSession?.mode === 'curricular';
+    const preview = isMission && typeof isGemmaHandwritingPreview === 'function' && isGemmaHandwritingPreview();
     const guide = getCurricularCanvasGuide(item);
     const active = index === Number(activeDictationSession?.currentIndex || 0);
-    const status = isMission
+    const status = preview
+        ? (item.aiGrading ? '젬마 시험 판독 중...' : (item.aiPreviewResult ? `젬마 시험 판독: ${escapeHtml(item.aiPreviewResult.written || '(읽은 글자 없음)')} · 점수·진도·학습 기록에는 반영하지 않아요.` : '젬마 시험 모드 · 점수·진도·학습 기록에는 반영하지 않아요.'))
+        : isMission
         ? (item.aiGrading ? 'AI 채점 중...' : (item.retryMode ? '다시 적어서 확인 버튼을 눌러요' : (item.aiGraded ? (getCurricularItemScore(item.aiResult || item) > 0 ? `✅ ${formatCurricularScore(getCurricularItemScore(item.aiResult || item))}점` : '🟡 오답') : '아직 채점 전')))
         : (item.traceComplete ? '✅ 완료' : (item.coverage ? `${Math.round(item.coverage * 100)}% 채움` : '아직 연습 전'));
     const retryAnswer = isMission && item.retryMode ? String(item.answer || item.sentence || item.word || '').trim() : '';
@@ -9276,7 +9279,7 @@ function renderCurricularWritingCanvasCard(item, index, { compact = false } = {}
     const cardTitle = activeDictationSession?.kind === 'trace'
         ? '단어 따라쓰기'
         : `${Number(item.difficulty || activeDictationSession?.difficulty || 1)}단 받아쓰기`;
-    const confirmText = isMission ? (item.aiGrading ? '채점중' : '확인') : '확인';
+    const confirmText = preview ? (item.aiGrading ? '시험 판독 중' : '젬마 시험 판독') : (isMission ? (item.aiGrading ? '채점중' : '확인') : '확인');
     return `<div class="rounded-3xl bg-white border-2 ${item.retryMode ? 'border-orange-300 bg-orange-50/70 shadow-lg shadow-orange-100' : (item.aiGraded || item.traceComplete ? 'border-green-200 bg-green-50/60' : (active ? 'border-red-300 shadow-lg shadow-red-100' : 'border-red-100'))} p-5" data-curricular-card="${index}">
         <div class="flex items-start justify-between gap-3 mb-3">
             <div>
@@ -9683,10 +9686,20 @@ written은 초성,중성,종성 토큰을 |로 연결합니다. 받침 없음=_;
 correct는 전사 확신이며 실제 정오 판정은 프로그램이 합니다. JSON만: {"written":"ㄴ,ㅏ,_|ㅁ,ㅜ,_","correct":true,"confidence":0.99,"analysis":"혼동 모음과 짧은 획수만 간결히(40자 이내)"}`;
 }
 
+function isGemmaHandwritingPreview() {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('handwriting') === 'gemma';
+}
+
+function buildGemmaHandwritingPreviewPrompt() {
+    return '이미지에 적힌 글자를 보이는 그대로 읽으세요. 단어를 추측하거나 맞춤법을 고치지 마세요. 추가된 자모도 생략하지 마세요. 자모로 분해하지 말고 일반 한글로 written에 적으세요. 빈 이미지면 written은 빈 문자열, correct는 false입니다. correct는 읽기 성공 여부이지 답안의 정오가 아닙니다. confidence는 판독 확신입니다. JSON만 출력하세요: {"written":"실제로 보이는 글자","correct":true,"confidence":0.9,"analysis":"판독 근거"}';
+}
+
 async function gradeCurricularCanvasItemWithAi(index) {
     const canvas = document.getElementById(`curricular-writing-canvas-${index}`);
     const item = activeDictationSession?.items?.[index];
     if (!canvas || !item || item.aiGrading) return;
+    const gemmaPreview = isGemmaHandwritingPreview();
     if (!hasCurricularCanvasInk(canvas)) { showModal('빈 칸에 먼저 받아쓴 뒤 확인을 눌러주세요.'); return; }
     const session = activeDictationSession;
     const ownerUid = currentUserId;
@@ -9696,16 +9709,30 @@ async function gradeCurricularCanvasItemWithAi(index) {
     gradingFeedback.close();
     const loadingToken = aieduLoading.start('에이두가 쓴 글씨를 꼼꼼히 확인하고 있어요', 'dictation');
     item.aiGrading = true;
-    if (button) { button.disabled = true; button.innerText = 'AI 채점 중'; }
-    if (status) { status.innerText = 'AI가 손글씨 이미지를 채점하고 있어요...'; status.className = 'text-red-500'; }
+    if (button) { button.disabled = true; button.innerText = gemmaPreview ? '젬마 시험 판독 중' : 'AI 채점 중'; }
+    if (status) { status.innerText = gemmaPreview ? '젬마로 글씨를 시험 판독해요. 점수·진도·학습 기록에는 반영하지 않아요.' : 'AI가 손글씨 이미지를 채점하고 있어요...'; status.className = 'text-red-500'; }
     try {
         const dataUrl = prepareCurricularHandwritingImage(canvas);
         const base64 = dataUrl.split(',')[1] || '';
         const difficulty = Number(item.difficulty || activeDictationSession?.difficulty || 1);
         const prompt = buildCurricularHandwritingTranscriptionPrompt();
-        const raw = await callKoreanAiGenerate(prompt, { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s' });
+        const requestOptions = { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s' };
+        if (gemmaPreview) Object.assign(requestOptions, { model: 'desktop-gemma', processingMode: 'local-only' });
+        const raw = await callKoreanAiGenerate(gemmaPreview ? buildGemmaHandwritingPreviewPrompt() : prompt, requestOptions);
         if (!isCurrent()) return;
         const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
+        if (gemmaPreview) {
+            const written = String(parsed.written || '').normalize('NFC').trim().slice(0, 2000);
+            // This model has not passed near-miss accuracy gates. No score,
+            // retry, completion, grade record or checkpoint may follow this branch.
+            item.aiPreviewResult = { written, analysis: String(parsed.analysis || '').slice(0, 500) };
+            if (status) {
+                status.innerText = `젬마 시험 판독: ${written || '(읽은 글자 없음)'} · 오독할 수 있어요. 점수·진도·학습 기록에는 반영하지 않아요.`;
+                status.className = 'text-slate-600';
+            }
+            await aieduLoading.finish(loadingToken, true);
+            return;
+        }
         const observedText = composeCurricularTranscription(parsed.written);
         const observed = { ...parsed, written: observedText, studentAnswer: '' };
         const isRetryAttempt = item.retryMode === true;
@@ -9755,10 +9782,10 @@ async function gradeCurricularCanvasItemWithAi(index) {
     } finally {
         aieduLoading.finish(loadingToken);
         item.aiGrading = false;
-        if (button) { button.disabled = false; button.innerText = '확인'; }
+        if (button) { button.disabled = false; button.innerText = gemmaPreview ? '젬마 시험 판독' : '확인'; }
         if (isCurrent()) {
             updateCurricularWritingActionButtons();
-            await checkpointCurricularWritingSession().catch(() => {});
+            if (!gemmaPreview) await checkpointCurricularWritingSession().catch(() => {});
         }
     }
 }
