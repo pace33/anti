@@ -23,7 +23,8 @@ test('blind transcription prompt cannot leak a target or sentence hint', () => {
   const prompt = context.buildCurricularHandwritingTranscriptionPrompt();
   assert.ok(prompt.includes('정답과 문제 문장은 제공하지 않습니다'));
   const grading = source.slice(source.indexOf('async function gradeCurricularCanvasItemWithAi('), source.indexOf('window.confirmCurricularCanvasItem'));
-  assert.ok(grading.includes('const prompt = buildCurricularHandwritingTranscriptionPrompt();'));
+  assert.ok(grading.includes('recognizeHandwritingOnDevice(new Blob([bytes]'));
+  assert.ok(!grading.includes('buildCurricularHandwritingTranscriptionPrompt();'));
   assert.ok(!grading.includes('JSON.stringify(target)'));
   assert.ok(!grading.includes('expected:'));
 });
@@ -32,6 +33,7 @@ async function runGrade(parsed, options = {}) {
   let recorded = null, calls = 0, suppliedPrompt = '';
   const events = [];
   const node = { disabled: false, innerText: '' };
+  const canvas = { _curricularStrokes: [[{x:.1,y:.1},{x:.2,y:.2}]], toDataURL: () => 'data:image/png;base64,aW5r' };
   const c = vm.createContext({
     activeDictationSession: { difficulty: 2, items: [{ answer: '학교', word: '학교', sentence: '학교에 가요', difficulty: 2, retryMode: Boolean(options.retry), aiGrading: Boolean(options.busy) }] },
     activeDictationImageAnalysis: '',
@@ -39,9 +41,11 @@ async function runGrade(parsed, options = {}) {
     aieduLoading: { start: () => { events.push('loading:start'); return 1; }, finish: async (token, success) => { events.push(success ? 'loading:100' : 'loading:release'); } },
     gradingFeedback: { close: () => {}, show: (correct, config) => events.push({ correct, ...config }) },
     aiErrorMessage: () => 'AI 생성에 실패했습니다. 오류 코드: AI-1099',
-    document: { getElementById: id => id.startsWith('curricular-writing-canvas') ? { toDataURL: () => 'data:image/png;base64,aW5r' } : node },
+    document: { getElementById: id => id.startsWith('curricular-writing-canvas') ? canvas : node },
     hasCurricularCanvasInk: () => options.ink !== false,
-    callKoreanAiGenerate: async prompt => { calls++; suppliedPrompt = prompt; if (options.fail) throw new Error('controlled failure'); if (options.changeSession) c.activeDictationSession = { items: [] }; return JSON.stringify(parsed); },
+    atob: x => Buffer.from(x, 'base64').toString('binary'), Blob,
+    recognizeHandwritingOnDevice: async (blob, config) => { calls++; suppliedPrompt = ''; if (options.fail) throw new Error('controlled failure'); if (options.changeSession) c.activeDictationSession = { items: [] }; if (options.changeInk) canvas._curricularStrokes = []; if (options.changeOwner) c.currentUserId = 'another-user'; return parsed; },
+    callKoreanAiGenerate: async () => { throw new Error('Default OCR must never call a server'); },
     parseAiJsonObject: JSON.parse, cleanKoreanSentence: String, cleanKoreanWord: String,
     recordCurricularWritingResultSyllables: async result => { recorded = result; },
     startCurricularRetryMode: () => {}, showAiedueAutoToast: () => {}, showModal: () => {},
@@ -59,7 +63,7 @@ async function runGrade(parsed, options = {}) {
 }
 
 test('grading completes 100% before the correct/retry comic without changing scores', async () => {
-  for (const [written, retry, correct, score] of [['ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', false, true, 1], ['ㅎ,ㅏ,ㄱ|ㄱ,ㅗ,_', false, false, 0], ['ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', true, true, 0.5], ['ㅎ,ㅏ,ㄱ|ㄱ,ㅗ,_', true, false, 0]]) {
+  for (const [written, retry, correct, score] of [['학교', false, true, 1], ['학고', false, false, 0], ['학교', true, true, 0.5], ['학고', true, false, 0]]) {
     const r = await runGrade({ written, correct: true, confidence: 1 }, { retry });
     assert.equal(r.recorded.score, score);
     const shown = r.events.findIndex(e => typeof e === 'object');
@@ -80,38 +84,42 @@ test('AI failure releases loading, restores confirm and never shows a wrong-answ
 });
 
 test('an obsolete grading response cannot save or show feedback in a new session', async () => {
-  const r = await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 1 }, { changeSession: true });
+  const r = await runGrade({ written: '학교', confidence: 1 }, { changeSession: true });
   assert.equal(r.recorded, null);
   assert(!r.events.some(e => typeof e === 'object'));
   assert(r.events.includes('loading:release'));
 });
 
-test('production scoring rejects a generous verdict for extra letters and low confidence', async () => {
-  for (const parsed of [
-    { written: '학교집', correct: true, confidence: 1 },
-    { written: '학교ㅋ', correct: true, confidence: 1 },
-    { written: '학교', correct: true, confidence: 0.5 },
-    { written: '학교', correct: true },
-    { written: '학교', correct: false, confidence: 1 }
-  ]) {
-    assert.equal((await runGrade(parsed)).recorded.score, 0);
+test('production scoring rejects extra letters and leaves uncertain OCR ungraded', async () => {
+  for (const written of ['학교집', '학교ㅋ', '학고', '학', '학교학교']) {
+    assert.equal((await runGrade({ written, confidence: 1 })).recorded.score, 0);
   }
-  const correct = await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 0.99 });
+  for (const parsed of [{ written: '학교', confidence: .5 }, { written: '학교' }, { written: '', confidence: 1 }, { written: '학교', confidence: 1, uncertain: true }]) {
+    const result = await runGrade(parsed);
+    assert.equal(result.recorded, null);
+    assert.ok(!result.events.some(e => typeof e === 'object'), 'uncertain OCR cannot consume retry or show wrong answer');
+  }
+  const correct = await runGrade({ written: '학교', confidence: .99 });
   assert.equal(correct.recorded.score, 1);
-  assert.ok(!correct.suppliedPrompt.includes('학교'));
-  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 0.99 }, { retry: true })).recorded.score, 0.5);
+  assert.equal(correct.suppliedPrompt, '');
+  assert.equal((await runGrade({ written: '학교', confidence: .99 }, { retry: true })).recorded.score, .5);
   assert.equal(correct.recorded.written, '학교');
-  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅗ,_', correct: true, confidence: 0.99 })).recorded.score, 0);
-  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_|ㅋ', correct: true, confidence: 0.99 })).recorded.score, 0);
-  assert.equal((await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 0.5 })).recorded.score, 0);
-  assert.equal((await runGrade({ written: '학교', correct: true, confidence: 0.99 })).recorded.score, 0);
+});
+
+test('clearing ink or changing account during OCR cannot publish a late grade', async () => {
+  for (const options of [{ changeInk: true }, { changeOwner: true }]) {
+    const r = await runGrade({ written: '학교', confidence: 1 }, options);
+    assert.equal(r.recorded, null);
+    assert.ok(!r.events.some(e => typeof e === 'object'));
+    assert.equal(r.node.disabled, false);
+  }
 });
 
 test('a second confirm during grading cannot create a duplicate AI request or save', async () => {
-  const result = await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 1 }, { busy: true });
+  const result = await runGrade({ written: '학교', confidence: 1 }, { busy: true });
   assert.equal(result.calls, 0);
   assert.equal(result.recorded, null);
-  const concurrent = await runGrade({ written: 'ㅎ,ㅏ,ㄱ|ㄱ,ㅛ,_', correct: true, confidence: 1 }, { concurrent: true });
+  const concurrent = await runGrade({ written: '학교', confidence: 1 }, { concurrent: true });
   assert.equal(concurrent.calls, 1);
   assert.equal(concurrent.recorded.score, 1);
 });
