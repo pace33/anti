@@ -1,15 +1,15 @@
 import { sortPublishedWordCards } from './word-card-utils.mjs?v=20260907-word-card-schema-hotfix-v5';
 
-export const WORD_CARD_REQUEST_NOTICE = '단어카드 신청이 완료됐어요. 이번 공부가 끝나면 선생님이 단어카드를 만들어서 단어카드 목록에 알려줄게요.';
+
 export function wordCardPublication(card) {
     return card?.publishedGenerationToken || card?.illustration?.path || '';
 }
-export function buildWordCardRepository(data = {}) {
+export function buildWordCardRepository(data = {}, currentUserId = '') {
     const requests = Array.isArray(data.requests) ? data.requests : [];
     const requested = new Map(requests.map(entry => [entry.cardId, entry]));
     const seen = data.seen || {};
     const cards = sortPublishedWordCards(data.cards || []).map(card => ({
-        ...card, requestedByMe: requested.has(card.id),
+        ...card, requestedByMe: requested.has(card.id) || Boolean(currentUserId && card.createdBy === currentUserId),
         isNew: seen[card.id] !== wordCardPublication(card)
     }));
     const mine = cards.filter(card => card.requestedByMe);

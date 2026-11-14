@@ -115,7 +115,7 @@ import {
     sortPublishedWordCards,
     validateWordCardText
 } from "./word-card-utils.mjs?v=20260907-word-card-schema-hotfix-v5";
-import { WORD_CARD_REQUEST_NOTICE, buildWordCardRepository, wordCardRequestStatus } from './word-card-requests.mjs?v=20261114-queue-v1';
+import { buildWordCardRepository, wordCardRequestStatus } from './word-card-requests.mjs?v=20261114-immediate-gemini-v1';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -10644,7 +10644,8 @@ const AIEDUE_KOREAN_FAST_TEXT_MODEL = AIEDUE_KOREAN_FAST_VISION_MODEL;
 
 function getKoreanAiProcessingMode(options = {}) {
     const urlMode = new URLSearchParams(window.location.search).get('ai');
-    return urlMode === 'local' || options.processingMode === 'local-only' ? 'local-only' : 'auto';
+    if (urlMode === 'local' || options.processingMode === 'local-only') return 'local-only';
+    return options.processingMode === 'gemini-only' ? 'gemini-only' : 'auto';
 }
 
 async function callKoreanAiGenerate(prompt, options = {}) {
@@ -10919,8 +10920,8 @@ async function requestSharedWordExplanation(word, signal) {
         body: JSON.stringify({
             word,
             prompt,
-            model: 'desktop-gemma',
-            processingMode: 'local-only',
+            model: AIEDUE_KOREAN_FAST_TEXT_MODEL,
+            processingMode: getKoreanAiProcessingMode({ processingMode: 'gemini-only' }),
             profile: 'korean-word-explanation',
             printTimeout: '60s'
         }),
@@ -10952,7 +10953,7 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
         const characterReference = await loadWordCardCharacterReference(signal);
         assertSharedWordCardRequestActive(requestId, signal);
         editSession = await createSettingsImageEditSession(characterReference, signal);
-        const imageJob = await createSettingsImageEditTurn(editSession, buildWordCardImageEditPrompt(safe.word, safe.explanation), '1:1', signal);
+        const imageJob = await createSettingsImageEditTurn(editSession, buildWordCardImageEditPrompt(safe.word, safe.explanation), '1:1', signal, { processingMode: 'gemini-only' });
         const imageInfo = await waitForStoryImageJob(imageJob, signal);
         const imageBlob = await downloadStoryImage(imageJob, imageInfo, signal);
         assertSharedWordCardRequestActive(requestId, signal);
@@ -11063,40 +11064,21 @@ window.openCurricularWordMeaning = async function openCurricularWordMeaning(inde
     const title = sharedWordCardElement('shared-word-card-title');
     const subtitle = sharedWordCardElement('shared-word-card-subtitle');
     if (title) title.textContent = word;
-    if (subtitle) subtitle.textContent = '단어의 뜻';
+    if (subtitle) subtitle.textContent = '공용 저장소를 먼저 확인하고 있어요.';
     const content = sharedWordCardElement('shared-word-card-content');
-    if (content) content.innerHTML = '<article class="word-meaning-only"><p class="word-meaning-sentence" aria-live="polite">단어의 뜻을 생각하고 있어요…</p><p class="word-card-request-notice" aria-live="polite">단어카드를 신청하고 있어요…</p></article>';
-    setSharedWordCardBusy(true, '단어의 뜻을 생각하고 있어요…', '');
-    // Persist a request immediately, independently of the text inference. Never
-    // create an image from the learner's browser or wait for the image queue.
-    const application = wordCardAccountApi('/word-card-requests', { method: 'POST', body: { word }, signal })
-        .then(() => {
-            assertSharedWordCardRequestActive(requestId, signal);
-            const note = content?.querySelector('.word-card-request-notice');
-            if (note) note.textContent = WORD_CARD_REQUEST_NOTICE;
-        }).catch(error => {
-            if (error?.name === 'AbortError' || requestId !== activeSharedWordCardRequestId) return;
-            const note = content?.querySelector('.word-card-request-notice');
-            if (note) note.textContent = '단어카드 신청을 저장하지 못했어요. 잠시 후 다시 눌러 주세요.';
-        });
+    if (content) content.innerHTML = '';
+    setSharedWordCardBusy(true);
     try {
-        const { explanation } = await requestSharedWordExplanation(word, signal);
+        const card = await ensureSharedWordCard(word, signal, requestId);
         assertSharedWordCardRequestActive(requestId, signal);
-        const sentence = content?.querySelector('.word-meaning-sentence');
-        if (sentence) sentence.textContent = explanation;
-        const listen = document.createElement('button');
-        listen.type = 'button'; listen.className = 'shared-word-card-tts'; listen.textContent = '🔊 뜻 다시 듣기';
-        listen.addEventListener('click', () => speakTextKo(explanation));
-        content?.querySelector('.word-meaning-only')?.insertBefore(listen, content.querySelector('.word-card-request-notice'));
+        await renderSharedWordCardDetail(card, requestId, signal);
+        assertSharedWordCardRequestActive(requestId, signal);
         setSharedWordCardBusy(false, null, null, true);
-        void speakTextKo(explanation);
     } catch (error) {
         if (error?.name === 'AbortError' || requestId !== activeSharedWordCardRequestId) return;
         setSharedWordCardBusy(false);
-        const sentence = content?.querySelector('.word-meaning-sentence');
-        if (sentence) sentence.textContent = aiErrorMessage(error);
+        sharedWordCardError(aiErrorMessage(error));
     }
-    await application;
 };
 
 window.openSharedWordCardDetail = async function openSharedWordCardDetail(cardId) {
@@ -11134,7 +11116,7 @@ window.openSharedWordCardRepository = async function openSharedWordCardRepositor
         const nextSignature = JSON.stringify(data);
         if (nextSignature === signature) return;
         signature = nextSignature;
-        const { mine, others, pending } = buildWordCardRepository(data);
+        const { mine, others, pending } = buildWordCardRepository(data, currentUserId);
         sharedWordCardsById.clear();
         [...mine, ...others].forEach(card => sharedWordCardsById.set(card.id, card));
         if (!content) return;
@@ -11170,7 +11152,7 @@ window.openSharedWordCardRepository = async function openSharedWordCardRepositor
             region.appendChild(grid); content.appendChild(region);
             return region;
         };
-        const myRegion = section('내가 신청한 단어 카드', mine, true);
+        const myRegion = section('내 단어 카드', mine, true);
         if (pending.length) {
             const waiting = document.createElement('div'); waiting.className = 'word-card-pending-list';
             pending.forEach(request => { const item = document.createElement('div'); item.className = 'word-card-pending';
@@ -11179,7 +11161,7 @@ window.openSharedWordCardRepository = async function openSharedWordCardRepositor
                 item.append(word, status); waiting.appendChild(item); });
             myRegion.appendChild(waiting);
         }
-        if (!mine.length && !pending.length) { const empty = document.createElement('p'); empty.className = 'word-card-request-notice'; empty.textContent = '단어의 뜻을 누르면 여기에 신청한 카드가 모여요.'; myRegion.appendChild(empty); }
+        if (!mine.length && !pending.length) { const empty = document.createElement('p'); empty.className = 'word-card-request-notice'; empty.textContent = '단어의 뜻을 누르면 설명과 그림 카드가 바로 만들어져요.'; myRegion.appendChild(empty); }
         section('모두의 단어 카드', others);
         if (!mine.length && !others.length) { const empty = document.createElement('p'); empty.className = 'word-card-request-notice'; empty.textContent = '완성된 카드는 모두 함께 볼 수 있어요. 제작이 끝나면 이 목록에 나타나요.'; content.appendChild(empty); }
     };

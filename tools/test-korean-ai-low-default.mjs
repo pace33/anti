@@ -32,8 +32,8 @@ test('word explanation accepts the finished JSON explanation, not the JSON strin
   output = '{"explanation":"학교는 함께 배우는 곳이에요."}';
   const result = await context.requestSharedWordExplanation('학교');
   assert.equal(calls.at(-1).body.profile, 'korean-word-explanation');
-  assert.equal(calls.at(-1).body.model, 'desktop-gemma');
-  assert.equal(calls.at(-1).body.processingMode, 'local-only');
+  assert.equal(calls.at(-1).body.model, low);
+  assert.equal(calls.at(-1).body.processingMode, 'gemini-only');
   assert.equal(result.explanation, '학교는 함께 배우는 곳이에요.');
 });
 test('canvas uses local blind OCR while notebook profile and reference editing stay intact', () => {
