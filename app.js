@@ -4,6 +4,7 @@
 // =========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { aiErrorCode, aiErrorMessage, createAiError } from "./ai-error-utils.mjs?v=20261022-photo-diagnostics-v1";
+import { recognizeHandwritingOnDevice } from './handwriting-ocr.mjs?v=20261114-browser-hwr-v1';
 import { buildCurricularDraft, normalizeCurricularDrafts, upsertCurricularDraft, resumeCurricularDraft } from './curricular-writing-drafts.mjs?v=partial-replay-v1';
 import {
     getAuth,
@@ -9703,24 +9704,33 @@ async function gradeCurricularCanvasItemWithAi(index) {
     if (!hasCurricularCanvasInk(canvas)) { showModal('빈 칸에 먼저 받아쓴 뒤 확인을 눌러주세요.'); return; }
     const session = activeDictationSession;
     const ownerUid = currentUserId;
+    const inkSnapshot = JSON.stringify(canvas._curricularStrokes || []);
     const isCurrent = () => activeDictationSession === session && currentUserId === ownerUid && session.items[index] === item;
+    const isInputCurrent = () => isCurrent() && JSON.stringify(canvas._curricularStrokes || []) === inkSnapshot;
     const button = document.getElementById(`curricular-confirm-btn-${index}`);
     const status = document.getElementById(`curricular-trace-status-${index}`);
     gradingFeedback.close();
     const loadingToken = aieduLoading.start('에이두가 쓴 글씨를 꼼꼼히 확인하고 있어요', 'dictation');
     item.aiGrading = true;
-    if (button) { button.disabled = true; button.innerText = gemmaPreview ? '젬마 시험 판독 중' : 'AI 채점 중'; }
-    if (status) { status.innerText = gemmaPreview ? '젬마로 글씨를 시험 판독해요. 점수·진도·학습 기록에는 반영하지 않아요.' : 'AI가 손글씨 이미지를 채점하고 있어요...'; status.className = 'text-red-500'; }
+    if (button) { button.disabled = true; button.innerText = gemmaPreview ? '젬마 시험 판독 중' : '글씨 확인 중'; }
+    if (status) { status.innerText = gemmaPreview ? '젬마로 글씨를 시험 판독해요. 점수·진도·학습 기록에는 반영하지 않아요.' : '이 기기에서 손글씨를 확인하고 있어요...'; status.className = 'text-red-500'; }
     try {
         const dataUrl = prepareCurricularHandwritingImage(canvas);
-        const base64 = dataUrl.split(',')[1] || '';
         const difficulty = Number(item.difficulty || activeDictationSession?.difficulty || 1);
-        const prompt = buildCurricularHandwritingTranscriptionPrompt();
-        const requestOptions = { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s' };
-        if (gemmaPreview) Object.assign(requestOptions, { model: 'desktop-gemma', processingMode: 'local-only' });
-        const raw = await callKoreanAiGenerate(gemmaPreview ? buildGemmaHandwritingPreviewPrompt() : prompt, requestOptions);
-        if (!isCurrent()) return;
-        const parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
+        let raw, parsed;
+        if (gemmaPreview) {
+            const base64 = dataUrl.split(',')[1] || '';
+            const requestOptions = { profile: 'korean-handwriting-grade', imageBase64: base64, imageMime: 'image/png', printTimeout: '75s', model: 'desktop-gemma', processingMode: 'local-only' };
+            raw = await callKoreanAiGenerate(buildGemmaHandwritingPreviewPrompt(), requestOptions);
+            parsed = parseAiJsonObject(raw, { written: '', correct: false, analysis: '' });
+        } else {
+            const bytes = Uint8Array.from(atob(dataUrl.split(',')[1] || ''), char => char.charCodeAt(0));
+            parsed = await recognizeHandwritingOnDevice(new Blob([bytes], { type: 'image/png' }), {
+                onProgress: text => { if (isInputCurrent()) { if (status) status.innerText = text; aieduLoading.update?.(loadingToken, text); } }
+            });
+            raw = JSON.stringify({ written: parsed.written, confidence: parsed.confidence, execution: parsed.execution, provider: parsed.provider });
+        }
+        if (!isInputCurrent()) return;
         if (gemmaPreview) {
             const written = String(parsed.written || '').normalize('NFC').trim().slice(0, 2000);
             // This model has not passed near-miss accuracy gates. No score,
@@ -9733,11 +9743,16 @@ async function gradeCurricularCanvasItemWithAi(index) {
             await aieduLoading.finish(loadingToken, true);
             return;
         }
-        const observedText = composeCurricularTranscription(parsed.written);
-        const observed = { ...parsed, written: observedText, studentAnswer: '' };
+        const observedText = String(parsed.written || '').normalize('NFC');
+        // Confidence is NOT accuracy. Unreadable input is ungraded, not an incorrect answer.
+        if (parsed.uncertain || !observedText || !Number.isFinite(parsed.confidence) || parsed.confidence < 0.9) {
+            if (status) { status.innerText = '글씨를 분명하게 읽기 어려워요. 획을 또렷하게 적고 다시 확인해 주세요. 아직 채점하지 않았어요.'; status.className = 'text-slate-600'; }
+            await aieduLoading.finish(loadingToken, true);
+            return;
+        }
+        const observed = { written: observedText };
         const isRetryAttempt = item.retryMode === true;
-        const rawCorrect = parsed.correct === true && decideCurricularAiCorrect(observed, item, difficulty)
-            && Number.isFinite(parsed.confidence) && parsed.confidence >= 0.9;
+        const rawCorrect = decideCurricularAiCorrect(observed, item, difficulty);
         const result = {
             sentence: item.sentence || item.answer || item.word,
             answer: item.answer || item.sentence || item.word,
@@ -9749,7 +9764,8 @@ async function gradeCurricularCanvasItemWithAi(index) {
             retryCorrect: isRetryAttempt && rawCorrect,
             retryAttempted: isRetryAttempt,
             score: isRetryAttempt ? (rawCorrect ? 0.5 : 0) : (rawCorrect ? 1 : 0),
-            analysis: String(parsed.analysis || parsed.reason || '').trim() || 'AI가 캔버스 손글씨를 확인했어요.'
+            recognition: { execution: 'browser', provider: parsed.provider, model: parsed.model },
+            analysis: '이 기기에서 손글씨를 읽고 정답과 비교했어요.'
         };
         await recordCurricularWritingResultSyllables(result, { source: isRetryAttempt ? 'curricular-writing-retry' : 'curricular-writing-ai', persist: true });
         if (!isCurrent()) return;

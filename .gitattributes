@@ -1,0 +1,3 @@
+# Keep integrity-pinned model/runtime assets byte-identical on every platform.
+assets/korean-hwr-v1/** -text
+vendor/onnxruntime-web-1.31.1/** -text

@@ -50,6 +50,9 @@ jobs:
           node --check word-card-table-core.mjs
           node --check ai-error-utils.mjs
           node --check curricular-writing-drafts.mjs
+          node --check handwriting-ocr.mjs
+          node --check handwriting-ocr-worker.mjs
+          node --check handwriting-ocr-core.mjs
           node --check korean-notices.mjs
           node --check tools/data-server/korean-notices.mjs
           node --check tools/data-server/publish-korean-notice.mjs
@@ -82,7 +85,7 @@ jobs:
           node --test tools/test-syllable-slow-reader-core.mjs tools/test-syllable-slow-reader-game.mjs
           node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs
           node --test tools/test-literacy-local-generation.mjs
-          node --test tools/test-gemma-handwriting-preview.mjs
+          node --test tools/test-handwriting-on-device.mjs tools/test-gemma-handwriting-preview.mjs
           node --test tools/test-curricular-photo-transition.mjs tools/test-trace-syllable-reset.mjs tools/test-trace-syllable-reset-async.mjs tools/test-curricular-ai-grading-strict.mjs
           node --test tools/test-curricular-writing-drafts.mjs
           node --test tools/test-grading-feedback.mjs tools/test-teacher-progress-controls.mjs
@@ -181,6 +184,18 @@ jobs:
 
       - name: Checkout canonical preparation-site assets
         uses: actions/checkout@v4
+
+      - name: Verify browser handwriting runtime Git blobs on public origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' path; do
+            expected="$(git rev-parse "HEAD:$path")"
+            curl -fsSL --max-time 120 -H 'Cache-Control: no-cache' "https://aiedue.ddns.net/korean/$path?verify=$GITHUB_SHA" -o /tmp/handwriting-asset
+            actual="$(git hash-object /tmp/handwriting-asset)"
+            test "$actual" = "$expected"
+            echo "$path matches canonical Git blob"
+          done < <(git ls-tree -rz --name-only HEAD handwriting-ocr.mjs handwriting-ocr-worker.mjs handwriting-ocr-core.mjs assets/korean-hwr-v1/ vendor/onnxruntime-web-1.31.1/)
 
       - name: Verify preparation site Git blobs on public origin
         shell: bash

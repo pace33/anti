@@ -35,11 +35,13 @@ test('word explanation accepts the finished JSON explanation, not the JSON strin
   assert.equal(calls.at(-1).body.model, low);
   assert.equal(result.explanation, '학교는 함께 배우는 곳이에요.');
 });
-test('canvas and notebook grading use fast profiles; character-reference editing remains intact', () => {
+test('canvas uses local blind OCR while notebook profile and reference editing stay intact', () => {
   const canvas = source.slice(source.indexOf('async function gradeCurricularCanvasItemWithAi'), source.indexOf('window.confirmCurricularCanvasItem'));
   assert.ok(canvas.includes("profile: 'korean-handwriting-grade'"));
   assert.ok(!canvas.includes("model: 'aiedue-gemma-vision'"));
-  assert.ok(canvas.includes('parsed.correct === true && decideCurricularAiCorrect'));
+  assert.ok(canvas.includes('recognizeHandwritingOnDevice(new Blob([bytes]'));
+  assert.ok(canvas.includes('const rawCorrect = decideCurricularAiCorrect(observed, item, difficulty)'));
+  assert.ok(!canvas.includes('parsed.correct === true && decideCurricularAiCorrect'));
   const notebook = source.slice(source.indexOf('async function gradeDictationSessionWithAi'), source.indexOf('function applyCurricularWritingStats'));
   assert.ok(notebook.includes("profile: 'korean-dictation-grade'"));
   const cards = source.slice(source.indexOf('async function generateSharedWordCard('), source.indexOf('window.playSharedWordCardTts'));
