@@ -81,6 +81,7 @@ jobs:
           node --test tools/test-word-card-table-core.mjs tools/test-word-card-table-game.mjs tools/test-word-card-table-source.mjs
           node --test tools/test-syllable-slow-reader-core.mjs tools/test-syllable-slow-reader-game.mjs
           node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs
+          node --test tools/test-literacy-local-generation.mjs
           node --test tools/test-curricular-photo-transition.mjs tools/test-trace-syllable-reset.mjs tools/test-trace-syllable-reset-async.mjs tools/test-curricular-ai-grading-strict.mjs
           node --test tools/test-curricular-writing-drafts.mjs
           node --test tools/test-grading-feedback.mjs tools/test-teacher-progress-controls.mjs
@@ -157,6 +158,8 @@ jobs:
           grep -q 'adjustStudentKoreanWallet' /tmp/korean-app.js
           grep -q 'warningTokens' /tmp/korean-app.js
           grep -q 'AIEDUE_KOREAN_FAST_VISION_MODEL.*Flash (Low)' /tmp/korean-app.js
+          grep -q 'AIEDUE_DRAWING_GENERATION_WAIT_NOTICE' /tmp/korean-app.js
+          grep -q '이미지 생성에 약 5분 정도 걸릴 수 있어요.' /tmp/korean-index.html
           grep -q "profile: 'korean-note-photo'" /tmp/korean-app.js
           grep -q "profile: 'korean-handwriting-grade'" /tmp/korean-app.js
           grep -q 'workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1' /tmp/korean-app.js

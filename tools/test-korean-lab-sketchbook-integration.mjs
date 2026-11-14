@@ -77,6 +77,20 @@ test('1단계 스케치북은 AI 스케치북이고 전용 생성 UI가 있다',
     assert.ok(app.includes("title: 'AI 스케치북'"));
 });
 
+test('1단계 그림 생성은 시작 전·전송·대기에 약 5분과 초과 가능성을 안내하고 창의적인 표현을 허용한다', () => {
+    const generate = section(app, 'window.generateAiSketchbookImage =', 'function buildDrawingRecord');
+    const controls = section(app, 'function updateAiSketchbookControls', 'function setDrawingEvaluationState');
+    const activity = section(html, 'id="drawing-activities-section"', 'id="drawing-workspace-section"');
+    assert.ok(activity.includes('이미지 생성에 약 5분 정도 걸릴 수 있어요.'));
+    assert.ok(app.includes("const AIEDUE_DRAWING_GENERATION_WAIT_NOTICE = '이미지 생성에 약 5분 정도 걸릴 수 있어요. 상황에 따라 더 오래 걸릴 수 있어요.'"));
+    assert.ok(controls.includes('AIEDUE_DRAWING_GENERATION_WAIT_NOTICE'));
+    assert.ok(generate.includes('aieduLoading.start(`화가 에이두가 내 그림을 완성하고 있어요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}`'));
+    assert.ok(generate.includes('내 그림을 AI에 보내고 있어요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}'));
+    assert.ok(generate.includes('새 그림을 만들고 있어요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}'));
+    assert.ok(generate.includes('색감, 질감, 빛과 작은 세부 표현에는 창의성을 더해도 좋습니다.'));
+    assert.ok(generate.includes('주요 대상과 전체 구도, 이야기'));
+});
+
 test('상점 고정 앱으로 크래프트와 포랜디가 모두 노출된다', () => {
     const shop = section(app, 'function renderAiedueKoreanShopItems', 'function renderAiedueKoreanTeacherShop');
     assert.ok(shop.includes('에이두 크래프트'));
@@ -166,7 +180,7 @@ test('AI 스케치북은 캔버스 원본을 편집하고 생성 직후 내 그�
     const complete = section(app, 'window.completeTodayDrawingMission =', 'window.openFriendsDrawingGallery');
     assert.ok(generate.includes('captureDrawingBlob()'));
     assert.ok(generate.includes('createSettingsImageEditSession(sourceBlob'));
-    assert.ok(generate.includes("createSettingsImageEditTurn(session, prompt, '4:3'"));
+    assert.ok(generate.includes("createSettingsImageEditTurn(session, prompt, '1:1'"));
     assert.ok(generate.includes('waitForStoryImageJob'));
     assert.ok(generate.includes('downloadStoryImage'));
     assert.ok(generate.includes('drawAiSketchbookBlob'));

@@ -7133,6 +7133,7 @@ window.openDrawingWorkspaceRecords = function() {
 }
 
 let isDrawingEvaluating = false;
+const AIEDUE_DRAWING_GENERATION_WAIT_NOTICE = '이미지 생성에 약 5분 정도 걸릴 수 있어요. 상황에 따라 더 오래 걸릴 수 있어요.';
 
 function updateAiSketchbookControls(message = '') {
     const button = document.getElementById('drawing-ai-generate-btn');
@@ -7158,7 +7159,7 @@ function updateAiSketchbookControls(message = '') {
             ? 'AI 그림을 저장하고 친구들 그림에 추가했어요. 새로 그리면 AI 생성을 다시 할 수 있어요.'
             : (drawingAiSketchbookGenerated
                 ? 'AI 그림은 완성됐지만 아직 저장되지 않았어요. 저장 다시 시도를 눌러 주세요.'
-                : '그림을 그린 뒤 AI 생성을 눌러 주세요.'));
+                : `그림을 그린 뒤 AI 생성을 눌러 주세요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}`));
         status.textContent = text;
         status.classList.toggle('hidden', !drawingAiSketchbookActive);
     }
@@ -7343,8 +7344,8 @@ window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
     drawingAiSketchbookGenerated = false;
     drawingAiSketchbookSaved = false;
     drawingAiSketchbookPendingRecord = null;
-    updateAiSketchbookControls('내 그림을 AntiAI 대화형 세션으로 보내고 있어요…');
-    const loadingToken = aieduLoading.start('화가 에이두가 내 그림을 완성하고 있어요', 'drawing');
+    updateAiSketchbookControls(`내 그림을 AI에 보내고 있어요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}`);
+    const loadingToken = aieduLoading.start(`화가 에이두가 내 그림을 완성하고 있어요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}`, 'drawing');
     let session = null;
     let failureMessage = '';
     try {
@@ -7352,9 +7353,9 @@ window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
         if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         session = await createSettingsImageEditSession(sourceBlob, controller.signal);
         if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
-        updateAiSketchbookControls('내 그림의 구도와 색을 살려 새 그림을 만들고 있어요. 보통 몇 분 정도 걸립니다.');
-        const prompt = '이 그림은 사용자가 직접 그린 원본입니다. 원본의 주요 대상, 배치, 포즈, 선과 색의 의도를 그대로 알아볼 수 있게 유지하면서 완성도 높은 따뜻한 디지털 일러스트로 다시 그려 주세요. 원본에 없는 글자, 로고, 워터마크는 추가하지 마세요. 흰 여백은 자연스러운 배경으로 정리하되 원본의 이야기를 바꾸지 마세요.';
-        const job = await createSettingsImageEditTurn(session, prompt, '4:3', controller.signal);
+        updateAiSketchbookControls(`내 그림의 구도를 살려 새 그림을 만들고 있어요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}`);
+        const prompt = '이 그림은 사용자가 직접 그린 원본입니다. 원본의 주요 대상과 전체 구도, 이야기를 알아볼 수 있게 살리면서 완성도 높은 따뜻한 디지털 일러스트로 다시 그려 주세요. 선을 그대로 복사할 필요는 없으며 색감, 질감, 빛과 작은 세부 표현에는 창의성을 더해도 좋습니다. 주요 대상을 없애거나 다른 대상으로 바꾸지 말고, 원본에 없는 글자, 로고, 워터마크는 추가하지 마세요. 흰 여백은 원본의 이야기에 어울리는 자연스러운 배경으로 정리해 주세요.';
+        const job = await createSettingsImageEditTurn(session, prompt, '1:1', controller.signal, { processingMode: 'local-only' });
         if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         const imageInfo = await waitForStoryImageJob(job, controller.signal);
         if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
@@ -12023,14 +12024,14 @@ window.openTodayLiteracyMission = function() {
 async function createLiteracyMissionQuestion(diff, type, { detective = false } = {}) {
     const generationContext = buildLiteracyGenerationContext(diff, type, { detective });
     const promptBuilder = detective ? generateLiteracyDetectivePrompt : generateLiteracyPrompt;
-    let responseText = await callKoreanAiGenerate(promptBuilder(diff, type, generationContext), { printTimeout: '3m' });
+    let responseText = await callKoreanAiGenerate(promptBuilder(diff, type, generationContext), { model: 'desktop-gemma', processingMode: 'local-only', profile: 'korean-literacy-generate-' + type, printTimeout: '3m', requestTimeoutMs: 150000 });
     let questionData = parseAiQuestionResponse(responseText);
     if (!questionData || !questionData.passage || !questionData.question) throw new Error('AI가 문해력 문제를 올바르게 생성하지 못했습니다.');
 
     const coverage = countLiteracyBankWordCoverage(questionData, generationContext.primaryWords);
     if (generationContext.primaryWords.length >= 3 && coverage < 2) {
         const retryContext = { ...generationContext, forceDiversityRetry: true };
-        responseText = await callKoreanAiGenerate(promptBuilder(diff, type, retryContext), { printTimeout: '3m' });
+        responseText = await callKoreanAiGenerate(promptBuilder(diff, type, retryContext), { model: 'desktop-gemma', processingMode: 'local-only', profile: 'korean-literacy-generate-' + type, printTimeout: '3m', requestTimeoutMs: 150000 });
         const retryQuestionData = parseAiQuestionResponse(responseText);
         if (retryQuestionData?.passage && retryQuestionData?.question) questionData = retryQuestionData;
     }
@@ -23446,14 +23447,14 @@ async function closeSettingsImageEditSession(session) {
     }
 }
 
-async function createSettingsImageEditTurn(session, prompt, aspectRatio, signal) {
+async function createSettingsImageEditTurn(session, prompt, aspectRatio, signal, options = {}) {
     const response = await fetchStoryResource(`/korean-ai/api/image-edit-sessions/${encodeURIComponent(session.id)}/turns`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-Image-Session-Token': session.token
         },
-        body: JSON.stringify({ prompt, aspectRatio, processingMode: getKoreanAiProcessingMode() }),
+        body: JSON.stringify({ prompt, aspectRatio, processingMode: getKoreanAiProcessingMode(options) }),
         signal
     }, 120000);
     const data = await response.json().catch(() => ({}));
