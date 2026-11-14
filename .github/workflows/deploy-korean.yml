@@ -94,7 +94,7 @@ jobs:
           node --test tools/test-student-activity-log-labels.mjs tools/test-student-activity-status.mjs
           npm ci --prefix tools/aya-server
           npm test --prefix tools/aya-server
-          node --test tools/test-word-card-immediate.mjs tools/test-korean-ai-low-default.mjs tools/test-word-card-requests.mjs tools/test-word-card-utils.mjs tools/test-word-card-integration.mjs tools/test-image-job-errors.mjs tools/test-ai-error-codes.mjs
+          node --test tools/test-word-card-safety.mjs tools/test-word-card-immediate.mjs tools/test-korean-ai-low-default.mjs tools/test-word-card-requests.mjs tools/test-word-card-utils.mjs tools/test-word-card-integration.mjs tools/test-image-job-errors.mjs tools/test-ai-error-codes.mjs
 
       - name: Verify modular structure and repository hygiene
         shell: bash

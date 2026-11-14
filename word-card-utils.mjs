@@ -38,7 +38,25 @@ export function normalizeWordCardWord(value = '') {
         .slice(0, MAX_WORD_LENGTH);
 }
 
+// Deterministic text screening supplements the gateway input/output filter.
+// Not a face detector, arbitrary-name recognizer, or semantic image moderation.
+export function assertWordCardSafety(value = '') {
+    const text = String(value || '').normalize('NFKC').replace(/[\p{Cf}]/gu, '');
+    const privateInfo = /(?:01[016789][\s–-]?\d{3,4}[\s–-]?\d{4}|\d{6}\s*[-–]\s*[1-8]\d{6}|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|(?:학생\s*)?(?:이름|성명)\s*[:：]\s*[가-힣]{2,5}|\[(?:주민등록번호|전화번호|이메일|이름) 삭제\])/iu;
+    const harmful = /(?:폭탄|사제폭발물|독극물).{0,16}(?:제조|만드는|만들기|제작)\s*(?:법|방법|순서)|(?:아동|미성년자).{0,12}(?:성착취|음란물|성관계 영상)|how\s+to\s+(?:make|build)\s+(?:an?\s+)?(?:bomb|explosive)\b|음란물|포르노/iu;
+    if (privateInfo.test(text) || harmful.test(text)) {
+        throw Object.assign(new Error('AI 생성에 실패했습니다. 오류 코드: AI-1005'), { code: 'AI-1005' });
+    }
+}
+
+function isSafeWordCardText(card) {
+    try { validateWordCardText(card); return true; } catch { return false; }
+}
+
 export function validateWordCardText(value = {}) {
+    // Check complete raw values before truncation can hide a match.
+    assertWordCardSafety(value.word);
+    assertWordCardSafety(value.explanation);
     const word = normalizeWordCardWord(value.word);
     const explanation = String(value.explanation || '')
         .replace(/[<>]/g, '')
@@ -51,6 +69,7 @@ export function validateWordCardText(value = {}) {
 }
 
 export async function buildWordCardId(word, cryptoApi = globalThis.crypto) {
+    assertWordCardSafety(word);
     const normalizedWord = normalizeWordCardWord(word);
     if (!normalizedWord) throw new Error('단어 카드 ID를 만들 단어가 필요해요.');
     if (!cryptoApi?.subtle?.digest) throw new Error('이 기기에서는 안전한 단어 카드 ID를 만들 수 없어요.');
@@ -67,12 +86,16 @@ export function getWordCardResolution(card, nowMs = Date.now()) {
         && isValidWordCardId(card?.id)
         && card?.word
         && card?.explanation
-        && isValidWordCardIllustrationPath(card?.illustration?.path, card.id)) return 'reuse';
+        && isValidWordCardIllustrationPath(card?.illustration?.path, card.id)) {
+        validateWordCardText(card);
+        return 'reuse';
+    }
     if (card?.status === 'generating' && Number(card?.leaseExpiresAtMs || 0) > nowMs) return 'wait';
     return 'generate';
 }
 
 export function buildWordCardExplanationPrompt(word) {
+    assertWordCardSafety(word);
     const normalizedWord = normalizeWordCardWord(word);
     return `초등학생이 교과서 낱말의 뜻을 쉽게 이해할 수 있도록 설명하세요.\n단어: "${normalizedWord}"\n규칙:\n1. 정확한 뜻을 쉽고 구체적인 한국어 한 문장으로 씁니다.\n2. 어려운 한자어와 순환 설명을 피합니다.\n3. 60자 이내로 씁니다.\n4. 사람 이름, 학교 이름 등 개인정보를 만들지 않습니다.\n5. 반드시 JSON만 출력합니다: {"word":"${normalizedWord}","explanation":"쉬운 설명 한 문장"}`;
 }
@@ -90,6 +113,7 @@ export function sortPublishedWordCards(cards = []) {
             && isValidWordCardId(card?.id)
             && card?.word
             && card?.explanation
-            && isValidWordCardIllustrationPath(card?.illustration?.path, card.id))
+            && isValidWordCardIllustrationPath(card?.illustration?.path, card.id)
+            && isSafeWordCardText(card))
         .sort((a, b) => String(a.word).localeCompare(String(b.word), 'ko'));
 }

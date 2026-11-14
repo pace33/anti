@@ -106,6 +106,7 @@ import {
 } from "./student-onboarding-diagnostic-core.mjs?v=20260922-cumulative-unlock-v1";
 import {
     WORD_CARD_GENERATION_VERSION,
+    assertWordCardSafety,
     buildWordCardId,
     buildWordCardImageEditPrompt,
     buildWordCardIllustrationPath,
@@ -114,8 +115,8 @@ import {
     normalizeWordCardWord,
     sortPublishedWordCards,
     validateWordCardText
-} from "./word-card-utils.mjs?v=20260907-word-card-schema-hotfix-v5";
-import { buildWordCardRepository, wordCardRequestStatus } from './word-card-requests.mjs?v=20261114-immediate-gemini-v1';
+} from "./word-card-utils.mjs?v=20261114-wordcard-safety-v1";
+import { buildWordCardRepository, wordCardRequestStatus } from './word-card-requests.mjs?v=20261114-wordcard-safety-v1';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -10884,6 +10885,7 @@ async function waitForPublishedSharedWordCard(cardReference, signal, requestId, 
 }
 
 async function claimSharedWordCard(word) {
+    assertWordCardSafety(word);
     const cardId = await buildWordCardId(word);
     const cardReference = doc(db, SHARED_WORD_CARD_COLLECTION, cardId);
     const generationToken = `${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
@@ -10913,6 +10915,7 @@ async function claimSharedWordCard(word) {
 }
 
 async function requestSharedWordExplanation(word, signal) {
+    assertWordCardSafety(word);
     const prompt = `도구나 명령을 사용하지 말고 일반 지식으로 바로 답하세요. 한국어 단어 “${word}” 자체의 뜻을 쉽고 정확한 한국어 한 문장으로 설명하세요. 반드시 JSON만 출력하세요: {"explanation":"단어의 실제 뜻 한 문장"}. explanation에는 실제 정의 문장 자체만 넣으세요. 작업을 완료했다거나 뜻을 제공했다는 보고는 답이 아닙니다.`;
     const response = await fetch('/korean-ai/generate', {
         method: 'POST',
@@ -10957,6 +10960,7 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
         const imageInfo = await waitForStoryImageJob(imageJob, signal);
         const imageBlob = await downloadStoryImage(imageJob, imageInfo, signal);
         assertSharedWordCardRequestActive(requestId, signal);
+        validateWordCardText(safe);
         const extension = imageBlob.type === 'image/jpeg' ? 'jpg' : (imageBlob.type === 'image/png' ? 'png' : 'webp');
         uploadedImagePath = buildWordCardIllustrationPath(cardId, generationToken, extension);
         await uploadBytes(storageRef(storage, uploadedImagePath), imageBlob, { contentType: imageBlob.type });
@@ -11029,6 +11033,7 @@ async function generateSharedWordCard(word, cardReference, cardId, generationTok
 }
 
 async function ensureSharedWordCard(word, signal, requestId) {
+    assertWordCardSafety(word);
     const normalizedWord = normalizeWordCardWord(word);
     assertSharedWordCardRequestActive(requestId, signal);
     const claim = await claimSharedWordCard(normalizedWord);
@@ -11055,7 +11060,7 @@ async function wordCardAccountApi(route, { method = 'GET', body, signal } = {}) 
 
 window.openCurricularWordMeaning = async function openCurricularWordMeaning(index) {
     const item = activeDictationSession?.kind === 'trace' ? activeDictationSession.items?.[index] : null;
-    const word = normalizeWordCardWord(item?.word || item?.answer || '');
+    const word = String(item?.word || item?.answer || '').trim();
     if (!word) return;
     activeSharedWordCardContext = 'dictation';
     const { requestId, signal } = beginSharedWordCardRequest();
@@ -11094,7 +11099,10 @@ window.openSharedWordCardDetail = async function openSharedWordCardDetail(cardId
 
 window.playSharedWordCardTts = function playSharedWordCardTts(cardId) {
     const card = sharedWordCardsById.get(cardId);
-    if (card?.explanation) speakTextKo(card.explanation);
+    if (card?.explanation) {
+        try { speakTextKo(validateWordCardText(card).explanation); }
+        catch (error) { sharedWordCardError(aiErrorMessage(error)); }
+    }
 };
 
 window.openSharedWordCardRepository = async function openSharedWordCardRepository(context = 'dictation') {

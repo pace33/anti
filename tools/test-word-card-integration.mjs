@@ -106,7 +106,7 @@ test('단어 뜻은 캐릭터·퍼센트 공통 로딩을 사용하고 TTS를 �
     assert.ok(app.includes("setSharedWordCardBusy(true, '단어를 설명하는 그림을 그리고 있어요…'"));
     assert.ok(app.includes("content.querySelector('.shared-word-card-sentence')?.addEventListener('click'"));
     assert.ok(app.includes("content.querySelector('.shared-word-card-tts')?.addEventListener('click'"));
-    assert.ok(app.includes('speakTextKo(card.explanation)'));
+    assert.ok(app.includes('speakTextKo(validateWordCardText(card).explanation)'));
     assert.ok(css.includes('.shared-word-card-modal'));
     assert.ok(css.includes('@media (max-width: 560px)'));
 });

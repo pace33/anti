@@ -1,4 +1,4 @@
-import { sortPublishedWordCards } from './word-card-utils.mjs?v=20260907-word-card-schema-hotfix-v5';
+import { sortPublishedWordCards } from './word-card-utils.mjs?v=20261114-wordcard-safety-v1';
 
 
 export function wordCardPublication(card) {

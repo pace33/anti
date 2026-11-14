@@ -10,18 +10,26 @@
 - 계정 인증은 Firebase, 카드·그림 저장은 에이두 자체 데이터 서버를 사용합니다.
 - 현재 저장 계약은 `schemaVersion: 1`, `generationVersion: 1`입니다. 오류 해결을 위해 프런트 버전만 올리지 않습니다.
 
+## 중간 자동 검수·필터링
+
+- 게이트웨이 서버의 `antiai-routing.js`는 AI 요청 텍스트와 생성된 텍스트/JSON 응답에 개인정보 마스킹과 일부 고위험 유해 패턴 차단을 적용합니다. 요청 차단은 다른 모델로 우회하지 않습니다.
+- 카드 흐름은 별도로 `assertWordCardSafety`를 호출합니다. 단어 원문은 정규화·길이 절단 및 공용 생성 문서 저장 전에 검사하고, 설명은 그림 생성 전에 검사합니다. 게시 직전과 기존 카드 재사용·저장소 목록·읽어주기에도 재검사합니다.
+- 전화번호, 주민등록번호, 이메일, `이름:`·`성명:` 형태의 이름 및 필터 마스킹 표식이 카드에 남으면 해당 카드 처리를 중단합니다. 일부 폭발물·독극물 제조 지시, 아동 성착취 및 명시적인 음란물 패턴도 차단합니다. 오류는 원문을 넣지 않는 `AI-1005`로 표시합니다.
+- 사람의 수동 승인 대기열이 아니라 즉시 생성 경로 안의 규칙 기반 자동 검사입니다. 모든 이름·주소·우회 표현을 인식하거나 이미지 픽셀의 유해성·얼굴·개인정보를 자동 판정하는 기능은 아닙니다. 이미지 형식/크기 검증은 이미지 내용 검수와 구분합니다.
+- 브라우저 카드 검사는 정상 앱 흐름의 보강이며 서버의 일반 텍스트 필터와 별개입니다. 브라우저를 우회한 모든 데이터 API 쓰기까지 이 검사로 강제한다고 설명하지 않습니다.
+
 ## 오류 객체 표시
 
 이미지 API는 `error: { message: ... }` 형태를 반환할 수 있습니다. `story-library-utils.mjs`의 `imageJobErrorMessage()`가 중첩 오류 메시지와 기존 문자열 오류를 함께 처리합니다. 오류 객체 자체를 화면에 표시하지 않고, 메시지가 없으면 한국어 기본 안내를 사용합니다. 세션 생성, 작업 생성·조회·다운로드, 단어 설명에서 같은 처리 함수를 사용합니다.
 
 ## 이미지 실행 검증
 
-서버는 이미지 전용 주 에이전트로 `view_file` 및 `generate_image`만 실행하며 자동 서브에이전트 위임을 금지합니다. 샌드박스와 공식 원본 경로, 생성 횟수, 대화, 결과 파일의 검증은 그대로 유지합니다. 서버 정본과 배포 절차는 에이두 저장소 `docs/antigravity-api.md`에서 관리합니다.
+서버는 이미지 전용 주 에이전트로 `read_file` 및 `generate_image`만 등록하여 실행하며 자동 서브에이전트 위임을 금지합니다. 과거 `view_file` 별칭 기록의 검증과 실행 도구 등록은 구분합니다. 샌드박스와 공식 원본 경로, 생성 횟수, 대화, 결과 파일의 검증은 그대로 유지합니다. 서버 정본과 배포 절차는 에이두 저장소 `docs/antigravity-api.md`에서 관리합니다.
 
 ## 회귀 확인
 
 ```bash
-node --test tools/test-image-job-errors.mjs tools/test-word-card-utils.mjs tools/test-word-card-integration.mjs tools/test-korean-ai-low-default.mjs tools/test-story-library-utils.mjs
+node --test tools/test-word-card-safety.mjs tools/test-image-job-errors.mjs tools/test-word-card-utils.mjs tools/test-word-card-integration.mjs tools/test-korean-ai-low-default.mjs tools/test-story-library-utils.mjs
 node tools/validate-site.mjs
 ```
 
