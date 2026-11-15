@@ -10684,7 +10684,8 @@ async function analyzeDictationImageWithAi(dataUrl, options = {}) {
     const [header, base64] = dataUrl.split(',');
     const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
     const prompt = '이 이미지는 오늘의 노트 학습 사진입니다. 이미지에 실제로 보이는 한국어 문구, 낱말, 사물 이름, 학습 주제어만 추출하세요. 이름이나 개인정보는 제외하고, 보이지 않는 글자는 정답이나 맥락으로 추측하지 마세요. 그림은 생성하지 마세요. 반드시 JSON만 출력하세요: {"words":["단어 또는 짧은 문구"]}';
-    const requestOptions = { profile: 'korean-note-photo', imageBase64: base64, imageMime: mime, printTimeout: '75s', requestTimeoutMs: 120000 };
+    // AntiAI auto: at most 1s locally, then Antigravity; no client-side duplicate request.
+    const requestOptions = { profile: 'korean-note-photo', processingMode: 'auto', imageBase64: base64, imageMime: mime, printTimeout: '75s', requestTimeoutMs: 120000 };
     if (options.useLegacyImageModel) requestOptions.model = '';
     const text = await callKoreanAiGenerate(prompt, requestOptions);
     const parsed = parseAiJsonObject(text, { words: [] });
@@ -10727,6 +10728,7 @@ ${candidateText}
 반드시 JSON만 출력: {"words":["명사"]}`;
     const raw = await callKoreanAiGenerate(prompt, {
         profile: 'korean-word-extract',
+        processingMode: 'auto',
         printTimeout: '60s',
         requestTimeoutMs: 120000,
         model: options.useLegacyTextModel ? '' : AIEDUE_KOREAN_FAST_TEXT_MODEL
@@ -12116,14 +12118,15 @@ window.openTodayLiteracyMission = function() {
 async function createLiteracyMissionQuestion(diff, type, { detective = false } = {}) {
     const generationContext = buildLiteracyGenerationContext(diff, type, { detective });
     const promptBuilder = detective ? generateLiteracyDetectivePrompt : generateLiteracyPrompt;
-    let responseText = await callKoreanAiGenerate(promptBuilder(diff, type, generationContext), { model: 'desktop-gemma', processingMode: 'local-only', profile: 'korean-literacy-generate-' + type, printTimeout: '3m', requestTimeoutMs: 150000 });
+    // Auto keeps AntiAI's server-owned 1s local budget and Antigravity fallback on both attempts.
+    let responseText = await callKoreanAiGenerate(promptBuilder(diff, type, generationContext), { model: AIEDUE_KOREAN_FAST_TEXT_MODEL, processingMode: 'auto', profile: 'korean-literacy-generate-' + type, printTimeout: '3m', requestTimeoutMs: 150000 });
     let questionData = parseAiQuestionResponse(responseText);
     if (!questionData || !questionData.passage || !questionData.question) throw new Error('AI가 문해력 문제를 올바르게 생성하지 못했습니다.');
 
     const coverage = countLiteracyBankWordCoverage(questionData, generationContext.primaryWords);
     if (generationContext.primaryWords.length >= 3 && coverage < 2) {
         const retryContext = { ...generationContext, forceDiversityRetry: true };
-        responseText = await callKoreanAiGenerate(promptBuilder(diff, type, retryContext), { model: 'desktop-gemma', processingMode: 'local-only', profile: 'korean-literacy-generate-' + type, printTimeout: '3m', requestTimeoutMs: 150000 });
+        responseText = await callKoreanAiGenerate(promptBuilder(diff, type, retryContext), { model: AIEDUE_KOREAN_FAST_TEXT_MODEL, processingMode: 'auto', profile: 'korean-literacy-generate-' + type, printTimeout: '3m', requestTimeoutMs: 150000 });
         const retryQuestionData = parseAiQuestionResponse(responseText);
         if (retryQuestionData?.passage && retryQuestionData?.question) questionData = retryQuestionData;
     }

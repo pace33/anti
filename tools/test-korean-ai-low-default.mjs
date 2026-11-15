@@ -29,6 +29,19 @@ test('word extraction uses Low with a dedicated fixed schema', async () => {
   assert.equal(calls.at(-1).body.model, low);
   assert.equal(result.words.join(','), '학교,나무');
 });
+test('photo and final word extraction preserve auto fallback in ordinary and legacy curricular paths', async () => {
+  for (const legacy of [false, true]) {
+    await context.analyzeDictationImageWithAi('data:image/png;base64,aW1hZ2U=', {useLegacyImageModel: legacy});
+    assert.equal(calls.at(-1).url, '/korean-ai/generate');
+    assert.equal(calls.at(-1).body.processingMode, 'auto');
+    assert.equal(calls.at(-1).body.model, legacy ? '' : low);
+    assert.equal(calls.at(-1).body.imageBase64, 'aW1hZ2U=');
+    assert.equal(calls.at(-1).body.imageMime, 'image/png');
+    await context.extractDictationWordsWithAi('학교 나무', {useLegacyTextModel: legacy});
+    assert.equal(calls.at(-1).body.processingMode, 'auto');
+    assert.equal(calls.at(-1).body.model, legacy ? '' : low);
+  }
+});
 test('word explanation accepts the finished JSON explanation, not the JSON string', async () => {
   output = '{"explanation":"학교는 함께 배우는 곳이에요."}';
   const result = await context.requestSharedWordExplanation('학교');
