@@ -21,13 +21,33 @@ test('today-note photo sends structured fast profile and converts words for exis
   const result = await context.analyzeDictationImageWithAi('data:image/png;base64,aW1hZ2U=');
   assert.equal(calls.at(-1).body.profile, 'korean-note-photo');
   assert.equal(calls.at(-1).body.model, low);
+  assert.equal(calls.at(-1).body.processingMode, 'gemini-only');
+  assert.equal(calls.at(-1).body.imageBase64, 'aW1hZ2U=');
   assert.equal(result, '학교\n나무');
 });
 test('word extraction uses Low with a dedicated fixed schema', async () => {
   const result = await context.extractDictationWordsWithAi('학교 나무');
   assert.equal(calls.at(-1).body.profile, 'korean-word-extract');
   assert.equal(calls.at(-1).body.model, low);
+  assert.equal(calls.at(-1).body.processingMode, 'gemini-only');
   assert.equal(result.words.join(','), '학교,나무');
+});
+test('curricular legacy photo and word selection also bypass local inference', async () => {
+  await context.analyzeDictationImageWithAi('data:image/png;base64,aW1hZ2U=', { useLegacyImageModel: true });
+  assert.equal(calls.at(-1).body.model, '');
+  assert.equal(calls.at(-1).body.processingMode, 'gemini-only');
+  await context.extractDictationWordsWithAi('학교 나무', { useLegacyTextModel: true });
+  assert.equal(calls.at(-1).body.model, '');
+  assert.equal(calls.at(-1).body.processingMode, 'gemini-only');
+});
+test('explicit local-only URL remains a diagnostic opt-in for photo/extraction', async () => {
+  context.window.location.search = '?ai=local';
+  try {
+    await context.analyzeDictationImageWithAi('data:image/png;base64,aW1hZ2U=');
+    assert.equal(calls.at(-1).body.processingMode, 'local-only');
+    await context.extractDictationWordsWithAi('학교 나무');
+    assert.equal(calls.at(-1).body.processingMode, 'local-only');
+  } finally { context.window.location.search = ''; }
 });
 test('word explanation accepts the finished JSON explanation, not the JSON string', async () => {
   output = '{"explanation":"학교는 함께 배우는 곳이에요."}';

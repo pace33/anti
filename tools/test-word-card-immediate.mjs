@@ -49,5 +49,6 @@ test('Gemini 직행은 명시적 옵션이며 local-only URL과 다른 로컬 �
     context.window.location.search = '?ai=local';
     assert.equal(context.getKoreanAiProcessingMode({ processingMode: 'gemini-only' }), 'local-only');
     assert.match(app, /createSettingsImageEditTurn\(session, prompt, '1:1', controller.signal, \{ processingMode: 'local-only' \}\)/);
-    assert.match(app, /model: 'desktop-gemma', processingMode: 'local-only', profile: 'korean-literacy-generate-'/);
+    const grading = section('async function gradeLiteracyEssayQuestion', 'window.startLiteracyDetectiveChallenge');
+    assert.match(grading, /profile: 'korean-literacy-grade'/);
 });
