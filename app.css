@@ -188,6 +188,7 @@ button, [onclick], .grid-item, .word-chip, .choice-chip-button, .listen-chip-but
 .rpg-action-button:active, .rpg-tool-button:active { transform: translateY(0); }
 .rpg-action-button > span:last-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rpg-action-icon { font-size: 1.35rem; }
+.rpg-school-button { color: #a44e16; border-color: #f4d8c2; background: linear-gradient(135deg, #fff9f5, #ffedde); text-decoration: none; }
 .rpg-cloud-button { flex-grow: 1.35; color: #397da4; border-color: #cfeaf5; background: linear-gradient(135deg, #f3fbff, #e7f7fd); }
 .rpg-shop-button { color: #3d8d64; border-color: #ccebd7; background: linear-gradient(135deg, #f3fcf5, #e4f7e9); }
 .rpg-settings-button { color: #6b7280; border-color: #e2e8f0; background: linear-gradient(135deg, #fff, #f7f8fa); }

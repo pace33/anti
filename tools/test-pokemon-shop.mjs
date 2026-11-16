@@ -82,10 +82,21 @@ test('Pokémon card shows a student price of 1,000원 and free teacher entry', (
     assert.doesNotMatch(teacher, /1,000원/);
 });
 
-test('both shop renderers include one Pokémon card and its handler is allowed safely', () => {
+test('student and teacher shops omit School-only games while preserving other shop content', () => {
     const context = renderContext();
-    for (const name of ['renderAiedueKoreanShopItems', 'renderAiedueKoreanTeacherShop']) {
-        assert.equal((context[name]().match(/id="school-enter-pokemon-btn"/g) || []).length, 1);
+    context.renderAieduePorandyShopCard = () => { throw new Error('Porandy must be launched from School'); };
+    context.renderAieduePokemonShopCard = () => { throw new Error('Pokemon must be launched from School'); };
+    context.renderAiedueRoblShopCard = () => '<div>unchanged-robl</div>';
+    context.renderAiedueKoreanTeacherShopManager = () => '<div>teacher-item-management</div>';
+    for (const role of ['student', 'teacher']) {
+        context.currentUserRole = role;
+        for (const name of ['renderAiedueKoreanShopItems', 'renderAiedueKoreanTeacherShop']) {
+            const html = context[name]();
+            assert.doesNotMatch(html, /에이두 (?:포랜디|포켓몬|크래프트)|openAieduePokemon|openAieduePorandy|openAiedueCraftShop|purchaseAiedueCraftAccess|enterAiedueCraftAsTeacher/);
+            assert.match(html, /unchanged-robl/);
+            if (name === 'renderAiedueKoreanTeacherShop') assert.match(html, /teacher-item-management/);
+            else assert.match(html, /아직 선생님이 배부한/);
+        }
     }
     vm.runInContext(section('const SAFE_MODAL_ACTIONS =', '\nfunction sanitizeModalHtml(').replace(/\nfunction sanitizeModalHtml\($/, ''), context);
     for (const action of ['openAieduePokemon(this)', 'window.openAieduePokemon(this)']) assert.equal(context.isSafeModalAction(action), true);

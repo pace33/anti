@@ -91,15 +91,16 @@ test('1단계 그림 생성은 시작 전·전송·대기에 약 5분과 초과 
     assert.ok(generate.includes('주요 대상과 전체 구도, 이야기'));
 });
 
-test('상점 고정 앱으로 크래프트와 포랜디가 모두 노출된다', () => {
-    const shop = section(app, 'function renderAiedueKoreanShopItems', 'function renderAiedueKoreanTeacherShop');
-    assert.ok(shop.includes('에이두 크래프트'));
-    assert.ok(shop.includes('renderAieduePorandyShopCard()'));
-    assert.ok(app.includes('에이두 포랜디'));
-    assert.ok(app.includes('https://aiedue.netlify.app/pokemon-defense/play.html'));
-    const safeActions = section(app, 'const SAFE_MODAL_ACTIONS = new Set([', ']);');
-    assert.ok(safeActions.includes("'openAieduePorandy'"));
-    assert.ok(css.includes('.aiedu-porandy-shop-card'));
+test('한글 상점에서는 게임 3종을 제거하고 하단 메뉴에서 스쿨로 이동한다', () => {
+    const shop = section(app, 'function renderAiedueKoreanShopItems', 'async function getAiedueKoreanClassStudents');
+    const teacher = section(app, 'function renderAiedueKoreanTeacherShop(items', 'async function openAiedueKoreanTeacherShop');
+    for (const renderer of [shop, teacher]) {
+        assert.doesNotMatch(renderer, /에이두 크래프트|renderAieduePorandyShopCard\(\)|renderAieduePokemonShopCard\(\)|purchaseAiedueCraftAccess\(\)|enterAiedueCraftAsTeacher\(\)/);
+        assert.ok(renderer.includes('renderAiedueRoblShopCard()'), '요청하지 않은 상점 항목은 보존');
+    }
+    const tray = section(html, 'id="rpg-action-tray"', '</nav>');
+    assert.match(tray, /<a\b[^>]*id="rpg-school-link"[^>]*href="https:\/\/aiedue\.ddns\.net\/school\/"[^>]*>[\s\S]*?<span>스쿨<\/span>[\s\S]*?<\/a>/);
+    assert.doesNotMatch(tray, /target="_blank"/);
 });
 
 test('교사 학급 관리에는 상점 물품 관리 탭과 CRUD·배부 도구가 내장된다', () => {

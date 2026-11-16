@@ -31,7 +31,7 @@ for (const { id, container, capture, input } of notices) {
 test('notice is styled without a blocking consent dialog or changes to photo processing', () => {
     assert.match(css, /\.photo-privacy-notice\s*\{/);
     assert.match(css, /\.photo-privacy-notice strong,[\s\S]*?\.photo-privacy-notice span\s*\{ display: block; \}/);
-    assert.ok(html.includes('app.css?v=stage3-photo-privacy-v1'));
+    assert.match(html, /href="app\.css\?v=[A-Za-z0-9._-]+"/);
     assert.ok(html.includes('onclick="captureWordBankCameraPhoto()"'));
     assert.ok(html.includes('onclick="captureDictationCameraPhoto()"'));
 });
