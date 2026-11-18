@@ -22298,14 +22298,14 @@ const TEST_LOGIN_ACCOUNTS = {
     student: {
         email: '9001@abc.com',
         password: '9001qwerty',
-        name: '학생 테스트',
+        name: '학생 체험',
         role: 'student',
         userCode: 9001
     },
     teacher: {
         email: 'teacher9001@abc.com',
         password: 'teacher9001qwerty',
-        name: '교사 테스트',
+        name: '교사 체험',
         role: 'teacher',
         userCode: null
     }
@@ -22461,7 +22461,7 @@ window.testLoginStudent = async function testLoginStudent() {
         updateAccountName(profile.name);
     } catch (error) {
         console.error('Test student login error:', error);
-        showModal('학생 테스트 계정을 준비하거나 로그인하는 중 오류가 발생했습니다.');
+        showModal('학생 체험 계정을 준비하거나 로그인하는 중 오류가 발생했습니다.');
     }
 }
 
@@ -22474,10 +22474,10 @@ window.testLoginTeacher = async function testLoginTeacher() {
     } catch (error) {
         console.error('Test teacher login error:', error);
         if (error.message === 'test-account-password-mismatch') {
-            showModal('교사 테스트 계정은 이미 있지만 비밀번호가 달라요. 다른 테스트 계정으로 다시 만들어야 합니다.');
+            showModal('교사 체험 계정은 이미 있지만 비밀번호가 달라요. 다른 체험 계정으로 다시 만들어야 합니다.');
             return;
         }
-        showModal('교사 테스트 계정을 준비하거나 로그인하는 중 오류가 발생했습니다.');
+        showModal('교사 체험 계정을 준비하거나 로그인하는 중 오류가 발생했습니다.');
     }
 }
 

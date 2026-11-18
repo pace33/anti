@@ -209,10 +209,10 @@ assert(appCss.includes('.settings-image-mode-tabs') && appCss.includes('.setting
 ].forEach((marker) => assert(!app.includes(marker), `app.js에 제거된 저장 함수가 남아 있습니다: ${marker}`));
 
 assert(index.includes('<small>3단계 교과 맞춤쓰기 단어를 모아요</small>') && index.includes('<small>4단계 지문 소재 단어를 모아요</small>'), '3·4단계 사진 촬영 안내 문구가 올바르지 않습니다.');
-assert(index.includes('id="student-test-login-guide"') && index.includes('번호 입력이 없으면 학생 테스트 버튼을 눌러 주세요.'), '학생 테스트 로그인 안내 문구가 버튼 위에 없습니다.');
+assert(index.includes('id="student-test-login-guide"') && index.includes('번호 입력이 없으면 학생 체험 버튼을 눌러 주세요.'), '학생 체험 로그인 안내 문구가 버튼 위에 없습니다.');
 assert(app.includes("classList.toggle('hidden', Boolean(inputPassword))") && app.includes('function renderStudentLoginNumber()'), '로그인 번호 입력 여부에 따라 학생 테스트 안내가 전환되지 않습니다.');
 assert(appCss.includes('.student-test-login-wrap') && appCss.includes('.student-test-login-guide'), '학생 테스트 안내 문구의 버튼 위 배치 스타일이 없습니다.');
-assert(index.includes('id="teacher-test-login-guide"') && index.includes('로그인 정보 입력이 없으면 교사 테스트를 눌러 주세요.'), '교사 테스트 로그인 안내 문구가 버튼 위에 없습니다.');
+assert(index.includes('id="teacher-test-login-guide"') && index.includes('로그인 정보 입력이 없으면 교사 체험을 눌러 주세요.'), '교사 체험 로그인 안내 문구가 버튼 위에 없습니다.');
 assert(app.includes('const TEACHER_TEST_LOGIN_GUIDE_DELAY_MS = 2000') && app.includes('function scheduleTeacherTestLoginGuide()'), '교사 테스트 안내의 2초 지연 타이머가 없습니다.');
 assert(app.includes("['teacher-email', 'teacher-pw'].forEach") && app.includes("addEventListener('input', handleTeacherLoginInput)"), '교사 로그인 입력에 따른 안내 초기화가 없습니다.');
 assert(appCss.includes('.teacher-test-login-wrap') && appCss.includes('.teacher-test-login-guide'), '교사 테스트 안내 문구의 버튼 위 배치 스타일이 없습니다.');
