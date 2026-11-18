@@ -48,7 +48,7 @@ test('Gemini 직행은 명시적 옵션이며 local-only URL과 다른 로컬 �
     assert.equal(context.getKoreanAiProcessingMode(), 'auto');
     context.window.location.search = '?ai=local';
     assert.equal(context.getKoreanAiProcessingMode({ processingMode: 'gemini-only' }), 'local-only');
-    assert.match(app, /createSettingsImageEditTurn\(session, prompt, '1:1', controller.signal, \{ processingMode: 'local-only' \}\)/);
+    assert.match(app, /createSettingsImageEditTurn\(session, prompt, '1:1', controller.signal, \{ processingMode: 'gemini-only' \}\)/);
     const generation = section('async function createLiteracyMissionQuestion(', 'window.startTodayLiteracyMission =');
     assert.ok(generation.includes("model: AIEDUE_KOREAN_FAST_TEXT_MODEL, processingMode: 'auto', profile: 'korean-literacy-generate-'"));
     assert.ok(!generation.includes("processingMode: 'local-only'"));

@@ -83,7 +83,7 @@ jobs:
           node --test tools/test-shape-zoo-core.mjs tools/test-shape-zoo-game.mjs
           node --test tools/test-word-card-table-core.mjs tools/test-word-card-table-game.mjs tools/test-word-card-table-source.mjs
           node --test tools/test-syllable-slow-reader-core.mjs tools/test-syllable-slow-reader-game.mjs
-          node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs
+          node --test tools/test-korean-lab-shell.mjs tools/test-korean-lab-sketchbook-integration.mjs tools/test-stage1-antiai-image.mjs
           node --test tools/test-literacy-local-generation.mjs
           node --test tools/test-handwriting-on-device.mjs tools/test-gemma-handwriting-preview.mjs
           node --test tools/test-curricular-photo-transition.mjs tools/test-trace-syllable-reset.mjs tools/test-trace-syllable-reset-async.mjs tools/test-curricular-ai-grading-strict.mjs

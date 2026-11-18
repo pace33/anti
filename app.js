@@ -7337,7 +7337,7 @@ window.generateAiSketchbookImage = async function generateAiSketchbookImage() {
         if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         updateAiSketchbookControls(`내 그림의 구도를 살려 새 그림을 만들고 있어요. ${AIEDUE_DRAWING_GENERATION_WAIT_NOTICE}`);
         const prompt = '이 그림은 사용자가 직접 그린 원본입니다. 원본의 주요 대상과 전체 구도, 이야기를 알아볼 수 있게 살리면서 완성도 높은 따뜻한 디지털 일러스트로 다시 그려 주세요. 선을 그대로 복사할 필요는 없으며 색감, 질감, 빛과 작은 세부 표현에는 창의성을 더해도 좋습니다. 주요 대상을 없애거나 다른 대상으로 바꾸지 말고, 원본에 없는 글자, 로고, 워터마크는 추가하지 마세요. 흰 여백은 원본의 이야기에 어울리는 자연스러운 배경으로 정리해 주세요.';
-        const job = await createSettingsImageEditTurn(session, prompt, '1:1', controller.signal, { processingMode: 'local-only' });
+        const job = await createSettingsImageEditTurn(session, prompt, '1:1', controller.signal, { processingMode: 'gemini-only' });
         if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
         const imageInfo = await waitForStoryImageJob(job, controller.signal);
         if (!isCurrentAiSketchbookOperation(revision, controller, startedUserId)) return;
