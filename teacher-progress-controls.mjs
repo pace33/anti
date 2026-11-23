@@ -8,6 +8,7 @@ export const PROGRESS_ACTIONS = Object.freeze({
     'vocabulary-game': ['어휘 게임 성공률 초기화', 'dictation', 'word-card-table'],
     'dictation-reset': ['교과 맞춤쓰기 초기화', 'dictation'],
     'literacy-reset': ['문해력 단·정답률 초기화', 'literacy'],
+    'literacy-set': ['문해력 단계·승급 제한 설정', 'literacy'],
     'detective-game': ['문해력 탐정단 성공률 초기화', 'literacy', 'literacy-detective'],
     'word-delete': ['단어 삭제', 'words'],
     'wrong-delete': ['오답 문항 삭제', 'dictation']
@@ -32,6 +33,12 @@ export function buildTeacherProgressPatch(data, action, args = {}) {
         const next = Number(args.step);
         if (!Number.isInteger(next) || next < 1 || next > 34) throw new Error('배움 1~33 또는 전체 완료를 선택해 주세요.');
         return { currentLearningStep:next - 1 };
+    }
+    if (action === 'literacy-set') {
+        const dan = Number(args.dan);
+        if (!Number.isInteger(dan) || dan < 1 || dan > 12) throw new Error('문해력 1~12단을 선택해 주세요.');
+        if (typeof args.promotionLocked !== 'boolean') throw new Error('승급 제한 여부를 확인해 주세요.');
+        return { literacyDan:dan, 'literacyPortfolio.dan':dan, 'literacyPortfolio.promotionLocked':args.promotionLocked };
     }
     if (action === 'literacy-reset') return { literacyDan:1, 'literacyPortfolio.dan':1, 'literacyPortfolio.stats':{}, 'literacyPortfolio.history':[] };
     if (action === 'dictation-reset') return {
@@ -61,7 +68,7 @@ export function createTeacherProgressControls({ document, window, escapeHtml:esc
     const button = (action, label=PROGRESS_ACTIONS[action][0]) => `<button type="button" class="teacher-progress-action" data-progress-action="${action}">${esc(label)}</button>`;
     function toolbar(sid, type) {
         view = {sid,type};
-        const buttons = Object.entries(PROGRESS_ACTIONS).filter(([k,v])=>v[1]===type && !['hangul-set','wrong-delete'].includes(k)).map(([k])=>button(k)).join('');
+        const buttons = Object.entries(PROGRESS_ACTIONS).filter(([k,v])=>v[1]===type && !['hangul-set','wrong-delete','literacy-set'].includes(k)).map(([k])=>button(k)).join('');
         const step = Math.min(34,Math.max(1,Number(getStudent(sid)?.currentLearningStep || 0)+1));
         return `<section class="teacher-progress-toolbar" aria-label="학생 진도 관리">${buttons}${type==='hangul' ? `<label>할 차례 <select id="teacher-hangul-step">${Array.from({length:34},(_,i)=>`<option value="${i+1}" ${step===i+1?'selected':''}>${i===33?'전체 33배움 완료':`배움 ${i+1}`}</option>`).join('')}</select></label>${button('hangul-set','진도 설정')}`:''}<p>선택한 학생의 해당 기록만 변경합니다. 돈·경험치·다른 단계 기록은 유지합니다.</p></section>`;
     }
@@ -81,22 +88,40 @@ export function createTeacherProgressControls({ document, window, escapeHtml:esc
     function wrongCards(student) {
         return `<section class="teacher-wrong-bank"><h4>오답 문항</h4>${arr(student.dictationPortfolio?.wrongBank).map(item=>`<article class="teacher-bank-card"><strong>${esc(item.sentence || item.word || '오답')}</strong><button type="button" data-progress-action="wrong-delete" data-key="${esc(wrongItemKey(item))}" aria-label="오답 문항 삭제">×</button><p>오답 ${Number(item.wrongCount || 0)}회 · 정답 ${Number(item.correctCount || 0)}회</p></article>`).join('') || '<p>오답 문항이 없습니다.</p>'}</section>`;
     }
+    function adjustment(sid, saved=false) {
+        const student=getStudent(sid); if(!student || pending) return;
+        view={sid,type:'literacy-adjustment'};
+        const portfolio=student.literacyPortfolio || {};
+        const dan=Math.min(12,Math.max(1,Math.floor(Number(portfolio.dan ?? student.literacyDan) || 1)));
+        const options=Array.from({length:12},(_,i)=>{
+            const n=i+1, difficulty=['쉬움','보통','어려움','도전'][Math.floor(i/3)];
+            const types=['객관식','객관식 · 단답형','객관식 · 단답형 · 서술형'][i%3];
+            return `<option value="${n}" ${dan===n?'selected':''}>${n}단 · ${difficulty} · ${types}</option>`;
+        }).join('');
+        showModal(`<section class="teacher-literacy-adjustment text-left"><h3>4단계 문해력 조정</h3><p class="teacher-literacy-student">${esc(student.name || '학생')}</p><label for="teacher-literacy-dan">문해력 단계</label><select id="teacher-literacy-dan">${options}</select><label class="teacher-literacy-lock"><input id="teacher-literacy-promotion-lock" type="checkbox" ${portfolio.promotionLocked===true?'checked':''}><span>승급 제한 (선택한 단계에 고정)</span></label><p>승급 제한을 켜면 선택한 문해력 단계의 난이도·문제 유형만 계속 나옵니다. 정답률과 학습 기록·보상은 계속 반영되며 자동 승급만 멈춥니다.</p><p>체크를 해제하면 누적 정답률을 기준으로 자동 승급이 다시 적용됩니다. 이미 풀고 있는 문제는 유지하고 다음 문제부터 적용합니다.</p><p id="teacher-literacy-adjustment-status" role="status">${saved?'저장했습니다. 다음 문제부터 적용됩니다.':''}</p>${button('literacy-set','저장')}</section>`,{plainClose:true,hideIcon:true});
+    }
     document.addEventListener('click', async event=>{
         const target=event.target.closest?.('[data-progress-action]');
         if(!target || !view || !document.getElementById('result-modal')?.contains(target) || pending) return;
         const action=target.dataset.progressAction; if(!Object.hasOwn(PROGRESS_ACTIONS,action)) return;
         const selected={...view}, args={word:target.dataset.word,key:target.dataset.key,step:document.getElementById('teacher-hangul-step')?.value};
+        if(action==='literacy-set') {
+            if(selected.type!=='literacy-adjustment') return;
+            args.dan=document.getElementById('teacher-literacy-dan')?.value;
+            args.promotionLocked=document.getElementById('teacher-literacy-promotion-lock')?.checked === true;
+        }
         const student=getStudent(selected.sid); if(!student) return;
         // Native confirm supports Enter, Escape and Cancel without unsafe HTML or shared modal handlers.
         const detail=action==='word-delete'?`‘${args.word}’ 단어를 정말 없애시겠습니까?`:action==='wrong-delete'?'이 오답 문항을 정말 없애시겠습니까?':`${PROGRESS_ACTIONS[action][0]}${action==='hangul-set'?` (선택: ${args.step==='34'?'전체 완료':`배움 ${args.step}`})`:''} 하시겠습니까?`;
-        if(!window.confirm(`${student.name || '학생'}\n${detail}\n이 변경은 되돌릴 수 없습니다.`)) return;
+        if(action!=='literacy-set' && !window.confirm(`${student.name || '학생'}\n${detail}\n이 변경은 되돌릴 수 없습니다.`)) return;
         pending=true;target.disabled=true;
         try {
             await mutate(selected.sid,action,args);
-            if(view?.sid!==selected.sid || view?.type!==selected.type) return;
-            if(selected.type==='words') bank(selected.sid,true); else window.openStudentProgressDetail(selected.sid,selected.type);
+            if(view?.sid!==selected.sid || view?.type!==selected.type || !target.isConnected) return;
+            if(selected.type==='literacy-adjustment') { pending=false; adjustment(selected.sid,true); }
+            else if(selected.type==='words') bank(selected.sid,true); else window.openStudentProgressDetail(selected.sid,selected.type);
         } catch(error) { window.alert(error?.message || '학생 기록 변경에 실패했습니다.'); }
         finally {pending=false;if(target.isConnected)target.disabled=false;}
     });
-    return {toolbar,bank,wrongCards};
+    return {toolbar,bank,wrongCards,adjustment};
 }

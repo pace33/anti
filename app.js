@@ -29,7 +29,7 @@ import { createClassroomService } from './classroom-service.js';
 import { installWorkshopLauncher } from './workshop-launcher.mjs?v=20260923-worksheet-sidebar-v1';
 import { createAieduLoading } from './aiedu-loading.js?v=grading-comic-v1';
 import { createGradingFeedback } from './grading-feedback.mjs?v=grading-comic-v1';
-import { createTeacherProgressControls, buildTeacherProgressPatch, PROGRESS_ACTIONS } from './teacher-progress-controls.mjs';
+import { createTeacherProgressControls, buildTeacherProgressPatch, PROGRESS_ACTIONS } from './teacher-progress-controls.mjs?v=literacy-promotion-lock-v1';
 import { detectiveCooldownUntil, requireDetectiveReady } from './detective-cooldown.mjs';
 import { firebaseConfig } from "./firebase-config.js";
 import {
@@ -11676,7 +11676,7 @@ function normalizeLiteracyPortfolio(raw = {}, fallbackDan = 1) {
             stats[k] = { attempts: 0, corrects: 0, wrongs: 0 };
         }
     });
-    return { history, stats, dan };
+    return { history, stats, dan, promotionLocked: raw.promotionLocked === true };
 }
 
 async function persistLiteracyData(extra = {}) {
@@ -11795,6 +11795,8 @@ function getLiteracyDanPlan(dan = null) {
 }
 
 function advanceLiteracyDanIfReady(targetPortfolio = literacyPortfolio) {
+    // Accuracy/history/rewards continue; pause only automatic promotion.
+    if (targetPortfolio?.promotionLocked === true) return null;
     const previousDan = getLiteracyDanPlan(targetPortfolio?.dan).dan;
     let nextDan = previousDan;
 
@@ -11810,6 +11812,19 @@ function advanceLiteracyDanIfReady(targetPortfolio = literacyPortfolio) {
     return { previousDan, nextDan, nextPlan: getLiteracyDanPlan(nextDan) };
 }
 
+async function recoverLiteracyPromotionAtomic(userId) {
+    const userRef = doc(db, 'users', userId);
+    return runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(userRef);
+        if (currentUserId !== userId || !snap.exists()) return null;
+        const data = snap.data();
+        const portfolio = normalizeLiteracyPortfolio(cloneLiteracyValue(data.literacyPortfolio || {}), data.literacyDan);
+        const promotion = advanceLiteracyDanIfReady(portfolio);
+        if (promotion) transaction.update(userRef, { literacyPortfolio: portfolio, literacyDan: portfolio.dan, updatedAt: serverTimestamp() });
+        return { portfolio, promotion };
+    });
+}
+
 function showLiteracyPromotionNotice(promotion) {
     if (!promotion) return;
     const nextTypes = promotion.nextPlan.types.map(type => getLiteracyTypeLabel(type)).join(' · ');
@@ -11821,7 +11836,7 @@ function showLiteracyPromotionNotice(promotion) {
 }
 function updateLiteracyDanBadges() {
     const plan = getLiteracyDanPlan();
-    const label = `문해력 ${plan.dan}단`;
+    const label = `문해력 ${plan.dan}단${literacyPortfolio?.promotionLocked === true ? ' · 승급 제한' : ''}`;
     const badge = document.getElementById('literacy-dan-dashboard-badge');
     if (badge) badge.innerText = label;
     const desc = document.getElementById('literacy-mission-desc');
@@ -11829,6 +11844,10 @@ function updateLiteracyDanBadges() {
 }
 
 function chooseRecommendedLiteracyMission() {
+    if (literacyPortfolio?.promotionLocked === true) {
+        const plan = getLiteracyDanPlan();
+        return { difficulty: plan.difficulty, type: plan.type };
+    }
     const difficulties = ['easy', 'normal', 'hard', 'expert'];
     for (const difficulty of difficulties) {
         const mcReady = isLiteracyMastered(difficulty, 'multipleChoice');
@@ -11990,13 +12009,15 @@ async function updateSharedBankCorrect(questionData) {
 
 async function getSharedBankProblems(difficulty) {
     try {
+        const plan = getLiteracyDanPlan();
+        if (literacyPortfolio?.promotionLocked === true && difficulty !== plan.difficulty) return [];
         const q = query(collection(db, SHARED_LITERACY_COLLECTION), where('difficulty', '==', difficulty), queryLimit(200));
         const querySnapshot = await getDocs(q);
         const list = [];
         querySnapshot.forEach((doc) => {
             const question = { ...doc.data(), id: doc.id };
             Object.defineProperty(question, SHARED_LITERACY_DOC_ID, { value: doc.id });
-            list.push(question);
+            if (literacyPortfolio?.promotionLocked !== true || plan.types.includes(question.type)) list.push(question);
         });
         return list;
     } catch (e) {
@@ -12007,9 +12028,12 @@ async function getSharedBankProblems(difficulty) {
 
 window.openLiteracyLimitBreak = async function(options = {}) {
     showActivityLoading();
+    try { await refreshLiteracyProgressForMission(); }
+    catch (error) { hideActivityLoading(); showModal('학습 설정을 불러오지 못했습니다. 다시 시도해 주세요.', {plainClose:true}); return; }
     let currentDifficulty = 'easy';
 
     async function renderLimitBreakModalContent(diff) {
+        if (literacyPortfolio?.promotionLocked === true) diff = getLiteracyDanPlan().difficulty;
         currentDifficulty = diff;
         const problems = await getSharedBankProblems(diff);
         const counts = { multipleChoice: 0, shortAnswer: 0, essay: 0 };
@@ -12027,7 +12051,7 @@ window.openLiteracyLimitBreak = async function(options = {}) {
                 <div class="mb-6">
                     <label class="block font-black text-gray-700 mb-2">1. 난이도 선택</label>
                     <div class="flex gap-2">
-                        ${['easy', 'normal', 'hard', 'expert'].map(d => `
+                        ${(literacyPortfolio?.promotionLocked === true ? [getLiteracyDanPlan().difficulty] : ['easy', 'normal', 'hard', 'expert']).map(d => `
                             <button type="button" class="px-4 py-2 rounded-xl font-black text-lg border-2 ${d === diff ? 'bg-purple-600 border-purple-600 text-white' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-50'} transition-all" onclick="window.changeLimitBreakDifficulty('${d}')">
                                 ${d.toUpperCase()}
                             </button>
@@ -12073,6 +12097,9 @@ window.openLiteracyLimitBreak = async function(options = {}) {
     window.startLimitBreakChallenge = async function(diff) {
         window.handleModalConfirm();
         showActivityLoading();
+        try { await refreshLiteracyProgressForMission(); }
+        catch (error) { hideActivityLoading(); showModal('학습 설정을 불러오지 못했습니다. 다시 시도해 주세요.', {plainClose:true}); return; }
+        if (literacyPortfolio?.promotionLocked === true) diff = getLiteracyDanPlan().difficulty;
         const problems = await getSharedBankProblems(diff);
         if (problems.length === 0) {
             hideActivityLoading();
@@ -12088,6 +12115,18 @@ window.openLiteracyLimitBreak = async function(options = {}) {
     hideActivityLoading();
     if (!options.isCurrent || options.isCurrent()) showModal(initialContent);
 };
+
+async function refreshLiteracyProgressForMission() {
+    const uid = currentUserId;
+    if (!uid) throw new Error('로그인 후 학습해 주세요.');
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (currentUserId !== uid || !snap.exists()) throw new Error('로그인 정보를 확인해 주세요.');
+    const data = snap.data();
+    literacyPortfolio = normalizeLiteracyPortfolio(data.literacyPortfolio, data.literacyDan);
+    currentUserProfileSnapshot = { ...currentUserProfileSnapshot, literacyPortfolio, literacyDan: literacyPortfolio.dan };
+    updateLiteracyDanBadges();
+    return getLiteracyDanPlan();
+}
 
 window.openTodayLiteracyMission = function() {
     const plan = getLiteracyDanPlan();
@@ -12121,7 +12160,17 @@ async function createLiteracyMissionQuestion(diff, type, { detective = false } =
 window.startTodayLiteracyMission = async function(diff, type) {
     showActivityLoading('에이두가 책을 읽으며 문해력 문제를 준비하고 있어요', 'literacy');
     try {
+        const uid = currentUserId;
+        const plan = await refreshLiteracyProgressForMission();
+        if (literacyPortfolio.promotionLocked === true) { diff = plan.difficulty; type = plan.type; }
         const questionData = await createLiteracyMissionQuestion(diff, type);
+        const latestPlan = await refreshLiteracyProgressForMission();
+        if (currentUserId !== uid) throw new Error('로그인 정보가 변경되었습니다.');
+        if (literacyPortfolio.promotionLocked === true && (diff !== latestPlan.difficulty || !latestPlan.types.includes(type))) {
+            hideActivityLoading();
+            showModal('선생님이 문해력 단계를 변경했습니다. 다음 문제를 다시 열어 주세요.', {plainClose:true});
+            return null;
+        }
         hideActivityLoading(true);
         setupLiteracyWorkspace(questionData, false);
         return questionData;
@@ -12164,9 +12213,9 @@ async function gradeLiteracyEssayQuestion(question, studentAnswer, { detective =
 
 async function pickLiteracyDetectiveLimitBreakQuestion(plan) {
     const preferred = String(plan?.difficulty || 'easy').toLowerCase();
-    const difficulties = Array.from(new Set([preferred, 'easy', 'normal', 'hard', 'expert']));
+    const difficulties = literacyPortfolio?.promotionLocked === true ? [preferred] : Array.from(new Set([preferred, 'easy', 'normal', 'hard', 'expert']));
     for (const difficulty of difficulties) {
-        const problems = await getSharedBankProblems(difficulty);
+        const problems = (await getSharedBankProblems(difficulty)).filter(question => literacyPortfolio?.promotionLocked !== true || plan.types.includes(question.type));
         if (problems.length) {
             const question = problems[Math.floor(Math.random() * problems.length)];
             question.detectiveLimitBreak = true;
@@ -12187,9 +12236,13 @@ window.aiedueLiteracyAdventureData = Object.freeze({
     async getCooldownUntil() { return detectiveCooldownUntil(await readDetectiveCooldown()); },
     async createRound() {
         requireDetectiveReady(await readDetectiveCooldown());
-        const plan = getLiteracyDanPlan();
+        const uid = currentUserId;
+        const plan = await refreshLiteracyProgressForMission();
         const limitBreakQuestion = await pickLiteracyDetectiveLimitBreakQuestion(plan);
         const question = limitBreakQuestion || await createLiteracyMissionQuestion(plan.difficulty, plan.type, { detective: true });
+        const latestPlan = await refreshLiteracyProgressForMission();
+        if (currentUserId !== uid) throw new Error('로그인 정보가 변경되었습니다.');
+        if (literacyPortfolio.promotionLocked === true && (question.difficulty !== latestPlan.difficulty || !latestPlan.types.includes(question.type))) throw new Error('문해력 단계가 변경되었습니다. 다시 도전해 주세요.');
         activeLiteracyDetectiveQuestion = question;
         activeLiteracyQuestion = question;
         isLiteracyLimitBreakMode = Boolean(limitBreakQuestion);
@@ -22813,7 +22866,7 @@ function renderTeacherClassProgressRows() {
         const unlocked = normalizeUnlockedLevels(student.unlockedLevels, 'student');
         const toggles = [1, 2, 3, 4].map((level) => {
             const active = unlocked.includes(level);
-            return `<button type="button" class="toggle-btn ${active ? 'active' : ''}" onclick="toggleLevelLock('${escapeInlineJsString(sid)}',${level},${active})">${level}단계</button>`;
+            return `<div class="teacher-stage-control"><button type="button" class="toggle-btn ${active ? 'active' : ''}" onclick="toggleLevelLock('${escapeInlineJsString(sid)}',${level},${active})">${level}단계</button><button type="button" class="teacher-stage-adjust" ${level === 4 ? `onclick="openTeacherStageAdjustment('${escapeInlineJsString(sid)}',4)"` : 'disabled title="준비 중"'} aria-label="${level}단계 조정${level === 4 ? '' : ' (준비 중)'}">조정${level === 4 ? '' : ' · 준비 중'}</button>${level === 4 && student.literacyPortfolio?.promotionLocked === true ? `<span class="teacher-stage-lock-status">🔒 ${Math.max(1, Math.floor(asNumber(student.literacyPortfolio.dan ?? student.literacyDan,1)))}단 고정</span>` : ''}</div>`;
         }).join('');
         const gameRates = [1, 2, 3, 4].map((stage) => {
             const report = getKoreanStageGameReport(student, stage);
@@ -23110,7 +23163,7 @@ const teacherProgressControls = createTeacherProgressControls({
             const patch = buildTeacherProgressPatch(data, action, args);
             tx.update(ref, { ...patch, updatedAt: serverTimestamp(), koreanActivityLog:[{
                 id:`teacher_progress_${Date.now()}_${Math.random().toString(36).slice(2)}`, type:'teacher-progress',
-                source:'class-management', createdAtMs:Date.now(), message:`교사가 ${PROGRESS_ACTIONS[action][0]}${args.word ? `: ${args.word}` : ''}${action === 'hangul-set' ? `: ${args.step === '34' ? '전체 완료' : `배움 ${args.step}`}` : ''}을(를) 실행했습니다.`
+                source:'class-management', createdAtMs:Date.now(), message:`교사가 ${PROGRESS_ACTIONS[action][0]}${args.word ? `: ${args.word}` : ''}${action === 'hangul-set' ? `: ${args.step === '34' ? '전체 완료' : `배움 ${args.step}`}` : ''}${action === 'literacy-set' ? `: ${args.dan}단 · 승급 제한 ${args.promotionLocked ? '켜짐' : '꺼짐'}` : ''}을(를) 실행했습니다.`
             }, ...(Array.isArray(data.koreanActivityLog) ? data.koreanActivityLog : [])].slice(0,200) });
         });
         const fresh = await getDoc(ref);
@@ -23121,6 +23174,11 @@ const teacherProgressControls = createTeacherProgressControls({
 window.openTeacherStudentWordBank = function(sid) {
     if (currentUserRole !== 'teacher' || !teacherClassStudents.has(sid)) return showModal('우리 반 학생만 관리할 수 있습니다.');
     teacherProgressControls.bank(sid);
+};
+window.openTeacherStageAdjustment = function(sid, stage) {
+    if (currentUserRole !== 'teacher' || !teacherClassStudents.has(sid)) return showModal('우리 반 학생만 관리할 수 있습니다.');
+    if (stage !== 4) return;
+    teacherProgressControls.adjustment(sid);
 };
 window.openStudentProgressDetail = function openStudentProgressDetail(sid, type) {
     if (currentUserRole !== 'teacher') return showModal('교사만 학생 진도를 관리할 수 있습니다.');
@@ -23301,16 +23359,12 @@ onAuthStateChanged(auth, async (user) => {
         updateDashboardExperience(userData, { authoritative: true });
         await loadKoreanLearningRecords(user.uid);
         if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
-        const recoveredLiteracyPromotion = advanceLiteracyDanIfReady();
-        if (recoveredLiteracyPromotion) {
-            await setDoc(userRef, {
-                literacyPortfolio,
-                literacyDan: literacyPortfolio.dan,
-                updatedAt: serverTimestamp()
-            }, { merge: true });
-            if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
+        const recoveredLiteracyState = await recoverLiteracyPromotionAtomic(user.uid);
+        if (auth.currentUser?.uid !== user.uid || currentUserId !== user.uid) return;
+        if (recoveredLiteracyState) literacyPortfolio = recoveredLiteracyState.portfolio;
+        if (recoveredLiteracyState?.promotion) {
             updateLiteracyDanBadges();
-            showLiteracyPromotionNotice(recoveredLiteracyPromotion);
+            showLiteracyPromotionNotice(recoveredLiteracyState.promotion);
         }
         loginSuccess = true;
         setRpgHudVisible(true);
