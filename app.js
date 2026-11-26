@@ -4248,6 +4248,11 @@ window.openAiedueLab = function openAiedueLab() {
         <button type="button" class="absolute -top-3 right-0 text-4xl font-black text-gray-400 hover:text-gray-700" onclick="closeAiedueKoreanModal()" aria-label="에이두 연구실 닫기">×</button>
         <div class="mb-5 pr-10"><div class="text-sm font-black tracking-widest text-violet-500">AIEDUE LAB</div><h3 class="text-3xl font-black text-[#2c3e50]">🧪 에이두 연구실</h3><p class="mt-2 font-bold text-gray-500">${currentUserRole === 'teacher' ? '시간 퀴즈와 도서관, 수업 공방을 만나 보세요.' : '시계 퀴즈와 도서관을 연구실에서 함께 만나 보세요.'}</p></div>
         <div class="aiedue-lab-activity-grid">
+            <a href="/articulation/" class="korean-embed-card p-5 text-left bg-gradient-to-br from-teal-50 to-emerald-50 border-2 border-teal-200 hover:scale-[1.01] transition-transform" aria-label="에이두 조음으로 이동">
+                <img src="/articulation/assets/articulation-brand.webp" alt="에이두 조음" class="block h-24 w-auto max-w-full mb-3 object-contain">
+                <strong class="block text-2xl font-black text-teal-700">에이두 조음</strong>
+                <span class="block mt-2 font-bold text-gray-600">자음과 모음을 검사하고, 나에게 맞게 연습해요.</span>
+            </a>
             <button type="button" class="korean-embed-card p-5 text-left bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 hover:scale-[1.01] transition-transform" onclick="openAiedueLibrary()">
                 <span class="block text-5xl mb-3" aria-hidden="true">📚</span>
                 <strong class="block text-2xl font-black text-amber-700">에이두 도서관</strong>

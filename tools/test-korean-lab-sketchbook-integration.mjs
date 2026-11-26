@@ -142,7 +142,9 @@ test('학급 상점 탭은 교사 물품을 로드하고 저장·삭제 후 같�
 test('연구실에는 도서관·시간 퀴즈와 교사용 수업 공방이 있고 다른 놀이는 단계별 진입점을 유지한다', () => {
     const lab = section(app, 'window.openAiedueLab =', 'function renderAiedueKoreanShopItems');
     const hub = section(app, 'window.openAiedueLab =', 'const AIEDUE_LAB_STAGE_SECTIONS');
-    assert.equal((hub.match(/class="korean-embed-card/g) || []).length, 3);
+    assert.equal((hub.match(/class="korean-embed-card/g) || []).length, 4);
+    assert.match(hub, /<a href="\/articulation\/"[^>]*class="korean-embed-card/);
+    assert.match(hub, /src="\/articulation\/assets\/articulation-brand\.webp" alt="에이두 조음"/);
     assert.ok(hub.includes('onclick="openAiedueLibrary()"'));
     assert.match(hub, /currentUserRole === 'teacher' \? `<button[^>]*onclick="openAiedueWorkshop\(\)"/);
     assert.ok(hub.includes('onclick="openAiedueLabTimeQuiz()"'));
